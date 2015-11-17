@@ -5,12 +5,16 @@
 	"license": "MIT",
 	"type": "project",
 	"require": {
-		"laravel/framework": "4.2.*",
-		"vinelab/neoeloquent": "1.1.*",
-		"lucadegasperi/oauth2-server-laravel": "3.*",
-		"artdarek/oauth-4-laravel": "dev-master",
-		"dingo/api": "0.8.*",
-		"f2m2/apidocs": "dev-master"
+		"laravel/framework": "4.2.17",
+		"vinelab/neoeloquent": "1.1.1",
+		"lucadegasperi/oauth2-server-laravel": "3.0.*",
+		"parse/php-sdk" : "1.*",
+		"pda/pheanstalk": "2.1.*",
+		"bradleyboy/laravel-braintree": "dev-master",
+		"aloha/twilio": "^2.0",
+		"twilio/sdk": "^4.5",
+		"authy/php": "2.2",
+        "f2m2/apidocs": "1.0.0"
 	},
 	"autoload": {
 		"classmap": [
@@ -20,7 +24,8 @@
 			"app/database/migrations",
 			"app/database/seeds",
 			"app/tests/TestCase.php",
-			"app/lib"
+			"app/lib",
+			"app/classes"
 		],
         "psr-0": {
             "Mintmesh" : "app/lib"

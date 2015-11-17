@@ -78,21 +78,23 @@ return [
         'refresh_token' => [
             'class'                 => 'League\OAuth2\Server\Grant\RefreshTokenGrant',
             // keeping access token available for one hour
-            'access_token_ttl'      => 3600,
+            'access_token_ttl'      => 259200,
             // canged from 604800 to 60
-            'refresh_token_ttl'     => 36000,
+            'refresh_token_ttl'     => 1209600,
             'rotate_refresh_tokens' => false,
         ],
         'password' => [
             'class'            => 'League\OAuth2\Server\Grant\PasswordGrant',
-            // keeping accesstoken available for one hour
-            'access_token_ttl' => 3600,
+            // keeping accesstoken available for 3 days
+            'access_token_ttl' => 259200,
     
             // the code to run in order to verify the user's identity
-            'callback'         => function($username, $password){
+            'callback'         => function($emailid, $password){
                 $credentials = [
-                    'username'    => $username,
+                    'emailid'    => $emailid,
                     'password' => $password,
+                    'emailverified' => 1,
+                    'status'=>1
                 ];
     
                 if (Auth::once($credentials)) {
@@ -101,7 +103,83 @@ return [
                     return false;
                 }
             }
-        ]
+        ],
+          
+       // 'facebook_access_token' => [
+            //'class'            => 'FacebookGrant\FacebookGrant',
+            //'access_token_ttl' => 604800,
+           // 'callback'         => function ($facebook_token) {
+ 
+            /**
+             * Get Facebook sDK
+             */
+            
+                //$fb = OAuth::consumer( 'Facebook' );
+ 
+            /**
+             * Set code
+             */
+            
+                //$fb->requestAccessToken($facebook_token);
+ 
+            /**
+             * Fetch result
+             */
+            
+                //$result = json_decode( $fb->request( '/me?fields=first_name,last_name,email,gender,location,birthday' ), true );
+ 
+ 
+            /**
+             * Fetch user id
+             */
+ 
+                //$user = User::where(array('email' => $result['email']))->first();
+                //$user->email = $result['email'];
+               // $user->save();
+ 
+            /**
+             * Return
+             */
+ 
+            //    return $user->id;
+          //  }
+       // ],
+
+        'special_grant' => [
+
+            'class'            => 'SpecialGrant\SpecialGrant',
+            'access_token_ttl' => 259200,
+
+            'callback'         => function ($emailid) {
+
+                // this grant type should be used only for autologin
+
+                $credentials = [
+                    'emailid'    => $emailid,                
+                    'emailverified' => 1,
+                    'status'=>1
+                ];
+                
+                // checking the user details only with emailid
+                $user = User::where(array('emailid' => $credentials['emailid'], 'emailverified' => $credentials['emailverified'], 'status' => $credentials['status']))->first();
+                
+                if(!empty($user) && $user->id) {
+                    return $user->id;
+                } else {
+                    return false;
+                }
+                /*if (Auth::once($credentials)) {
+                    return Auth::user()->id;
+                } else {
+                    return false;
+                }*/
+            }
+        ],
+        /*'refresh_token' => [
+        'class' => '\League\OAuth2\Server\Grant\RefreshTokenGrant',
+        'access_token_ttl' => 3600,
+        'refresh_token_ttl' => 36000
+        ],*/
     ],
 
     /*
@@ -166,7 +244,7 @@ return [
     | this can be also set on a per grant-type basis
     |
     */
-    'access_token_ttl' => 3600,
+    'access_token_ttl' => 259200,
 
     /*
     |--------------------------------------------------------------------------

@@ -11,9 +11,9 @@ abstract class Validator {
                 $this->input = $input ?: \Input::all();
         }
 
-        public function passes()
+        public function passes($filter='default')
         {
-                $validation = \Validator::make($this->input, static::$rules);
+                $validation = \Validator::make($this->input, static::$rules[$filter]);
 
                 if ($validation->passes()) {
                         return true;
@@ -27,5 +27,6 @@ abstract class Validator {
         {
                 return $this->errors;
         }
+
 
 }

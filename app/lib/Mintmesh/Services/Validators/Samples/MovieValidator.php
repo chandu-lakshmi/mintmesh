@@ -17,5 +17,18 @@ class MovieValidator extends Validator {
                 'released'   => 'required|numeric|between:1900,2020',
                 'tagline'    => 'required|max:100'
         );
+        
+        /**
+         * Update Validation rules for Movie model
+         */
+        public static $update_rules = array(
+                'id'      => 'required'
+        );
+        /**
+         * Destroy Validation rules for Movie model
+         */
+        public static $destroy_rules = array(
+                'id'      => 'required'
+        );
 
 }

@@ -32,14 +32,14 @@ return array(
 		),
 		'neo4j' => array (
             'driver' => 'neo4j',
-            'host'   => '127.0.0.1',
+            'host'   => '127.0.0.1',//127.0.0.1
             'port'   => '7474',
             'username' => 'neo4j',
             /* 
             | Password for using sample DB "admin" 
 			| Password for using realtime DB "mintmesh"
             */
-            'password' => 'admin'
+            'password' => 'mintmesh'//mintmesh
         ),
 
 	),

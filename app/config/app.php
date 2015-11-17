@@ -13,7 +13,7 @@ return array(
 	|
 	*/
 
-	'debug' => false,
+	'debug' => true,
 
 	/*
 	|--------------------------------------------------------------------------
@@ -123,14 +123,15 @@ return array(
 		'Illuminate\Workbench\WorkbenchServiceProvider',
 		/* Mintmesh Service providers */
 		'Mintmesh\ServiceProviders\MovieServiceProvider',
+                'Mintmesh\ServiceProviders\API\User\UserServiceProvider',
+                'Mintmesh\ServiceProviders\oauth\OauthServiceProvider',
 		/* Neoeloquent module for neo4j */
 		'Vinelab\NeoEloquent\NeoEloquentServiceProvider',
 		/* oAuth2.0 server */
 		'LucaDegasperi\OAuth2Server\Storage\FluentStorageServiceProvider',
-		'LucaDegasperi\OAuth2Server\OAuth2ServerServiceProvider',
-		'Artdarek\OAuth\OAuthServiceProvider',
-		'Dingo\Api\Provider\ApiServiceProvider',
-		'F2m2\Apidocs\ApidocsServiceProvider',
+                'Bradleyboy\Laravel\BraintreeServiceProvider',
+                'Aloha\Twilio\Support\Laravel\ServiceProvider',
+                'F2m2\Apidocs\ApidocsServiceProvider'
 	),
 
 	/*
@@ -198,8 +199,7 @@ return array(
 		'Validator'         => 'Illuminate\Support\Facades\Validator',
 		'View'              => 'Illuminate\Support\Facades\View',
 		'Authorizer' 		=> 'LucaDegasperi\OAuth2Server\Facades\AuthorizerFacade',
-		'OAuth' 			=> 'Artdarek\OAuth\Facade\OAuth',
-		'API' 				=> 'Dingo\Api\Facade\API',
+                'Twilio' => 'Twilio\Support\Laravel\Facade'
 
 	),
 

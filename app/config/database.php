@@ -55,15 +55,15 @@ return array(
             | Password for using sample DB "admin" 
 			| Password for using realtime DB "mintmesh"
             */
-            'password' => 'admin'
+            'password' => 'm!ntm35h'//admin
         ),
 
 		'mysql' => array(
 			'driver'    => 'mysql',
 			'host'      => 'localhost',
 			'database'  => 'mintmesh',
-			'username'  => 'root',
-			'password'  => '',
+			'username'  => 'mintmesh',
+			'password'  => 'm!ntm35h',
 			'charset'   => 'utf8',
 			'collation' => 'utf8_unicode_ci',
 			'prefix'    => '',

@@ -22,11 +22,37 @@ class MovieGateway {
         return $this->movieRepository->getMovielist();
     }
     
-    // validation on user inputs for create movie
+    // validation on user inputs for creating a movie
     public function validateCreateMovieInput($input) {
         $movieValidator = new \Mintmesh\Services\Validators\Samples\MovieValidator($input);
         
         if($movieValidator->passes()) {
+            /* validation passes successfully */
+            return array('status_code' => 200, 'status' => 'success');
+        }
+        
+        /* Return validation errors to the controller */
+        return array('status_code' => 404, 'status' => 'error', 'message' => $movieValidator->getErrors()); 
+    }
+    
+    // validation on user inputs for editing a movie
+    public function validateEditMovieInput($input) {
+        $movieValidator = new \Mintmesh\Services\Validators\Samples\MovieValidator($input);
+        
+        if($movieValidator->update_passes()) {
+            /* validation passes successfully */
+            return array('status_code' => 200, 'status' => 'success');
+        }
+        
+        /* Return validation errors to the controller */
+        return array('status_code' => 404, 'status' => 'error', 'message' => $movieValidator->getErrors()); 
+    }
+    
+    // validation on user inputs for destroying a movie
+    public function validateDeleteMovieInput($input) {
+        $movieValidator = new \Mintmesh\Services\Validators\Samples\MovieValidator($input);
+        
+        if($movieValidator->destroy_passes()) {
             /* validation passes successfully */
             return array('status_code' => 200, 'status' => 'success');
         }
@@ -40,10 +66,35 @@ class MovieGateway {
         * NOTE : if you need to access more than one model do this here, All your business
         * logic and validation is handled by this gateway.
         */
-        if ($this->movieRepository->create($input)) {
+        if ($this->movieRepository->createMovie($input)) {
                 return array('status_code' => 200,'status' => 'success', 'message' => 'Created Successfully');
         } else {
                 return array('status_code' => 404, 'status' => 'error', 'message' => 'Failed to create');
+        }
+	}
+        
+    public function updateMovie($input) {
+        /**
+        * NOTE : if you need to access more than one model do this here, All your business
+        * logic and validation is handled by this gateway.
+        */
+        if ($this->movieRepository->updateMovie($input)) {
+                return array('status_code' => 200,'status' => 'success', 'message' => 'Updated Successfully');
+        } else {
+                return array('status_code' => 404, 'status' => 'error', 'message' => 'Failed to update');
+        }
+	}
+        
+        
+    public function destroyMovie($id) {
+        /**
+        * NOTE : if you need to access more than one model do this here, All your business
+        * logic and validation is handled by this gateway.
+        */
+        if ($this->movieRepository->destroyMovie($id)) {
+                return array('status_code' => 200,'status' => 'success', 'message' => 'Destroyed Successfully');
+        } else {
+                return array('status_code' => 404, 'status' => 'error', 'message' => 'Failed to destroy');
         }
 	}
         
