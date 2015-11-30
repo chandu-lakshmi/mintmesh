@@ -124,63 +124,74 @@ class SMSGateway {
             $email = $this->loggedinUserDetails->emailid ;
             $countryCode='';
             $number = $phone= !empty($this->neoLoggedInUserDetails->phone)?$this->neoLoggedInUserDetails->phone:0;
-            $splitedNumber = explode('-', $number,2);
-            if (is_array($splitedNumber))
+             //check if phone number is already existing
+            $userCount = $this->neoUserRepository->getUserByPhone($phone, $email);
+            if (empty($userCount))
             {
-                $number = !empty($splitedNumber[1])?$splitedNumber[1]:0;
-                $countryCode = !empty($splitedNumber[0])?str_replace('+','',$splitedNumber[0]):'';
-            }
-            $user = $authy_api->registerUser($email, $number, $countryCode); //email, cellphone, country_code
-            $smsInput=array();
-            $smsInput['sms_type'] = $sms_type ;
-            $smsInput['from_email'] = $email ;
-            $smsInput['to_number'] = $phone ;
-            $smsInput['message'] = 'OTP' ;
-            if($user->ok())
-            {
-                   $smsInput['send_status'] = 1 ;
-                   //update authy id for user
-                   $updAuthy=$this->userRepository->updateAuthyId($this->loggedinUserDetails->id, $user->id());
-                   $sms = $authy_api->requestSms($user->id(),array("force" => "true"));
-                   if ($sms->ok())
-                   {
-                       $smsInput['twilio_response'] = "success" ;
-                       $this->smsRepository->logSMS($smsInput);
-                        $data = array();
-                        $message = array('msg'=>array(Lang::get('MINTMESH.sms.otp_sent')));
-                        return $this->commonFormatter->formatResponse(200, "success", $message, $data) ;
-                   }
-                   else
-                   {
-                     $message="";
-                     $smsInput['send_status'] = 0 ;
-                     foreach($sms->errors() as $field => $message) {
-                        $message = $message ;
-                      }
-                      if (empty($message))
-                      {
-                          $message = Lang::get('MINTMESH.sms.max_reached') ;
-                      }
-                      $smsInput['twilio_response'] = $message ;
-                      $this->smsRepository->logSMS($smsInput);
-                      
-                      $message = array('msg'=>array($message));
-                      return $this->commonFormatter->formatResponse(406, "error", $message, array()) ;
-                   }
+                $splitedNumber = explode('-', $number,2);
+                if (is_array($splitedNumber))
+                {
+                    $number = !empty($splitedNumber[1])?$splitedNumber[1]:0;
+                    $countryCode = !empty($splitedNumber[0])?str_replace('+','',$splitedNumber[0]):'';
+                }
+                $user = $authy_api->registerUser($email, $number, $countryCode); //email, cellphone, country_code
+                $smsInput=array();
+                $smsInput['sms_type'] = $sms_type ;
+                $smsInput['from_email'] = $email ;
+                $smsInput['to_number'] = $phone ;
+                $smsInput['message'] = 'OTP' ;
+                if($user->ok())
+                {
+                       $smsInput['send_status'] = 1 ;
+                       //update authy id for user
+                       $updAuthy=$this->userRepository->updateAuthyId($this->loggedinUserDetails->id, $user->id());
+                       $sms = $authy_api->requestSms($user->id(),array("force" => "true"));
+                       if ($sms->ok())
+                       {
+                           $smsInput['twilio_response'] = "success" ;
+                           $this->smsRepository->logSMS($smsInput);
+                            $data = array();
+                            $message = array('msg'=>array(Lang::get('MINTMESH.sms.otp_sent')));
+                            return $this->commonFormatter->formatResponse(200, "success", $message, $data) ;
+                       }
+                       else
+                       {
+                         $message="";
+                         $smsInput['send_status'] = 0 ;
+                         foreach($sms->errors() as $field => $message) {
+                            $message = $message ;
+                          }
+                          if (empty($message))
+                          {
+                              $message = Lang::get('MINTMESH.sms.max_reached') ;
+                          }
+                          $smsInput['twilio_response'] = $message ;
+                          $this->smsRepository->logSMS($smsInput);
+
+                          $message = array('msg'=>array($message));
+                          return $this->commonFormatter->formatResponse(406, "error", $message, array()) ;
+                       }
+                }
+                else
+                {
+                    $smsInput['send_status'] = 0 ;
+                    foreach($user->errors() as $field => $message) {
+                      $message = $message ;
+                    }
+                     $smsInput['twilio_response'] = $message ;
+                     $this->smsRepository->logSMS($smsInput);
+                     $message = array('msg'=>array($message));
+                     return $this->commonFormatter->formatResponse(406, "error", $message, array()) ;
+                }
+
+
             }
             else
             {
-                $smsInput['send_status'] = 0 ;
-                foreach($user->errors() as $field => $message) {
-                  $message = $message ;
-                }
-                 $smsInput['twilio_response'] = $message ;
-                 $this->smsRepository->logSMS($smsInput);
-                 $message = array('msg'=>array($message));
-                 return $this->commonFormatter->formatResponse(406, "error", $message, array()) ;
+                $message = array('msg'=>array(Lang::get('MINTMESH.sms.user_exist')));
+                return $this->commonFormatter->formatResponse(406, "error", $message, array()) ;
             }
-
-            
+           
 
             
         }

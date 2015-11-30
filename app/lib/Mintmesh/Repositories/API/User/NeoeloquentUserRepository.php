@@ -81,15 +81,23 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
         {
             //get user object
             $user = $this->getNodeByEmailId($this->appEncodeDecode->filterString($input['emailid']));
-            //set params
-            //unset email id as we do not update it
-            unset($input['emailid']);
-            foreach ($input as $key=>$val)
+            if (count($user))
             {
-                $user->$key = $this->appEncodeDecode->filterString($val);
+                //set params
+                //unset email id as we do not update it
+                unset($input['emailid']);
+                foreach ($input as $key=>$val)
+                {
+                    $user->$key = $this->appEncodeDecode->filterString($val);
+                }
+                $user->save();
+                return $user ;
             }
-            $user->save();
-            return $user ;
+            else
+            {
+                return 0 ;
+            }
+            
         }
         
         // complete a user profile
@@ -644,6 +652,40 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                 return false ;
             }
         }
+        public function getUserJobFunction($emailid="")
+        {
+             $emailid = $this->appEncodeDecode->filterString(strtolower($emailid));
+            $queryString = "MATCH (n:User)-[r:".Config::get('constants.RELATIONS_TYPES.POSSES_JOB_FUNCTION')."]->(m:Job_Functions) where n.emailid='".$emailid."' RETURN m";
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            //echo "<pre>";
+            //print_r($result);exit;
+            if ($result->count())
+            {
+                return $result ;
+            }
+            else
+            {
+                return false ;
+            }
+        }
+        public function getUserIndustry($emailid="")
+        {
+             $emailid = $this->appEncodeDecode->filterString(strtolower($emailid));
+            $queryString = "MATCH (n:User)-[r:".Config::get('constants.RELATIONS_TYPES.HOLDS_INDUSTRY_EXPERIENCE')."]->(m:Industries) where n.emailid='".$emailid."' RETURN m";
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            //echo "<pre>";
+            //print_r($result);exit;
+            if ($result->count())
+            {
+                return $result ;
+            }
+            else
+            {
+                return false ;
+            }
+        }
         
         //get refer request count
         public function getRequestCount($relation, $fromEmail, $toEmail, $forEmail)
@@ -761,6 +803,48 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                return 0;
            }
        }
+       public function mapJobFunction($jobFunction=0,$emailid='')
+       {
+           if (!empty($jobFunction) && !empty($emailid))
+           {
+               
+                $emailid = $this->appEncodeDecode->filterString(strtolower($emailid));
+                 $queryString = "Match (m:User),(j:Job_Functions)
+                                 where m.emailid='".$emailid."' and j.mysql_id=".$jobFunction."
+                                 create unique (m)-[r:".Config::get('constants.RELATIONS_TYPES.POSSES_JOB_FUNCTION')."";
+
+                 $queryString.="]->(j)  set r.created_at='".date("Y-m-d H:i:s")."'";
+
+                 $query = new CypherQuery($this->client, $queryString);
+                 $result = $query->getResultSet();
+               return true ;
+           }
+           else
+           {
+               return 0;
+           }
+       }
+       public function mapIndustry($industry=0,$emailid='')
+       {
+           if (!empty($industry) && !empty($emailid))
+           {
+               
+                $emailid = $this->appEncodeDecode->filterString(strtolower($emailid));
+                 $queryString = "Match (m:User),(i:Industries)
+                                 where m.emailid='".$emailid."' and i.mysql_id=".$industry."
+                                 create unique (m)-[r:".Config::get('constants.RELATIONS_TYPES.HOLDS_INDUSTRY_EXPERIENCE')."";
+
+                 $queryString.="]->(i)  set r.created_at='".date("Y-m-d H:i:s")."'";
+
+                 $query = new CypherQuery($this->client, $queryString);
+                 $result = $query->getResultSet();
+               return true ;
+           }
+           else
+           {
+               return 0;
+           }
+       }
        
        public function unMapSkills($emailid='')
        {
@@ -768,6 +852,41 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
            {
                $emailid = $this->appEncodeDecode->filterString(strtolower($emailid));
                $queryString = "Match (m:User)-[r:".Config::get('constants.RELATIONS_TYPES.KNOWS')."]-(s:Skills)
+                                where m.emailid='".$emailid."'
+                                delete r";
+
+                $query = new CypherQuery($this->client, $queryString);
+                return $result = $query->getResultSet();
+           }
+           else
+           {
+               return 0;
+           }
+       }
+       
+       public function unMapJobFunction($emailid='')
+       {
+           if (!empty($emailid))
+           {
+               $emailid = $this->appEncodeDecode->filterString(strtolower($emailid));
+               $queryString = "Match (m:User)-[r:".Config::get('constants.RELATIONS_TYPES.POSSES_JOB_FUNCTION')."]-(j:Job_Functions)
+                                where m.emailid='".$emailid."'
+                                delete r";
+
+                $query = new CypherQuery($this->client, $queryString);
+                return $result = $query->getResultSet();
+           }
+           else
+           {
+               return 0;
+           }
+       }
+       public function unMapIndustry($emailid='')
+       {
+           if (!empty($emailid))
+           {
+               $emailid = $this->appEncodeDecode->filterString(strtolower($emailid));
+               $queryString = "Match (m:User)-[r:".Config::get('constants.RELATIONS_TYPES.HOLDS_INDUSTRY_EXPERIENCE')."]-(i:Industries)
                                 where m.emailid='".$emailid."'
                                 delete r";
 
@@ -849,6 +968,103 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             {
                 return 0;
             }
+        }
+        
+        public function ConnectToInvitee($user, $relationAttrs=array())
+        {
+            if (!empty($user))
+            {
+                $user = $this->appEncodeDecode->filterString(strtolower($user));
+                $queryString = "Match (m:User), (n:User)
+                                where m.emailid='".$user."' 
+                                and (n)-[:".Config::get('constants.RELATIONS_TYPES.INVITED')."]->(m)
+                                create unique (m)-[r:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION');
+
+                $queryString.="]->(n) set r.created_at='".date("Y-m-d H:i:s")."'";
+                if (!empty($relationAttrs))
+                {
+                    $queryString.=" , " ;
+                    foreach ($relationAttrs as $atrName=>$atrVal)
+                    {
+                        $queryString.="r.".$atrName."='".$this->appEncodeDecode->filterString($atrVal)."',";
+                    }
+                    $queryString = rtrim($queryString,',');
+                }
+                $queryString.=" return r" ;
+                $query = new CypherQuery($this->client, $queryString);
+                return $result = $query->getResultSet();
+            }
+        }
+        
+        public function AutoConnectUsers($user, $toConnectEmail, $relationAttrs=array())
+        {
+            if (!empty($user))
+            {
+                $user = $this->appEncodeDecode->filterString(strtolower($user));
+                $toConnectEmail = $this->appEncodeDecode->filterString(strtolower($toConnectEmail));
+                $queryString = "Match (m:User), (n:User)
+                                where m.emailid='".$user."' 
+                                and n.emailid='".$toConnectEmail."' 
+                                create unique (m)-[r:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION');
+
+                $queryString.="]->(n) set r.created_at='".date("Y-m-d H:i:s")."'";
+                if (!empty($relationAttrs))
+                {
+                    $queryString.=" , " ;
+                    foreach ($relationAttrs as $atrName=>$atrVal)
+                    {
+                        $queryString.="r.".$atrName."='".$this->appEncodeDecode->filterString($atrVal)."',";
+                    }
+                    $queryString = rtrim($queryString,',');
+                }
+                $queryString.=" return r" ;
+                $query = new CypherQuery($this->client, $queryString);
+                return $result = $query->getResultSet();
+            }
+        }
+        
+        public function getInfluencersList($userEmail = '')
+        {
+            if (!empty($userEmail))
+            {
+                $queryString = "match (u:User)-[r:ACCEPTED_CONNECTION]-(u1:User)-[r1:ACCEPTED_CONNECTION]-(u2:User) where u.emailid='".$userEmail."' and not (u)-[:ACCEPTED_CONNECTION]-(u2) with u2
+                                match (u2)-[r2:ACCEPTED_CONNECTION]-(u3) return u2,count(r2)
+                                order by count(r2) desc  limit 5";
+                $query = new CypherQuery($this->client, $queryString);
+                return $result = $query->getResultSet();
+            }
+            else
+            {
+                return false;
+            }
+        }
+        
+        public function getAutoconnectUsers($userEmail='', $email='', $phones=array())
+        {
+            if (!empty($email))
+            {
+                $email = $this->appEncodeDecode->filterString(strtolower($email)) ;
+                $userEmail = $this->appEncodeDecode->filterString(strtolower($userEmail)) ;
+                $phoneString = !empty($phones)?implode("','", $phones):'';
+                $phoneString = "'".$phoneString."'" ;
+                $queryString = "match (v:User{emailid:'".$userEmail."'}),(u:User)"
+                                . " where (u.emailid='".$email."' and HAS (u.login_source) and (u)-[:IMPORTED]->(v)) or (u.phone IN[".$phoneString."] and u.phoneverified='1' and HAS (u.login_source) and (u)-[:IMPORTED]->(v)) return u" ;
+                $query = new CypherQuery($this->client, $queryString);
+                $result = $query->getResultSet();
+                if ($result->count())
+                {
+                    return $result ;
+                }
+                else
+                {
+                    return false ;
+                }
+            }
+            else
+            {
+                return false ;
+            }
+             
         }
          
 }

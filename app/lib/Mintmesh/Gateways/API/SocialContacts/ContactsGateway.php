@@ -46,8 +46,7 @@ class ContactsGateway {
                 $this->userFileUploader = $userFileUploader ;
                 $this->userEmailManager = $userEmailManager ;
                 $this->appEncodeDecode = $appEncodeDecode ;
-                $this->loggedinUserDetails = $this->getLoggedInUser();
-                $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
+                
 	}
         
         /*
@@ -55,131 +54,187 @@ class ContactsGateway {
          */
         public function processContacts($input)
         {
-            //declare returnArray
-            $returnArray = array();
-            $fromUser = $this->neoLoggedInUserDetails ;
-            if (!empty($input['contacts']))
+            $this->loggedinUserDetails = $this->getLoggedInUser();
+            if ($this->loggedinUserDetails)
             {
-                $contacts = json_decode($input['contacts']); //$input['contacts'] ;
-                if (!empty($contacts) && is_array($contacts))
+                $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
+                if (!empty($this->neoLoggedInUserDetails) && count($this->neoLoggedInUserDetails))
                 {
-                    $mintmeshEmails = array();
-                    foreach($contacts as $contact)
+                    //declare returnArray
+                    $returnArray = array();
+                    $fromUser = $this->neoLoggedInUserDetails ;
+                    if (!empty($input['contacts']))
                     {
-                        //process only when only email exists
-                        if (!empty($contact->emails) && is_array($contact->emails) && !in_array($fromUser->emailid,$contact->emails))
+                        $contacts = json_decode($input['contacts']); //$input['contacts'] ;
+                        if (!empty($contacts) && is_array($contacts))
                         {
-                            $relationAttrs = array();
-                            $emails = !empty($contact->emails)?$contact->emails:array();
-                            $phones = !empty($contact->phones)?$contact->phones:array();
-                             //\Log::info("<<<<<<<<<<<<<<<<<<<<<<  In getExisting contacts before >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
-                            $result = $this->contactsRepository->getExistingContacts($emails, $phones);
-                            //\Log::info("<<<<<<<<<<<<<<<<<<<<<<  In getExisting contacts after >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
-                            if (empty($result))
+                            $mintmeshEmails = array();
+                            foreach($contacts as $contact)
                             {
-                                //create nodes for each email id
-                               // \Log::info("<<<<<<<<<<<<<<<<<<<<<<  In create contacts before >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
-                                $createResult = $this->createNonMembersNodes($emails, $contact);
-                                //\Log::info("<<<<<<<<<<<<<<<<<<<<<<  In create contacts after >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
-                                if (!$createResult)//return if some error occurs
+                                //process only when only email exists
+                                if (!empty($contact->emails) && is_array($contact->emails) && !in_array($fromUser->emailid,$contact->emails))
                                 {
-                                    $message = array('msg'=>array(Lang::get('MINTMESH.import_contacts.error')));
-                                    return $this->commonFormatter->formatResponse(406, "error", $message, array('mintmesh_users'=>$returnArray)) ;
-                                }
-                            }
-                            else
-                            {
-                                $existingEmails = array();
-                                foreach ($result as $res)//process each contacts 
-                                {
-                                    if (!empty($res[0]->login_source) && !in_array($res[0]->emailid,$mintmeshEmails))//says that it is mintmesh user
+                                    $relationAttrs = array();
+                                    $emails = !empty($contact->emails)?$contact->emails:array();
+                                    $phones = !empty($contact->phones)?$contact->phones:array();
+                                    //autoconnect people
+                                    $connectResult = $this->checkAutoconnect($this->loggedinUserDetails->emailid, $emails, $phones);
+                                     //\Log::info("<<<<<<<<<<<<<<<<<<<<<<  In getExisting contacts before >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
+                                    $result = $this->contactsRepository->getExistingContacts($emails, $phones);
+                                    //\Log::info("<<<<<<<<<<<<<<<<<<<<<<  In getExisting contacts after >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
+                                    if (empty($result))
                                     {
-                                        $r = $res[0]->getProperties();
-                                        if (!empty($res[0]->location))//user has completed profile
+                                        //create nodes for each email id
+                                       // \Log::info("<<<<<<<<<<<<<<<<<<<<<<  In create contacts before >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
+                                        $createResult = $this->createNonMembersNodes($emails, $contact);
+                                        //\Log::info("<<<<<<<<<<<<<<<<<<<<<<  In create contacts after >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
+                                        if (!$createResult)//return if some error occurs
                                         {
-                                            if (!empty($res[0]->from_linkedin))//if  linked in
-                                            {
-                                                $r['dp_path'] = $res[0]->linkedinImage ;
-                                            }
-                                            else if (!empty($res[0]->dp_renamed_name))
-                                            {
-                                                $r['dp_path'] = $res[0]->dp_path."/".$res[0]->dp_renamed_name ;
-                                            }
-                                            else
-                                            {
-                                                $r['dp_path'] = "";
-                                            }
+                                            $message = array('msg'=>array(Lang::get('MINTMESH.import_contacts.error')));
+                                            return $this->commonFormatter->formatResponse(406, "error", $message, array('mintmesh_users'=>$returnArray)) ;
                                         }
-                                        if (isset($r['id']))
-                                            unset($r['id']);
-                                        $connected = $this->neoUserRepository->checkConnection($fromUser->emailid,$res[0]->emailid);
-                                        if (!empty($connected))
-                                        {
-                                            $r['connected'] = 1 ;
-                                            $r['request_sent_at'] = 0 ;
-                                        }
-                                        else
-                                        {
-                                            //check if in pending state
-                                            $pending = $this->neoUserRepository->checkPendingConnection($fromUser->emailid,$res[0]->emailid);
-                                            if (!empty($pending))// if pending
-                                            {
-                                                $r['request_sent_at'] = $pending ;
-                                                $r['connected'] = 2 ;
-                                            }else
-                                            {
-                                                $r['connected'] = 0 ;
-                                                $r['request_sent_at'] = 0;
-                                            }
-                                        }
-                                        if (!empty($contact->recordID))
-                                        $r['recordID'] = $contact->recordID ;
-                                        $returnArray[]=$r;
                                     }
-                                    $toUser = $res ;
-                                    $relationAttrs = $this->formRelationAttributes($contact);
-                                    $r1 = $res[0]->getProperties();
-                                    //create relation for users
-                                    try{
-                                        //\Log::info("<<<<<<<<<<<<<<<<<<<<<<  In relate contacts before >>>>>>>>>>>>>>>>>>>>> ".$r1['emailid'].date('H:i:s'));
-                                        $relation = $this->contactsRepository->relateContacts($fromUser, $toUser, $relationAttrs);   
-                                       // \Log::info("<<<<<<<<<<<<<<<<<<<<<<  In relate contacts after >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
-                                    }
-                                    catch(\RuntimeException $e)
+                                    else
                                     {
-                                        $message = array('msg'=>array(Lang::get('MINTMESH.import_contacts.error')));
-                                        return $this->commonFormatter->formatResponse(406, "error", $message, array('mintmesh_users'=>$returnArray)) ;
+                                        $existingEmails = array();
+                                        foreach ($result as $res)//process each contacts 
+                                        {
+                                            if (!empty($res[0]->login_source) && !in_array($res[0]->emailid,$mintmeshEmails))//says that it is mintmesh user
+                                            {
+                                                $r = $res[0]->getProperties();
+                                                if (!empty($res[0]->location))//user has completed profile
+                                                {
+                                                    if (!empty($res[0]->from_linkedin))//if  linked in
+                                                    {
+                                                        $r['dp_path'] = $res[0]->linkedinImage ;
+                                                    }
+                                                    else if (!empty($res[0]->dp_renamed_name))
+                                                    {
+                                                        $r['dp_path'] = $res[0]->dp_path."/".$res[0]->dp_renamed_name ;
+                                                    }
+                                                    else
+                                                    {
+                                                        $r['dp_path'] = "";
+                                                    }
+                                                }
+                                                if (isset($r['id']))
+                                                    unset($r['id']);
+                                                $connected = $this->neoUserRepository->checkConnection($fromUser->emailid,$res[0]->emailid);
+                                                if (!empty($connected))
+                                                {
+                                                    $r['connected'] = 1 ;
+                                                    $r['request_sent_at'] = 0 ;
+                                                }
+                                                else
+                                                {
+                                                    //check if in pending state
+                                                    $pending = $this->neoUserRepository->checkPendingConnection($fromUser->emailid,$res[0]->emailid);
+                                                    if (!empty($pending))// if pending
+                                                    {
+                                                        $r['request_sent_at'] = $pending ;
+                                                        $r['connected'] = 2 ;
+                                                    }else
+                                                    {
+                                                        $r['connected'] = 0 ;
+                                                        $r['request_sent_at'] = 0;
+                                                    }
+                                                }
+                                                if (!empty($contact->recordID))
+                                                $r['recordID'] = $contact->recordID ;
+                                                if (!empty($r['emailid']) && in_array($r['emailid'],$connectResult))
+                                                {
+                                                    $r['connected']=1;
+                                                }
+                                                $returnArray[]=$r;
+                                                
+                                            }
+                                            $toUser = $res ;
+                                            $relationAttrs = $this->formRelationAttributes($contact);
+                                            $r1 = $res[0]->getProperties();
+                                            //create relation for users
+                                            try{
+                                                //\Log::info("<<<<<<<<<<<<<<<<<<<<<<  In relate contacts before >>>>>>>>>>>>>>>>>>>>> ".$r1['emailid'].date('H:i:s'));
+                                                $relation = $this->contactsRepository->relateContacts($fromUser, $toUser, $relationAttrs);   
+                                               // \Log::info("<<<<<<<<<<<<<<<<<<<<<<  In relate contacts after >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
+                                            }
+                                            catch(\RuntimeException $e)
+                                            {
+                                                $message = array('msg'=>array(Lang::get('MINTMESH.import_contacts.error')));
+                                                return $this->commonFormatter->formatResponse(406, "error", $message, array('mintmesh_users'=>$returnArray)) ;
+                                            }
+                                            $existingEmails[] = $res[0]->emailid ;
+                                            $mintmeshEmails[] = $res[0]->emailid ;
+                                        }
+                                        //create nodes for remaining users
+                                        $stringedEmails = array();
+                                        foreach ($emails as $e)
+                                        {
+                                            $stringedEmails[] = $this->appEncodeDecode->filterString(strtolower($e)) ;
+                                        }
+                                        $remainingContacts = array_diff($stringedEmails, $existingEmails) ;
+                                        $createResult = $this->createNonMembersNodes($remainingContacts, $contact);
                                     }
-                                    $existingEmails[] = $res[0]->emailid ;
-                                    $mintmeshEmails[] = $res[0]->emailid ;
-                                }
-                                //create nodes for remaining users
-                                $stringedEmails = array();
-                                foreach ($emails as $e)
-                                {
-                                    $stringedEmails[] = $this->appEncodeDecode->filterString(strtolower($e)) ;
-                                }
-                                $remainingContacts = array_diff($stringedEmails, $existingEmails) ;
-                                $createResult = $this->createNonMembersNodes($remainingContacts, $contact);
+                                    
+                                }    
                             }
-                        }    
+                            $message = array('msg'=>array(Lang::get('MINTMESH.import_contacts.success')));
+                            return $this->commonFormatter->formatResponse(200, "success", $message, array('mintmesh_users'=>$returnArray)) ;
+                        }
+                        else
+                        {
+                            $message = array('msg'=>array(Lang::get('MINTMESH.import_contacts.invalid')));
+                            return $this->commonFormatter->formatResponse(201, "error", $message, array()) ;
+                        }
+
                     }
-                    $message = array('msg'=>array(Lang::get('MINTMESH.import_contacts.success')));
-                    return $this->commonFormatter->formatResponse(200, "success", $message, array('mintmesh_users'=>$returnArray)) ;
+                    else
+                    {
+                         $message = array('msg'=>array(Lang::get('MINTMESH.import_contacts.invalid')));
+                         return $this->commonFormatter->formatResponse(201, "error", $message, array()) ;
+                    }
                 }
                 else
                 {
-                    $message = array('msg'=>array(Lang::get('MINTMESH.import_contacts.invalid')));
-                    return $this->commonFormatter->formatResponse(201, "error", $message, array()) ;
+                    $message = array('msg'=>array(Lang::get('MINTMESH.user.user_not_found')));
+                    return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
                 }
                 
             }
             else
             {
-                 $message = array('msg'=>array(Lang::get('MINTMESH.import_contacts.invalid')));
-                 return $this->commonFormatter->formatResponse(201, "error", $message, array()) ;
+                $message = array('msg'=>array(Lang::get('MINTMESH.user.user_not_found')));
+                return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
             }
-            
+        }
+        
+        public function checkAutoconnect($userEmail='', $emails=array(),$phones=array())
+        {
+            $autoConnectedUsers = array();
+            if (!empty($emails) && !empty($userEmail))
+            {
+                foreach ($emails as $email)
+                {
+                    $autoConnectPeople = $this->neoUserRepository->getAutoconnectUsers($userEmail, $email, $phones);
+                    if (!empty($autoConnectPeople))
+                    {
+                        foreach ($autoConnectPeople as $person)
+                        {
+                            try{
+                                $pushData = array();
+                                $pushData['user_email']=$userEmail;
+                                $pushData['to_connect_email']=$autoConnectedUsers[]=$person[0]->emailid;
+                                $pushData['relationAttrs']=array('auto_connected'=>1);
+                                Queue::push('Mintmesh\Services\Queues\AutoConnectQueue', $pushData, 'IMPORT');
+                            }
+                            catch(\RuntimeException $e)
+                            {
+                                
+                            }
+                        }
+                    }
+                }
+            }
+            return $autoConnectedUsers ;
             
         }
         
@@ -188,6 +243,8 @@ class ContactsGateway {
             if (!empty($emails) && !empty($contact))
             {
                 //get user details using access token
+                $this->loggedinUserDetails = $this->getLoggedInUser();
+                $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
                 $loginUserDetails = $this->loggedinUserDetails;
                 $fromUser = $this->neoLoggedInUserDetails ;
                 foreach ($emails as $email)
@@ -250,6 +307,8 @@ class ContactsGateway {
         }
         public function processInvitations($input)
         {
+            $this->loggedinUserDetails = $this->getLoggedInUser();
+            $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
             $fromUser = $this->neoLoggedInUserDetails ;
             if (!empty($input['emails']))
             {
@@ -308,8 +367,74 @@ class ContactsGateway {
             }
         }
         
+        
+        public function sendReferralInvitations($input)
+        {
+            $this->loggedinUserDetails = $this->getLoggedInUser();
+            $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
+            $fromUser = $this->neoLoggedInUserDetails ;
+            if (!empty($input['emails']))
+            {
+                $loginUserDetails = $this->loggedinUserDetails;
+                $emails = $input['emails'] ;
+                $emails = json_decode($emails);
+                foreach ($emails as $email)
+                {
+                    //call mail 
+                    $userDetails = $this->neoUserRepository->getNodeByEmailId($email);
+                    if (!empty($userDetails))
+                    {
+                        // set email required params
+                        $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.join_invitation');
+                        if (Config::get('constants.INVITE_SINGLE'))
+                        {
+                            $email = Config::get('constants.INVITE_EMAIL') ;
+                        }
+                        $this->userEmailManager->emailId = $email;
+                        $dataSet = array();
+                        $dataSet['name'] =!empty($userDetails['firstname'])?$userDetails['firstname']:'';
+                        $dataSet['sender_name'] =!empty($loginUserDetails->firstname)?$loginUserDetails->firstname:'';
+                        $dataSet['sender_email'] =!empty($loginUserDetails->emailid)?$loginUserDetails->emailid:'';
+                        $this->userEmailManager->dataSet = $dataSet;
+                        $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.join_invitaion');
+                        $this->userEmailManager->name = $dataSet['name'];
+                        $email_sent = $this->userEmailManager->sendMail();
+                         //log email status
+                         $emailStatus = 0;
+                         if (!empty($email_sent))
+                         {
+                             $emailStatus = 1;
+                         }
+                         $emailLog = array(
+                                'emails_types_id' => 3,
+                                'from_user' => !empty($loginUserDetails->id)?$loginUserDetails->id:0,
+                                'from_email' => !empty($loginUserDetails->emailid)?$loginUserDetails->emailid:'',
+                                'to_email' => $this->appEncodeDecode->filterString(strtolower($email)),
+                                'related_code' => '',
+                                'sent' => $emailStatus,
+                                'ip_address' => $_SERVER['REMOTE_ADDR']
+                            ) ;
+                         $this->userRepository->logEmail($emailLog);
+                         $relationAttrs = array();
+                         $relationAttrs['request_for_emailid'] = $input['for_email'] ;
+                         $relation = $this->contactsRepository->relateInvitees($fromUser, $userDetails, $relationAttrs); 
+                    }
+ 
+                }
+                $message = array('msg'=>array(Lang::get('MINTMESH.join_invitation.success')));
+                return $this->commonFormatter->formatResponse(200, "success", $message, array()) ;
+                
+            }
+            else
+            {
+                $message = array('msg'=>array(Lang::get('MINTMESH.join_invitation.invalid')));
+                return $this->commonFormatter->formatResponse(201, "error", $message, array()) ;
+            }
+        }
         public function getMintmeshUsers($input)
         {
+            $this->loggedinUserDetails = $this->getLoggedInUser();
+            $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
             $user = $this->neoLoggedInUserDetails ;
             $result = $this->contactsRepository->getRelatedMintmeshUsers($user->emailid);
             $returnArray = array();

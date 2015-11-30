@@ -331,8 +331,8 @@ class ReferralsGateway {
             $this->loggedinUserDetails = $this->getLoggedInUser();
             $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
             $userEmail = $this->neoLoggedInUserDetails->emailid ;
-            $input['page_no'] = 0;
-            $posts = $this->referralsRepository->getAllPosts($userEmail, $input['request_type'],$input['page_no']);
+            $page = !empty($input['page_no'])?$input['page_no']:0;
+            $posts = $this->referralsRepository->getAllPosts($userEmail, $input['request_type'],$page);
             if (!empty(count($posts)))
             {
                 $returnPosts = array();
@@ -389,6 +389,10 @@ class ReferralsGateway {
                if (!empty($input['message']))
                {
                    $relationAttrs['message'] = $input['message'] ;
+               }
+               if (!empty($input['bestfit_message']))
+               {
+                   $relationAttrs['bestfit_message'] = $input['bestfit_message'] ;
                }
                $relationAttrs['relation_count'] = $relationCount ;
                $result = $this->referralsRepository->referContact($userEmail, $input['refer_to'], $input['referring'], $input['post_id'], $relationAttrs);
@@ -485,6 +489,7 @@ class ReferralsGateway {
                         if (isset($v[0]) && isset($v[1]))
                         {
                             $postDetails = array();
+                            $p1Status = '';
                             $reference_details = $this->userGateway->formUserDetailsArray($v[0], 'property') ;
                             foreach ($reference_details as $k1=>$v1)
                             {
@@ -501,19 +506,34 @@ class ReferralsGateway {
                             {
                                 if ($relationDetails['one_way_status'] == Config::get('constants.REFERRALS.STATUSES.ACCEPTED'))
                                 {
+                                    $p1Status = strtolower(Config::get('constants.REFERRALS.STATUSES.ACCEPTED')) ;
                                     $postDetails['relation_status']=!empty($relationDetails['completed_status'])?strtolower($relationDetails['completed_status']):strtolower(Config::get('constants.REFERRALS.STATUSES.PENDING'));
                                 }
                                 else
                                 {
-                                    $postDetails['relation_status'] = strtolower($relationDetails['one_way_status']) ;
+                                    $postDetails['relation_status'] = $p1Status = strtolower($relationDetails['one_way_status']) ;
                                 }
                             }
                             else
                             {
+                                $p1Status = strtolower(Config::get('constants.REFERRALS.STATUSES.PENDING')) ;
                                 $postDetails['relation_status'] = strtolower(Config::get('constants.REFERRALS.STATUSES.PENDING')) ;
                             }
                             $postDetails['relation_count'] = $relationDetails['relation_count'];
-                            $returnArray['references'][] = $postDetails ;
+                            //categorize references
+                            if (!empty($p1Status) && $p1Status ==  strtolower(Config::get('constants.REFERRALS.STATUSES.ACCEPTED')))
+                            {
+                                $returnArray['references']['accepted'][] = $postDetails ;
+                            }
+                            else if (!empty($p1Status) && $p1Status ==  strtolower(Config::get('constants.REFERRALS.STATUSES.DECLINED')))
+                            {
+                                $returnArray['references']['declined'][] = $postDetails ;
+                            }
+                            else
+                            {
+                                $returnArray['references']['pending'][] = $postDetails ;
+                            }
+                            //$returnArray['references'][] = $postDetails ;
                         }
                     }
                     $data =  $returnArray ;
@@ -798,6 +818,7 @@ class ReferralsGateway {
         
         public function getPostStatusDetails($input)
         {
+            $isReferredUser = false;
             $result = $this->referralsRepository->getPostStatusDetails($input);
             if (count($result))
             {
@@ -849,6 +870,7 @@ class ReferralsGateway {
                         {
                             $phone_verified = !empty($this->neoLoggedInUserDetails->phoneverified)?$this->neoLoggedInUserDetails->phoneverified:0;
                             $returnArray['phone_verified'] = $phone_verified ;
+                            $isReferredUser = true ;
                         }
                     }
                     
@@ -895,6 +917,7 @@ class ReferralsGateway {
                     if (!empty($result[0][0]->one_way_status))
                     {
                         $returnArray["one_way_status"] = strtolower($result[0][0]->one_way_status) ;
+                        $returnArray["p1_updated_at"] = !empty($result[0][0]->p1_updated_at)?$result[0][0]->p1_updated_at:"";
                     }
                     else
                     {
@@ -903,14 +926,26 @@ class ReferralsGateway {
                     if (!empty($result[0][0]->completed_status))
                     {
                         $returnArray["complete_status"] = strtolower($result[0][0]->completed_status) ;
+                        $returnArray["p3_updated_at"] = !empty($result[0][0]->p3_updated_at)?$result[0][0]->p3_updated_at:"";
                     }
                     else
                     {
                         $returnArray["complete_status"] = strtolower(Config::get('constants.REFERRALS.STATUSES.PENDING')) ;
                     }
+                    
                     $returnArray["optional_message"] = !empty($result[0][0]->message)?$result[0][0]->message:"";
+                    $returnArray["bestfit_message"] = !empty($result[0][0]->bestfit_message)?$result[0][0]->bestfit_message:"";
+                    $returnArray["p2_updated_at"] = !empty($result[0][0]->created_at)?$result[0][0]->created_at:"";
                     $returnArray["service_name"] = !empty($result[0][2]->service)?$result[0][2]->service:"";
+                    $returnArray["service_created_at"] = !empty($result[0][2]->created_at)?$result[0][2]->created_at:"";
                     $returnArray['points_awarded'] = Config::get('constants.POINTS.SEEK_REFERRAL') ;
+                    if ($isReferredUser)//p3 is veiwing it
+                    {
+                        if (isset($returnArray['bestfit_message']))
+                        {
+                            unset($returnArray['bestfit_message']);
+                        }
+                    }
                     $data=array("status_details"=>$returnArray) ;
                     $message = array('msg'=>array(Lang::get('MINTMESH.referrals.success')));
                     return $this->commonFormatter->formatResponse(200, "success", $message, $data) ;

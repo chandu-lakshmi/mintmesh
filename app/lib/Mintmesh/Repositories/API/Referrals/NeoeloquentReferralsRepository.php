@@ -380,11 +380,11 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                   $queryString.=" and r.referred_by='".$referred_by."' and r.relation_count='".$relation_count."' and u.emailid='".$referral."' ";
                   if ($post_way == 'one' && $status == Config::get('constants.REFERRALS.STATUSES.DECLINED'))
                   {
-                      $queryString .=" set r.one_way_status='".Config::get('constants.REFERRALS.STATUSES.'.$status)."', r.updated_at='".date("Y-m-d H:i:s")."'" ;
+                      $queryString .=" set r.one_way_status='".Config::get('constants.REFERRALS.STATUSES.'.$status)."', r.p1_updated_at='".date("Y-m-d H:i:s")."'" ;
                   }
                   else if ($post_way == 'round')
                   {
-                     $queryString .=" set r.completed_status='".Config::get('constants.REFERRALS.STATUSES.'.$status)."' , r.status='".Config::get('constants.REFERRALS.STATUSES.COMPLETED')."', r.updated_at='".date("Y-m-d H:i:s")."'" ;
+                     $queryString .=" set r.completed_status='".Config::get('constants.REFERRALS.STATUSES.'.$status)."' , r.status='".Config::get('constants.REFERRALS.STATUSES.COMPLETED')."', r.p3_updated_at='".date("Y-m-d H:i:s")."'" ;
                   }
                   $queryString.=" return p,r" ;
                   $query = new CypherQuery($this->client, $queryString);
@@ -617,7 +617,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                      $queryString.= "r.payment_status='".$status."'," ;
                  }
                  
-                 $queryString.= " r.one_way_status='".Config::get('constants.REFERRALS.STATUSES.ACCEPTED')."', r.updated_at='".date("Y-m-d H:i:s")."'" ; 
+                 $queryString.= " r.one_way_status='".Config::get('constants.REFERRALS.STATUSES.ACCEPTED')."', r.p1_updated_at='".date("Y-m-d H:i:s")."'" ; 
                  $query = new CypherQuery($this->client, $queryString);
                  return $result = $query->getResultSet(); 
              }

@@ -27,44 +27,49 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
         }
         public function createContactAndRelation($fromId, $neoInput=array(),$relationAttrs = array())
         {
-            $queryString = "MATCH (u:User)
+            try{
+                $queryString = "MATCH (u:User)
                             WHERE ID(u) = ".$fromId."
                             CREATE (m:User ";
-            if (!empty($neoInput))
-            {
-                $queryString.="{";
-                foreach ($neoInput as $k=>$v)
+                if (!empty($neoInput))
                 {
-                    if ($k == 'emailid')
-                        $v= strtolower ($v);
-                    $queryString.=$k.":'".$this->appEncodeDecode->filterString($v)."'," ;
+                    $queryString.="{";
+                    foreach ($neoInput as $k=>$v)
+                    {
+                        if ($k == 'emailid')
+                            $v= strtolower ($v);
+                        $queryString.=$k.":'".$this->appEncodeDecode->filterString($v)."'," ;
+                    }
+                    $queryString = rtrim($queryString, ",") ;
+                    $queryString.="}";
                 }
-                $queryString = rtrim($queryString, ",") ;
-                $queryString.="}";
-            }
-            $queryString.=")<-[:".Config::get('constants.RELATIONS_TYPES.IMPORTED');
-            if (!empty($relationAttrs))
-            {
-                $queryString.="{";
-                foreach ($relationAttrs as $k=>$v)
+                $queryString.=")<-[:".Config::get('constants.RELATIONS_TYPES.IMPORTED');
+                if (!empty($relationAttrs))
                 {
-                    $queryString.=$k.":'".$this->appEncodeDecode->filterString($v)."'," ;
+                    $queryString.="{";
+                    foreach ($relationAttrs as $k=>$v)
+                    {
+                        $queryString.=$k.":'".$this->appEncodeDecode->filterString($v)."'," ;
+                    }
+                    $queryString = rtrim($queryString, ",") ;
+                    $queryString.="}";
                 }
-                $queryString = rtrim($queryString, ",") ;
-                $queryString.="}";
+                $queryString.="]-(u)" ;
+                $query = new CypherQuery($this->client, $queryString);
+                $result = $query->getResultSet();
+                //$result = NeoUser::whereIn('emailid', $emails)->get();
+                if ($result->count())
+                {
+                    return $result ;
+                }
+                else
+                {
+                    return false ;
+                }
+            } catch (\Everyman\Neo4j\Exception $ex) {
+                    return false ;
             }
-            $queryString.="]-(u)" ;
-            $query = new CypherQuery($this->client, $queryString);
-            $result = $query->getResultSet();
-            //$result = NeoUser::whereIn('emailid', $emails)->get();
-            if ($result->count())
-            {
-                return $result ;
-            }
-            else
-            {
-                return false ;
-            }
+            
         }
         /*
          * get existing contacts count
@@ -193,7 +198,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
             $query = new CypherQuery($this->client, $queryString);
             return $result = $query->getResultSet();
         }
-        public function relateInvitees($fromUser , $toUser )
+        public function relateInvitees($fromUser , $toUser, $relationAttrs=array())
         {
             
             if ($toUser->id != $fromUser->id )//ignore if same user
@@ -234,6 +239,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
             }
             
         }
+       
         
 }
 ?>

@@ -19,7 +19,7 @@ return [
     'ANDROID'=>'android',
     'IOS'=>'ios',
     'INVITE_SINGLE'=>TRUE,
-    'INVITE_EMAIL'=>'akiraa31@yahoo.com',
+    'INVITE_EMAIL'=>'mintmeshapp@gmail.com',
     'PUSH_APP_ID' =>'MTPajI5Vj2EzNUvKnvvynrZHh320Nk2pu9iW3x60',// 'MTPajI5Vj2EzNUvKnvvynrZHh320Nk2pu9iW3x60',//'0YORwFGpy2BsSW4g6ify3FxeBraHHiMDuzFUTJX0',
     'PUSH_REST_KEY' =>'32zUISSPq5aAdkdWdrGYTQpad4JsRhoQsD4Exro8',// '32zUISSPq5aAdkdWdrGYTQpad4JsRhoQsD4Exro8',//'dVGfvLnENYwyTXVKoUPJKvOW4J9Ww9UoRbQQfJg7',
     'PUSH_MASTER_KEY' =>'LJIrWD0drrfZC55wvKwpWpnSyeq9UhMl5Ybuern6',// 'LJIrWD0drrfZC55wvKwpWpnSyeq9UhMl5Ybuern6',//'noK7rjixKT90K6GICpVwzgoMIb8v8JOhq2U1Z6BA'

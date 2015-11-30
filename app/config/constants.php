@@ -52,6 +52,8 @@ return [
         'DECLINED'=>'DECLINED',
         'MORE_INFO'=>'MORE_INFO',
         'KNOWS'=>'KNOWS',
+        'POSSES_JOB_FUNCTION'=>'POSSES_JOB_FUNCTION',
+        'HOLDS_INDUSTRY_EXPERIENCE'=>'HOLDS_INDUSTRY_EXPERIENCE',
         'HAS_REFERRED'=>'HAS_REFERRED'
         
     ],

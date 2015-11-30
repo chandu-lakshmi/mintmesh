@@ -231,7 +231,7 @@ class UserController extends \BaseController {
            if (!empty($code))
            {
                $response = $this->userGateway->activateUser($code);
-               if (empty($os_type) && $response['status_code'] == 200)
+               if (empty($os_type) && !empty($response['data']))
                {
                    return View::make('landings/activation');
                }
@@ -567,7 +567,7 @@ class UserController extends \BaseController {
          * @param string $access_token
          * @param string $push_id
          * @param string $request_type
-         * @param string base_rel_id applied for normal refer flow. comes with notifications in referral_relation field
+         * @param string $base_rel_id applied for normal refer flow. comes with notifications in referral_relation field
          * @return Response
 	 */
         public function closeNotification()
@@ -834,6 +834,7 @@ class UserController extends \BaseController {
          * @param string $access_token
          * @param string $connected_to_me 0/1/2
          * @param string $non_mintmesh 0/1
+         * @param string $invite_via_email 0/1
          * @param string $refer_to whom to be referred
          * @param string $referring referral
 	 * @return Response
@@ -899,6 +900,24 @@ class UserController extends \BaseController {
                 return \Response::json($validation);
             }
         }
+        
+        /**
+	 * get influencers list
+         * 
+         * POST/get_influencers_list
+         * 
+         * @param string $access_token
+	 * @return Response
+	 */
+        public function getInfluencersList()
+        {
+            
+            $response = $this->userGateway->getInfluencersList();
+            return \Response::json($response);
+            
+        }
+        
+        
 
 
 }

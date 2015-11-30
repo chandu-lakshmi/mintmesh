@@ -442,11 +442,15 @@ p{
 <DIV class="dclr"></DIV>
 <P class="ft40"><SPAN class="ft56">b. </SPAN>As defined in the “Terms” there may be specific occasions for written mail. In such cases and only for such cases, please mail to</P>
 <P class="ft49">For Members in the United States:</P>
-<P class="ft13">MintMesh Inc</P>
-<P class="ft13">12915 Wheatland Road Fairfax VA 22033 USA</P>
+<P class="ft13">MintMesh Inc </br>
+<NOBR>4094 Majestic Lane,</NOBR><br/>
+<NOBR>Fairfax VA 22033</NOBR><br/>
+<NOBR>USA</NOBR></P>
 <P class="ft49">For Members outside the United States:</P>
-<P class="ft13">MintMesh India Pvt. Ltd <NOBR>8-2-269/S/33/A,</NOBR> Sagar <NOBR>Co-op</NOBR> Society Road no. 2, Banjara Hills, Hyderabad <SPAN class="ft13">– </SPAN>500034,</P>
-<P class="ft13">Telengana, India</P>
+<P class="ft13">MintMesh India Pvt. Ltd <NOBR>8-2-269/S/33/A, Sagar Co-op Society<br/>
+    Road no. 2, Banjara Hills,<br/>
+    Hyderabad <SPAN class="ft13">– </SPAN>500034,<br/>
+    Telengana, India</P>
 
 </DIV>
 </div>

@@ -70,9 +70,10 @@ return array(
                 "join_invitation" => "emails.Api.User.join_invitation"
          ),
          "activate_user"=>array(
-             "success"=>"Successfully Activated",
-             "invalid"=>"Activation Period Expired",
-             "error"=>"Invalid Activation Code",
+             "success"=>"Successfully activated",
+             "invalid"=>"Activation period expired",
+             "error"=>"Invalid activation code",
+             "already_activated"=>"User is already activated",
          ),
         "forgot_password"=>array(
              "success"=>"Email Successfully Sent",
@@ -158,6 +159,10 @@ return array(
     "reference_flow"=>array(
         "success"=>"Successfully listed",
         "invalid_input"=>"Invalid input"
+    ),
+    "influencers"=>array(
+        "success"=>"Successfully listed",
+        "not_found"=>"No Influencer Found"
     )
     
     

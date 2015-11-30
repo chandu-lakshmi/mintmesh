@@ -175,6 +175,7 @@ class ReferralsController extends \BaseController {
          * @param string $refer_to
          * @param string $post_id
          * @param string $message
+         * @param string $bestfit_message
 	 * @return Response
 	 */
         public function referContact()
