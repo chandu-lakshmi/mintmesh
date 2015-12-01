@@ -1594,7 +1594,18 @@ class UserGateway {
                         }
                         else
                         {
-                            $a['other_status'] = $p2Status ;
+                            $a['other_status'] = Config::get('constants.REFERENCE_STATUS.PENDING') ;
+                            if (!empty($a['request_for_emailid']))
+                            {
+                                //get third user details
+                                $neoOtherUserDetails = $this->neoUserRepository->getNodeByEmailId($a['request_for_emailid']) ;
+                                $otherUserDetails = $this->formUserDetailsArray($neoOtherUserDetails, 'attribute') ;
+                                foreach ($otherUserDetails as $k=>$v)
+                                {
+                                    $a['other_user_'.$k] = $v ;
+                                }
+                            }
+                            
                         }
                         /*if (!empty($a['status']) && $a['status'] == Config::get('constants.REFERENCE_STATUS.INTRO_COMPLETE'))//if intro completed then get p3 status
                         {
