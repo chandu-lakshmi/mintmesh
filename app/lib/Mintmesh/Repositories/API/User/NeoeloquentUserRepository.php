@@ -786,7 +786,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             $fromEmail = $this->appEncodeDecode->filterString(strtolower($fromEmail));
             $toEmail = $this->appEncodeDecode->filterString(strtolower($toEmail));
             $queryString = "Match (m:User),(n:User)
-                                    where m.emailid='".$fromEmail."' and n.emailid=".$toEmail."
+                                    where m.emailid='".$fromEmail."' and n.emailid='".$toEmail."'
                                     create unique (m)-[r:".Config::get('constants.RELATIONS_TYPES.DELETED_CONTACT')."";
 
                     $queryString.="]->(n)  set r.created_at='".date("Y-m-d H:i:s")."'";
