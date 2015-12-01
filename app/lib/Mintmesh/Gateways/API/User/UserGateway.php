@@ -834,7 +834,7 @@ class UserGateway {
                     }
                     else
                     {
-                        $message = array('msg'=>array(Lang::get('MINTMESH.activate_user.invalid')));
+                        $message = array('msg'=>array(Lang::get('MINTMESH.activate_user.already_activated')));
                         return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
                     }
                 }
@@ -1594,7 +1594,7 @@ class UserGateway {
                         }
                         else
                         {
-                            $a['other_status'] = Config::get('constants.REFERENCE_STATUS.PENDING') ;
+                            $a['other_status'] = $p2Status;
                             if (!empty($a['request_for_emailid']))
                             {
                                 //get third user details
