@@ -780,6 +780,20 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             return $result = $query->getResultSet();
         }
         
+        public function createDeleteContactRelation($fromEmail="", $toEmail="")
+        {
+            
+            $fromEmail = $this->appEncodeDecode->filterString(strtolower($fromEmail));
+            $toEmail = $this->appEncodeDecode->filterString(strtolower($toEmail));
+            $queryString = "Match (m:User),(n:User)
+                                    where m.emailid='".$fromEmail."' and n.emailid=".$toEmail."
+                                    create unique (m)-[r:".Config::get('constants.RELATIONS_TYPES.DELETED_CONTACT')."";
+
+                    $queryString.="]->(n)  set r.created_at='".date("Y-m-d H:i:s")."'";
+            $query = new CypherQuery($this->client, $queryString);
+            return $result = $query->getResultSet();
+        }
+        
        public function mapSkills($skills=array(),$emailid='')
        {
            if (!empty($skills) && !empty($emailid))
@@ -1048,7 +1062,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                 $phoneString = !empty($phones)?implode("','", $phones):'';
                 $phoneString = "'".$phoneString."'" ;
                 $queryString = "match (v:User{emailid:'".$userEmail."'}),(u:User)"
-                                . " where (u.emailid='".$email."' and HAS (u.login_source) and (u)-[:IMPORTED]->(v)) or (u.phone IN[".$phoneString."] and u.phoneverified='1' and HAS (u.login_source) and (u)-[:IMPORTED]->(v)) return u" ;
+                                . " where (u.emailid='".$email."' and HAS (u.login_source) and (u)-[:IMPORTED]->(v) and not (u)-[:DELETED_CONTACT]-(v)) or (replace(u.phone, '-', '') IN[".$phoneString."] and u.phoneverified='1' and HAS (u.login_source) and (u)-[:IMPORTED]->(v) and not (u)-[:DELETED_CONTACT]-(v)) return u" ;
                 $query = new CypherQuery($this->client, $queryString);
                 $result = $query->getResultSet();
                 if ($result->count())

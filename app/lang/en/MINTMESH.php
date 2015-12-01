@@ -43,6 +43,7 @@ return array(
              "post_closed" => "Successfully Closed",
              "post_not_closed" => "Please close all pending referrals received for this service request",
              "no_posts" => "No Posts Found",
+             "no_referrals_found"=>"No referrals found",
              "already_referred"=>"This contact has already been referred",
              "limit_crossed" => "You have reached maximum number of referrals for this request",
              "no_post" => "No Post Found",

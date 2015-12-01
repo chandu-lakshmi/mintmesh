@@ -542,7 +542,7 @@ class ReferralsGateway {
                 }
                 else
                 {
-                    $message = array('msg'=>array(Lang::get('MINTMESH.referrals.no_post')));
+                    $message = array('msg'=>array(Lang::get('MINTMESH.referrals.no_referrals_found')));
                     return $this->commonFormatter->formatResponse(200, "success", $message, array()) ;
                 }
             }

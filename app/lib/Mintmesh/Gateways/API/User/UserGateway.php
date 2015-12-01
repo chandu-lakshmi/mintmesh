@@ -814,18 +814,27 @@ class UserGateway {
                 {
                     $userDetails = $this->userRepository->getUserByCode($emailActCode);
                     if (!empty($userDetails)) {
-                        // update status of the user to active
-                        $this->userRepository->setActive($userDetails->id);
-                        $message = array('msg'=>array(Lang::get('MINTMESH.activate_user.success')));
-                        $data = array('emailid'=>$userDetails->emailid);
-                        //remove activation code
-                        $this->userRepository->removeActiveCode($userDetails->id);
-                        return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
+                        if (empty($userDetails->status))
+                        {
+                            // update status of the user to active
+                            $this->userRepository->setActive($userDetails->id);
+                            $message = array('msg'=>array(Lang::get('MINTMESH.activate_user.success')));
+                            $data = array('emailid'=>$userDetails->emailid);
+                            //remove activation code
+                           // $this->userRepository->removeActiveCode($userDetails->id);
+                            return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
+                        }
+                        else
+                        {
+                            $message = array('msg'=>array(Lang::get('MINTMESH.activate_user.already_activated')));
+                            return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
+                        }
+                        
                         
                     }
                     else
                     {
-                        $message = array('msg'=>array(Lang::get('MINTMESH.activate_user.already_activated')));
+                        $message = array('msg'=>array(Lang::get('MINTMESH.activate_user.invalid')));
                         return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
                     }
                 }
@@ -1550,7 +1559,9 @@ class UserGateway {
                             }
 
                         }
-                        if (!empty($a['request_for_emailid']))
+                        $p2Status = !empty($relation[0]->status)?$relation[0]->status:Config::get('constants.REFERENCE_STATUS.PENDING');
+                        $p2StatusIn=array(Config::get('constants.REFERENCE_STATUS.SUCCESS'),Config::get('constants.REFERENCE_STATUS.INTRO_COMPLETE'));
+                        if (!empty($a['request_for_emailid']) && in_array($p2Status, $p2StatusIn))
                         {
                             $relationCount = !empty($relation[0]->request_count)?$relation[0]->request_count:0;
                             //get other relation message
@@ -1580,6 +1591,10 @@ class UserGateway {
                                 $a['other_user_'.$k] = $v ;
                             }
 
+                        }
+                        else
+                        {
+                            $a['other_status'] = $p2Status ;
                         }
                         /*if (!empty($a['status']) && $a['status'] == Config::get('constants.REFERENCE_STATUS.INTRO_COMPLETE'))//if intro completed then get p3 status
                         {
@@ -1909,7 +1924,7 @@ class UserGateway {
                 $r['industry_name'] = $industry_name ;
                 if (isset($r['id']))
                     unset($r['id']);
-                if (!empty($neoLoggedInUserDetails->industry))//user has completed profile
+                if (!empty($neoLoggedInUserDetails->dp_renamed_name))//user has completed profile
                 {
                     if (!empty($neoLoggedInUserDetails->from_linkedin))//if  linked in
                     {
@@ -2926,6 +2941,9 @@ class UserGateway {
                 $deleted = $this->neoUserRepository->removeContact($loggedinUserDetails->emailid, $input['emailid']);
                 if ($deleted)
                 {
+                    //create a delete contact relation
+                    $deleted = $this->neoUserRepository->createDeleteContactRelation($loggedinUserDetails->emailid, $input['emailid']);
+                    
                     $message = array('msg'=>array(Lang::get('MINTMESH.user.user_disconnect_success')));
                     return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
                 }
