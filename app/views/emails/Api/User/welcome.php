@@ -146,7 +146,7 @@ td[class="buttonContent"] a{padding:15px !important;}
                                 <table border="0"  cellspacing="0" width="100%">
                                     <tr>
 <td align="center" valign="top" class="textContent" style="padding:20px 30px 10px;">
-<img src="<?php echo url(); ?>/public/images/mintmesh-logo.png"   align="center" style="max-width:100%;text-align:center;" alt="logo" title="Text">
+<img src="http://52.32.104.43/public/images/mintmesh-logo.png"   align="center" style="max-width:100%;text-align:center;" alt="logo" title="Text">
 <h2 style="text-align:center;font-weight:normal;font-family: 'Roboto', sans-serif;font-weight:300;font-size:28px;margin-bottom:10px;margin-top:20px;color:#000000;">Activate your Account</h2>
 
 <hr style="border-top:1px solid #c8c8c8;margin-top:20px;">
@@ -191,7 +191,7 @@ td[class="buttonContent"] a{padding:15px !important;}
                                                         
                                                         <div style="text-align:left;font-family: 'Roboto', sans-serif;font-size:20px;margin-bottom:0;color:#777777;line-height:135%;letter-spacing:0.2px;">
 <p>You have successfully created MintMesh account for <a href="mailto:<?php echo $email ; ?>" style="color:#000;text-decoration:none;"><?php echo $email ; ?></a></p>
-<p>To activate your account,click the link below</p>
+<p>To activate your account, click the link below</p>
 </div>
                                                     </td>
                                                 </tr>
