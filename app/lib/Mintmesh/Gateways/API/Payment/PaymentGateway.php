@@ -190,7 +190,8 @@ class PaymentGateway {
         
         public function generateTansactionId($extraParam = "")
         {
-            return md5(time().$extraParam) ;
+            return uniqid();
+            //return  md5(time().$extraParam) ;
         }
         
         public function generateCitrusBill($amount=0, $percentage=0,$transactionId=0)

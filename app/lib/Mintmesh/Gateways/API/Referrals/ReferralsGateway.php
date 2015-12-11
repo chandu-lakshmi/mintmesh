@@ -22,7 +22,10 @@ use Lang;
 use Config;
 use Log;
 class ReferralsGateway {
-    
+    const SUCCESS_RESPONSE_CODE = 200;
+    const SUCCESS_RESPONSE_MESSAGE = 'success';
+    const ERROR_RESPONSE_CODE = 403;
+    const ERROR_RESPONSE_MESSAGE = 'error';
     protected $referralsRepository, $referralsValidator, $neoUserRepository, $userRepository;  
     protected $authorizer, $appEncodeDecode,$paymentRepository,$paymentGateway;
     protected $commonFormatter, $loggedinUserDetails,$neoLoggedInUserDetails, $userGateway;
@@ -1122,7 +1125,106 @@ class ReferralsGateway {
                 return $this->commonFormatter->formatResponse(200, "success", $message, array()) ;
             }
         }
-        
+        public function getAllReferrals($input)
+        {
+            $return = array();
+            $loggedinUserDetails = $this->getLoggedInUser();
+            if ($loggedinUserDetails)
+            {
+                $neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($loggedinUserDetails->emailid) ;
+                $return['userDetails'] = $this->userGateway->formUserDetailsArray($neoLoggedInUserDetails, 'attribute') ;
+                $userEmail = !empty($loggedinUserDetails->emailid)?$loggedinUserDetails->emailid:'';
+                $page = !empty($input['page'])?$input['page']:0;
+                $relationDetails = $this->referralsRepository->getAllReferrals($userEmail,$page);
+                $return['referrals'] = array();
+                if (count($relationDetails))
+                {
+                    
+                    foreach ($relationDetails as $relation)
+                    {
+                        $p2Status = Config::get('constants.REFERENCE_STATUS.PENDING') ;
+                        $to_emailid = "" ;
+                        $a = $relation[0]->getProperties();
+                        if (!empty($relation[1]) && !empty($a))
+                        {
+                            $a['relation_type'] = strtolower($relation[1]) ;
+                        }
+                        if (!empty($relation[2]) && !empty($a) && !empty($relation[1]))
+                        {
+                            if ($relation[1] == Config::get('constants.RELATIONS_TYPES.INTRODUCE_CONNECTION'))
+                            {
+                                $toUserDetails = $this->userGateway->formUserDetailsArray($relation[2], 'property') ;
+                                foreach ($toUserDetails as $k=>$v)
+                                {
+                                    $a['to_user_'.$k] = $v ;
+                                }
+                                $to_emailid = $toUserDetails['emailid'] ;
+                                $a['other_status'] = !empty($relation[0]->status)?$relation[0]->status:Config::get('constants.REFERENCE_STATUS.PENDING');
+                                //get details of the person who requested for reference (p1)
+                                if (!empty($a['request_for_emailid']))
+                                {
+                                    //get relation id of the request reference relation
+                                    
+                                    $requestR = $this->referralsRepository->getRequestReferenceRelationId($a['request_for_emailid'],$loggedinUserDetails->emailid, $toUserDetails['emailid'],$a['request_count']);
+                                    if (count($requestR))
+                                    {
+                                        $a['referral_relation'] = !empty($requestR[0][0])?$requestR[0][0]:0;
+                                    }
+                                    $otherUserResult = $this->neoUserRepository->getNodeByEmailId($a['request_for_emailid']) ;
+                                    $otherUserDetails = $this->userGateway->formUserDetailsArray($otherUserResult, 'attribute') ;
+                                    foreach ($otherUserDetails as $k=>$v)
+                                    {
+                                        $a['other_user_'.$k] = $v ;
+                                    }
+                                }
+                            }
+                            else if ($relation[1] == Config::get('constants.REFERRALS.GOT_REFERRED'))
+                            {
+                                //get details of the person who got referred(p3)
+                                $toUserDetails = $this->userGateway->formUserDetailsArray($relation[3], 'property') ;
+                                foreach ($toUserDetails as $k=>$v)
+                                {
+                                    $a['to_user_'.$k] = $v ;
+                                }
+                                $postDetails = $relation[2]->getProperties() ;
+                                $postId = $relation[2]->getId() ;
+                                foreach ($postDetails as $k=>$v)
+                                {
+                                    $a['post_details_'.$k] = $v ;
+                                }
+                                //get details of the person who created the post(p1)
+                                if (!empty($a['post_details_created_by']))
+                                {
+                                    $otherUserResult = $this->neoUserRepository->getNodeByEmailId($a['post_details_created_by']) ;
+                                    $otherUserDetails = $this->userGateway->formUserDetailsArray($otherUserResult, 'attribute') ;
+                                    foreach ($otherUserDetails as $k=>$v)
+                                    {
+                                        $a['other_user_'.$k] = $v ;
+                                    }
+                                }
+                                $a['post_id'] = $postId ;
+                                $a['post_status'] = !empty($postDetails['status'])?strtolower($postDetails['status']):'' ;
+                                $a['referrals_count'] = $this->referralsRepository->getPostReferralsCount($postId);
+                                $a['other_status'] = !empty($relation[0]->one_way_status)?$relation[0]->one_way_status:Config::get('constants.REFERENCE_STATUS.PENDING');
+                            }
+                        }
+                        $return['referrals'][] = $a ;
+                    }
+                }
+                $data = array("my_referrals"=>$return) ;
+                $message = array('msg'=>array(Lang::get('MINTMESH.get_requests.success')));
+                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
+            }
+            else
+            {
+                $responseMessage = Lang::get('MINTMESH.user.user_not_found');
+                $responseCode = self::ERROR_RESPONSE_CODE;
+                $responseStatus = self::ERROR_RESPONSE_MESSAGE;
+                $responseData = array();
+            }
+            $message = array('msg'=>array($responseMessage));
+            return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $responseData) ;
+        }
         public function getReferralsCash($input)
         {
             $this->loggedinUserDetails = $this->getLoggedInUser();

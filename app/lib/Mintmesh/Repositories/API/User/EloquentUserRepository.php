@@ -189,7 +189,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                switch ($notification_type)
                 {
                     case 'request_connect':
-                            $types= array(1,3,4,7,11,17,21);
+                            $types= array(1,3,4,7,10,11,13,17,21);
                             $type = implode(",",$types);
                             break;
                     default:
@@ -227,13 +227,16 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                 if (!empty($type))
                 {
                     $sql.=" and nl.notifications_types_id IN (".$type.")" ;
-                    $sql.=" and nl.status = '1'" ;
+                    $sql.=" and CASE WHEN nl.notifications_types_id=10 THEN 1 ELSE nl.status = '1' END" ;
+                    $sql.=" GROUP BY CASE WHEN nl.notifications_types_id=10 THEN nl.extra_info
+                            ELSE nl.id END  ";
                 }
                $sql.=" order by nl.id desc" ;
                if (!empty($page))
                 {
                     $sql.=" limit ".$start.",10" ;
                 }
+               // echo $sql ; exit;
                return $result = DB::select($sql);
             }
         }
@@ -247,7 +250,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                switch ($notification_type)
                 {
                     case 'request_connect':
-                            $types= array(1,3,4,7,11,17);
+                            $types= array(1,3,4,7,11,13,17);
                             $type = implode(",",$types);
                             break;
                     default:
@@ -287,14 +290,14 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
         
         public function getIndustries()
         {
-            $sql = "select id, name from industries where status = '1'";
+            $sql = "select id, name from industries where status = '1' order by name asc";
             $result = DB::select($sql);
             return $result ;
         }
         
         public function getJobFunctions()
         {
-            $sql = "select id, name from job_functions where status = '1'";
+            $sql = "select id, name from job_functions where status = '1' order by name asc";
             $result = DB::select($sql);
             return $result ;
         }
@@ -455,7 +458,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
             {
                 $sql.= " and LOWER(name) like '%".  $this->appEncodeDecode->filterString(strtolower($input['search_for']))."%'";
             }
-            $sql.=" order by id asc" ;
+            $sql.=" order by name asc" ;
             return $result = DB::select($sql);
         }
         

@@ -20,6 +20,7 @@ class ContactsController extends \BaseController {
          * POST/import_contacts
          * @param string $access_token The access token received for mintmesh
          * @param array $contacts The list of contacts
+         * @param string $autoconnect 0/1 to autoconnect enabled or not
          * 
 	 * @return Response
 	 */

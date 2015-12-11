@@ -9,7 +9,7 @@ use Mintmesh\Services\APPEncode\APPEncode ;
 class NeoeloquentUserRepository extends BaseRepository implements NeoUserRepository {
 
         protected $neoUser, $db_user, $db_pwd, $appEncodeDecode;
-
+        const LIMIT=10;
         public function __construct(NeoUser $neoUser,APPEncode $appEncodeDecode)
         {
                 parent::__construct($neoUser);
@@ -212,12 +212,12 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             if (!empty($emailId))
             {
                 $emailId = $this->appEncodeDecode->filterString(strtolower($emailId));
-                /*$queryString = "MATCH (n:User {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."]->(m) where HAS (m.login_source) RETURN m
+                $queryString = "MATCH (n:User {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."]->(m) where HAS (m.login_source) RETURN m
                                 UNION
-                                MATCH (n:User {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."|".Config::get('constants.RELATIONS_TYPES.REQUESTED_CONNECTION')."]-(m:User) where has(m.login_source) RETURN m order by m.firstname asc" ;
-                */
-                $queryString = "MATCH (n:User {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."|".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."|".Config::get('constants.RELATIONS_TYPES.REQUESTED_CONNECTION')."]-(m:User) where has(m.login_source) RETURN m order by m.firstname asc" ;
+                                MATCH (n:User {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-(m:User) where has(m.login_source) RETURN m order by m.firstname asc" ;
                 
+                /*$queryString = "MATCH (n:User {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."|".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."|".Config::get('constants.RELATIONS_TYPES.REQUESTED_CONNECTION')."]-(m:User) where has(m.login_source) RETURN m order by m.firstname asc" ;
+                */
                 $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();
             }
@@ -330,7 +330,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                                 RETURN r, type(r) as relationName, n order by r.created_at desc" ;
                 if (!empty($limit) && !($limit < 0))
                 {
-                    $queryString.=" skip ".$skip." limit ".$limit ;
+                    $queryString.=" skip ".$skip." limit ".self::LIMIT ;
                 }
                 $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();
@@ -1053,6 +1053,20 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             }
         }
         
+        public function getRecruitersList($userLocation = '', $page)
+        {
+            if (!empty($userEmail))
+            {
+                $queryString = "MATCH (u:`User`) where lower(u.you_are)='recruiter' and u.location=~'.*".strtolower($userLocation)."' RETURN u LIMIT 25";
+                $query = new CypherQuery($this->client, $queryString);
+                return $result = $query->getResultSet();
+            }
+            else
+            {
+                return false;
+            }
+        }
+        
         public function getAutoconnectUsers($userEmail='', $email='', $phones=array())
         {
             if (!empty($email))
@@ -1062,7 +1076,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                 $phoneString = !empty($phones)?implode("','", $phones):'';
                 $phoneString = "'".$phoneString."'" ;
                 $queryString = "match (v:User{emailid:'".$userEmail."'}),(u:User)"
-                                . " where (u.emailid='".$email."' and HAS (u.login_source) and (u)-[:IMPORTED]->(v) and not (u)-[:DELETED_CONTACT]-(v)) or (replace(u.phone, '-', '') IN[".$phoneString."] and u.phoneverified='1' and HAS (u.login_source) and (u)-[:IMPORTED]->(v) and not (u)-[:DELETED_CONTACT]-(v)) return u" ;
+                                . " where (u.emailid='".$email."' and HAS (u.login_source) and (u)-[:IMPORTED]->(v) and not (u)-[:DELETED_CONTACT]-(v) and not (u)-[:ACCEPTED_CONNECTION]-(v)) or (replace(u.phone, '-', '') IN[".$phoneString."] and u.phoneverified='1' and HAS (u.login_source) and (u)-[:IMPORTED]->(v) and not (u)-[:DELETED_CONTACT]-(v) and not (u)-[:ACCEPTED_CONNECTION]-(v)) return u" ;
                 $query = new CypherQuery($this->client, $queryString);
                 $result = $query->getResultSet();
                 if ($result->count())
@@ -1080,6 +1094,8 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             }
              
         }
+        
+        
          
 }
 ?>

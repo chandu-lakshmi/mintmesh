@@ -2192,6 +2192,7 @@ class UserGateway {
                             $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($notification->from_email) ;
                             if (!empty($neoUserDetails))
                             {
+                                $noReferralsPost = false ;
                                 $note = array();
                                 $note = $this->formUserDetailsArray($neoUserDetails, 'attribute');
                                 $thirdName = "";
@@ -2289,7 +2290,34 @@ class UserGateway {
                                     $note['relation_id']= !empty($notification->extra_info)?$notification->extra_info:0;
 
                                 }
-
+                                // open requests battle cards
+                                if ($notification->notifications_types_id == 10 && $input['notification_type'] == 'request_connect')//10 is for referenced notification type
+                                {
+                                    //check if any pending referrals are their
+                                    $postId = !empty($notification->extra_info)?$notification->extra_info:0 ;
+                                    $activeResult = $this->referralsRepository->checkActivePost($postId);
+                                    if (count($activeResult))
+                                    {
+                                        
+                                        //get all referrals
+                                        $referrals = $this->referralsRepository->getPostReferences($postId, 0, 0);
+                                        if (count($referrals))
+                                        {
+                                            $note['notification_type'] = 'open_request_battle_card';
+                                            $referralsList = $this->classifyReferrals($referrals);
+                                            if (!empty($referralsList))
+                                            foreach ($referralsList as $r_k=>$r_v)
+                                            {
+                                                $note[$r_k]=$r_v;
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        $noReferralsPost = true ;
+                                    }
+                                }
+                                if (!$noReferralsPost)//for post battle cards for which no referrals found
                                 $notes[] = $note ;
                             }
                         }
@@ -2319,6 +2347,53 @@ class UserGateway {
             
         }
         
+        public function classifyReferrals($referrals = array())
+        {
+            $returnArray = array();
+            $returnArray['accepted'] = array();
+            $returnArray['pending'] = array();
+            if (!empty($referrals))
+            {
+                foreach ($referrals as $referral)
+                {
+                    if ($referral[1]->one_way_status != Config::get('constants.REFERRALS.STATUSES.DECLINED'))
+                    {
+                        $userDetails = $this->formUserDetailsArray($referral[0],'property');
+                        $relationDetails = $referral[1]->getProperties();
+                        if (!empty($referral[1]->referred_by))
+                        {
+                            $fromUseremail = $referral[1]->referred_by ;
+                            $fromUserResult = $this->neoUserRepository->getNodeByEmailId($fromUseremail) ;
+                            $fromUserDetails = $this->formUserDetailsArray($fromUserResult);
+                        }
+                        $referDetails = array();
+                        foreach ($userDetails as $k_r=>$v_r)
+                        {
+                            $referDetails['other_user_'.$k_r] = $v_r ;
+                        }
+                        foreach ($relationDetails as $k_r=>$v_r)
+                        {
+                            $referDetails[$k_r] = $v_r ;
+                        }
+                        if (!empty($fromUserDetails))
+                        foreach ($fromUserDetails as $k_r=>$v_r)
+                        {
+                            $referDetails['from_user_'.$k_r] = $v_r ;
+                        }
+                        if ($referral[1]->one_way_status == Config::get('constants.REFERRALS.STATUSES.ACCEPTED'))
+                        {
+                            
+                            $returnArray['accepted'][] = $referDetails ;
+                        }
+                        else 
+                        {
+                            $returnArray['pending'][] = $referDetails ;
+                        }
+                    }
+                }
+                return $returnArray ;
+            }
+        }
         /*
          * accept connection
          */
@@ -2813,6 +2888,7 @@ class UserGateway {
                                 $returnArray["other_user_".$k]=$v ;
                             }
                             $returnArray['message'] = !empty($result[0][0]->message)?$result[0][0]->message:'';
+                            $returnArray['requested_at'] = !empty($result[0][0]->created_at)?$result[0][0]->created_at:'';
                             if ($result[0][0]->status == Config::get('constants.REFERENCE_STATUS.PENDING'))
                             {   
 
@@ -2824,16 +2900,28 @@ class UserGateway {
                                 $toEmail = !empty($result[0][0]->request_for_emailid)?$result[0][0]->request_for_emailid:'';
                                 $forEmail = !empty($p1Details['emailid'])?$p1Details['emailid']:'';
                                 $returnArray['message'] = !empty($result[0][0]->message)?$result[0][0]->message:'';
-                                $introDetails = $this->neoUserRepository->getIntroduceConnection($fromEmail="", $toEmail="",$forEmail="");
+                                $relationCount = !empty($result[0][0]->request_count)?$result[0][0]->request_count:0;
+                                $introDetails = $this->neoUserRepository->getIntroduceConnection($fromEmail, $toEmail,$forEmail, $relationCount);
                                 if (count($introDetails))
                                 {
                                     $returnArray['other_message'] = (isset($introDetails[0][0]->message))?$introDetails[0][0]->message:"" ;
                                     $returnArray['other_status'] = (isset($introDetails[0][0]->status))?$introDetails[0][0]->status:"" ;
+                                    $returnArray['introduced_at'] = (isset($introDetails[0][0]->created_at))?$introDetails[0][0]->created_at:"" ;
                                 }
                                 else
                                 {
                                     $returnArray['other_message']="";
                                     $returnArray['other_status'] = Config::get('constants.REFERENCE_STATUS.PENDING') ;
+                                }
+                                
+                                if ($returnArray['other_status'] == Config::get('constants.REFERENCE_STATUS.SUCCESS'))//if intro completed then get p3 status
+                                {
+                                    //get the time p3 accepted
+                                    $completedResult = $this->neoUserRepository->getReferralAcceptConnection($toEmail, $forEmail, $fromEmail);
+                                    if (count($completedResult))
+                                    {
+                                        $returnArray['completed_at'] = (isset($completedResult[0][0]->created_at))?$completedResult[0][0]->created_at:"" ;
+                                    }
                                 }
                             }
                             $returnArray['status'] = $result[0][0]->status ;
@@ -3155,6 +3243,36 @@ class UserGateway {
                 else
                 {
                     $message = array('msg'=>array(Lang::get('MINTMESH.influencers.not_found')));
+                    return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
+                }
+            }
+            else
+            {
+                $message = array('msg'=>array(Lang::get('MINTMESH.user.user_not_found')));
+                return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
+            }
+        }
+        
+        public function getRecruiters($input)
+        {
+            $loggedinUserDetails = $this->getLoggedInUser();
+            if ($loggedinUserDetails)
+            {
+               $recruitersList = array();
+                $recruiters = $this->neoUserRepository->getRecruitersList($loggedinUserDetails->emailid);
+                if (!empty($recruiters) && count($recruiters))
+                {
+                    foreach ($recruiters as $recruiter)
+                    {
+                        $recruitersList[] = $this->formUserDetailsArray($recruiters[0], 'property') ;
+                    }
+                    $data = array("recruiters"=>$recruitersList) ;
+                    $message = array('msg'=>array(Lang::get('MINTMESH.recruiters.success')));
+                    return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ; 
+                }
+                else
+                {
+                    $message = array('msg'=>array(Lang::get('MINTMESH.recruiters.not_found')));
                     return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
                 }
             }

@@ -61,7 +61,7 @@ class ContactsGateway {
                 if (!empty($this->neoLoggedInUserDetails) && count($this->neoLoggedInUserDetails))
                 {
                     //declare returnArray
-                    $returnArray = array();
+                    $returnArray = $autoconnectedUsers = array();
                     $fromUser = $this->neoLoggedInUserDetails ;
                     if (!empty($input['contacts']))
                     {
@@ -71,6 +71,7 @@ class ContactsGateway {
                             $mintmeshEmails = array();
                             foreach($contacts as $contact)
                             {
+                                $connectResult = array();
                                 //process only when only email exists
                                 if (!empty($contact->emails) && is_array($contact->emails) && !in_array($fromUser->emailid,$contact->emails))
                                 {
@@ -78,6 +79,7 @@ class ContactsGateway {
                                     $emails = !empty($contact->emails)?$contact->emails:array();
                                     $phones = !empty($contact->phones)?$contact->phones:array();
                                     //autoconnect people
+                                    if (!empty($input['autoconnect']))
                                     $connectResult = $this->checkAutoconnect($this->loggedinUserDetails->emailid, $emails, $phones);
                                      //\Log::info("<<<<<<<<<<<<<<<<<<<<<<  In getExisting contacts before >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
                                     $result = $this->contactsRepository->getExistingContacts($emails, $phones);
@@ -144,8 +146,13 @@ class ContactsGateway {
                                                 if (!empty($r['emailid']) && in_array($r['emailid'],$connectResult))
                                                 {
                                                     $r['connected']=1;
+                                                    $autoconnectedUsers[] = $r ;
                                                 }
-                                                $returnArray[]=$r;
+                                                else
+                                                {
+                                                   $returnArray[]=$r; 
+                                                }
+                                                
                                                 
                                             }
                                             $toUser = $res ;
@@ -178,7 +185,7 @@ class ContactsGateway {
                                 }    
                             }
                             $message = array('msg'=>array(Lang::get('MINTMESH.import_contacts.success')));
-                            return $this->commonFormatter->formatResponse(200, "success", $message, array('mintmesh_users'=>$returnArray)) ;
+                            return $this->commonFormatter->formatResponse(200, "success", $message, array('mintmesh_users'=>$returnArray,'autoconnected_users'=>$autoconnectedUsers)) ;
                         }
                         else
                         {

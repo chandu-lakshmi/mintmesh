@@ -164,7 +164,12 @@ return array(
     "influencers"=>array(
         "success"=>"Successfully listed",
         "not_found"=>"No Influencer Found"
+    ),
+    "recruiters"=>array(
+        "success"=>"Successfully listed",
+        "not_found"=>"No Influencer Found"
     )
+    
     
     
 

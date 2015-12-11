@@ -150,6 +150,8 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
        Route::post("referral/get_post_details", "API\Referrals\ReferralsController@getPostDetails");
        Route::post("referral/get_post_references", "API\Referrals\ReferralsController@getPostReferences");
        Route::post("referral/get_my_referrals", "API\Referrals\ReferralsController@getMyReferrals");
+       //get all referrals done by me
+       Route::post("referral/get_all_referrals", "API\Referrals\ReferralsController@getAllReferrals");
        Route::post("referral/process_post", "API\Referrals\ReferralsController@processPost");
        Route::post("referral/get_post_status_details", "API\Referrals\ReferralsController@getPostStatusDetails");
        Route::post("referral/get_my_referral_contacts", "API\Referrals\ReferralsController@getMyReferralContacts");
@@ -169,11 +171,7 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
        //sms
        Route::post("send_sms", "API\SMS\SmsController@sendSMS");
        
-        // sample
-        Route::get("movies", "Samples\SampleController@index");
-	Route::post("movies/create", "Samples\SampleController@create");
-        Route::post("movies/edit", "Samples\SampleController@edit");
-        Route::post("movies/delete", "Samples\SampleController@delete");
+
         
         
 });

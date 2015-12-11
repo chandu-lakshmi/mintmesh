@@ -14,7 +14,7 @@ use Mintmesh\Services\APPEncode\APPEncode ;
 class NeoeloquentReferralsRepository extends BaseRepository implements ReferralsRepository {
 
         protected $neoUser, $db_user, $db_pwd, $client,$appEncodeDecode;
-
+        const LIMIT=10;
         public function __construct(NeoUser $neoUser,APPEncode $appEncodeDecode)
         {
                 parent::__construct($neoUser);
@@ -124,10 +124,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
         {
             if (!empty($userEmail) && !empty ($postId))
             {
-                //check if the post is in pending state
-                $queryString1 = "match (p:Post)-[r:GOT_REFERRED]-() where r.one_way_status ='PENDING' and ID(p)=".$postId." return r";
-                $query1 = new CypherQuery($this->client, $queryString1);
-                $result1 = $query1->getResultSet();
+                $result1 = $this->checkActivePost($postId);
                 if (count($result1))
                 {
                   return false ;   
@@ -145,6 +142,16 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             }
         }
         
+        public function checkActivePost($postId=0)
+        {
+            if (!empty($postId))
+            {
+                //check if the post is in pending state
+                $queryString1 = "match (p:Post)-[r:GOT_REFERRED]-() where r.one_way_status ='PENDING' and ID(p)=".$postId." return r";
+                $query1 = new CypherQuery($this->client, $queryString1);
+                return $result1 = $query1->getResultSet();
+            }
+        }
         public function getLatestPosts($email="")
         {
             if (!empty($email))
@@ -189,7 +196,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                                 return p, count(r) ORDER BY p.created_at DESC " ;
                 if (!empty($limit) && !($limit < 0))
                 {
-                    $queryString.=" skip ".$skip." limit ".$limit ;
+                    $queryString.=" skip ".$skip." limit ".self::LIMIT ;
                 }
                 $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();
@@ -297,18 +304,23 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             if (!empty($post_id))
             {
                 $skip = 0 ;
+                $queryLimit = self::LIMIT ;
                 if (!empty($page))
                 {
                     $skip = $limit = 0;
                     $limit = $page*10 ;
                     $skip = $limit - 10 ;
                 }
+                else if (!empty($limit))
+                {
+                    $queryLimit = $limit ;
+                }
                 $queryString = "match (u:User)-[r:GOT_REFERRED]->(p:Post) 
                                 where ID(p)=".$post_id." 
                                 and p.status='".Config::get('constants.REFERRALS.STATUSES.ACTIVE')."' return u, r order by r.created_at desc" ;
                 if (!empty($limit) && !($limit < 0))
                 {
-                    $queryString.=" skip ".$skip." limit ".$limit ;
+                    $queryString.=" skip ".$skip." limit ".$queryLimit ;
                 }
                 $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();
@@ -456,7 +468,8 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
          {
              if (!empty($post_id) && !empty($referred_by))
              {
-                 $queryString = "match (m1:User),(p:Post) where ID(p)=".$post_id." and p.status='ACTIVE' with m1,p
+                 //and p.status='ACTIVE'
+                 $queryString = "match (m1:User),(p:Post) where ID(p)=".$post_id." with m1,p
                                 match (m1)-[r1:GOT_REFERRED]-(p) where r1.referred_by='".$referred_by."'
                                 with max(r1.relation_count) as rel_count ,m1,r1  
                                 match (m1)-[r1:GOT_REFERRED]-(p) 
@@ -626,6 +639,54 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                  return 0;
              }
          }
+         
+         public function getAllReferrals($userEmail='', $page=0)
+         {
+             if (!empty($userEmail))
+             {
+                $userEmail = $this->appEncodeDecode->filterString(strtolower($userEmail));
+                $skip = $limit = 0;
+                if (!empty($page))
+                {
+                    $limit = $page*10 ;
+                    $skip = $limit - 10 ;
+                }
+                $relations = array(Config::get('constants.RELATIONS_TYPES.INTRODUCE_CONNECTION'), Config::get('constants.REFERRALS.GOT_REFERRED'));
+                $relationString = implode("|",$relations) ;
+                $queryString="match (u:User)-[r:".$relationString."]->(p) where case type(r) when '".Config::get('constants.RELATIONS_TYPES.INTRODUCE_CONNECTION')."' then u.emailid='".$userEmail."' else r.referred_by='".$userEmail."' end return r, type(r) as relationName, p, u order by r.created_at desc";
+                if (!empty($limit) && !($limit < 0))
+                {
+                    $queryString.=" skip ".$skip." limit ".self::LIMIT ;
+                }
+                 $query = new CypherQuery($this->client, $queryString);
+                 return $result = $query->getResultSet(); 
+             }
+             else
+             {
+                 return false ;
+             }
+         }
+         
+         public function getRequestReferenceRelationId($from='', $to='', $for='',$relation_count=0)
+        {
+            $from = $this->appEncodeDecode->filterString(strtolower($from)) ;
+            $to = $this->appEncodeDecode->filterString(strtolower($to)) ;
+            $for = $this->appEncodeDecode->filterString(strtolower($for)) ;
+            $queryString = "match (u:User)-[r:".Config::get('constants.RELATIONS_TYPES.REQUEST_REFERENCE')."]-(u1:User) "
+                            . "where  u.emailid='".$from."' and u1.emailid='".$to."' and r.request_for_emailid='".$for."'"
+                    . " and r.request_count='".$relation_count."' return ID(r) as relation_id" ;
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if ($result->count())
+            {
+                return $result ;
+            }
+            else
+            {
+                return false ;
+            }
+            
+        }
          
         
 

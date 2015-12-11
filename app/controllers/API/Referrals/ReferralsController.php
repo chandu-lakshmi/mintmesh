@@ -350,6 +350,23 @@ class ReferralsController extends \BaseController {
         }
         
         /**
+	 * get all referrals
+         * 
+         * POST/get_all_referrals
+         * 
+         * @param string $access_token
+         * @param string $page
+	 * @return Response
+	 */
+        public function getAllReferrals()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            $response = $this->referralsGateway->getAllReferrals($inputUserData);
+            return \Response::json($response);
+        }
+        
+        /**
 	 * peoples search
          * 
          * POST/search_people
