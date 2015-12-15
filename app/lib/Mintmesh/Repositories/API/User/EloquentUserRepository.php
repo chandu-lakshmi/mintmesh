@@ -227,7 +227,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                 if (!empty($type))
                 {
                     $sql.=" and nl.notifications_types_id IN (".$type.")" ;
-                    $sql.=" and CASE WHEN nl.notifications_types_id=10 THEN 1 ELSE nl.status = '1' END" ;
+                    $sql.=" and CASE WHEN nl.notifications_types_id=10 THEN 1 ELSE nl.other_status = '0' END" ;
                     $sql.=" GROUP BY CASE WHEN nl.notifications_types_id=10 THEN nl.extra_info
                             ELSE nl.id END  ";
                 }

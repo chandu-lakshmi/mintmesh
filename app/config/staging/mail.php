@@ -28,7 +28,7 @@ return array(
 	|
 	*/
 
-	'host' => 'smtp.mailgun.org',//'smtp.mailgun.org',
+	'host' => 'smtp.mandrillapp.com',//'smtp.mailgun.org',
 
 	/*
 	|--------------------------------------------------------------------------
@@ -80,7 +80,7 @@ return array(
 	|
 	*/
 
-	'username' => 'postmaster@sandbox3bf349a6e57d44edbbc3795138062555.mailgun.org',//null,
+	'username' => 'mintmesh@yahoo.com',//null,
 
 	/*
 	|--------------------------------------------------------------------------
@@ -93,7 +93,7 @@ return array(
 	|
 	*/
 
-	'password' => 'd7d613612d9765803de1608379b91ce1',//null,
+	'password' => 'j0L7nqRrZHLrQE5jy7y6cg',//null,
 
 	/*
 	|--------------------------------------------------------------------------
