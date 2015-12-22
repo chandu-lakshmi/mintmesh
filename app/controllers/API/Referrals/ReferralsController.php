@@ -20,6 +20,7 @@ class ReferralsController extends \BaseController {
          * 
          * POST/user
          * 
+         * @param string $access_token The Access token of a user
 	 * @param string $service Service Text
          * @param string $service_scope Service scope get_service|provide_service
          * @param string $service_cost Service cost
@@ -54,6 +55,7 @@ class ReferralsController extends \BaseController {
          * 
          * POST/close_post
          * 
+         * @param string $access_token The Access token of a user
 	 * @param string $post_id Id of the post
          * 
 	 * @return Response
@@ -78,6 +80,7 @@ class ReferralsController extends \BaseController {
          * 
          * POST/deactivate_post
          * 
+         * @param string $access_token The Access token of a user
 	 * @param string $post_id Id of the post
          * 
 	 * @return Response
@@ -103,6 +106,7 @@ class ReferralsController extends \BaseController {
          * 
          * POST/edit_post
          * 
+         * @param string $access_token The Access token of a user
 	 * @param string $post_id Id of the post
          * 
 	 * @return Response
@@ -144,7 +148,7 @@ class ReferralsController extends \BaseController {
          * 
          * POST/get_posts
          * 
-	 * @param string $access_token
+	 * @param string $access_token The Access token of a user
          * @param string $request_type get_service|provide_service
          * @param string $page_no
          * 
@@ -170,7 +174,7 @@ class ReferralsController extends \BaseController {
          * 
          * POST/refer_contact
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
          * @param string $refering
          * @param string $refer_to
          * @param string $post_id
@@ -198,7 +202,7 @@ class ReferralsController extends \BaseController {
          * 
          * POST/get_post_details
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
          * @param string $post_id
 	 * @return Response
 	 */
@@ -222,7 +226,7 @@ class ReferralsController extends \BaseController {
          * 
          * POST/get_post_references
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
          * @param string $post_id
          * @param string $limit
          * @param string $page_no
@@ -248,7 +252,7 @@ class ReferralsController extends \BaseController {
          * 
          * POST/get_my_referrals
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
          * @param string $post_id
 	 * @return Response
 	 */
@@ -272,7 +276,7 @@ class ReferralsController extends \BaseController {
          * 
          * POST/process_post
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
          * @param string $from_user from wher the request has come
          * @param string $referred_by
          * @param string $post_way one|round
@@ -301,7 +305,7 @@ class ReferralsController extends \BaseController {
          * 
          * POST/get_post_status_details
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
          * @param string $from_user from wher the request has come
          * @param string $referred_by person who referred
          * @param string $referral person who got referred
@@ -329,7 +333,7 @@ class ReferralsController extends \BaseController {
          * 
          * POST/get_my_referral_contacts
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
          * @param string $other_email email id of person who create the post
          * @param string $post_id
 	 * @return Response
@@ -392,7 +396,7 @@ class ReferralsController extends \BaseController {
          * 
          * POST/get_mutual_people
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
          * @param string $other_email
 	 * @return Response
 	 */
@@ -416,7 +420,7 @@ class ReferralsController extends \BaseController {
          * 
          * POST/get_referrals_cash
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
          * @param string $payment_reason
          * @param string $page page number
 	 * @return Response

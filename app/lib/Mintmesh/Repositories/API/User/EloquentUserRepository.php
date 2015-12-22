@@ -102,6 +102,18 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                 return $count ;
             }
         }
+        
+        public function changePassword($input)
+        {
+            if (!empty($input['email']))
+            {
+                $email = $input['email'];
+                $password = Hash::make($input['password']);
+                $count = DB::update("update users set password=? where emailid=?",array($password,$email));
+                return $count ;
+            }
+        }
+        
         public function getPushDetails($pushId=0)
         {
             $pushResult = DB::select("select * from notifications_logs where id=? limit 1",array($pushId)) ;

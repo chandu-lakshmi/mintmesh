@@ -446,8 +446,19 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                 if (isset($relationAttrs['request_for_emailid']) && !empty($relationAttrs['request_for_emailid']))
                 {
                     //get request count to set unique relation
-                    $count = $this->getRequestCount($relationType, $from, $to, $relationAttrs['request_for_emailid']) ;
-                    $relationAttrs['request_count'] = $count+1 ;
+                    //if request type is introduce connection then get count from request reference
+                    if ($relationType == Config::get('constants.RELATIONS_TYPES.INTRODUCE_CONNECTION'))
+                    {
+                        $count = $this->getRequestCount(Config::get('constants.RELATIONS_TYPES.REQUEST_REFERENCE'), $relationAttrs['request_for_emailid'], $from, $to) ;
+                        $relationAttrs['request_count'] = $count ;
+                    }
+                    else
+                    {
+                        $count = $this->getRequestCount($relationType, $from, $to, $relationAttrs['request_for_emailid']) ;
+                        $relationAttrs['request_count'] = $count+1 ;
+                    }
+                    
+                    
                 }
                 $queryString = "Match (m:User), (n:User)
                                 where m.emailid='".$to."'  and n.emailid='".$from."'
@@ -759,7 +770,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
         {
             if (!empty($relationId))
             {
-                $queryString = "match (u:User)-[r]-(u1:User) where ID(r)=".$relationId." return r,u,u1 limit 1";
+                $queryString = "match (u:User)-[r]->(u1:User) where ID(r)=".$relationId." return r,u,u1 limit 1";
                 $query = new CypherQuery($this->client, $queryString);
                 return $res = $query->getResultSet();  
             }
@@ -1041,9 +1052,10 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
         {
             if (!empty($userEmail))
             {
+                $userEmail = $this->appEncodeDecode->filterString(strtolower($userEmail));
                 $queryString = "match (u:User)-[r:ACCEPTED_CONNECTION]-(u1:User)-[r1:ACCEPTED_CONNECTION]-(u2:User) where u.emailid='".$userEmail."' and not (u)-[:ACCEPTED_CONNECTION]-(u2) with u2
                                 match (u2)-[r2:ACCEPTED_CONNECTION]-(u3) return u2,count(r2)
-                                order by count(r2) desc  limit 5";
+                                order by count(r2) desc  limit 20";
                 $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();
             }
@@ -1053,11 +1065,23 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             }
         }
         
-        public function getRecruitersList($userLocation = '', $page)
+        public function getRecruitersList($userEmail = '', $page)
         {
             if (!empty($userEmail))
             {
-                $queryString = "MATCH (u:`User`) where lower(u.you_are)='recruiter' and u.location=~'.*".strtolower($userLocation)."' RETURN u LIMIT 25";
+                 $skip = $limit = 0;
+                if (!empty($page))
+                {
+                    $limit = $page*10 ;
+                    $skip = $limit - 10 ;
+                }
+                $userEmail = $this->appEncodeDecode->filterString(strtolower($userEmail));
+                $queryString = "MATCH (u:`User`),(u1:User) where lower(u1.you_are)='recruiter' and u1.location=~('.*' + u.location) and u.emailid='".$userEmail."' and u1.emailid<>'".$userEmail."' and not (u)-[:ACCEPTED_CONNECTION]-(u1) RETURN u1 ";
+                //echo $queryString ; exit;
+                if (!empty($limit) && !($limit < 0))
+                {
+                    $queryString.=" skip ".$skip." limit ".self::LIMIT ;
+                }
                 $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();
             }

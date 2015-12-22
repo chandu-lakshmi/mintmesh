@@ -157,20 +157,26 @@ return array(
              "max_reached"=>"Maximum number of OTPs reached",
              "user_exist"=>" A user is already existing with this phone number,kindly change your phone number."
          ),
-    "reference_flow"=>array(
-        "success"=>"Successfully listed",
-        "invalid_input"=>"Invalid input"
-    ),
-    "influencers"=>array(
-        "success"=>"Successfully listed",
-        "not_found"=>"No Influencer Found"
-    ),
-    "recruiters"=>array(
-        "success"=>"Successfully listed",
-        "not_found"=>"No Influencer Found"
-    )
-    
-    
-    
+
+        "reference_flow"=>array(
+            "success"=>"Successfully listed",
+            "invalid_input"=>"Invalid input"
+        ),
+        "influencers"=>array(
+            "success"=>"Successfully listed",
+            "not_found"=>"No Influencer Found"
+        ),
+        "recruiters"=>array(
+            "success"=>"Successfully listed",
+            "not_found"=>"No Influencer Found"
+        ),
+        "change_password"=>array(
+            "success"=>"Sucessfully password changed",
+            "failed"=>"Some Error Occured",
+            "confirmPasswordMismatch"=>"Conform password mismatch",
+            "oldPasswordMismatch"=>"Old password mismatch",
+            "user_not_found"=>"User Not Found"
+        )
+
 
 );

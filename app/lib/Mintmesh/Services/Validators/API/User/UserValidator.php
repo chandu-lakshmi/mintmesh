@@ -90,8 +90,12 @@ class UserValidator extends Validator {
         ),
         'get_reference_flow'=>array(
             'base_rel_id'=>'required'
-        )
-                
+        ),
+        'change_password'=>array(
+            'password_old'=>'required|min:6',
+            'password_new' => 'required|min:6|confirmed',
+            'password_new_confirmation' => 'required|min:6'
+        )        
         );
 }
 ?>

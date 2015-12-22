@@ -35,6 +35,7 @@ Route::group(array('prefix' => 'v1'), function() {
     
     // FB login
     //Route::get("user/fb_login", "API\User\UserController@loginWithFacebook");
+    Route::get("paypalTest", "API\User\UserController@paypalTest");
 
     //get country codes list
     Route::get("country_codes", "API\User\UserController@countryCodes");
@@ -84,19 +85,20 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
         Route::post("user/complete_profile", "API\User\UserController@completeUserProfile");
         //edit user profile
         Route::post("user/edit_profile", "API\User\UserController@editProfile");
-       // import contacts
-       Route::post("user/import_contacts", "API\SocialContacts\ContactsController@importContacts");
-       // sending invitation
-       Route::post("user/invite_people", "API\SocialContacts\ContactsController@sendInvitation");
-       // get list of mintmesh users
-       Route::post("user/contacts/", "API\SocialContacts\ContactsController@getMintmeshUsers");
-       //set connection request between two users
-       Route::post("user/request_connect", "API\User\UserController@connectUserRequest");
-       //get profile details
-       Route::post("user/get_profile", "API\User\UserController@getUserProfile");
-       // get single notification details
-       Route::post("user/get_single_notification_details", "API\User\UserController@getSingleNotificationDetails");
-       
+        //change user password
+        Route::post("user/change_password", "API\User\UserController@changePassword");
+        // import contacts
+        Route::post("user/import_contacts", "API\SocialContacts\ContactsController@importContacts");
+        // sending invitation
+        Route::post("user/invite_people", "API\SocialContacts\ContactsController@sendInvitation");
+        // get list of mintmesh users
+        Route::post("user/contacts/", "API\SocialContacts\ContactsController@getMintmeshUsers");
+        //set connection request between two users
+        Route::post("user/request_connect", "API\User\UserController@connectUserRequest");
+        //get profile details
+        Route::post("user/get_profile", "API\User\UserController@getUserProfile");
+        // get single notification details
+        Route::post("user/get_single_notification_details", "API\User\UserController@getSingleNotificationDetails");
        //get reference flow
        Route::post("user/get_reference_flow", "API\User\UserController@getReferenceFlow");
        // get user details by emailid
@@ -130,6 +132,13 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
        Route::post("user/get_specific_level_info", "API\User\UserController@getSpecificLevelInfo");
        // disconnect a user
        Route::post("user/disconnect_user", "API\User\UserController@disConnectUsers");
+       
+       // get influencers list
+       Route::post("user/get_influencers_list", "API\User\UserController@getInfluencersList");
+       
+       // get recruiters list
+       Route::post("user/get_recruiters_list", "API\User\UserController@getRecruitersList");
+       
        //send otp
        Route::post("user/send_otp", "API\SMS\SmsController@sendOTP");
        //verify otp
@@ -171,7 +180,6 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
        //sms
        Route::post("send_sms", "API\SMS\SmsController@sendSMS");
        
-
         
         
 });

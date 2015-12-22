@@ -19,6 +19,7 @@ use Mintmesh\Services\ResponseFormatter\API\CommonFormatter ;
 use LucaDegasperi\OAuth2Server\Authorizer;
 use Mintmesh\Services\APPEncode\APPEncode ;
 use Mintmesh\Gateways\API\SocialContacts\ContactsGateway;
+use Illuminate\Support\Facades\Hash;
 
 use Lang;
 use Config;
@@ -34,7 +35,7 @@ class UserGateway {
     const ERROR_RESPONSE_MESSAGE = 'error';
     protected $userRepository, $neoUserRepository,$paymentRepository;    
     protected $authorizer, $appEncodeDecode;
-    protected $userValidator,$contactsGateway;
+    protected $userValidator,$contactsGateway, $referralsGateway;
     protected $userEmailManager;
     protected $userFileUploader,$declines, $refer_nots;
     protected $commonFormatter, $postNotifications, $other_status_diferrent, $referralsRepository;
@@ -66,296 +67,175 @@ class UserGateway {
                 $this->infoTypes = array('experience', 'education', 'certification');
                 $this->directProfileRedirections = array('2','12','14');
                 $this->declines = array('15','16');
-                $this->postNotifications = array(10,11,12,13,14,15,16);
+                $this->postNotifications = array(10,11,12,13,14,15,16,22);
                 $this->other_status_diferrent = array(10,12);
                 $this->selfReferNotifications = array(17) ;
                 $this->referFlowTypes = array(3,4,5,6,7,8,9);
                 $this->refer_nots = array(3,4,5,6,7,8,9);
         }
+        // validation on user inputs for change password
+        public function validateChangePassword($input) {            
+            return $this->doValidation('change_password','MINTMESH.change_password.valid');
+        }
         
         // validation on user inputs for creating a user
-        public function validateCreateUserInput($input) {
-            //validator passes method accepts validator filter key as param
-            if($this->userValidator->passes('create')) {
-                /* validation passes successfully */
-                $message = array('msg'=>array(Lang::get('MINTMESH.user.valid')));
-                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
-            }
-
-            /* Return validation errors to the controller */
-            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $this->userValidator->getErrors(), array()) ;
-            
+        public function validateCreateUserInput($input) {            
+            return $this->doValidation('create','MINTMESH.user.valid');
         }
+        
         // validation logout
         public function validateUserLogOut($input) {
-            //validator passes method accepts validator filter key as param
-            if($this->userValidator->passes('logout')) {
-                /* validation passes successfully */
-                $message = array('msg'=>array(Lang::get('MINTMESH.user.valid')));
-                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
-            }
-
-            /* Return validation errors to the controller */
-            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $this->userValidator->getErrors(), array()) ;
-            
+            return $this->doValidation('logout','MINTMESH.user.valid');     
         }
+        
         //validation of connection request
         public function validateConnectionRequestInput($input) {
-            //validator passes method accepts validator filter key as param
-            if($this->userValidator->passes('connection_request')) {
-                /* validation passes successfully */
-                $message = array('msg'=>array(Lang::get('MINTMESH.user.valid')));
-                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
-            }
-
-            /* Return validation errors to the controller */
-            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $this->userValidator->getErrors(), array()) ;
-            
+            return $this->doValidation('connection_request','MINTMESH.user.valid');         
         }
+        
         //validation of connection accept
         public function validateAcceptConnectionInput($input) {
-            //validator passes method accepts validator filter key as param
-            if($this->userValidator->passes('connection_accept')) {
-                /* validation passes successfully */
-                $message = array('msg'=>array(Lang::get('MINTMESH.user.valid')));
-                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
-            }
-
-            /* Return validation errors to the controller */
-            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $this->userValidator->getErrors(), array()) ;
-            
+            return $this->doValidation('connection_accept','MINTMESH.user.valid');
         }
+        
         public function validateSingleNotificationInput($input)
         {
-            
-            //validator passes method accepts validator filter key as param
-            if($this->userValidator->passes('get_single_notification')) {
-                /* validation passes successfully */
-                $message = array('msg'=>array(Lang::get('MINTMESH.user.valid')));
-                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
-            }
-
-            /* Return validation errors to the controller */
-            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $this->userValidator->getErrors(), array()) ;
+            return $this->doValidation('get_single_notification','MINTMESH.user.valid');
         }
+        
         public function validateGetUserByEmailInput($input)
         {
-            
-            //validator passes method accepts validator filter key as param
-            if($this->userValidator->passes('get_user_by_email')) {
-                /* validation passes successfully */
-                $message = array('msg'=>array(Lang::get('MINTMESH.user.valid')));
-                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
-            }
-
-            /* Return validation errors to the controller */
-            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $this->userValidator->getErrors(), array()) ;
+            return $this->doValidation('get_user_by_email','MINTMESH.user.valid');
         }
+        
         // validation on user inputs for authenticating a user for special login
         public function validateUserSpecialLoginInput($input) {
-            //validator passes method accepts validator filter key as param
-            if($this->userValidator->passes('special_login')) {
-                /* validation passes successfully */
-                $message = array('msg'=>array(Lang::get('MINTMESH.login.login_valid')));
-                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
-            }
-
-            /* Return validation errors to the controller */
-            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $this->userValidator->getErrors(), array()) ;
+            return $this->doValidation('special_login','MINTMESH.login.login_valid');
         }
         
         public function validateNotificationsInput($input)
         {
-            //validator passes method accepts validator filter key as param
-            if($this->userValidator->passes('get_notifications')) {
-                /* validation passes successfully */
-                $message = array('msg'=>array(Lang::get('MINTMESH.user.valid')));
-                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
-            }
-
-            /* Return validation errors to the controller */
-            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $this->userValidator->getErrors(), array()) ;
-        
+            return $this->doValidation('get_notifications','MINTMESH.login.login_valid');        
         }
+        
         // validation on user inputs for updating a user
         public function validateCompleteProfileUserInput($input)
         {
-            //validator passes method accepts validator filter key as param
-            if($this->userValidator->passes('complete_profile')) {
-                /* validation passes successfully */
-                $message = array('msg'=>array(Lang::get('MINTMESH.user.valid')));
-                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
-            }
-
-            /* Return validation errors to the controller */
-            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $this->userValidator->getErrors(), array()) ;
-           
+            return $this->doValidation('complete_profile','MINTMESH.user.valid');           
         }
         
         // validation on user inputs for authenticating a user
-        public function validateUserLoginInput($input) {
-            //validator passes method accepts validator filter key as param
-            if($this->userValidator->passes('login')) {
-                /* validation passes successfully */
-                $message = array('msg'=>array(Lang::get('MINTMESH.login.login_valid')));
-                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
-            }
-
-            /* Return validation errors to the controller */
-            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $this->userValidator->getErrors(), array()) ;
-        }
-        
+        public function validateUserLoginInput($input) 
+        {
+            return $this->doValidation('login','MINTMESH.login.login_valid');
+        }        
         
         // validation on user inputs for authenticating a facebook user
-        public function validateFbLoginInput($input) {
-            //validator passes method accepts validator filter key as param
-            if($this->userValidator->passes('fb_login')) {
-                /* validation passes successfully */
-                $message = array('msg'=>array(Lang::get('MINTMESH.fb_login.valid')));
-                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
-            }
-
-            /* Return validation errors to the controller */
-            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $this->userValidator->getErrors(), array()) ;
+        public function validateFbLoginInput($input) 
+        {
+            return $this->doValidation('fb_login','MINTMESH.fb_login.valid');
         }
         
         //validation on close notification
         public function validateCloseNotificationInput($input)
         {
-            //validator passes method accepts validator filter key as param
-            if($this->userValidator->passes('close_notification')) {
-                /* validation passes successfully */
-                $message = array('msg'=>array(Lang::get('MINTMESH.user.valid')));
-                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
-            }
-
-            /* Return validation errors to the controller */
-            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $this->userValidator->getErrors(), array()) ;            
+            return $this->doValidation('close_notification','MINTMESH.user.valid');        
         }
+        
         //validation get reference flow input
         public function validateGetReferenceFlowInput($input)
         {
-            //validator passes method accepts validator filter key as param
-            if($this->userValidator->passes('get_reference_flow')) {
-                /* validation passes successfully */
-                $message = array('msg'=>array(Lang::get('MINTMESH.user.valid')));
-                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
-            }
-
-            /* Return validation errors to the controller */
-            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $this->userValidator->getErrors(), array()) ;            
+            return $this->doValidation('get_reference_flow','MINTMESH.user.valid');     
         }
+        
         // validation logout
-        public function validateUsersByLocation($input) {
-            //validator passes method accepts validator filter key as param
-            if($this->userValidator->passes('get_users_by_location')) {
-                /* validation passes successfully */
-                $message = array('msg'=>array(Lang::get('MINTMESH.user.valid')));
-                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
-            }
-
-            /* Return validation errors to the controller */
-            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $this->userValidator->getErrors(), array()) ;
-            
+        public function validateUsersByLocation($input) 
+        {
+            return $this->doValidation('get_users_by_location','MINTMESH.user.valid');            
         }
+        
         //validation on forgot password input
         public function validateForgotPasswordInput($input)
         {
-            //validator passes method accepts validator filter key as param
-            if($this->userValidator->passes('forgot_password')) {
-                /* validation passes successfully */
-                $message = array('msg'=>array(Lang::get('MINTMESH.forgot_password.valid')));
-                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
-            }
-
-            /* Return validation errors to the controller */
-            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $this->userValidator->getErrors(), array()) ;
+            return $this->doValidation('forgot_password','MINTMESH.forgot_password.valid');
         }
-        
-        
+                
         //validation on reset password input
         public function validateResetPasswordInput($input)
         {
-            //validator passes method accepts validator filter key as param
-            if($this->userValidator->passes('reset_password')) {
-                /* validation passes successfully */
-                $message = array('msg'=>array(Lang::get('MINTMESH.reset_password.valid')));
-                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
-            }
-
-            /* Return validation errors to the controller */
-            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $this->userValidator->getErrors(), array()) ;
+            return $this->doValidation('reset_password','MINTMESH.reset_password.valid');
         }
         
         //validation on reset password input
         public function validateReferContactInput($input)
         {
-            //validator passes method accepts validator filter key as param
-            if($this->userValidator->passes('refer_contact')) {
-                /* validation passes successfully */
-                $message = array('msg'=>array(Lang::get('MINTMESH.user.valid')));
-                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
-            }
-
-            /* Return validation errors to the controller */
-            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $this->userValidator->getErrors(), array()) ;
+            return $this->doValidation('refer_contact','MINTMESH.user.valid');
         }
         
         //validation on reset password input
         public function validateEditProfileInput($input)
         {
-            //validator passes method accepts validator filter key as param
-            if($this->userValidator->passes('edit_profile')) {
-                /* validation passes successfully */
-                $message = array('msg'=>array(Lang::get('MINTMESH.user.valid')));
-                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
-            }
-
-            /* Return validation errors to the controller */
-            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $this->userValidator->getErrors(), array()) ;
+            return $this->doValidation('edit_profile','MINTMESH.user.valid');
         }
         
         //validation on phone existance input
         public function validatePhoneExistanceInput($input)
         {
-            //validator passes method accepts validator filter key as param
-            if($this->userValidator->passes('validate_phone_existance')) {
-                /* validation passes successfully */
-                $message = array('msg'=>array(Lang::get('MINTMESH.user.valid')));
-                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
-            }
-
-            /* Return validation errors to the controller */
-            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $this->userValidator->getErrors(), array()) ;
+            return $this->doValidation('validate_phone_existance','MINTMESH.user.valid');
         }
         
         //validation on specific level info input
         public function validateLevelsInfo($input)
         {
-            //validator passes method accepts validator filter key as param
-            if($this->userValidator->passes('specific_level_info')) {
-                /* validation passes successfully */
-                $message = array('msg'=>array(Lang::get('MINTMESH.get_levels.valid')));
-                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
-            }
-
-            /* Return validation errors to the controller */
-            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $this->userValidator->getErrors(), array()) ;
+            return $this->doValidation('specific_level_info','MINTMESH.get_levels.valid');
         }
         
         //validation on refer my contact input
         public function validateReferMyContactInfo($input)
         {
-            //validator passes method accepts validator filter key as param
-            if($this->userValidator->passes('refer_my_contact')) {
-                /* validation passes successfully */
-                $message = array('msg'=>array(Lang::get('MINTMESH.referrals.invalid_input')));
-                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
-            }
-
-            /* Return validation errors to the controller */
-            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $this->userValidator->getErrors(), array()) ;
+            return $this->doValidation('refer_my_contact','MINTMESH.referrals.invalid_input');
         }
+        
+        /**
+	 * update password.
+	 *
+	 * @return Response
+	 */ 
+        public function changePassword($input) 
+        {
+            
+            if ($this->loggedinUserDetails = $this->getLoggedInUser()) {
+                
+                if(Hash::make($input['password_old']) == $this->loggedinUserDetails->password) {
+                    if($input['password_new'] == $input['password_new_confirmation']) {
+                        $post=array();
+                        $post['email']=$this->loggedinUserDetails->email ;
+                        $post['password']=$input['password_new'];
+                        // update status of the user to active
+                        $updateCount = $this->userRepository->changePassword($post);
+                        if (!empty($updateCount))
+                        {
+                            $message = array('msg'=>array(Lang::get('MINTMESH.change_password.success')));
+                            return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
+                        }
+                        else
+                        {
+                            $message = array('msg'=>array(Lang::get('MINTMESH.change_password.failed')));
+                            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
+                        }
+                    } else {
+                        $message = array('msg'=>array(Lang::get('MINTMESH.change_password.confirmPasswordMismatch')));
+                        return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
+                    }
+                } else {
+                    $message = array('msg'=>array(Lang::get('MINTMESH.change_password.oldPasswordMismatch')));
+                    return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
+                }
+            } else {
+                $message = array('msg'=>array(Lang::get('MINTMESH.change_password.user_not_found')));
+                return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
+            }
+	}
         
         /**
 	 * Store a newly created resource in storage.
@@ -474,8 +354,16 @@ class UserGateway {
 	}
         
         public function getSkills($input)
-        {
-            $skillsR = $this->userRepository->getSkills($input);
+        { 
+            if (Cache::has('skills')) { 
+                $skillsR = Cache::get('skills');                
+                \Log::info("<<<<<<<<< In if >>>>>>>>>");
+            } else {
+                $skillsR = $this->userRepository->getSkills($input);
+                \Log::info("<<<<<<<<< In else >>>>>>>>>");
+                Cache::add('skills', $skillsR, 1000);                
+            }  
+            // $skillsR = $this->userRepository->getSkills($input);
             if (!empty($skillsR))
             {
                 $data = $skills = array();
@@ -753,47 +641,7 @@ class UserGateway {
             }
 
         }
-        
-        /*
-         * processing the request from facebook user
-         */
-        public function processFbLogin($inputUserData = array())
-        {
-            $fb = OAuth::consumer( 'Facebook' );
-            $fbResult = json_decode( $fb->request( '/me?access_token='.$inputUserData['fb_access_token'] ), true );
-            //check if a user already in mysql 
-            if (!empty($fbResult))
-            {
-                $user = $this->userRepository->getUserByEmail($fbResult['email']);
-                if (!empty($user))
-                {
-                    $loginUserData = array();
-                    $loginUserData['username'] = $fbResult['email'] ;
-                    $loginUserData['password'] = Config::get('constants.FB_PASSWORD') ;
-                    $loginUserData['grant_type'] = Config::get('constants.GRANT_TYPE') ;
-                    $loginUserData['client_id'] = '875Fvq2wSHf5Rjyl' ;
-                    $loginUserData['client_secret'] = 'Mb63nD2ZjsC94RhphxlbjRsBXB1oO1KV' ;
-                    return \Response::json($this->verifyLogin($loginUserData));
-                }
-                else
-                {
-                    $inputUserData = array();
-                    $inputUserData['emailid'] = $fbResult['email'] ;
-                    $inputUserData['firstname'] = $fbResult['first_name'] ;
-                    $inputUserData['lastname'] = $fbResult['last_name'] ;
-                    $inputUserData['login_source'] = Config::get('constants.MNT_LOGIN_SOURCE') ;
-                    $inputUserData['password'] = Config::get('constants.FB_PASSWORD') ;
-                    $inputUserData['password_confirmation'] = Config::get('constants.FB_PASSWORD') ;
-                    $validation = $this->validateCreateUserInput($inputUserData);
-                    if($validation['status'] == 'success') {
-                        // creating entry in mysql DB
-                        $createResult = $this->createUser($inputUserData);
-                        return \Response::json($this->verifyLogin($createResult));
-                    }
-                }
-            }
-            
-        }
+
         
         /*
          * activating a user
@@ -1021,6 +869,8 @@ class UserGateway {
                         $resumeInput['emailid'] = $this->loggedinUserDetails->emailid ;
                         $resumeInfoSuccess = $this->editResumeInfo($resumeInput);
                     }
+                    $loggedinUserDetails = $this->getLoggedInUser();
+                    //Cache::add('userprofile_'.Crypt::encrypt($this->loggedinUserDetails->emailid), $loggedinUserDetails, 1000);  
                     $message = array('msg'=>array(Lang::get('MINTMESH.user.edit_success')));
                     return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
                 }
@@ -1252,11 +1102,20 @@ class UserGateway {
         
         public function getUserProfile()
         {
+//            if (Cache::has('userprofile')) { 
+//                $loggedinUserDetails = Cache::get('userprofile_'.Crypt::encrypt($this->loggedinUserDetails->emailid));                
+//                \Log::info("<<<<<<<<< In if >>>>>>>>>");
+//            } else {
+//                $loggedinUserDetails = $this->getLoggedInUser();
+//                \Log::info("<<<<<<<<< In else >>>>>>>>>");
+//                Cache::add('userprofile_'.Crypt::encrypt($this->loggedinUserDetails->emailid), $loggedinUserDetails, 1000);                
+//            }  
+//            
             $responseMessage = $responseCode = $responseStatus = "";
             $responseData = array();
             $loggedinUserDetails = $this->getLoggedInUser();
             if ($loggedinUserDetails)
-            {
+            {                
                 $requestsCount = 0;
                 $extraDetails = array();
                 $neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($loggedinUserDetails->emailid) ;
@@ -1275,11 +1134,10 @@ class UserGateway {
                     }
                     $extraDetails['skills'] = $skillsArray ;
                 }
-                $badgeResult = $this->userRepository->getNotificationsCount($loggedinUserDetails, 'all');
-                $r = array();
+		$r = array();
                 if (!empty($neoLoggedInUserDetails))
                 {
-                    $r = $this->formUserDetailsArray($neoLoggedInUserDetails, 'attribute') ;
+                    $r = $this->formUserDetailsArray($neoLoggedInUserDetails);
                     if (!empty($neoLoggedInUserDetails->cv_path) && !empty($neoLoggedInUserDetails->cv_renamed_name))
                     {
                         $r['cv_path'] = $neoLoggedInUserDetails->cv_path."/".$neoLoggedInUserDetails->cv_renamed_name ;
@@ -1291,41 +1149,14 @@ class UserGateway {
                             $r[$k] = $v ;
                         }
                     }
-                    $r['notifications_count']= !(empty($badgeResult))?$badgeResult:0;
-                    $requestsCount = $this->neoUserRepository->getMyRequestsCount($loggedinUserDetails->emailid);
-                    $r['requests_count']= !(empty($requestsCount))?$requestsCount:0;
-                    //credits count
-                    $creditResult = $this->userRepository->getCreditsCount($loggedinUserDetails->emailid);
-                    $r['total_credits'] = (!empty($creditResult))?$creditResult[0]->credits:0 ;
-                    if ($r['total_credits'] == null)
+                    $countDetails = $this->getUserBadgeCounts($loggedinUserDetails);
+                    if (!empty($countDetails))
                     {
-                        $r['total_credits'] = 0;
-                    }
-                    $levels_info_r = $this->userRepository->getCurrentLevelInfo($loggedinUserDetails->emailid);
-                    $levels_info = array();
-                    if (!empty($levels_info_r))
-                    {
-                        foreach ($levels_info_r as $row)
+                        foreach ($countDetails as $key=>$val)
                         {
-                            $levels_info = array("level_id"=>$row->id, "name"=>$row->name, "points"=>$row->points, "earned_points"=>$row->earned_points);
+                            $r[$key]=$val ;
                         }
                     }
-
-                    foreach ($levels_info as $k=>$v)
-                    {
-                        if ($v == null)
-                        {
-                            $levels_info[$k]="";
-                        }
-                    }
-                    $r['levels_info'] = $levels_info ;
-                    $total_cash = 0;
-                    $referral_cash_res = $this->paymentRepository->getPaymentTotalCash($loggedinUserDetails->emailid,1);
-                    if (!empty($referral_cash_res))
-                    {
-                        $total_cash = $referral_cash_res[0]->total_cash ;
-                    }
-                    $r['total_cash'] = $total_cash ;
                     $data = array("user"=>$r);
                     $responseCode = self::SUCCESS_RESPONSE_CODE;
                     $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
@@ -1352,6 +1183,47 @@ class UserGateway {
             
         }
         
+        public function getUserBadgeCounts($loggedinUserDetails)
+        {
+            $returnArray =  array();
+            $badgeResult = $this->userRepository->getNotificationsCount($loggedinUserDetails, 'all');
+            $returnArray['notifications_count']= !(empty($badgeResult))?$badgeResult:0;
+            $requestsCount = $this->neoUserRepository->getMyRequestsCount($loggedinUserDetails->emailid);
+            $returnArray['requests_count']= !(empty($requestsCount))?$requestsCount:0;
+            //credits count
+            $creditResult = $this->userRepository->getCreditsCount($loggedinUserDetails->emailid);
+            $returnArray['total_credits'] = (!empty($creditResult))?$creditResult[0]->credits:0 ;
+            if ($returnArray['total_credits'] == null)
+            {
+                $returnArray['total_credits'] = 0;
+            }
+            $levels_info_r = $this->userRepository->getCurrentLevelInfo($loggedinUserDetails->emailid);
+            $levels_info = array();
+            if (!empty($levels_info_r))
+            {
+                foreach ($levels_info_r as $row)
+                {
+                    $levels_info = array("level_id"=>$row->id, "name"=>$row->name, "points"=>$row->points, "earned_points"=>$row->earned_points);
+                }
+            }
+
+            foreach ($levels_info as $k=>$v)
+            {
+                if ($v == null)
+                {
+                    $levels_info[$k]="";
+                }
+            }
+            $returnArray['levels_info'] = $levels_info ;
+            $total_cash = 0;
+            $referral_cash_res = $this->paymentRepository->getPaymentTotalCash($loggedinUserDetails->emailid,1);
+            if (!empty($referral_cash_res))
+            {
+                $total_cash = $referral_cash_res[0]->total_cash ;
+            }
+            $returnArray['total_cash'] = $total_cash ;
+            return $returnArray ;
+        }
         public function formUserMoreDetailsArray($input=array())
         {
             $result = array();
@@ -1544,6 +1416,8 @@ class UserGateway {
                                     $a['to_user_'.$k] = $v ;
                                 }
                                 $to_emailid = $toUserDetails['emailid'] ;
+                                //relation id of first request
+                                $a['referral_relation'] = $relation[0]->getID();
                             }
                             else if ($relation[1] == Config::get('constants.REFERRALS.POSTED'))
                             {
@@ -1640,59 +1514,14 @@ class UserGateway {
                         $details = $this->formUserDetailsArray($connection[0],'property');;
                         if ($details['emailid'] != $loggedinUserDetails->emailid)//if not me
                         {
-                            $connected = $this->neoUserRepository->checkConnection($loggedinUserDetails->emailid,$details['emailid']);
-                            if (!empty($connected))
+                            $connectionsR = $this->checkConnections($loggedinUserDetails->emailid, $input['emailid'], $details['emailid']);
+                            if (!empty($connectionsR))
                             {
-                                $details['connected'] = 1 ;
-                                $details['request_sent_at'] = 0;
-                            }else
-                            {
-                                //check staus
-                                $statusRes = $this->neoUserRepository->getRequestStatus($loggedinUserDetails->emailid,$input['emailid'], $details['emailid'], Config::get('constants.RELATIONS_TYPES.REQUEST_REFERENCE'));
-                                if (!empty($statusRes))// if pending
+                                foreach ($connectionsR as $k=>$v)
                                 {
-                                    if ($statusRes['status'] == Config::get('constants.REFERENCE_STATUS.PENDING') || $statusRes['status'] == Config::get('constants.REFERENCE_STATUS.INTRO_COMPLETE'))
-                                    {
-                                        if ($statusRes['status'] != Config::get('constants.REFERENCE_STATUS.PENDING'))
-                                        {
-                                            //check if declined at other side
-                                            $otherStatusRes = $this->neoUserRepository->getRequestStatus($input['emailid'], $details['emailid'],$loggedinUserDetails->emailid, Config::get('constants.RELATIONS_TYPES.INTRODUCE_CONNECTION'));
-                                            if (!empty($otherStatusRes))
-                                            {
-                                                if ($otherStatusRes['status'] == Config::get('constants.REFERENCE_STATUS.DECLINED'))
-                                                {
-                                                    $details['request_sent_at'] = 0 ;
-                                                    $details['connected'] = 0 ;
-                                                }
-                                                else
-                                                {
-                                                    $details['request_sent_at'] = $statusRes['created_at'] ;
-                                                    $details['connected'] = 2 ;
-                                                }
-                                            }
-                                            else
-                                            {
-                                                $details['request_sent_at'] = $statusRes['created_at'] ;
-                                                $details['connected'] = 2 ;
-                                            }
-                                        }
-                                        else
-                                        {
-                                            $details['request_sent_at'] = $statusRes['created_at'] ;
-                                            $details['connected'] = 2 ;
-                                        }
-
-                                    }
-                                    else
-                                    {
-                                        $details['connected'] = 0 ;
-                                        $details['request_sent_at'] = 0;
-                                    }
-                                }else
-                                {
-                                    $details['connected'] = 0 ;
-                                    $details['request_sent_at'] = 0;
+                                    $details[$k]=$v ;
                                 }
+                                
                             }
                         }
                         else
@@ -1713,6 +1542,76 @@ class UserGateway {
                 return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
             }
             
+        }
+        
+        public function checkConnections($loggedInUser='', $inputUser='',$currentUser='')
+        {
+            $returnArray = array();
+            $connected = $this->neoUserRepository->checkConnection($loggedInUser,$currentUser);
+            if (!empty($connected))
+            {
+                $returnArray['connected'] = 1 ;
+                $returnArray['request_sent_at'] = 0;
+            }else
+            {
+                $pendingConnection = $this->neoUserRepository->checkPendingConnection($loggedInUser,$currentUser);
+                if (!empty($pendingConnection))// if pending
+                {
+                    $returnArray['request_sent_at'] = $pendingConnection ;
+                    $returnArray['connected'] = 2 ;
+                }
+                else //check for reference status
+                {
+                    //check staus
+                    $statusRes = $this->neoUserRepository->getRequestStatus($loggedInUser,$inputUser, $currentUser, Config::get('constants.RELATIONS_TYPES.REQUEST_REFERENCE'));
+                    if (!empty($statusRes))// if pending
+                    {
+                        if ($statusRes['status'] == Config::get('constants.REFERENCE_STATUS.PENDING') || $statusRes['status'] == Config::get('constants.REFERENCE_STATUS.INTRO_COMPLETE'))
+                        {
+                            if ($statusRes['status'] != Config::get('constants.REFERENCE_STATUS.PENDING'))
+                            {
+                                //check if declined at other side
+                                $otherStatusRes = $this->neoUserRepository->getRequestStatus($inputUser, $currentUser,$loggedInUser, Config::get('constants.RELATIONS_TYPES.INTRODUCE_CONNECTION'));
+                                if (!empty($otherStatusRes))
+                                {
+                                    if ($otherStatusRes['status'] == Config::get('constants.REFERENCE_STATUS.DECLINED'))
+                                    {
+                                        $returnArray['request_sent_at'] = 0 ;
+                                        $returnArray['connected'] = 0 ;
+                                    }
+                                    else
+                                    {
+                                        $returnArray['request_sent_at'] = $statusRes['created_at'] ;
+                                        $returnArray['connected'] = 2 ;
+                                    }
+                                }
+                                else
+                                {
+                                    $returnArray['request_sent_at'] = $statusRes['created_at'] ;
+                                    $returnArray['connected'] = 2 ;
+                                }
+                            }
+                            else
+                            {
+                                $returnArray['request_sent_at'] = $statusRes['created_at'] ;
+                                $returnArray['connected'] = 2 ;
+                            }
+
+                        }
+                        else
+                        {
+                            $returnArray['connected'] = 0 ;
+                            $returnArray['request_sent_at'] = 0;
+                        }
+                    }else
+                    {
+                        $returnArray['connected'] = 0 ;
+                        $returnArray['request_sent_at'] = 0;
+                    }
+                }
+
+            }
+            return $returnArray ;
         }
         /*
          * get user notification details
@@ -2001,6 +1900,16 @@ class UserGateway {
             
             return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $message, $data) ;
             
+            /*
+            if (Cache::has('countryCodes')) { 
+                $countryCodes = Cache::get('countryCodes');                
+                \Log::info("<<<<<<<<< In if >>>>>>>>>");
+            } else {
+                $countryCodes = $this->userRepository->getCountryCodes();
+                \Log::info("<<<<<<<<< In else >>>>>>>>>");
+                Cache::add('countryCodes', $countryCodes, 1000);                
+            } 
+            */
             
             /*if (Cache::has('countryCodes')) { 
                 $countryCodes = Cache::get('countryCodes');                
@@ -2062,23 +1971,31 @@ class UserGateway {
          */
         public function getJobFunctions()
         {
-            $jobFunctionsResult = $this->userRepository->getJobFunctions();
-            if (!empty($jobFunctionsResult))
-            {
-                $data = $jobFunctions = array();
-                foreach($jobFunctionsResult as $key=>$val)
-                {
-                    $jobFunctions[] = array("job_function_name"=>trim($val->name), "job_function_id"=>$val->id) ;
-                }
-                $data = array("job_functions"=>$jobFunctions) ;
-                $message = array('msg'=>array(Lang::get('MINTMESH.job_functions.success')));
-                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
-            }
-            else
-            {
-                $message = array('msg'=>array(Lang::get('MINTMESH.job_functions.error')));
-                return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
-            }
+        	if (Cache::has('jobfunctions')) { 
+                $jobFunctionsResult = Cache::get('jobfunctions');                
+                \Log::info("<<<<<<<<< In if >>>>>>>>>");
+            } else {
+                $jobFunctionsResult = $this->userRepository->getJobFunctions();
+                \Log::info("<<<<<<<<< In else >>>>>>>>>");
+                Cache::add('jobfunctions', $jobFunctionsResult, 1000);                
+            }  
+	        // $jobFunctionsResult = $this->userRepository->getJobFunctions();
+	        if (!empty($jobFunctionsResult))
+	        {
+	            $data = $jobFunctions = array();
+	            foreach($jobFunctionsResult as $key=>$val)
+	            {
+	                $jobFunctions[] = array("job_function_name"=>trim($val->name), "job_function_id"=>$val->id) ;
+	            }
+	            $data = array("job_functions"=>$jobFunctions) ;
+	            $message = array('msg'=>array(Lang::get('MINTMESH.job_functions.success')));
+	            return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
+	        }
+	        else
+	        {
+	            $message = array('msg'=>array(Lang::get('MINTMESH.job_functions.error')));
+	            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
+	        }
         }
         
         public function sendNotification($fromUser, $neofromUser, $email, $notificationType = 0, $extraInserts = array(), $otherInfoParams = array(),$parse=1)
@@ -2178,6 +2095,15 @@ class UserGateway {
             if ($loggedinUserDetails)
             {
                 $neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($loggedinUserDetails->emailid) ;
+                $userBadgeCounts = $this->getUserBadgeCounts($loggedinUserDetails);
+                $loggeduserDetails = $this->formUserDetailsArray($neoLoggedInUserDetails,'attribute');
+               if (!empty($userBadgeCounts))
+                {
+                    foreach ($userBadgeCounts as $k=>$v)
+                    {
+                        $loggeduserDetails[$k]=$v ;
+                    }
+                }
                 if (count($neoLoggedInUserDetails))
                 {
                     $page = !empty($input['page'])?$input['page']:0;
@@ -2322,7 +2248,7 @@ class UserGateway {
                             }
                         }
                         $phone_verified = !empty($neoLoggedInUserDetails->phoneverified)?$neoLoggedInUserDetails->phoneverified:0;
-                        $data = array("notifications"=>$notes, "notifications_count"=>$notifications_count,"phone_verified"=>$phone_verified) ;
+                        $data = array("notifications"=>$notes, "notifications_count"=>$notifications_count,"phone_verified"=>$phone_verified,'user_details'=>$loggeduserDetails) ;
                         $message = array('msg'=>array(Lang::get('MINTMESH.notifications.success')));
                         return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
                     }
@@ -2895,36 +2821,42 @@ class UserGateway {
                             }
                             else 
                             {
-                                //check for p2-p3 status
-                                $fromEmail = !empty($p2Details['emailid'])?$p2Details['emailid']:'';
-                                $toEmail = !empty($result[0][0]->request_for_emailid)?$result[0][0]->request_for_emailid:'';
-                                $forEmail = !empty($p1Details['emailid'])?$p1Details['emailid']:'';
-                                $returnArray['message'] = !empty($result[0][0]->message)?$result[0][0]->message:'';
-                                $relationCount = !empty($result[0][0]->request_count)?$result[0][0]->request_count:0;
-                                $introDetails = $this->neoUserRepository->getIntroduceConnection($fromEmail, $toEmail,$forEmail, $relationCount);
-                                if (count($introDetails))
+                                $p2Status = !empty($result[0][0]->status)?$result[0][0]->status:Config::get('constants.REFERENCE_STATUS.PENDING');
+                                $p2StatusIn=array(Config::get('constants.REFERENCE_STATUS.SUCCESS'),Config::get('constants.REFERENCE_STATUS.INTRO_COMPLETE'));
+                                if (in_array($p2Status, $p2StatusIn))
                                 {
-                                    $returnArray['other_message'] = (isset($introDetails[0][0]->message))?$introDetails[0][0]->message:"" ;
-                                    $returnArray['other_status'] = (isset($introDetails[0][0]->status))?$introDetails[0][0]->status:"" ;
-                                    $returnArray['introduced_at'] = (isset($introDetails[0][0]->created_at))?$introDetails[0][0]->created_at:"" ;
-                                }
-                                else
-                                {
-                                    $returnArray['other_message']="";
-                                    $returnArray['other_status'] = Config::get('constants.REFERENCE_STATUS.PENDING') ;
-                                }
-                                
-                                if ($returnArray['other_status'] == Config::get('constants.REFERENCE_STATUS.SUCCESS'))//if intro completed then get p3 status
-                                {
-                                    //get the time p3 accepted
-                                    $completedResult = $this->neoUserRepository->getReferralAcceptConnection($toEmail, $forEmail, $fromEmail);
-                                    if (count($completedResult))
+                                    //check for p2-p3 status
+                                    $fromEmail = !empty($p2Details['emailid'])?$p2Details['emailid']:'';
+                                    $toEmail = !empty($result[0][0]->request_for_emailid)?$result[0][0]->request_for_emailid:'';
+                                    $forEmail = !empty($p1Details['emailid'])?$p1Details['emailid']:'';
+                                    $returnArray['message'] = !empty($result[0][0]->message)?$result[0][0]->message:'';
+                                    $relationCount = !empty($result[0][0]->request_count)?$result[0][0]->request_count:0;
+                                    $introDetails = $this->neoUserRepository->getIntroduceConnection($fromEmail, $toEmail,$forEmail, $relationCount);
+                                    if (count($introDetails))
                                     {
-                                        $returnArray['completed_at'] = (isset($completedResult[0][0]->created_at))?$completedResult[0][0]->created_at:"" ;
+                                        $returnArray['other_message'] = (isset($introDetails[0][0]->message))?$introDetails[0][0]->message:"" ;
+                                        $returnArray['other_status'] = (isset($introDetails[0][0]->status))?$introDetails[0][0]->status:"" ;
+                                        $returnArray['introduced_at'] = (isset($introDetails[0][0]->created_at))?$introDetails[0][0]->created_at:"" ;
+                                    }
+                                    else
+                                    {
+                                        $returnArray['other_message']="";
+                                        $returnArray['other_status'] = Config::get('constants.REFERENCE_STATUS.PENDING') ;
+                                    }
+
+                                    if ($returnArray['other_status'] == Config::get('constants.REFERENCE_STATUS.SUCCESS'))//if intro completed then get p3 status
+                                    {
+                                        //get the time p3 accepted
+                                        $completedResult = $this->neoUserRepository->getReferralAcceptConnection($toEmail, $forEmail, $fromEmail);
+                                        if (count($completedResult))
+                                        {
+                                            $returnArray['completed_at'] = (isset($completedResult[0][0]->created_at))?$completedResult[0][0]->created_at:"" ;
+                                        }
                                     }
                                 }
                             }
                             $returnArray['status'] = $result[0][0]->status ;
+                            $returnArray['referral_relation'] = $input['base_rel_id'] ;
                             $returnArray['current_user'] = "p2" ;
                             if (!empty($p1Details) && !empty($p1Details['emailid']))
                             {
@@ -3234,7 +3166,32 @@ class UserGateway {
                 {
                     foreach ($influencers as $influencer)
                     {
-                        $influencersList[] = $this->formUserDetailsArray($influencer[0], 'property') ;
+                        $details = $this->formUserDetailsArray($influencer[0], 'property') ;
+                        $details['no_of_connections'] = !empty($influencer[1])?$influencer[1]:0;
+                         //get known list
+                        $knownPeopleInput = $knownPeopleListResult = $knownPeopleList = array();
+                        $knownPeopleInput['emailid'] = $loggedinUserDetails->emailid ;
+                        $knownPeopleInput['other_email'] = !empty($details['emailid'])?$details['emailid']:'' ;
+                        if (!empty($knownPeopleInput['other_email']))
+                        {
+                            $knownPeopleListResult = $this->getMutualPeopleInInfluncers($knownPeopleInput) ;
+                            if (!empty($knownPeopleListResult['data']['users']))
+                            foreach ($knownPeopleListResult['data']['users'] as $r=>$v)
+                            {
+                                $knownPeopleList[] = $v['fullname'] ;
+                            }
+                            $details['known_people'] = $knownPeopleList ;
+                        }
+                        $connectionsR = $this->checkConnections($loggedinUserDetails->emailid, '', $details['emailid']);
+                        if (!empty($connectionsR))
+                        {
+                            foreach ($connectionsR as $k=>$v)
+                            {
+                                $details[$k]=$v ;
+                            }
+
+                        }
+                        $influencersList[] = $details ;
                     }
                     $data = array("influencers"=>$influencersList) ;
                     $message = array('msg'=>array(Lang::get('MINTMESH.influencers.success')));
@@ -3245,6 +3202,7 @@ class UserGateway {
                     $message = array('msg'=>array(Lang::get('MINTMESH.influencers.not_found')));
                     return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
                 }
+                
             }
             else
             {
@@ -3252,19 +3210,50 @@ class UserGateway {
                 return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
             }
         }
-        
-        public function getRecruiters($input)
+        public function getMutualPeopleInInfluncers($input)
+        {
+            $userEmail = $input['emailid'] ;
+            $result = $this->referralsRepository->getMutualPeople($userEmail,$input['other_email']);
+            if (count($result))
+            {
+                $users = array();
+                foreach ($result as $k=>$v)
+                {
+                    $users[]=$this->formUserDetailsArray($v[0],'property') ;
+                }
+                $data=array("users"=>$users) ;
+                $message = array('msg'=>array(Lang::get('MINTMESH.referrals.success')));
+                return $this->commonFormatter->formatResponse(200, "success", $message, $data) ;
+            }
+            else
+            {
+                $message = array('msg'=>array(Lang::get('MINTMESH.referrals.no_result')));
+                return $this->commonFormatter->formatResponse(200, "success", $message, array()) ;
+            }
+        }
+        public function getRecruitersList($input)
         {
             $loggedinUserDetails = $this->getLoggedInUser();
             if ($loggedinUserDetails)
             {
                $recruitersList = array();
-                $recruiters = $this->neoUserRepository->getRecruitersList($loggedinUserDetails->emailid);
+               $page = !empty($input['page'])?$input['page']:0;
+                $recruiters = $this->neoUserRepository->getRecruitersList($loggedinUserDetails->emailid, $page);
                 if (!empty($recruiters) && count($recruiters))
                 {
                     foreach ($recruiters as $recruiter)
                     {
-                        $recruitersList[] = $this->formUserDetailsArray($recruiters[0], 'property') ;
+                        $details = $this->formUserDetailsArray($recruiter[0], 'property') ;
+                        $connectionsR = $this->checkConnections($loggedinUserDetails->emailid, '', $details['emailid']);
+                        if (!empty($connectionsR))
+                        {
+                            foreach ($connectionsR as $k=>$v)
+                            {
+                                $details[$k]=$v ;
+                            }
+
+                        }
+                        $recruitersList[] = $details;
                     }
                     $data = array("recruiters"=>$recruitersList) ;
                     $message = array('msg'=>array(Lang::get('MINTMESH.recruiters.success')));
@@ -3281,7 +3270,29 @@ class UserGateway {
                 $message = array('msg'=>array(Lang::get('MINTMESH.user.user_not_found')));
                 return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
             }
+//            $message = array('msg'=>array(Lang::get('MINTMESH.user.user_not_found')));
+//            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
         }
+        
+        public function doValidation($validatorFilterKey, $langKey) {
+             //validator passes method accepts validator filter key as param
+            if($this->userValidator->passes($validatorFilterKey)) {
+                /* validation passes successfully */
+                $message = array('msg'=>array(Lang::get($langKey)));
+                $responseCode = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg = self::SUCCESS_RESPONSE_MESSAGE;
+                $data = array();                
+            } else {
+                /* Return validation errors to the controller */
+                $message = $this->userValidator->getErrors();
+                $responseCode = self::ERROR_RESPONSE_CODE;
+                $responseMsg = self::ERROR_RESPONSE_MESSAGE;
+                $data = array();
+            }
+            
+            return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $message, $data) ;
+        }
+        
         
         
     

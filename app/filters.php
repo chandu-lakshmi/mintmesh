@@ -14,12 +14,14 @@
 App::before(function($request)
 {
 	//
+    //Log::info("<<<<<<<<<<<<<<< REQUEST >>>>>>>>>>>>>".print_r($request,1));
 });
 
 
 App::after(function($request, $response)
 {
 	//
+    //Log::info("<<<<<<<<<<<<<<< RESPONSE >>>>>>>>>>>>>".print_r($response,1));
 });
 
 /*

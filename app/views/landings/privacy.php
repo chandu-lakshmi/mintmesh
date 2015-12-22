@@ -279,7 +279,7 @@ the MintMesh  Application, you agree to the terms of this Privacy Policy and the
 
 collection, processing, use and disclosure by MintMesh and its service providers, 
 
-of  all the Information as stated above, that you enter into the MintMeshApp.
+of  all the Information as stated above, that you enter into the MintMesh App.
     </b></p>
 <h3 class="ft5">2.What do we use your information for?</h3>
 <p>
@@ -412,12 +412,12 @@ Personal Information?</h3>
 
 For any questions or concern you may have with respect to your Personal Information, 
 
-you can contact: <A href="mailto:support@mintmesh.com">support@MintMesh.com.</A></p>
+you can contact: <A href="mailto:support@mintmesh.com">support@mintmesh.com.</A></p>
 <p>If you prefer that we do not contact you for marketing purposes in connection with 
 
 products or services similar to the Services (including the App), please send us an 
 
-email at the following address: <A href="mailto:support@mintmesh.com">support@MintMesh.com.</A></p>
+email at the following address: <A href="mailto:support@mintmesh.com">support@mintmesh.com.</A></p>
 
 <h3 class="ft5">7. Global Applicability</h3>
 <p>
@@ -439,7 +439,7 @@ invite you to connect with them on MintMesh. We may also chose to use SMS
 
 programs to authenticate your account. You have the option to unsubscribe from this 
 
-service by a message to <A href="mailto:support@mintmesh.com">support@MintMesh.com</A></p>
+service by a message to <A href="mailto:support@mintmesh.com">support@mintmesh.com</A></p>
 
 <h3 class="ft5">9. Privacy Settings</h3>
 <p>As we do not control the actions of other users that you have chosen to share your 
@@ -474,7 +474,7 @@ event that the last e-mail address that you have provided us is not valid, or fo
 
 reason is not capable of delivering to you the notice described above, our dispatch of 
 
-the e-mail  containing  such  notice  will  nonetheless  constitute  effective  notice  of the  changes described in the notice. Continued use of the Mintmesh Application,
+the e-mail  containing  such  notice  will  nonetheless  constitute  effective  notice  of the  changes described in the notice. Continued use of the MintMesh Application,
 
 following notice of such changes shall indicate your acknowledgement of such 
 

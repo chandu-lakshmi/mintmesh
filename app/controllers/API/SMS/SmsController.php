@@ -23,7 +23,9 @@ class SmsController extends \BaseController {
          * 
          * POST/send_sms
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
+         * @param string $numbers
+         * @param string $sms_type
 	 * @return Response
 	 */
         public function sendSMS()

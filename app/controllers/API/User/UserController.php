@@ -27,6 +27,34 @@ class UserController extends \BaseController {
 	}
         
         /**
+	 * Change Password entry
+         * 
+         * POST/user
+         * @param string $access_token The Access token of a user
+	 * @param string $password_old The old password of a user
+         * @param string $password_new The new password of a user
+         * @param string $password_new_confirmation The new password of a user
+         * @param string $deviceToken The device token of the user device
+         * 
+	 * @return Response
+	 */
+	public function changePassword()
+	{
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->userGateway->validateChangePassword($inputUserData);
+            if($validation['status'] == 'success') 
+            {
+                // update password in mysql DB
+                return \Response::json($this->userGateway->changePassword($inputUserData));
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+	}
+        
+        /**
 	 * Create new user entry
          * 
          * POST/user
@@ -64,10 +92,12 @@ class UserController extends \BaseController {
          * 
          * POST/user
          * 
+         * @param string $access_token The Access token of a user
 	 * @param string $position The position of a user
          * @param string $company The company of a user
          * @param string $industry The industry of a user
          * @param string $location The location of a user 
+         * @param string $job_function The job function of a user
          * @param string $fromLinkedin if user is from linkedin 
          * @param string $linkedinImage if user is from linkedin then profile image url
          * @param file $dpImage The profile image of a user profile
@@ -371,6 +401,7 @@ class UserController extends \BaseController {
          * 
          * POST/edit_profile
          * 
+         * @param string $access_token The Access token of a user
          * @param string $info_type contact|resume|experience|education|certification|skills
          * @param string $action add|edit|delete only for experience|education|certification
          * @param string $firstname First name of user
@@ -426,7 +457,7 @@ class UserController extends \BaseController {
          * 
          * POST/request_connect
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
          * @param string $emails The email ids of the users to which connect request is to be sent
 	 * @return Response
 	 */
@@ -451,7 +482,7 @@ class UserController extends \BaseController {
          * 
          * POST/get_profile
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
 	 * @return Response
 	 */
         public function getUserProfile()
@@ -467,9 +498,10 @@ class UserController extends \BaseController {
          * 
          * POST/get_single_notification_details
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
          * @param string $emailid
          * @param string $push_id
+         * @param string $notification_type
 	 * @return Response
 	 */
         public function getSingleNotificationDetails()
@@ -492,7 +524,7 @@ class UserController extends \BaseController {
          * 
          * POST/get_profile_by_emailid
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
          * @param string $emailid
 	 * @return Response
 	 */
@@ -516,7 +548,7 @@ class UserController extends \BaseController {
          * 
          * POST/get_notifications
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
          * @param string $notification_type
 	 * @return Response
 	 */
@@ -540,7 +572,7 @@ class UserController extends \BaseController {
          * 
          * POST/accept_connection
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
          * @param string $from_email
          * @param string $refered_by
          * @param string $self_reference used in self reference flow
@@ -566,8 +598,9 @@ class UserController extends \BaseController {
          * 
          * POST/close_connection
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
          * @param string $push_id
+         * @param string $notification_type
          * @param string $request_type
          * @param string $base_rel_id applied for normal refer flow. comes with notifications in referral_relation field
          * @return Response
@@ -592,7 +625,7 @@ class UserController extends \BaseController {
          * 
          * POST/get_reference_flow
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
          * @param string $base_rel_id referral_relation field from notification
 	 * @return Response
 	 */
@@ -617,7 +650,7 @@ class UserController extends \BaseController {
          * 
          * POST/get_connected_users
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
          * @param string $emailid used in refer my contact
 	 * @return Response
 	 */
@@ -633,7 +666,7 @@ class UserController extends \BaseController {
          * 
          * POST/logout
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
          * @param string $deviceToken
 	 * @return Response
 	 */
@@ -656,7 +689,7 @@ class UserController extends \BaseController {
          * 
          * POST/request_reference
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user 
          * @param string $request_to
          * @param string $request_for
          * @param string $message
@@ -733,6 +766,7 @@ class UserController extends \BaseController {
          * 
          * POST/get_mutual_requests
          * 
+         * @param string $access_token The Access token of a user
          * @param string $emailid
 	 * @return Response
 	 */
@@ -756,6 +790,7 @@ class UserController extends \BaseController {
          * 
          * POST/get_user_connections
          * 
+         * @param string $access_token The Access token of a user
          * @param string $emailid
 	 * @return Response
 	 */
@@ -779,6 +814,7 @@ class UserController extends \BaseController {
          * 
          * POST/get_my_requests
          * 
+         * @param string $access_token The Access token of a user
 	 * @return Response
 	 */
         public function getMyRequests()
@@ -795,7 +831,7 @@ class UserController extends \BaseController {
          * 
          * POST/get_users_by_location
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
          * @param string $location
 	 * @return Response
 	 */
@@ -819,7 +855,7 @@ class UserController extends \BaseController {
          * 
          * POST/get_levels_info
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
 	 * @return Response
 	 */
         public function getLevelsInfo()
@@ -833,7 +869,7 @@ class UserController extends \BaseController {
          * 
          * POST/refer_my_connection
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
          * @param string $connected_to_me 0/1/2
          * @param string $non_mintmesh 0/1
          * @param string $invite_via_email 0/1
@@ -860,7 +896,7 @@ class UserController extends \BaseController {
          * 
          * POST/get_specific_level_info
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
          * @param string $level_id
 	 * @return Response
 	 */
@@ -884,7 +920,7 @@ class UserController extends \BaseController {
          * 
          * POST/disconnect_user
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
          * @param string $emailid
 	 * @return Response
 	 */
@@ -915,6 +951,24 @@ class UserController extends \BaseController {
         {
             
             $response = $this->userGateway->getInfluencersList();
+            return \Response::json($response);
+            
+        }
+        
+        
+        /**
+	 * get recruiters list
+         * 
+         * POST/get_recruiters_list
+         * 
+         * @param string $access_token
+         * @param string $page
+	 * @return Response
+	 */
+        public function getRecruitersList()
+        {
+            $inputUserData = \Input::all();
+            $response = $this->userGateway->getRecruitersList($inputUserData);
             return \Response::json($response);
             
         }

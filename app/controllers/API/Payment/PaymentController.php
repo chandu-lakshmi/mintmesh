@@ -21,7 +21,7 @@ class PaymentController extends \BaseController {
          * 
          * POST/generate_bt_token
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
          * @param string $mm_transaction_id
 	 * @return Response
 	 */
@@ -71,7 +71,7 @@ class PaymentController extends \BaseController {
          * 
          * POST/bt_transaction
          * 
-         * @param string $access_token
+         * @param string $access_token The Access token of a user
          * @param string $nonce
          * @param string $amount
          * @param string $mm_transaction_id

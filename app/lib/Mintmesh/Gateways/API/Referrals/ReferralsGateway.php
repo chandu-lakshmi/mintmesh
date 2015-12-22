@@ -1154,6 +1154,7 @@ class ReferralsGateway {
                             if ($relation[1] == Config::get('constants.RELATIONS_TYPES.INTRODUCE_CONNECTION'))
                             {
                                 $toUserDetails = $this->userGateway->formUserDetailsArray($relation[2], 'property') ;
+                                //details of third user
                                 foreach ($toUserDetails as $k=>$v)
                                 {
                                     $a['to_user_'.$k] = $v ;
