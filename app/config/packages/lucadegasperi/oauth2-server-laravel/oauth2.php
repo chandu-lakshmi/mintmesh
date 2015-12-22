@@ -78,15 +78,15 @@ return [
         'refresh_token' => [
             'class'                 => 'League\OAuth2\Server\Grant\RefreshTokenGrant',
             // keeping access token available for one hour
-            'access_token_ttl'      => 259200,
+            'access_token_ttl'      => 1209600,
             // canged from 604800 to 60
-            'refresh_token_ttl'     => 1209600,
+            'refresh_token_ttl'     => 2592000,
             'rotate_refresh_tokens' => false,
         ],
         'password' => [
             'class'            => 'League\OAuth2\Server\Grant\PasswordGrant',
             // keeping accesstoken available for 3 days
-            'access_token_ttl' => 259200,
+            'access_token_ttl' => 1209600,
     
             // the code to run in order to verify the user's identity
             'callback'         => function($emailid, $password){
@@ -148,7 +148,7 @@ return [
         'special_grant' => [
 
             'class'            => 'SpecialGrant\SpecialGrant',
-            'access_token_ttl' => 259200,
+            'access_token_ttl' => 1209600,
 
             'callback'         => function ($emailid) {
 
@@ -244,7 +244,7 @@ return [
     | this can be also set on a per grant-type basis
     |
     */
-    'access_token_ttl' => 259200,
+    'access_token_ttl' => 1209600,
 
     /*
     |--------------------------------------------------------------------------

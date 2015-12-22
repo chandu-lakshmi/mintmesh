@@ -1053,9 +1053,9 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             if (!empty($userEmail))
             {
                 $userEmail = $this->appEncodeDecode->filterString(strtolower($userEmail));
-                $queryString = "match (u:User)-[r:ACCEPTED_CONNECTION]-(u1:User)-[r1:ACCEPTED_CONNECTION]-(u2:User) where u.emailid='".$userEmail."' and not (u)-[:ACCEPTED_CONNECTION]-(u2) with u2
-                                match (u2)-[r2:ACCEPTED_CONNECTION]-(u3) return u2,count(r2)
-                                order by count(r2) desc  limit 20";
+                $queryString = "match (u:User)-[r:ACCEPTED_CONNECTION]-(u1:User)-[r1:ACCEPTED_CONNECTION]-(u2:User) where u.emailid='".$userEmail."' and u2.emailid<>'".$userEmail."' and not (u)-[:ACCEPTED_CONNECTION]-(u2) with u2
+                                match (u2)-[r2:ACCEPTED_CONNECTION]-(u3) return u2,count(distinct(r2))
+                                order by count(distinct(r2)) desc  limit 20";
                 $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();
             }
