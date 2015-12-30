@@ -23,14 +23,72 @@ class EloquentPaymentRepository extends BaseRepository implements PaymentReposit
             return $result = DB::statement($sql);
             //return DB::getPdo()->lastInsertId();
         }
-        
+        public function checkUserBank($input)
+        {
+            $result = array();
+            if (!empty($input))
+            {
+                $sql = "select * from user_bank_details where account_number='".$input['account_number']."' and user=".$input['user']." and status=1 ".(isset($input['bank_id'])?" and id<>'".$input['bank_id']."'":"") ;
+                $result = DB::select($sql);
+                return $result ;
+            }
+            else
+            {
+                return $result;
+            }
+        }
+
+        public function saveUserBank($input)
+        {
+            $sql = "insert into user_bank_details (`user`,`bank_name`,`account_name`,`account_number`,`ifsc_code`,`address`,`ip_address`,`created_at`,`modified_at`)" ;
+            $sql.=" values('".$input['user']."','".$input['bank_name']."',
+                            '".$input['account_name']."','".$input['account_number']."','".$input['ifsc_code']."','".$input['address']."'
+                                ,'".$_SERVER['REMOTE_ADDR']."','".date('Y-m-d H:i:s')."','".date('Y-m-d H:i:s')."')" ;
+            //echo $sql ; exit;
+            return $result = DB::statement($sql);
+            //return DB::getPdo()->lastInsertId();
+        }
+        public function editUserBank($input)
+        {
+            if (!empty($input))
+            {
+                $sql = "update user_bank_details set "
+                        . "user='".$input['user']."',"
+                        . "bank_name='".$input['bank_name']."',"
+                        . "account_name='".$input['account_name']."',"
+                        . "account_number='".$input['account_number']."',"
+                        . "ifsc_code='".$input['ifsc_code']."',"
+                        . "address='".$input['address']."',"
+                        . "ip_address='".$_SERVER['REMOTE_ADDR']."',"
+                        . " modified_at='".date('Y-m-d H:i:s')."' "
+                        . "where id='".$input['bank_id']."'" ;
+                return $result = DB::statement($sql);
+            }
+            else
+            {
+                return false ;
+            }
+        }
+        public function deleteUserBank($input)
+        {
+            $sql = "update user_bank_details set status=0 where id=".$input['bank_id'] ;
+//            $sql = "delete from user_bank_details where id='".$input['bank_id']."'";
+            return $result = DB::statement($sql);
+        }
+        public function listUserBanks($input)
+        {
+            $sql = "select * from user_bank_details where status=1 and user=".$input['user_id'] ;
+            $result = DB::select($sql);
+            return $result ;
+        }
         public function updatePaymentTransaction($input)
         {
             if (!empty($input['mm_transaction_id']))
             {
                 $sql = "update payment_transactions set status='".$input['status']."', last_modified_at=now() 
                         where mm_transaction_id='".$input['mm_transaction_id']."'" ;
-                return $result = DB::statement($sql);
+                $result = DB::statement($sql);
+                return true;
             }
             else
             {
@@ -83,11 +141,17 @@ class EloquentPaymentRepository extends BaseRepository implements PaymentReposit
         
         public function getPaymentTotalCash($email="", $paymentReason=0)
         {
-             if (!empty($email) && !empty($paymentReason))
+             if (!empty($email))
             {
-                $sql = "select sum(amount) as total_cash from payment_transactions where to_user='".$email."'
-                        and payment_reason=".$paymentReason." and status='".Config::get('constants.PAYMENTS.STATUSES.SUCCESS')."'" ;
-            
+               
+                 $sql = "select balance_cash as total_cash from balance_cash where user_email='$email' ";
+                 /* $sql = "select sum(amount) as total_cash from payment_transactions where to_user='".$email."'
+                        and status='".Config::get('constants.PAYMENTS.STATUSES.SUCCESS')."'" ;
+                if (!empty($paymentReason))
+                {
+                    $sql.=" and payment_reason=".$paymentReason."" ;
+                }
+            */
                return $result = DB::select($sql);
             }
             else
@@ -153,6 +217,121 @@ class EloquentPaymentRepository extends BaseRepository implements PaymentReposit
                          where REPLACE(service_id,',','')=".$postId." and REPLACE(relation_id,',','')=".$relationId." and "
                         . " status IN('".Config::get('constants.PAYMENTS.STATUSES.PENDING')."')";
                 return $result = DB::statement($sql);
+            }
+        }
+        
+        public function logPayout($input = array())
+        {
+            $sql = "insert into payout_logs (`from_user`,`to_mintmesh_user`,`to_provided_user`,`amount`,`payout_types_id`,`status`,`ip_address`,`service_response`,`paypal_item_id`,`paypal_batch_id`,`bank_id`)" ;
+            $sql.=" values('".$input['from_user']."','".$input['to_mintmesh_user']."',
+                            '".$input['to_provided_user']."',".$input['amount'].",".$input['payout_types_id'].",'".$input['status']."','".$_SERVER['REMOTE_ADDR']."','".$input['service_response']."','".$input['paypal_item_id']."','".$input['paypal_batch_id']."','".$input['bank_id']."')" ;
+            //echo $sql ; exit;
+            return $result = DB::statement($sql);
+        }
+        
+        public function getBalanceCash($userEmail='')
+        {
+            if (!empty($userEmail))
+            {
+                $sql = "select * from balanse_cash where user_email='".$userEmail."'";
+                return $result = DB::select($sql);
+            }
+            else
+            {
+                return 0;
+            }
+        }
+        public function getbankInfo($bank_id='')
+        {
+            if (!empty($bank_id))
+            {
+                $sql = "select * from user_bank_details where id='".$bank_id."'";
+                $result = DB::select($sql);
+                return $result[0];
+            }
+            else
+            {
+                return 0;
+            }
+        }
+        public function getbalanceCashInfo($userEmail='')
+        {
+            if (!empty($userEmail))
+            {
+                $sql ="select * from balance_cash where user_email='".$userEmail."'";
+                $result = DB::select($sql);
+                if (!empty($result))
+                {
+                    return $result[0];
+                }
+                else
+                {
+                    return 0;
+                }
+            }
+            else
+            {
+                return 0;
+            }
+        }
+        
+        public function editBalanceCash($bid=0, $input=array())
+        {
+            if (!empty($bid))
+            {
+                if (!empty($input))
+                {
+                    $sql = "update balance_cash set last_modified_at=now(),ip_address='".$_SERVER['REMOTE_ADDR']."'";
+                    foreach ($input as $k=>$v)
+                    {
+                        if ($k == 'balance_cash')
+                        {
+                            $sql.=",".$k."=".$v ;
+                        }
+                        else
+                        {
+                            $sql.=",".$k."='".$v."'" ;
+                        }
+                    }
+                    $sql.=" where id=".$bid ;
+                    return $result = DB::statement($sql);
+                    
+                }
+                else
+                {
+                    return 0;
+                }
+            }
+            else
+            {
+                return 0;
+            }
+        }
+        
+        public function insertBalanceCash($input=array())
+        {
+            if (!empty($input))
+            {
+                $sql = "insert into balance_cash (`user_id`, `user_email`,`balance_cash`,`currency`,`last_modified_at`,`ip_address`)";
+                $sql.=" values(" ;
+                foreach ($input as $k=>$v)
+                {
+                    if ($k == 'balance_cash' || $k=='user_id')
+                    {
+                        $sql.=$v."," ;
+                    }
+                    else
+                    {
+                        $sql.="'".$v."'," ;
+                    }
+                }
+                $sql.="now(),'".$_SERVER['REMOTE_ADDR']."')";
+                return $result = DB::statement($sql);
+
+            }
+            else
+            {
+                return 0;
             }
         }
             

@@ -32,7 +32,9 @@ return array(
                 "user_found"=>"User is already existing",
                 "user_not_found"=>"User Not Found",
                 "user_disconnect_success" => "Successfully Disconnected",
-                "user_disconnect_error" => "Users Not Connected"
+                "user_disconnect_error" => "Users Not Connected",
+                "wrong_password"=>"Invalid password",
+                "correct_password"=>"Password successfully validated"
             
                 
             ),
@@ -68,7 +70,15 @@ return array(
          "email_template_paths"=>array(
                 "user_welcome" => "emails.Api.User.welcome",
                 "forgot_password" => "emails.Api.User.forgot_password",
-                "join_invitation" => "emails.Api.User.join_invitation"
+                "join_invitation" => "emails.Api.User.join_invitation",
+                "payout_success_admin" => "emails.Api.Payment.payout_success_admin",
+                "payout_failure_admin" => "emails.Api.Payment.payout_failure_admin",
+                "payout_success_user" => "emails.Api.Payment.payout_success_user",
+                "payout_failure_user" => "emails.Api.Payment.payout_failure_user",
+                "manual_payout_success_admin" => "emails.Api.Payment.manualPayout_success_admin",
+                "manual_payout_failure_admin" => "emails.Api.Payment.manualPayout_failure_admin",
+                "manual_payout_success_user" => "emails.Api.Payment.manualPayout_success_user",
+                "manual_payout_failure_user" => "emails.Api.Payment.manualPayout_failure_user"
          ),
          "activate_user"=>array(
              "success"=>"Successfully activated",
@@ -87,7 +97,8 @@ return array(
              "invalid"=>"Reset Password Period Expired",
              "failed"=>"Some Error Occured",
              "error"=>"Invalid Token",
-             "valid"=>"Validated"
+             "valid"=>"Validated",
+             "same"=>"New password cant be same as old password"
          ),
          "import_contacts"=>array(
              "success"=>"Contacts Successfully Imported",
@@ -144,7 +155,8 @@ return array(
              "valid"=>"valid",
              "success"=>"Success",
              "failed"=>"Transaction Failed",
-             "error"=>"Invalid Input"
+             "error"=>"Invalid Input",
+             "invalid_amount"=>"Invalid amount"
          ),
          "sms"=>array(
              "valid"=>"valid",
@@ -168,7 +180,7 @@ return array(
         ),
         "recruiters"=>array(
             "success"=>"Successfully listed",
-            "not_found"=>"No Influencer Found"
+            "not_found"=>"No Recruiter Found"
         ),
         "change_password"=>array(
             "success"=>"Sucessfully password changed",
@@ -176,6 +188,47 @@ return array(
             "confirmPasswordMismatch"=>"Conform password mismatch",
             "oldPasswordMismatch"=>"Old password mismatch",
             "user_not_found"=>"User Not Found"
+        ),
+        "save_user_bank"=>array(
+            "success"=>"Sucessfully bank details saved",
+            "failed"=>"Some Error Occured",
+            "user_not_found"=>"User Not Found",
+            "details_already_exist"=>"Same bank details already exist for same user"
+        ),
+        "edit_user_bank"=>array(
+            "success"=>"Sucessfully bank details edited",
+            "failed"=>"Some Error Occured",
+            "user_not_found"=>"User Not Found",
+            "details_already_exist"=>"Same bank details already exist for same user"
+        ),
+        "delete_user_bank"=>array(
+            "success"=>"Sucessfully bank deleted",
+            "failed"=>"Some Error Occured",
+            "user_not_found"=>"User Not Found"
+        ),
+        "payout"=>array(
+            "success"=>"Payout done successfully",
+            "failed"=>"payout failed",
+            "error"=>"Some error occured",
+            "email_subject"=>"You have a Payout!",
+            "email_note"=>"Thanks for your patronage!",
+            "receipient_type"=>"Email",
+            "invalid_amount"=>"Invalid Amount"
+        ),
+        "list_user_banks"=>array(
+            "success"=>"Sucessfully banks of user listed",
+            "failed"=>"Some Error Occured",
+            "nobanksadded"=>"User has no banks added",
+            "user_not_found"=>"User Not Found"
+        ),
+        "manualpayout"=>array(
+            "success"=>"Sucessfully manual payment done",
+            "error"=>"Some Error Occured",
+            "invalid_amount"=>"You cash limit excised",
+            "wrong_password"=>"User Password Mismatch"
+        ),
+        "bad_words"=>array(
+            "success"=>"Successfully cached"
         )
 
 

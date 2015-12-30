@@ -239,6 +239,23 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
             }
             
         }
+        
+        /*
+         * delete imported contacts before fresh import
+         */
+        public function deleteImportedContacts($userEmail='')
+        {
+            if (!empty($userEmail))
+            {
+                $queryString = "match (u:User)-[r:IMPORTED]->(n:User) where u.emailid='".$userEmail."' and not (u)-[:ACCEPTED_CONNECTION]-(n) and not (u)-[:REQUESTED_CONNECTION]-(n) delete r";
+                 $query = new CypherQuery($this->client, $queryString);
+                return $result = $query->getResultSet();
+            }
+            else
+            {
+                return 0;
+            }
+        }
        
         
 }

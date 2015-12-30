@@ -131,7 +131,8 @@ return array(
 		'LucaDegasperi\OAuth2Server\Storage\FluentStorageServiceProvider',
                 'Bradleyboy\Laravel\BraintreeServiceProvider',
                 'Aloha\Twilio\Support\Laravel\ServiceProvider',
-                'F2m2\Apidocs\ApidocsServiceProvider'
+                'F2m2\Apidocs\ApidocsServiceProvider',
+                'Aws\Laravel\AwsServiceProvider'
 	),
 
 	/*
@@ -199,7 +200,8 @@ return array(
 		'Validator'         => 'Illuminate\Support\Facades\Validator',
 		'View'              => 'Illuminate\Support\Facades\View',
 		'Authorizer' 		=> 'LucaDegasperi\OAuth2Server\Facades\AuthorizerFacade',
-                'Twilio' => 'Twilio\Support\Laravel\Facade'
+                'Twilio' => 'Twilio\Support\Laravel\Facade',
+                'AWS'               => 'Aws\Laravel\AwsFacade',
 
 	),
 

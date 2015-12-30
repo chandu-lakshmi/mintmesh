@@ -98,7 +98,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
             {
                 $email = $this->appEncodeDecode->filterString(strtolower($input['email']));
                 $password = Hash::make($input['password']);
-                $count = DB::update("update users set password=? where md5(emailid)=?",array($password,$email));
+                $count = DB::update("update users set password=?, resetactivationcode='' where md5(emailid)=?",array($password,$email));
                 return $count ;
             }
         }
@@ -152,11 +152,11 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                {
                    if ($is_default)
                    {
-                       DB::update("update notifications_logs set other_status='".$other_status."' where from_email=? and notifications_types_id=? and to_email=? and other_status=?",array($result->other_email, 4, $result->from_email, $other_status));
+                       DB::update("update notifications_logs set other_status='".$other_status."', updated_at=now() where from_email=? and notifications_types_id=? and to_email=? and other_status=?",array($result->other_email, 4, $result->from_email, $other_status));
                    }
                    else
                    {
-                       DB::update("update notifications_logs set other_status='".$other_status."' where from_email=? and notifications_types_id=? and to_email=?",array($result->other_email, 4, $result->from_email));
+                       DB::update("update notifications_logs set other_status='".$other_status."', updated_at=now() where from_email=? and notifications_types_id=? and to_email=?",array($result->other_email, 4, $result->from_email));
                    }
                    
                }
@@ -164,11 +164,11 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                {
                    if ($is_default)
                    {
-                       return DB::update("update notifications_logs set status='0',other_status='".$other_status."' where from_email=? and notifications_types_id=? and to_email=? and other_email=? and extra_info=? and other_status=?",array($result->from_email, $result->notifications_types_id, $result->to_email,$result->other_email,$result->extra_info, $other_status));
+                       return DB::update("update notifications_logs set status='0',other_status='".$other_status."', updated_at=now() where from_email=? and notifications_types_id=? and to_email=? and other_email=? and extra_info=? and other_status=?",array($result->from_email, $result->notifications_types_id, $result->to_email,$result->other_email,$result->extra_info, $other_status));
                    }
                    else
                    {
-                       return DB::update("update notifications_logs set status='0',other_status='".$other_status."' where from_email=? and notifications_types_id=? and to_email=? and other_email=? and extra_info=?",array($result->from_email, $result->notifications_types_id, $result->to_email,$result->other_email,$result->extra_info));
+                       return DB::update("update notifications_logs set status='0',other_status='".$other_status."', updated_at=now() where from_email=? and notifications_types_id=? and to_email=? and other_email=? and extra_info=?",array($result->from_email, $result->notifications_types_id, $result->to_email,$result->other_email,$result->extra_info));
                    }
                    
                }
@@ -176,11 +176,11 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                {
                    if ($is_default)
                    {
-                       return DB::update("update notifications_logs set status='0',other_status='".$other_status."' where from_email=? and notifications_types_id=? and to_email=? and other_status=?",array($result->from_email, $result->notifications_types_id, $result->to_email, $other_status));
+                       return DB::update("update notifications_logs set status='0',other_status='".$other_status."', updated_at=now() where from_email=? and notifications_types_id=? and to_email=? and other_status=?",array($result->from_email, $result->notifications_types_id, $result->to_email, $other_status));
                    }
                    else
                    {
-                       return DB::update("update notifications_logs set status='0',other_status='".$other_status."' where from_email=? and notifications_types_id=? and to_email=? ",array($result->from_email, $result->notifications_types_id, $result->to_email));
+                       return DB::update("update notifications_logs set status='0',other_status='".$other_status."', updated_at=now() where from_email=? and notifications_types_id=? and to_email=? ",array($result->from_email, $result->notifications_types_id, $result->to_email));
                    }
                    
                }
@@ -201,7 +201,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                switch ($notification_type)
                 {
                     case 'request_connect':
-                            $types= array(1,3,4,7,10,11,13,17,21);
+                            $types= array(1,3,4,7,10,11,20,17,21);
                             $type = implode(",",$types);
                             break;
                     default:
@@ -262,7 +262,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                switch ($notification_type)
                 {
                     case 'request_connect':
-                            $types= array(1,3,4,7,11,13,17);
+                            $types= array(1,3,4,7,11,20,17);
                             $type = implode(",",$types);
                             break;
                     default:
@@ -314,21 +314,44 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
             return $result ;
         }
         
-         public function logEmail($input)
-         {
-             return $this->email->create($input);
-         }
-         public function logNotification($input)
-         {
-             return $this->notifications->create($input);
-         }
-         public function getNotification($id = 0)
-         {
-             $sql = "select nl.*, nt.name as not_type from notifications_logs nl 
-                        left join notifications_types nt on nt.id = nl.notifications_types_id 
-                        where nl.id = ".$id ;
-             return $result = DB::select($sql);
-         }
+        public function updateUserresetpwdcode($input)
+        {
+            $sql = "update users set resetactivationcode='".$input['resetactivationcode']."' where id='".$input['user_id']."'";
+            return $result = DB::statement($sql);
+        }
+        
+        public function getresetcodeNpassword($emailid) 
+        {
+            $email = $this->appEncodeDecode->filterString(strtolower($emailid));
+            $sql = "select password, resetactivationcode from users where status = '1' and md5(emailid)='".$email."'";
+            $result = DB::select($sql);
+            if (!empty($result))
+            {
+                return $result[0] ;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+        public function logEmail($input)
+        {
+            return $this->email->create($input);
+        }
+        
+        public function logNotification($input)
+        {
+            return $this->notifications->create($input);
+        }
+        
+        public function getNotification($id = 0)
+        {
+            $sql = "select nl.*, nt.name as not_type from notifications_logs nl 
+                       left join notifications_types nt on nt.id = nl.notifications_types_id 
+                       where nl.id = ".$id ;
+            return $result = DB::select($sql);
+        }
          
         public function logLevel($points_types_id=0,$email="", $from="", $other="",$points=0)
         {
@@ -529,6 +552,12 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                 return false ;
             }
             
+        }
+        
+        public function getBadWords()
+        {
+            $sql = "select word from bad_words";
+            return $result = DB::select($sql);
         }
         
         

@@ -1,4 +1,5 @@
 <?php namespace Mintmesh\Services\APPEncode;
+use Cache;
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -13,15 +14,18 @@
 
  class  APPEncode {
     //put your code here
-    
-    
+
+    protected $profanity_list = array('word');
     public function filterString($str) {
         if (isset($str) && $str != '' && $str != '0' && !is_array($str)) {
-            $str = stripslashes($str) ;
+            //$str = stripslashes($str) ;
             //$str = addcslashes($str,'\\') ;
-            $str = (trim(htmlentities($str, ENT_QUOTES,"UTF-8")));
-            $str = str_replace("&amp;", "&", $str);
-
+            $search = array('\\', "\0", "\n", "\r", "'", '"', "\x1a");
+            $replace = array('\\\\', '\\0', '\\n', '\\r', "\\'", '\\"', '\\Z');
+            $str = str_replace($search, $replace, $str);
+            //$str = (trim(htmlentities($str, ENT_QUOTES,"UTF-8")));
+            //$str = str_replace("&amp;", "&", $str);
+            
             return $str;
         }
         else
@@ -29,13 +33,21 @@
     }
 
    public function filterStringDecode($str) {
-        if (isset($str) && $str != '' && $str != '0') {
-            return trim(htmlspecialchars_decode(html_entity_decode($str, ENT_QUOTES,'UTF-8')));
-            // return $str;
+        if (isset($str) && $str != '' && $str != '0' && !is_array($str)) {
+            //$str = stripslashes($str) ;
+            //$str = addcslashes($str,'\\') ;
+            $replace = array('\\', "\0", "\n", "\r", "'", '"', "\x1a");
+            $search = array('\\\\', '\\0', '\\n', '\\r', "\\'", '\\"', '\\Z');
+            $str = str_replace($search, $replace, $str);
+            //$str = (trim(htmlentities($str, ENT_QUOTES,"UTF-8")));
+            //$str = str_replace("&amp;", "&", $str);
+            
+            return $str;
         }
         else
             return $str;
-     }
+    }
+     
      
       public function filterStringLashes($str) {
         if (isset($str) && $str != '' && $str != '0') {
@@ -125,5 +137,44 @@
               return 0;
           }
       }
+       function cleanBadWords($str)
+        {
+            if (Cache::has('badWords')) { 
+                $this->profanity_list = Cache::get('badWords');
+            } 
+           $explodeString = explode(" ", $str) ;
+           if (is_string($str))
+           {
+               $explodeStringArray = explode(" ", $str) ;
+                if (is_array($explodeStringArray))
+                {
+                    foreach ($explodeStringArray as $key=>$val)
+                    {
+                        if (in_array(strtolower($val), $this->profanity_list))
+                        {
+                            $temp = substr($val, 1,-1);
+                            $replacedString = str_replace($temp, str_repeat('*',strlen($temp)),$val);
+                            $explodeString[$key] = $replacedString;
+                        }
+                    }
+                    $str = implode(' ', $explodeString);
+                }
+                else
+                {
+                    if (in_array(strtolower($str), $this->profanity_list))
+                    {
+                        $temp = substr($val, 1,-1);
+                        $replacedString = str_replace($temp, '*',$str);
+                        $str = $replacedString;
+                    }
+                }
+                return $str ; 
+           }
+           else
+           {
+               return '';
+           }
+
+        }
      
 }

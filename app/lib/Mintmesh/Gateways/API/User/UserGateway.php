@@ -193,8 +193,15 @@ class UserGateway {
         //validation on refer my contact input
         public function validateReferMyContactInfo($input)
         {
-            return $this->doValidation('refer_my_contact','MINTMESH.referrals.invalid_input');
+            return $this->doValidation('refer_my_contact','MINTMESH.user.valid');
         }
+        
+        //validation on check user input
+        public function validateCheckUserPasswordInfo($input)
+        {
+            return $this->doValidation('check_user_password','MINTMESH.user.valid');
+        }
+        
         
         /**
 	 * update password.
@@ -203,23 +210,18 @@ class UserGateway {
 	 */ 
         public function changePassword($input) 
         {
-            
             if ($this->loggedinUserDetails = $this->getLoggedInUser()) {
-                
-                if(Hash::make($input['password_old']) == $this->loggedinUserDetails->password) {
+                if(Hash::check($input['password_old'],$this->loggedinUserDetails->password)) {
                     if($input['password_new'] == $input['password_new_confirmation']) {
                         $post=array();
-                        $post['email']=$this->loggedinUserDetails->email ;
+                        $post['email']=$this->loggedinUserDetails->emailid ;
                         $post['password']=$input['password_new'];
-                        // update status of the user to active
-                        $updateCount = $this->userRepository->changePassword($post);
-                        if (!empty($updateCount))
-                        {
+                        // change password of user
+                        $changePwd = $this->userRepository->changePassword($post);
+                        if (!empty($changePwd)) {
                             $message = array('msg'=>array(Lang::get('MINTMESH.change_password.success')));
                             return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
-                        }
-                        else
-                        {
+                        } else {
                             $message = array('msg'=>array(Lang::get('MINTMESH.change_password.failed')));
                             return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
                         }
@@ -356,11 +358,9 @@ class UserGateway {
         public function getSkills($input)
         { 
             if (Cache::has('skills')) { 
-                $skillsR = Cache::get('skills');                
-                \Log::info("<<<<<<<<< In if >>>>>>>>>");
+                $skillsR = Cache::get('skills');
             } else {
                 $skillsR = $this->userRepository->getSkills($input);
-                \Log::info("<<<<<<<<< In else >>>>>>>>>");
                 Cache::add('skills', $skillsR, 1000);                
             }  
             // $skillsR = $this->userRepository->getSkills($input);
@@ -393,8 +393,8 @@ class UserGateway {
                 $originalFileName = $input['dpImage']->getClientOriginalName();
                 //upload the file
                 $this->userFileUploader->source = $input['dpImage'] ;
-                $this->userFileUploader->destination = public_path().Config::get('constants.DP_PATH') ;
-                $renamedFileName = $this->userFileUploader->moveFile();
+                $this->userFileUploader->destination = Config::get('constants.S3BUCKET') ;
+                $renamedFileName = $this->userFileUploader->uploadToS3();
             }
             
             if (!empty($input['fromLinkedin']))
@@ -419,6 +419,7 @@ class UserGateway {
                 $neoInput['dp_renamed_name'] = $renamedFileName ;
                 $neoInput['linkedinImage'] = $linkedinFileName ;
                 $neoInput['points_earned'] = Config::get('constants.POINTS.COMPLETE_PROFILE') ;
+                $neoInput['completed_contact'] = 1 ;
                 $updatedNeoUser =  $this->neoUserRepository->updateUser($neoInput) ;
                 if (count($updatedNeoUser))
                 {
@@ -494,7 +495,7 @@ class UserGateway {
                         }
                         else if (!empty($neoUser->dp_renamed_name))
                         {
-                            $neoUser->dp_path = $neoUser->dp_path."/".$neoUser->dp_renamed_name ;
+                            $neoUser->dp_path = $neoUser->dp_renamed_name ;
                         }
                         else
                         {
@@ -581,7 +582,7 @@ class UserGateway {
                                     }
                                     else if (!empty($neoUser->dp_renamed_name))
                                     {
-                                        $neoUser->dp_path = $neoUser->dp_path."/".$neoUser->dp_renamed_name ;
+                                        $neoUser->dp_path = $neoUser->dp_renamed_name ;
                                     }
                                     else
                                     {
@@ -710,49 +711,35 @@ class UserGateway {
             $decodedString = $this->base_64_decode($input['code']) ;
             $sentTime = $decodedString['string1'] ;
             $email = $decodedString['string2'];
-            if (!empty($email))
-            {
-                //set timezone of mysql if different servers are being used
-
-                //date_default_timezone_set('America/Los_Angeles');
-                $expiryTime =  date('Y-m-d H:i:s', strtotime($sentTime . " +".Config::get('constants.MNT_USER_EXPIRY_HR')." hours"));
-                //check if expiry time is valid
-
-                if (strtotime($expiryTime) > strtotime(date('Y-m-d H:i:s')))
-                {
-                    $post=array();
-                    $post['email']=$email ;
-                    $post['password']=$input['password'];
-                    // update status of the user to active
-                    $updateCount = $this->userRepository->resetPassword($post);
-                    if (!empty($updateCount))
-                    {
-                        $message = array('msg'=>array(Lang::get('MINTMESH.reset_password.success')));
-                        return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
-                        
-                    }
-                    else
-                    {
-                        $message = array('msg'=>array(Lang::get('MINTMESH.reset_password.failed')));
+            //to get resetactivationcode 
+            $passwordData = $this->userRepository->getresetcodeNpassword($email);
+            if (!empty($email) && !empty($passwordData) && $passwordData->resetactivationcode == $input['code']) {
+                
+                    //set timezone of mysql if different servers are being used
+                    //date_default_timezone_set('America/Los_Angeles');
+                    $expiryTime =  date('Y-m-d H:i:s', strtotime($sentTime . " +".Config::get('constants.MNT_USER_EXPIRY_HR')." hours"));
+                    //check if expiry time is valid
+                    if (strtotime($expiryTime) > strtotime(date('Y-m-d H:i:s'))) {
+                        $post=array();
+                        $post['email']=$email ;
+                        $post['password']=$input['password'];
+                        // update status of the user to active
+                        $updateCount = $this->userRepository->resetPassword($post);
+                        if (!empty($updateCount)) {
+                            $message = array('msg'=>array(Lang::get('MINTMESH.reset_password.success')));
+                            return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
+                        } else {
+                            $message = array('msg'=>array(Lang::get('MINTMESH.reset_password.failed')));
+                            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
+                        }
+                    } else {
+                        $message = array('msg'=>array(Lang::get('MINTMESH.reset_password.invalid')));
                         return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
-                        
                     }
-
-                }
-                else
-                {
-                    $message = array('msg'=>array(Lang::get('MINTMESH.reset_password.invalid')));
-                    return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
-                    
-                }
-            }
-            else
-            {
+            } else {
                 $message = array('msg'=>array(Lang::get('MINTMESH.reset_password.error')));
                 return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
-                
             }
-            
         }
         
         /*
@@ -765,53 +752,58 @@ class UserGateway {
                 //get user details
                 $userDetails = $this->userRepository->getUserByEmail($input['emailid']);
                 // set email required params
-                 $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.forgot_password');
-                 $this->userEmailManager->emailId = $input['emailid'];
-                 $dataSet = array();
-                 $dataSet['name'] =$userDetails['firstname'];
-                 //set reset code
-                 //set timezone of mysql if different servers are being used
-                 //date_default_timezone_set('America/Los_Angeles');
-                 $currentTime =  date('Y-m-d H:i:s');
-                 $email = md5($input['emailid']) ;
-                 $code = $this->base_64_encode($currentTime, $email) ;
-                 $deep_link_type = !empty($input['os_type'])?$input['os_type']:'';
-                 $deep_link = $this->getDeepLinkScheme($deep_link_type);
-                 $appLink = $deep_link.Config::get('constants.MNT_VERSION')."/user/reset_password/".$code ;
-                 //$appLinkCoded = $this->base_64_encode("", $appLink) ; 
-                 $dataSet['link'] = $appLink ;
-                 $dataSet['hrs'] = Config::get('constants.MNT_USER_EXPIRY_HR');
-                //$dataSet['link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/redirect_to_app/".$appLinkCoded ;;
-                 $this->userEmailManager->dataSet = $dataSet;
-                 $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.forgot_password');
-                 $this->userEmailManager->name = $userDetails['firstname']." ".$userDetails['lastname'];;
-                 $email_sent = $this->userEmailManager->sendMail();
-                 //log email status
-                 $emailStatus = 0;
-                 if (!empty($email_sent))
-                 {
-                     $emailStatus = 1;
-                 }
-                 $emailLog = array(
-                        'emails_types_id' => 2,
-                        'from_user' => 0,
-                        'from_email' => '',
-                        'to_email' => !empty($userDetails)?$userDetails->emailid:'',
-                        'related_code' => $code,
-                        'sent' => $emailStatus,
-                        'ip_address' => $_SERVER['REMOTE_ADDR']
-                    ) ;
-                 $this->userRepository->logEmail($emailLog);
-                 if (!empty($email_sent))
-                 {
-                     $message = array('msg'=>array(Lang::get('MINTMESH.forgot_password.success')));
-                     return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
-                 }
-                 else
-                 {
-                     $message = array('msg'=>array(Lang::get('MINTMESH.forgot_password.error')));
-                     return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
-                 }
+                $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.forgot_password');
+                $this->userEmailManager->emailId = $input['emailid'];
+                $dataSet = array();
+                $dataSet['name'] =$userDetails['firstname'];
+                //set reset code
+                //set timezone of mysql if different servers are being used
+                //date_default_timezone_set('America/Los_Angeles');
+                $currentTime =  date('Y-m-d H:i:s');
+                $email = md5($input['emailid']) ;
+                $code = $this->base_64_encode($currentTime, $email) ;
+                $deep_link_type = !empty($input['os_type'])?$input['os_type']:'';
+                $deep_link = $this->getDeepLinkScheme($deep_link_type);
+                $appLink = $deep_link.Config::get('constants.MNT_VERSION')."/user/reset_password/".$code ;
+                //$appLinkCoded = $this->base_64_encode("", $appLink) ; 
+                $dataSet['link'] = $appLink ;
+                $dataSet['hrs'] = Config::get('constants.MNT_USER_EXPIRY_HR');
+               //$dataSet['link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/redirect_to_app/".$appLinkCoded ;;
+                $this->userEmailManager->dataSet = $dataSet;
+                $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.forgot_password');
+                $this->userEmailManager->name = $userDetails['firstname']." ".$userDetails['lastname'];;
+                $email_sent = $this->userEmailManager->sendMail();
+                //log email status
+                $emailStatus = 0;
+                if (!empty($email_sent))
+                {
+                    $emailStatus = 1;
+                }
+                $emailLog = array(
+                       'emails_types_id' => 2,
+                       'from_user' => 0,
+                       'from_email' => '',
+                       'to_email' => !empty($userDetails)?$userDetails->emailid:'',
+                       'related_code' => $code,
+                       'sent' => $emailStatus,
+                       'ip_address' => $_SERVER['REMOTE_ADDR']
+                   ) ;
+                $this->userRepository->logEmail($emailLog);
+                //update code in users table
+                $inputdata = array('user_id' => $userDetails->id,
+                                   'resetactivationcode' => $code);
+                $this->userRepository->updateUserresetpwdcode($inputdata);
+                if (!empty($email_sent))
+                {
+
+                    $message = array('msg'=>array(Lang::get('MINTMESH.forgot_password.success')));
+                    return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
+                }
+                else
+                {
+                    $message = array('msg'=>array(Lang::get('MINTMESH.forgot_password.error')));
+                    return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
+                }
             }
             else
             {
@@ -821,6 +813,7 @@ class UserGateway {
         }
         public function editProfile($input)
         {
+            $userInput = array();
             if (!empty($input['access_token']))
                 unset($input['access_token']);
             if (!empty($input))
@@ -853,12 +846,33 @@ class UserGateway {
                     }
                     else if (!empty($input['info_type']) && in_array($input['info_type'], $this->infoTypes))
                     {
+                        
                         $sectionInput = $input;
                         $sectionInput['emailid'] = $this->loggedinUserDetails->emailid ;
                         $sectionInfoSuccess = $this->editSectionInfo($sectionInput, $input['info_type']);
+                        if ($sectionInfoSuccess)
+                        {
+                            //update profile completion percentage
+                            $userInput['completed_'.strtolower($input['info_type'])] = 1 ;
+                        }
+                        else
+                        {
+                            //update profile completion percentage
+                            $userInput['completed_'.strtolower($input['info_type'])] = 0 ;
+                        }
                     }
                     else if (!empty($input['info_type']) && $input['info_type'] == 'skills')
                     {
+                        //update profile completion percentage
+                        if (!empty($input['skills']))
+                        {
+                            $userInput['completed_'.strtolower($input['info_type'])] = 1 ;
+                        }
+                        else
+                        {
+                            $userInput['completed_'.strtolower($input['info_type'])] = 0 ;
+                        }
+                        
                         $skillsInput = $input;
                         $skillsInput['emailid'] = $this->loggedinUserDetails->emailid ;
                         $skillsInfoSuccess = $this->editSkillsInfo($skillsInput);
@@ -869,8 +883,12 @@ class UserGateway {
                         $resumeInput['emailid'] = $this->loggedinUserDetails->emailid ;
                         $resumeInfoSuccess = $this->editResumeInfo($resumeInput);
                     }
-                    $loggedinUserDetails = $this->getLoggedInUser();
-                    //Cache::add('userprofile_'.Crypt::encrypt($this->loggedinUserDetails->emailid), $loggedinUserDetails, 1000);  
+                    //update user node to update proflie completion percentage
+                    if (!empty($userInput))
+                    {
+                        $userInput['emailid'] = $this->loggedinUserDetails->emailid ;
+                        $this->neoUserRepository->updateUser($userInput);
+                    }
                     $message = array('msg'=>array(Lang::get('MINTMESH.user.edit_success')));
                     return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
                 }
@@ -931,14 +949,14 @@ class UserGateway {
                     $originalFileName = $input['dpImage']->getClientOriginalName();
                     //upload the file
                     $this->userFileUploader->source = $input['dpImage'] ;
-                    $this->userFileUploader->destination = public_path().Config::get('constants.DP_PATH') ;
-                    $renamedFileName = $this->userFileUploader->moveFile();
+                    $this->userFileUploader->destination = Config::get('constants.S3BUCKET') ;
+                    $renamedFileName = $this->userFileUploader->uploadToS3();
                     $neoInput['from_linkedin'] = $from_linkedin ;
                     $neoInput['dp_path'] = url('/').Config::get('constants.DP_PATH') ;
                     $neoInput['dp_original_name'] = $originalFileName ;
                     $neoInput['dp_renamed_name'] = $renamedFileName ;
                     $neoInput['linkedinImage'] = $linkedinFileName ;
-                    $returnDp = $neoInput['dp_path']."/".$neoInput['dp_renamed_name'] ;
+                    $returnDp = $renamedFileName;
                     unset($input['dpImage']);
                 }
                 foreach ($input as $key=>$val)
@@ -973,6 +991,7 @@ class UserGateway {
                     ) ;
                     $t = $this->userRepository->logNotification($notificationLog);
                 }
+                $neoInput['completed_contact'] = 1 ;
                 $updatedNeoUser =  $this->neoUserRepository->updateUser($neoInput) ;
                 if (!empty($input['job_function']))
                 {
@@ -997,6 +1016,7 @@ class UserGateway {
         {
             if (!empty($input))
             {
+                $return = true ;
                 $sectionName = Config::get('constants.USER_CATEGORIES.'.  strtoupper($section)) ;
                 $relationName = Config::get('constants.RELATIONS_TYPES.MORE_INFO') ;
                 // $expInfo = !empty($input['id'])?$this->neoUserRepository->getSectionInfo($input['id'], $sectionName):array();
@@ -1016,10 +1036,16 @@ class UserGateway {
                     {
                         //remove all relations for experience
                         $this->neoUserRepository->removeCategoryNodeRelation($input, $sectionName, $relationName);
+                        //get number of categories relation remainng for the user
+                        $remainingCount = $this->neoUserRepository->getCategoryNodeRelationCount($input, $sectionName, $relationName);
+                        if (empty($remainingCount))
+                        {
+                            $return = false ;
+                        }
                     }
                 }
                 
-                return true ;
+                return $return ;
             }
         }
         
@@ -1219,13 +1245,14 @@ class UserGateway {
             $referral_cash_res = $this->paymentRepository->getPaymentTotalCash($loggedinUserDetails->emailid,1);
             if (!empty($referral_cash_res))
             {
-                $total_cash = $referral_cash_res[0]->total_cash ;
+                $total_cash = !empty($referral_cash_res[0]->total_cash)?$referral_cash_res[0]->total_cash:0 ;
             }
             $returnArray['total_cash'] = $total_cash ;
             return $returnArray ;
         }
         public function formUserMoreDetailsArray($input=array())
         {
+            
             $result = array();
             if (!empty($input))
             {
@@ -1618,13 +1645,10 @@ class UserGateway {
          */
         public function getSingleNotificationDetails($input)
         {
-            $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($input['emailid']) ;
             $loggedinUserDetails = $this->getLoggedInUser();
-            if ($loggedinUserDetails && count($neoUserDetails))
+            if ($loggedinUserDetails)
             {
-                if (!empty($neoUserDetails))
-                {
-                    $r = $this->formUserDetailsArray($neoUserDetails, 'attribute') ;
+                    $r = array() ;
                     $notifications_count = 0;
                     //get push data
                     $notification = $this->userRepository->getNotification($input['push_id']);
@@ -1632,10 +1656,22 @@ class UserGateway {
                     {
                         $notifications_count = $this->userRepository->getNotificationsCount($loggedinUserDetails, $input['notification_type']);
                         $notification = $notification[0];
+                         if ($notification->notifications_types_id == 20){//if payment done notification the change the from and other details
+                            $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($notification->other_email) ;
+                        }
+                        else{
+                            $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($notification->from_email) ;
+                        }
+                        $r = $this->formUserDetailsArray($neoUserDetails, 'attribute') ;
                         $thirdName = "";
                         if (!empty($notification->other_email))
                         {
-                            $otherEmailDetails = $this->neoUserRepository->getNodeByEmailId($notification->other_email) ;
+                            if ($notification->notifications_types_id == 20){//if payment done notification the change the from and other details
+                                $otherEmailDetails = $this->neoUserRepository->getNodeByEmailId($notification->from_email) ;
+                            }
+                            else{
+                                $otherEmailDetails = $this->neoUserRepository->getNodeByEmailId($notification->other_email) ;
+                            }
                             if (in_array($notification->notifications_types_id, $this->notificationsTypes))
                             {
                                 $thirdName = $otherEmailDetails->fullname ;
@@ -1671,7 +1707,7 @@ class UserGateway {
                                 $e = $notification->other_email ;
                                 $f = $notification->from_email ;
                             }
-                            else if ($notification->notifications_types_id == 11)
+                            else if ($notification->notifications_types_id == 11 || $notification->notifications_types_id == 20)
                             {
                                 $e = $notification->to_email ;
                                 $f = $notification->from_email ;
@@ -1681,7 +1717,7 @@ class UserGateway {
                                 $e = $notification->from_email ;
                                 $f = $notification->to_email ;
                             }
-                            else if ($notification->notifications_types_id == 13 || $notification->notifications_types_id == 16)
+                            else if ($notification->notifications_types_id == 16)
                             {
                                 $e = $notification->from_email ;
                                 $f = $notification->other_email ;
@@ -1729,7 +1765,6 @@ class UserGateway {
                     //$data = array("user"=>$r);
                     $message = array('msg'=>array(Lang::get('MINTMESH.user.profile_success')));
                     return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
-                }
             }
             else
             {
@@ -1842,7 +1877,7 @@ class UserGateway {
                     }
                     else if (!empty($neoLoggedInUserDetails->dp_renamed_name))
                     {
-                        $r['dp_path'] = $neoLoggedInUserDetails->dp_path."/".$neoLoggedInUserDetails->dp_renamed_name ;
+                        $r['dp_path'] = $neoLoggedInUserDetails->dp_renamed_name ;
                     }
                     else
                     {
@@ -1853,10 +1888,27 @@ class UserGateway {
                 {
                     $r['dp_path']="";
                 }
+                //get profile completion percentage
+                $r['profile_completion_percentage'] = $this->calculateProfilePercentageCompletion($neoLoggedInUserDetails);
             }
            return $r ; 
         }
         
+        public function calculateProfilePercentageCompletion($neoLoggedInUserDetails)
+        {
+            $percentage = 0;
+            $profileSections = Config::get('constants.PROFILE_COMPLETION_SECTIONS');
+            foreach ($profileSections as $val)
+            {
+                $varName = 'completed_'.$val ;
+                if (!empty($neoLoggedInUserDetails->$varName))
+                {
+                    //echo $val;
+                    $percentage = $percentage+Config::get('constants.PROFILE_COMPLETION_VALUES.'.  strtoupper($val));
+                }
+            }
+            return $percentage ;
+        }
         
         /*
          * country codes 
@@ -2115,7 +2167,13 @@ class UserGateway {
                         $notes = array();
                         foreach ($notifications as $notification)
                         {
-                            $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($notification->from_email) ;
+                            if ($notification->notifications_types_id == 20){//if payment done notification the change the from and other details
+                                $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($notification->other_email) ;
+                            }
+                            else{
+                                $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($notification->from_email) ;
+                            }
+                            
                             if (!empty($neoUserDetails))
                             {
                                 $noReferralsPost = false ;
@@ -2124,7 +2182,13 @@ class UserGateway {
                                 $thirdName = "";
                                 if (!empty($notification->other_email))
                                 {
-                                    $otherEmailDetails = $this->neoUserRepository->getNodeByEmailId($notification->other_email) ;
+                                    if ($notification->notifications_types_id == 20){//if payment done notification the change the from and other details
+                                        $otherEmailDetails = $this->neoUserRepository->getNodeByEmailId($notification->from_email) ;
+                                    }
+                                    else{
+                                        $otherEmailDetails = $this->neoUserRepository->getNodeByEmailId($notification->other_email) ;
+                                    }
+                                    
                                     if (in_array($notification->notifications_types_id, $this->notificationsTypes))
                                     {
                                         $thirdName = !empty($otherEmailDetails->fullname)?$otherEmailDetails->fullname:'' ;
@@ -2160,7 +2224,7 @@ class UserGateway {
                                         $e = $notification->other_email ;
                                         $f = $notification->from_email ;
                                     }
-                                    else if ($notification->notifications_types_id == 11)
+                                    else if ($notification->notifications_types_id == 11 || $notification->notifications_types_id == 20)
                                     {
                                         $e = $notification->to_email ;
                                         $f = $notification->from_email ;
@@ -2170,7 +2234,7 @@ class UserGateway {
                                         $e = $notification->from_email ;
                                         $f = $notification->to_email ;
                                     }
-                                    else if ($notification->notifications_types_id == 13 || $notification->notifications_types_id == 16)
+                                    else if ($notification->notifications_types_id == 16)
                                     {
                                         $e = $notification->from_email ;
                                         $f = $notification->other_email ;
@@ -2254,8 +2318,10 @@ class UserGateway {
                     }
                     else
                     {
+                        $phone_verified = !empty($neoLoggedInUserDetails->phoneverified)?$neoLoggedInUserDetails->phoneverified:0;
+                        $data = array("notifications"=>array(), "notifications_count"=>0,"phone_verified"=>$phone_verified,'user_details'=>$loggeduserDetails) ;
                         $message = array('msg'=>array(Lang::get('MINTMESH.notifications.no_notifications')));
-                        return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
+                        return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
                     }
                 }
                 else
@@ -3291,6 +3357,62 @@ class UserGateway {
             }
             
             return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $message, $data) ;
+        }
+        
+        public function getBadWords()
+        {
+            if (Cache::has('badWords')) { 
+                $data = Cache::get('badWords');
+            } 
+            else
+            {
+                $badwords = array();
+                $badWordsList = $this->userRepository->getBadWords();
+                if (!empty($badWordsList))
+                {
+                    foreach ($badWordsList as $badWord)
+                    {
+                        $badwords[]=$badWord->word ;
+                    }
+                }
+                $data = $badwords;
+                Cache::forever('badWords', $badwords);
+                
+            }
+            $responseCode = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg  = self::SUCCESS_RESPONSE_MESSAGE;
+            $message      = array('msg'=>array(Lang::get('MINTMESH.bad_words.success')));
+            return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $message, $data) ;
+            
+        }
+        
+        public function checkUserPassword($input)
+        {
+            $loggedinUserDetails = $this->getLoggedInUser();
+            if ($loggedinUserDetails) {
+                //check password
+                if(Hash::check($input['password'],$loggedinUserDetails->password)) {
+                    $responseMessage = Lang::get('MINTMESH.user.correct_password');
+                    $responseCode = self::SUCCESS_RESPONSE_CODE;
+                    $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
+                    $responseData = array();
+                }
+                else
+                {
+                    $responseMessage = Lang::get('MINTMESH.user.wrong_password');
+                    $responseCode = self::ERROR_RESPONSE_CODE;
+                    $responseStatus = self::ERROR_RESPONSE_MESSAGE;
+                    $responseData = array();
+                }
+            }
+            else {
+                $responseMessage = Lang::get('MINTMESH.user.user_not_found');
+                $responseCode = self::ERROR_RESPONSE_CODE;
+                $responseStatus = self::ERROR_RESPONSE_MESSAGE;
+                $responseData = array();
+            }
+            $message = array('msg'=>array($responseMessage));
+            return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $responseData) ;
         }
         
         

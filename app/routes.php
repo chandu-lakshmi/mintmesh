@@ -32,10 +32,6 @@ Route::get('/privacy_policy', function()
 //for user login & registration with out oAuth
 Route::group(array('prefix' => 'v1'), function() {
 
-    
-    // FB login
-    //Route::get("user/fb_login", "API\User\UserController@loginWithFacebook");
-    Route::get("paypalTest", "API\User\UserController@paypalTest");
 
     //get country codes list
     Route::get("country_codes", "API\User\UserController@countryCodes");
@@ -76,6 +72,9 @@ Route::group(array('prefix' => 'v1'), function() {
     //citrus payment\
     Route::any("payment/generate_bill", "API\Payment\PaymentController@generateCitrusBill");
     Route::post("payment/citrus_transaction", "API\Payment\PaymentController@citrusTransaction");
+    
+    //cache badwords
+    Route::post("cache_badwords", "API\User\UserController@cacheBadWords");
 });
 
 //Route::group(array('prefix' => 'v1'), function() {
@@ -143,6 +142,8 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
        Route::post("user/send_otp", "API\SMS\SmsController@sendOTP");
        //verify otp
        Route::post("user/verify_otp", "API\SMS\SmsController@verifyOTP");
+       // check user password
+       Route::post("user/check_user_password", "API\User\UserController@checkUserPassword");
        // logout
        Route::post("user/logout", "API\User\UserController@logout");
        
@@ -172,11 +173,18 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
        //payment client tokens
        Route::post("payment/generate_bt_token", "API\Payment\PaymentController@generateBTToken");
        
-       ;
-       
+       //save bank details of user
+       Route::post("payment/save_user_bank", "API\Payment\PaymentController@saveUserBank");
+       //edit bank details of user
+       Route::post("payment/edit_user_bank", "API\Payment\PaymentController@editUserBank");
+       //delete bank details of user
+       Route::post("payment/delete_user_bank", "API\Payment\PaymentController@deleteUserBank");
+       //list bank details of user
+       Route::post("payment/list_user_banks", "API\Payment\PaymentController@listUserBanks");
        //payment transactions
        Route::post("payment/bt_transaction", "API\Payment\PaymentController@braintreeTransaction");
-       
+       Route::post("payment/payout", "API\Payment\PaymentController@payout");
+       Route::post("payment/manual_payout", "API\Payment\PaymentController@manualPayout");
        //sms
        Route::post("send_sms", "API\SMS\SmsController@sendSMS");
        

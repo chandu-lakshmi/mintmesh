@@ -18,6 +18,7 @@ class UserValidator extends Validator {
             'deviceToken' => 'required'
         ),
         'edit_profile'=>array(
+            'dpImage'   => 'image',
             'info_type'=>'required'
         ),
         'special_login' => array(
@@ -50,6 +51,7 @@ class UserValidator extends Validator {
             'code'=>"required"        
             ),
         'complete_profile' => array(
+                'dpImage'   => 'image',
                 'position'      => 'required',
                 'company'   => 'required',
                 'industry'    => 'required',
@@ -95,7 +97,10 @@ class UserValidator extends Validator {
             'password_old'=>'required|min:6',
             'password_new' => 'required|min:6|confirmed',
             'password_new_confirmation' => 'required|min:6'
-        )        
+        ) ,
+        'check_user_password'=>array(
+            'password'=>'required'
+        )
         );
 }
 ?>

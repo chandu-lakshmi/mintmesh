@@ -972,6 +972,38 @@ class UserController extends \BaseController {
             return \Response::json($response);
             
         }
+        
+        public function cacheBadWords()
+        {
+            $response = $this->userGateway->getBadWords();
+            return \Response::json($response);
+        }
+        
+        /**
+	 * check user password
+         * 
+         * POST/check_user_password
+         * 
+         * @param string $access_token
+         * @param string $password
+	 * @return Response
+	 */
+        public function checkUserPassword()
+        {
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->userGateway->validateCheckUserPasswordInfo($inputUserData);
+            if($validation['status'] == 'success') {
+                $response = $this->userGateway->checkUserPassword($inputUserData);
+                return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+            
+            
+        }
+        
 		
 		
         

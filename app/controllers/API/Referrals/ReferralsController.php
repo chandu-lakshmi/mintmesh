@@ -22,7 +22,7 @@ class ReferralsController extends \BaseController {
          * 
          * @param string $access_token The Access token of a user
 	 * @param string $service Service Text
-         * @param string $service_scope Service scope get_service|provide_service
+         * @param string $service_scope Service scope get_service|provide_service|find_candidate|find_job
          * @param string $service_cost Service cost
          * @param string $free_service Service free 0|1
          * @param string $web_link Service web url

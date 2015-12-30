@@ -17,14 +17,23 @@ use Mintmesh\Services\ResponseFormatter\API\CommonFormatter ;
 use Mintmesh\Services\APPEncode\APPEncode ;
 use Mintmesh\Repositories\API\Payment\PaymentRepository;
 use Mintmesh\Repositories\API\User\NeoUserRepository;
+use Mintmesh\Services\Emails\API\User\UserEmailManager ;
 use Lang,URL;
 use Config;
 use  \Braintree_ClientToken;
 use  \Braintree_Transaction;
+use Illuminate\Support\Facades\Hash;
+
 class PaymentGateway {
-    
+        
+    const SUCCESS_RESPONSE_CODE = 200;
+    const SUCCESS_RESPONSE_MESSAGE = 'success';
+    const ERROR_RESPONSE_CODE = 403;
+    const ERROR_RESPONSE_MESSAGE = 'error';
+
     protected $authorizer, $appEncodeDecode, $paymentValidator,$paymentRepository,$userRepository,$neoUserRepository;
     protected $commonFormatter, $loggedinUserDetails,$referralsRepository, $userGateway;
+    protected $userEmailManager;
 	public function __construct(PaymentValidator $paymentValidator, 
                                     Authorizer $authorizer,
                                     CommonFormatter $commonFormatter,
@@ -33,7 +42,8 @@ class PaymentGateway {
                                     PaymentRepository $paymentRepository,
                                     ReferralsRepository $referralsRepository,
                                     UserGateway $userGateway,
-                                    NeoUserRepository $neoUserRepository) {
+                                    NeoUserRepository $neoUserRepository,
+                                    UserEmailManager $userEmailManager) {
             //ini_set('max_execution_time', 500);
 		$this->paymentValidator = $paymentValidator;
                 $this->authorizer = $authorizer;
@@ -41,32 +51,42 @@ class PaymentGateway {
                 $this->appEncodeDecode = $appEncodeDecode ;
                 $this->paymentRepository = $paymentRepository ;
                 $this->userRepository = $userRepository;
-                
+                $this->userEmailManager = $userEmailManager ;
                 $this->referralsRepository =  $referralsRepository ;
                 $this->userGateway=$userGateway ;
                 $this->neoUserRepository = $neoUserRepository;
                
 	}
         
+        //validation on payout input
+        public function validatePayoutInput($input)
+        {
+            return $this->doValidation('payout','MINTMESH.payment.valid');
+        }
+        
+        //validation on payout input
+        public function validateManualPayoutInput($input)
+        {
+            return $this->doValidation('manualPayout','MINTMESH.payment.valid');
+        }
+        
+        //validation on  payment transaction
+        public function validateTransactionInput($input)
+        {
+            return $this->doValidation('transaction_input','MINTMESH.payment.valid');
+        }
+        
         //validation on braintree payment transaction
         public function validateBTTransactionInput($input)
         {
-            //validator passes method accepts validator filter key as param
-            if($this->paymentValidator->passes('braintree_tran')) {
-                /* validation passes successfully */
-                $message = array('msg'=>array(Lang::get('MINTMESH.payment.valid')));
-                return $this->commonFormatter->formatResponse(200, "success", $message, array()) ;
-            }
-
-            /* Return validation errors to the controller */
-            return $this->commonFormatter->formatResponse(406, "error", $this->paymentValidator->getErrors(), array()) ;
+            return $this->doValidation('braintree_tran','MINTMESH.payment.valid');
         }
-        
-         //validation on  payment transaction
-        public function validateTransactionInput($input)
+
+        //validation on  user bank details
+        public function validatesaveUserBank($input)
         {
             //validator passes method accepts validator filter key as param
-            if($this->paymentValidator->passes('transaction_input')) {
+            if($this->paymentValidator->passes('user_bank_details_save')) {
                 /* validation passes successfully */
                 $message = array('msg'=>array(Lang::get('MINTMESH.payment.valid')));
                 return $this->commonFormatter->formatResponse(200, "success", $message, array()) ;
@@ -75,8 +95,33 @@ class PaymentGateway {
             /* Return validation errors to the controller */
             return $this->commonFormatter->formatResponse(406, "error", $this->paymentValidator->getErrors(), array()) ;
         }
-        
-        
+        //validation on edit user bank details
+        public function validateeditUserBank($input)
+        {
+            //validator passes method accepts validator filter key as param
+            if($this->paymentValidator->passes('user_bank_details_edit')) {
+                /* validation passes successfully */
+                $message = array('msg'=>array(Lang::get('MINTMESH.payment.valid')));
+                return $this->commonFormatter->formatResponse(200, "success", $message, array()) ;
+            }
+
+            /* Return validation errors to the controller */
+            return $this->commonFormatter->formatResponse(406, "error", $this->paymentValidator->getErrors(), array()) ;
+        }
+        //validation on delete user bank details
+        public function validatedeleteUserBank($input)
+        {
+            //validator passes method accepts validator filter key as param
+            if($this->paymentValidator->passes('user_bank_details_delete')) {
+                /* validation passes successfully */
+                $message = array('msg'=>array(Lang::get('MINTMESH.payment.valid')));
+                return $this->commonFormatter->formatResponse(200, "success", $message, array()) ;
+            }
+
+            /* Return validation errors to the controller */
+            return $this->commonFormatter->formatResponse(406, "error", $this->paymentValidator->getErrors(), array()) ;
+        }
+                
         public function generateBtClientToken()
         {
             $clientToken = $this->getBTClientToken();
@@ -122,7 +167,107 @@ class PaymentGateway {
                 return $this->commonFormatter->formatResponse(406, "error", Lang::get('MINTMESH.payment.error'), array()) ;
             }
         }
-        
+        public function saveUserBank($input)
+        {
+            if ($this->loggedinUserDetails = $this->getLoggedInUser()) {
+                $post=array();
+                $post['user']=$this->loggedinUserDetails->id ;
+                $post['bank_name'] = $input['bank_name'];
+                $post['account_name'] = $input['account_name'];
+                $post['account_number'] = $input['account_number'];
+                $post['ifsc_code'] = $input['ifsc_code'];
+                $post['address'] = $input['address'];
+                //check bank details exist
+                $checkUserBank = $this->paymentRepository->checkUserBank($post);
+                if(empty($checkUserBank)) {
+                    // save user bank details
+                    $saveUserBank = $this->paymentRepository->saveUserBank($post);
+                    if (!empty($saveUserBank)) {
+                        $message = array('msg'=>array(Lang::get('MINTMESH.save_user_bank.success')));
+                        return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
+                    } else {
+                        $message = array('msg'=>array(Lang::get('MINTMESH.save_user_bank.failed')));
+                        return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
+                    }
+                } else {
+                    $message = array('msg'=>array(Lang::get('MINTMESH.save_user_bank.details_already_exist')));
+                    return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
+                }
+            } else {
+                $message = array('msg'=>array(Lang::get('MINTMESH.save_user_bank.user_not_found')));
+                return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
+            }
+        }
+        public function editUserBank($input)
+        {
+            if ($this->loggedinUserDetails = $this->getLoggedInUser()) {
+                $post=array();
+                $post['user']=$this->loggedinUserDetails->id ;
+                $post['bank_id'] = $input['bank_id'];
+                $post['bank_name'] = $input['bank_name'];
+                $post['account_name'] = $input['account_name'];
+                $post['account_number'] = $input['account_number'];
+                $post['ifsc_code'] = $input['ifsc_code'];
+                $post['address'] = $input['address'];
+                //check bank details exist
+                $checkUserBank = $this->paymentRepository->checkUserBank($post);
+                if(empty($checkUserBank)) {
+                    // save user bank details
+                    $editUserBank = $this->paymentRepository->editUserBank($post);
+                    if (!empty($editUserBank)) {
+                        $message = array('msg'=>array(Lang::get('MINTMESH.edit_user_bank.success')));
+                        return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
+                    } else {
+                        $message = array('msg'=>array(Lang::get('MINTMESH.edit_user_bank.failed')));
+                        return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
+                    }
+                } else {
+                    $message = array('msg'=>array(Lang::get('MINTMESH.save_user_bank.details_already_exist')));
+                    return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
+                }
+            } else {
+                $message = array('msg'=>array(Lang::get('MINTMESH.edit_user_bank.user_not_found')));
+                return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
+            }
+        }
+        public function deleteUserBank($input)
+        {
+            if ($this->loggedinUserDetails = $this->getLoggedInUser()) {
+                $post=array();
+                $post['bank_id'] = $input['bank_id'];
+                // delete user bank details
+                $deleteUserBank = $this->paymentRepository->deleteUserBank($post);
+                if (!empty($deleteUserBank)) {
+                    $message = array('msg'=>array(Lang::get('MINTMESH.delete_user_bank.success')));
+                    return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
+                } else {
+                    $message = array('msg'=>array(Lang::get('MINTMESH.delete_user_bank.failed')));
+                    return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
+                }
+            } else {
+                $message = array('msg'=>array(Lang::get('MINTMESH.delete_user_bank.user_not_found')));
+                return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
+            }
+        }
+        public function listUserBanks($input)
+        {
+            if ($this->loggedinUserDetails = $this->getLoggedInUser()) {
+                $post=array();
+                $post['user_id'] = $this->loggedinUserDetails->id;
+                // delete user bank details
+                $listUserBanks = $this->paymentRepository->listUserBanks($post);
+                if (!empty($listUserBanks)) {
+                    $message = array('msg'=>array(Lang::get('MINTMESH.list_user_banks.success')));
+                    return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $listUserBanks) ;
+                } else {
+                    $message = array('msg'=>array(Lang::get('MINTMESH.list_user_banks.nobanksadded')));
+                    return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $listUserBanks) ;
+                }
+            } else {
+                $message = array('msg'=>array(Lang::get('MINTMESH.list_user_banks.user_not_found')));
+                return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
+            }
+        }
         public function getBTClientToken()
         {
             return Braintree_ClientToken::generate();
@@ -131,46 +276,63 @@ class PaymentGateway {
         {
             $amount = $input['amount'];
             $nonce = $input['nonce'] ;
-            $result = Braintree_Transaction::sale([
-            'amount' => $amount,
-            'paymentMethodNonce' => $nonce
-            ]);
-            if (!empty($result->success))
+            if ($amount > 0)
             {
-                $input['status'] = Config::get('constants.PAYMENTS.STATUSES.SUCCESS') ;
-            }
-            else
-            {
-                $input['status'] = Config::get('constants.PAYMENTS.STATUSES.FAILED') ;
-            }
-            $this->paymentRepository->updatePaymentTransaction($input) ;
-            if (!empty($result->success))
-            {
-                $transactionDetails = $this->paymentRepository->getTransactionById($input['mm_transaction_id']) ;;
-                //update post payment status
-                if (!empty($transactionDetails))
+                $result = Braintree_Transaction::sale([
+                'amount' => $amount,
+                'paymentMethodNonce' => $nonce
+                ]);
+                if (!empty($result->success))
                 {
-                    $postUpdateStatus = $this->referralsRepository->updatePostPaymentStatus($transactionDetails->relation_id,Config::get('constants.PAYMENTS.STATUSES.SUCCESS'));
-                    //send notifications to the respective people
-                    $sendNotes = $this->processPostPaymentCompletion($transactionDetails);
-                    
+                    $input['status'] = Config::get('constants.PAYMENTS.STATUSES.SUCCESS') ;
                 }
-                //log brain tree
-                $pt_input = array();
-                $pt_input['response'] = $result ;
-                $pt_input['mm_transaction_id'] = $input['mm_transaction_id'] ;
-                $pt_res = $this->paymentRepository->logPayment($pt_input);
-                return $this->commonFormatter->formatResponse(200, "success", Lang::get('MINTMESH.payment.success'), array()) ;
+                else
+                {
+                    $input['status'] = Config::get('constants.PAYMENTS.STATUSES.FAILED') ;
+                }
+                $updtStatus = $this->paymentRepository->updatePaymentTransaction($input) ;
+
+                if (!empty($result->success))
+                {
+                    $transactionDetails = $this->paymentRepository->getTransactionById($input['mm_transaction_id']) ;;
+                    if ($updtStatus && $input['status'] == Config::get('constants.PAYMENTS.STATUSES.SUCCESS'))
+                    {
+                        //update balance cash info
+                        $sqlUser = $this->userRepository->getUserByEmail($transactionDetails->to_user);
+                        $mysqlUserId = $sqlUser->id ;
+                        \Log::info("-----in success brantree ------");
+                        $updtBalanceInfo =  $this->updateBalanceCashInfo($transactionDetails->amount, Config::get('constants.PAYMENTS.CURRENCY.USD'), $transactionDetails->to_user, $mysqlUserId);
+                    }
+                    //update post payment status
+                    if (!empty($transactionDetails))
+                    {
+                        $postUpdateStatus = $this->referralsRepository->updatePostPaymentStatus($transactionDetails->relation_id,Config::get('constants.PAYMENTS.STATUSES.SUCCESS'));
+                        //send notifications to the respective people
+                        $sendNotes = $this->processPostPaymentCompletion($transactionDetails);
+
+                    }
+                    //log brain tree
+                    $pt_input = array();
+                    $pt_input['response'] = $result ;
+                    $pt_input['mm_transaction_id'] = $input['mm_transaction_id'] ;
+                    $pt_res = $this->paymentRepository->logPayment($pt_input);
+                    return $this->commonFormatter->formatResponse(200, "success", Lang::get('MINTMESH.payment.success'), array()) ;
+                }
+                else
+                {
+                    //log brain tree
+                    $pt_input = array();
+                    $pt_input['response'] = $result ;
+                    $pt_input['mm_transaction_id'] = $input['mm_transaction_id'] ;
+                    $pt_res = $this->paymentRepository->logPayment($pt_input);
+                    return $this->commonFormatter->formatResponse(406, "error", Lang::get('MINTMESH.payment.failed'), array()) ;
+                }
             }
             else
             {
-                //log brain tree
-                $pt_input = array();
-                $pt_input['response'] = $result ;
-                $pt_input['mm_transaction_id'] = $input['mm_transaction_id'] ;
-                $pt_res = $this->paymentRepository->logPayment($pt_input);
-                return $this->commonFormatter->formatResponse(406, "error", Lang::get('MINTMESH.payment.failed'), array()) ;
+                return $this->commonFormatter->formatResponse(406, "error", Lang::get('MINTMESH.payment.invalid_amount'), array()) ;
             }
+            
         }
         
         public function getLoggedInUser()
@@ -199,8 +361,9 @@ class PaymentGateway {
             $totalAmount = 0 ;
             if (!empty($amount) && !empty($percentage))
             {
-               $perAmount = ($percentage/100)*$amount;
-               $totalAmount = $amount+$perAmount ;
+               $totalAmount = $this->calculateTotalAmount($percentage, $amount);
+               /*$perAmount = ($percentage/100)*$amount;
+               $totalAmount = $amount+$perAmount ;*/
             }
             if (!empty($amount))
             {
@@ -264,7 +427,15 @@ class PaymentGateway {
                   //get transaction details
                   $transactionDetails = $tranDetails;
                   $input['status'] = Config::get('constants.PAYMENTS.STATUSES.SUCCESS') ;
-                  $this->paymentRepository->updatePaymentTransaction($input) ;
+                  $updtStatus = $this->paymentRepository->updatePaymentTransaction($input) ;
+                  if ($updtStatus)
+                  {
+                      //update balance cash info
+                      $sqlUser = $this->userRepository->getUserByEmail($transactionDetails->to_user);
+                      $mysqlUserId = $sqlUser->id ;
+                      $updtBalanceInfo =  $this->updateBalanceCashInfo($transactionDetails->amount, Config::get('constants.PAYMENTS.CURRENCY.INR'), $tranDetails->to_user, $mysqlUserId);
+                  }
+                  
                   if (!empty($transactionDetails))
                   {
                       $postUpdateStatus = $this->referralsRepository->updatePostPaymentStatus($transactionDetails->relation_id,Config::get('constants.PAYMENTS.STATUSES.SUCCESS'));
@@ -275,7 +446,8 @@ class PaymentGateway {
                     $pt_input['response'] = json_encode($input) ;
                     $pt_input['mm_transaction_id'] = $input['TxId'] ;
                     $pt_res = $this->paymentRepository->logPayment($pt_input);
-                    return $this->commonFormatter->formatResponse(200, "success", Lang::get('MINTMESH.payment.success'), array()) ;								      
+                    $data = $input ;
+                    return $this->commonFormatter->formatResponse(200, "success", Lang::get('MINTMESH.payment.success'), $data) ;								      
                 }										    
               else {
                   $pt_input = array();
@@ -284,7 +456,8 @@ class PaymentGateway {
                   $pt_res = $this->paymentRepository->logPayment($pt_input);
                   $input['status'] = Config::get('constants.PAYMENTS.STATUSES.FAILED')  ;
                   $this->paymentRepository->updatePaymentTransaction($input) ;
-                  return $this->commonFormatter->formatResponse(406, "error", Lang::get('MINTMESH.payment.failed'), array()) ;  
+                  $data=$input ;
+                  return $this->commonFormatter->formatResponse(406, "error", Lang::get('MINTMESH.payment.failed'), $data) ;  
               }
         }
         
@@ -321,6 +494,430 @@ class PaymentGateway {
             
         }
         
+        //paypal payout
+        public function paypalPayout($input=array())
+        {
+            $loggedinUserDetails = $this->getLoggedInUser();
+            if ($loggedinUserDetails) {
+                //get balance cash info
+                $balanceCashInfo = $this->paymentRepository->getbalanceCashInfo($loggedinUserDetails->emailid);
+                $balanceCash = !empty($balanceCashInfo->balance_cash)?$balanceCashInfo->balance_cash:0;
+                $payoutAmount = !empty($input['amount'])?$input['amount']:0;
+                if ($balanceCash >= $payoutAmount && !empty($payoutAmount)) {
+                    $paypal_client_id = Config::get('constants.PAYPAL.CLIENT_ID');
+                    $paypal_client_secret = Config::get('constants.PAYPAL.CLIENT_SECRET');
+                    $paypal_item_id = $this->createPaypalItemId();
+                    try{
+                        $apiContext = new \PayPal\Rest\ApiContext(
+                            new \PayPal\Auth\OAuthTokenCredential(
+                                $paypal_client_id,     // ClientID
+                                $paypal_client_secret      // ClientSecret
+                            )
+                        );
+                        $senderbatchId = uniqid();
+                        $payouts = new \PayPal\Api\Payout();
+                        $senderBatchHeader = new \PayPal\Api\PayoutSenderBatchHeader();
+                        $senderBatchHeader->setSenderBatchId($senderbatchId)
+                            ->setEmailSubject(Lang::get('MINTMESH.payout.email_subject'));
+                                    $senderItem = new \PayPal\Api\PayoutItem();
+                        $senderItem->setRecipientType(Lang::get('MINTMESH.payout.receipient_type'))
+                            ->setNote(Lang::get('MINTMESH.payout.email_note'))
+                            ->setReceiver($input['paypal_emailid'])
+                            ->setSenderItemId($paypal_item_id)
+                            ->setAmount(new \PayPal\Api\Currency('{
+                                                "value":'.$input['amount'].',
+                                                "currency":"USD"
+                                            }'));
+
+                        $payouts->setSenderBatchHeader($senderBatchHeader)
+                            ->addItem($senderItem);
+                        $request = clone $payouts;
+                        try{
+                            $output = $payouts->createSynchronous($apiContext);
+                            if (isset($output->batch_header->batch_status) && $output->batch_header->batch_status == 'SUCCESS') {
+                                $responseMessage = Lang::get('MINTMESH.payout.success');
+                                $responseCode = self::SUCCESS_RESPONSE_CODE;
+                                $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
+                                $responseData = array();
+                                //send emails
+                                //email to mintmesh support
+                                $successSupportTemplate = Lang::get('MINTMESH.email_template_paths.payout_success_admin');
+                                $receipientEmail = Config::get('constants.MINTMESH_SUPPORT.EMAILID');
+                                $emailiSent = $this->sendPayoutEmailToMintMesh($successSupportTemplate, $receipientEmail, array());
+                                //email to user
+                                $successSupportTemplate = Lang::get('MINTMESH.email_template_paths.payout_success_user');
+                                $receipientEmail = $loggedinUserDetails->emailid;
+                                $emailiSent = $this->sendPayoutEmailToUser($successSupportTemplate, $receipientEmail, array());
+                                //log payout
+                                $payoutInput = array();
+                                $payoutInput['from_user'] = Config::get('constants.MINTMESH_SUPPORT.EMAILID');
+                                $payoutInput['amount'] = $input['amount'];
+                                $payoutInput['to_mintmesh_user']= $loggedinUserDetails->emailid;
+                                $payoutInput['to_provided_user']= $input['paypal_emailid'];
+                                $payoutInput['payout_types_id'] = 1;//paypal type
+                                $payoutInput['paypal_item_id'] = $paypal_item_id;//paypal item id
+                                $payoutInput['paypal_batch_id'] = $senderbatchId;//paypal batch id
+                                $payoutInput['status'] = $output->batch_header->batch_status ;
+                                $payoutInput['service_response'] = $this->appEncodeDecode->filterString($output) ;
+                                $payoutInput['bank_id'] = "";
+
+                                $log = $this->paymentRepository->logPayout($payoutInput);
+
+                                //update balance cash info
+                                //edit balance cash info
+                                $balanceCash = $balanceCashInfo->balance_cash-$payoutAmount;
+                                $bid = $balanceCashInfo->id ;
+                                $inp = array();
+                                $inp['balance_cash'] = $balanceCash ;
+                                $u = $this->paymentRepository->editBalanceCash($bid, $inp);
+                            } else {
+
+                                $responseMessage = Lang::get('MINTMESH.payout.error');
+                                $responseCode = self::ERROR_RESPONSE_CODE;
+                                $responseStatus = self::ERROR_RESPONSE_MESSAGE;
+                                $responseData = array();
+                                //send emails
+                                //email to mintmesh support
+                                $failureSupportTemplate = Lang::get('MINTMESH.email_template_paths.payout_failure_admin');
+                                $receipientEmail = Config::get('constants.MINTMESH_SUPPORT.EMAILID');
+                                $emailiSent = $this->sendPayoutEmailToMintMesh($failureSupportTemplate, $receipientEmail, array());
+                                //email to user
+                                $failureSupportTemplate = Lang::get('MINTMESH.email_template_paths.payout_failure_user');
+                                $receipientEmail = $loggedinUserDetails->emailid;
+                                $emailiSent = $this->sendPayoutEmailToUser($failureSupportTemplate, $receipientEmail, array());
+                                //log payout
+                                $payoutInput = array();
+                                $payoutInput['from_user'] = Config::get('constants.MINTMESH_SUPPORT.EMAILID');
+                                $payoutInput['amount'] = $input['amount'];
+                                $payoutInput['to_mintmesh_user']= $loggedinUserDetails->emailid;
+                                $payoutInput['to_provided_user']= $input['paypal_emailid'];
+                                $payoutInput['payout_types_id'] = 1;//paypal type
+                                $payoutInput['paypal_item_id'] = $paypal_item_id;//paypal item id
+                                $payoutInput['paypal_batch_id'] = $senderbatchId;//paypal batch id
+                                $payoutInput['status'] = $output->batch_header->batch_status ;
+                                $payoutInput['service_response'] = $this->appEncodeDecode->filterString($output) ;
+                                $payoutInput['bank_id'] = "";
+
+                                $log = $this->paymentRepository->logPayout($payoutInput);
+                            }
+                            /*echo $output->batch_header->batch_status;exit;
+                            print_r($output);exit;
+                            print_r($output->items[0]->errors);exit;*/
+
+                        } catch (\PayPal\Exception\PayPalConnectionException $ex) {
+                            $responseMessage = Lang::get('MINTMESH.payout.error');
+                            $responseCode = self::ERROR_RESPONSE_CODE;
+                            $responseStatus = self::ERROR_RESPONSE_MESSAGE;
+                            $responseData = array();
+                            $message = array('msg'=>array($responseMessage));
+                            //log payout
+                            $payoutInput = array();
+                            $payoutInput['from_user'] = Config::get('constants.MINTMESH_SUPPORT.EMAILID');
+                            $payoutInput['amount'] = $input['amount'];
+                            $payoutInput['to_mintmesh_user']= $loggedinUserDetails->emailid;
+                            $payoutInput['to_provided_user']= $input['paypal_emailid'];
+                            $payoutInput['payout_types_id'] = 1;//paypal type
+                            $payoutInput['paypal_item_id'] = $paypal_item_id;//paypal item id
+                            $payoutInput['paypal_batch_id'] = $senderbatchId;//paypal batch id
+                            $payoutInput['status'] = Config::get('constants.PAYPAL.STATUS.ERROR') ;
+                            $payoutInput['service_response'] = $this->appEncodeDecode->filterString($ex) ;
+                            $payoutInput['bank_id'] = "";
+
+                            $log = $this->paymentRepository->logPayout($payoutInput);
+                        }
+
+
+
+                    }
+                    catch (Exception $ex)
+                    {
+                        $responseMessage = Lang::get('MINTMESH.payout.error');
+                        $responseCode = self::ERROR_RESPONSE_CODE;
+                        $responseStatus = self::ERROR_RESPONSE_MESSAGE;
+                        $responseData = array();
+                    }
+                } else {
+                    $responseMessage = Lang::get('MINTMESH.payout.invalid_amount');
+                    $responseCode = self::ERROR_RESPONSE_CODE;
+                    $responseStatus = self::ERROR_RESPONSE_MESSAGE;
+                    $responseData = array();
+                }
+
+            } else {
+                $responseMessage = Lang::get('MINTMESH.user.user_not_found');
+                $responseCode = self::ERROR_RESPONSE_CODE;
+                $responseStatus = self::ERROR_RESPONSE_MESSAGE;
+                $responseData = array();
+            }
+            
+            
+            $message = array('msg'=>array($responseMessage));
+            return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $responseData) ;
+            
+        }
+        
+        //manual payout
+        public function manualPayout($input=array())
+        {
+            $loggedinUserDetails = $this->getLoggedInUser();
+            if ($loggedinUserDetails) {
+                //get balance cash info
+                $balanceCashInfo = $this->paymentRepository->getbalanceCashInfo($loggedinUserDetails->emailid);
+                $balanceCash = !empty($balanceCashInfo->balance_cash)?$balanceCashInfo->balance_cash:0;
+                $payoutAmount = !empty($input['amount'])?$input['amount']:0;
+                if ($balanceCash >= $payoutAmount && !empty($payoutAmount)) {
+                    $responseMessage = Lang::get('MINTMESH.manualpayout.success');
+                    $responseCode = self::SUCCESS_RESPONSE_CODE;
+                    $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
+                    $responseData = array();
+                    $bankDetails = $this->paymentRepository->getbankInfo($input['bank_id']);
+                    //send emails
+                    //email to mintmesh support and user
+                    $successSupportTemplateAdmin = Lang::get('MINTMESH.email_template_paths.manual_payout_success_admin');
+                    $receipientEmailAdmin = Config::get('constants.MINTMESH_SUPPORT.EMAILID');
+                    $successSupportTemplateUser = Lang::get('MINTMESH.email_template_paths.manual_payout_success_user');
+                    $receipientEmailUser = $loggedinUserDetails->emailid;//Config::get('constants.MINTMESH_SUPPORT.EMAILID');
+                    $emailSentAdmin = $this->sendManualEmailToMintMesh($successSupportTemplateAdmin, $receipientEmailAdmin, $bankDetails);
+                    $emailSentUser = $this->sendManualEmailToMintMesh($successSupportTemplateUser, $receipientEmailUser, $bankDetails);
+//                    $emailiSent=1;
+                    if($emailSentAdmin && $emailSentUser) {
+                        //log payout
+                        $payoutInput = array();
+                        $payoutInput['from_user'] = Config::get('constants.MINTMESH_SUPPORT.EMAILID');
+                        $payoutInput['amount'] = $input['amount'];
+                        $payoutInput['to_mintmesh_user']= $loggedinUserDetails->emailid;
+                        $payoutInput['to_provided_user']= $loggedinUserDetails->emailid;
+                        $payoutInput['payout_types_id'] = 2;//manual type
+                        $payoutInput['paypal_item_id'] = "";//paypal item id
+                        $payoutInput['paypal_batch_id'] = "";//paypal batch id
+                        $payoutInput['status'] = Config::get('constants.MANUAL.STATUS.SUCESS') ;
+                        $payoutInput['service_response'] = "";
+                        $payoutInput['bank_id'] = $input['bank_id'];
+
+                        $log = $this->paymentRepository->logPayout($payoutInput);
+
+                        //update balance cash info
+                        //edit balance cash info
+                        $balanceCash = $balanceCashInfo->balance_cash-$payoutAmount;
+                        $bid = $balanceCashInfo->id ;
+                        $inp = array();
+                        $inp['balance_cash'] = $balanceCash ;
+                        $u = $this->paymentRepository->editBalanceCash($bid, $inp);
+                    } else {
+                        $responseMessage = Lang::get('MINTMESH.manualpayout.error');
+                        $responseCode = self::ERROR_RESPONSE_CODE;
+                        $responseStatus = self::ERROR_RESPONSE_MESSAGE;
+                        $responseData = array();
+                        $message = array('msg'=>array($responseMessage));
+                        //log payout
+                        $payoutInput = array();
+                        $payoutInput['from_user'] = Config::get('constants.MINTMESH_SUPPORT.EMAILID');
+                        $payoutInput['amount'] = $input['amount'];
+                        $payoutInput['to_mintmesh_user']= $loggedinUserDetails->emailid;
+                        $payoutInput['to_provided_user']= $input['paypal_emailid'];
+                        $payoutInput['payout_types_id'] = 2;//paypal type
+                        $payoutInput['paypal_item_id'] = "";//paypal item id
+                        $payoutInput['paypal_batch_id'] = "";//paypal batch id
+                        $payoutInput['status'] = Config::get('constants.MANUAL.STATUS.ERROR') ;
+                        $payoutInput['service_response'] = "" ;
+                        $payoutInput['bank_id'] = $input['bank_id'];
+
+                        $log = $this->paymentRepository->logPayout($payoutInput);
+                    }
+                } else {
+                    $responseMessage = Lang::get('MINTMESH.manualpayout.invalid_amount');
+                    $responseCode = self::ERROR_RESPONSE_CODE;
+                    $responseStatus = self::ERROR_RESPONSE_MESSAGE;
+                    $responseData = array();
+                }
+
+            } else {
+                $responseMessage = Lang::get('MINTMESH.user.user_not_found');
+                $responseCode = self::ERROR_RESPONSE_CODE;
+                $responseStatus = self::ERROR_RESPONSE_MESSAGE;
+                $responseData = array();
+            }
+            $message = array('msg'=>array($responseMessage));
+            return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $responseData) ;
+        }
+
+        public function createPaypalItemId()
+        {
+            return uniqid();
+        }
+        public function sendManualEmailToMintMesh($templatePath, $emailid, $data)
+        {
+           $this->userEmailManager->templatePath = $templatePath;
+            $this->userEmailManager->emailId = $emailid;
+            $dataSet = array();
+            $dataSet['name'] = "shweta" ;
+            $dataSet['email'] = "shwetapazarey@gmail.com";
+            $dataSet['bank_name'] = $data->bank_name;
+            $dataSet['account_name'] = $data->account_name;
+            $dataSet['account_number'] = $data->account_number;
+            $dataSet['ifsc_code'] = $data->ifsc_code;
+            $dataSet['address'] = $data->address;
+            /*$dataSet['name'] = $input['firstname'];
+            $dataSet['link'] = $appLink ;
+            $dataSet['email'] = $input['emailid'] ;*/
+
+           // $dataSet['link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/redirect_to_app/".$appLinkCoded ;;
+            $this->userEmailManager->dataSet = $dataSet;
+            $this->userEmailManager->subject = "test email for manual payout";
+            $this->userEmailManager->name = 'test user';
+            return $email_sent = $this->userEmailManager->sendMail();
+            
+        }
+        public function sendManualEmailToUser($templatePath, $emailid, $data)
+        {
+           $this->userEmailManager->templatePath = $templatePath;
+            $this->userEmailManager->emailId = $emailid;
+            $dataSet = array();
+            $dataSet['name'] = "shweta" ;
+            $dataSet['email'] = "shwetapazarey@gmail.com";
+            $dataSet['bank_name'] = $data->bank_name;
+            $dataSet['account_name'] = $data->account_name;
+            $dataSet['account_number'] = $data->account_number;
+            $dataSet['ifsc_code'] = $data->ifsc_code;
+            $dataSet['address'] = $data->address;
+            /*$dataSet['name'] = $input['firstname'];
+            $dataSet['link'] = $appLink ;
+            $dataSet['email'] = $input['emailid'] ;*/
+
+           // $dataSet['link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/redirect_to_app/".$appLinkCoded ;;
+            $this->userEmailManager->dataSet = $dataSet;
+            $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.welcome');
+            $this->userEmailManager->name = 'user';
+            return $email_sent = $this->userEmailManager->sendMail();
+        }
+        public function sendPayoutEmailToMintMesh($templatePath, $emailid, $data)
+        {
+           $this->userEmailManager->templatePath = $templatePath;
+            $this->userEmailManager->emailId = $emailid;
+            $dataSet = array();
+            $dataSet['name'] = "shweta" ;
+            $dataSet['email'] = "shwetapazarey@gmail.com";
+            /*$dataSet['name'] = $input['firstname'];
+            $dataSet['link'] = $appLink ;
+            $dataSet['email'] = $input['emailid'] ;*/
+
+           // $dataSet['link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/redirect_to_app/".$appLinkCoded ;;
+            $this->userEmailManager->dataSet = $dataSet;
+            $this->userEmailManager->subject = "test email";
+            $this->userEmailManager->name = 'user';
+            return $email_sent = $this->userEmailManager->sendMail();
+            
+        }
+        public function sendPayoutEmailToUser($templatePath, $emailid, $data)
+        {
+           $this->userEmailManager->templatePath = $templatePath;
+            $this->userEmailManager->emailId = $emailid;
+            $dataSet = array();
+            $dataSet['name'] = "shweta" ;
+            $dataSet['email'] = "shwetapazarey@gmail.com";
+            /*$dataSet['name'] = $input['firstname'];
+            $dataSet['link'] = $appLink ;
+            $dataSet['email'] = $input['emailid'] ;*/
+
+           // $dataSet['link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/redirect_to_app/".$appLinkCoded ;;
+            $this->userEmailManager->dataSet = $dataSet;
+            $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.welcome');
+            $this->userEmailManager->name = 'user';
+            return $email_sent = $this->userEmailManager->sendMail();
+        }
+        
+         public function doValidation($validatorFilterKey, $langKey) {
+             //validator passes method accepts validator filter key as param
+            if($this->paymentValidator->passes($validatorFilterKey)) {
+                /* validation passes successfully */
+                $message = array('msg'=>array(Lang::get($langKey)));
+                $responseCode = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg = self::SUCCESS_RESPONSE_MESSAGE;
+                $data = array();                
+            } else {
+                /* Return validation errors to the controller */
+                $message = $this->paymentValidator->getErrors();
+                $responseCode = self::ERROR_RESPONSE_CODE;
+                $responseMsg = self::ERROR_RESPONSE_MESSAGE;
+                $data = array();
+            }
+            
+            return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $message, $data) ;
+        }
+        
+        public function updateBalanceCashInfo($amount=0, $currency='', $userEmail='', $userID)
+        {
+            //get user country 
+            $userDetails = $this->neoUserRepository->getNodeByEmailId($userEmail) ;
+            $convertedAmount = 0;
+            if (strtolower($userDetails->phone_country_name) =="india")//if india
+            {
+                
+                if (!empty($currency) && $currency == Config::get('constants.PAYMENTS.CURRENCY.USD'))//if dollar then convert 
+                {
+                    //change from dollar to rs
+                    $rsRate = Config::get('constants.PAYMENTS.CONVERSION_RATES.USD_TO_INR');
+                    $convertedAmount = $amount*$rsRate ;
+                }
+                else
+                {
+                    $convertedAmount = $amount ;
+                }
+            }
+            else //if USA
+            {
+                //get balance cash info
+                if (!empty($currency) && $currency == Config::get('constants.PAYMENTS.CURRENCY.INR'))//if dollar then convert 
+                {
+                    //change from dollar to rs
+                    $usdRate = Config::get('constants.PAYMENTS.CONVERSION_RATES.INR_TO_USD');
+                    $convertedAmount = round($amount/$usdRate) ;
+                }
+                else
+                {
+                    $convertedAmount = $amount ;
+                }
+            }
+            //get balance cash info
+            $balanceCashInfo = $this->paymentRepository->getbalanceCashInfo($userEmail);
+            if (!empty($balanceCashInfo))
+            {
+                 \Log::info("-----in update brantree ------");
+                //edit balance cash info
+                $balanceCash = $convertedAmount+$balanceCashInfo->balance_cash ;
+                $bid = $balanceCashInfo->id ;
+                $inp = array();
+                $inp['balance_cash'] = $balanceCash ;
+                $u = $this->paymentRepository->editBalanceCash($bid, $inp);
+            }
+            else //insert balance cash info
+            {
+                \Log::info("-----in insert brantree ------");
+                //insert balance cash info
+                $inp = array();
+                $inp['user_id'] = $userID ;
+                $inp['user_email'] = $userEmail ;
+                $inp['balance_cash'] = $convertedAmount ;
+                $inp['currency'] = $currency ;
+                $i = $this->paymentRepository->insertBalanceCash($inp);
+            }
+            return ;
+            
+        }
+        
+        
+        public function calculateTotalAmount($percentage, $amount)
+        {
+            if (!empty($percentage) && !empty($amount))
+            {
+                $perAmount = ($percentage/100)*$amount;
+                return $totalAmount = $amount+$perAmount ;
+            }
+            else
+            {
+                return 0;
+            }
+        }
     
 }
 ?>

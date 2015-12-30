@@ -27,13 +27,25 @@ return [
         'SID'=>'AC61f4636c861c92b39112a5898195777d',
         'AUTH_TOKEN'=>'5bf17a942a0a2781e3eaf8f9abbb4730',
         'FROM_NUMBER'=>'(334) 610-3965',
-        'AUTHY_API_KEY'=>'ElOrhsTdJuNPgbbVNnhO9oYilExs9XLB',//'RYaNOw4tlOMj88iHCIwypwIEDkzf6AQp',
+        'AUTHY_API_KEY'=>'ywKZqdMKOXtyKp844aLyksoK3IiCSB1y',//ElOrhsTdJuNPgbbVNnhO9oYilExs9XLB
         'AUTHY_URL'=>'http://api.authy.com'
-        
     ],
     'CITRUS'=>[
         'ACCESS_KEY'=>'QZVFK264G28QZ6NJ43KB',
         'SECRET_KEY'=>'cd9cbbaefab824e2f9672b998188b87468e5f9e6'
+    ],
+    'PAYPAL'=>[
+        'CLIENT_ID'=>'AQ6EVfzfI95uH_8JAyPCkpcBc4k_GDMU9W4KbI_sMsGIyLtkDDKX1CN24ojGsXrbtEhtvNCscxRlWgNZ',//'AQ6EVfzfI95uH_8JAyPCkpcBc4k_GDMU9W4KbI_sMsGIyLtkDDKX1CN24ojGsXrbtEhtvNCscxRlWgNZ',//'AYXtuYZ9GyPCT5IoBDoSRISgXtANxqoEmTNUiBZW27hDwVzAueeMtsXIqQcbJwRLoLlHzeVvYV7fOzDL',
+        'CLIENT_SECRET'=>'EDuYEHHqzWEX7Uisehy8GTROOAsYZfjswrBRY-xikFWt_BHUwxa_qr-_N16AsGxXplgDS_eFNOpLAj9J',//'EDuYEHHqzWEX7Uisehy8GTROOAsYZfjswrBRY-xikFWt_BHUwxa_qr-_N16AsGxXplgDS_eFNOpLAj9J'//'ELcx1IzIF_6cjCPAXQ15MEX5M9SsCQQfbNHvbk4pOIeZRhZxpfcAJ9g60Li8bagpDLRmA2REqfzXYQ6T'
+        'STATUS'=>[
+            'ERROR'=>'ERROR'
+        ]
+    ],
+    'MANUAL'=>[
+        'STATUS'=>[
+            'ERROR'=>'ERROR',
+            'SUCESS'=>'SUCESS'
+        ]
     ],
     'REFERENCE_STATUS'=>[
         'PENDING'=>'PENDING',
@@ -53,7 +65,10 @@ return [
         'DECLINED'=>'DECLINED',
         'MORE_INFO'=>'MORE_INFO',
         'KNOWS'=>'KNOWS',
-        'HAS_REFERRED'=>'HAS_REFERRED'
+        'POSSES_JOB_FUNCTION'=>'POSSES_JOB_FUNCTION',
+        'HOLDS_INDUSTRY_EXPERIENCE'=>'HOLDS_INDUSTRY_EXPERIENCE',
+        'HAS_REFERRED'=>'HAS_REFERRED',
+        'DELETED_CONTACT'=>'DELETED_CONTACT'
         
     ],
     'MAPPED_RELATION_TYPES'=>[
@@ -94,7 +109,33 @@ return [
             'SUCCESS'=>'SUCCESS',
             'FAILED'=>'FAILED',
             'CANCELLED'=>'CANCELLED'
+        ],
+        'CURRENCY'=>[
+            'USD'=>'USD',
+            'INR'=>'INR'
+        ],
+        'CONVERSION_RATES'=>[
+            'INR_TO_USD'=>70,
+            'USD_TO_INR'=>60
         ]
+    ],
+    'MINTMESH_SUPPORT'=>[
+        'EMAILID'=>'pshweta24@gmail.com'
+    ],
+    'S3BUCKET' => 'mintmesh',
+    'PROFILE_COMPLETION_VALUES'=>[
+        'CERTIFICATION'=>10,
+        'CONTACT'=>30,
+        'SKILLS'=>20,
+        'EDUCATION'=>20,
+        'EXPERIENCE'=>20
+    ],
+    'PROFILE_COMPLETION_SECTIONS'=>[
+        'CERTIFICATION'=>'certification',
+        'CONTACT'=>'contact',
+        'SKILLS'=>'skills',
+        'EDUCATION'=>'education',
+        'EXPERIENCE'=>'experience'
     ]
         
 ];

@@ -193,7 +193,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                                 and  case p.service_type when 'in_location' then  lower(n.location) =~ ('.*' + lower(p.service_location)) else 1=1 end
                                 and p.status='".Config::get('constants.REFERRALS.STATUSES.ACTIVE')."' 
                                 OPTIONAL MATCH (p)-[r:GOT_REFERRED]-(u)
-                                return p, count(r) ORDER BY p.created_at DESC " ;
+                                return p, count(distinct(u)) ORDER BY p.created_at DESC " ;
                 if (!empty($limit) && !($limit < 0))
                 {
                     $queryString.=" skip ".$skip." limit ".self::LIMIT ;
@@ -604,7 +604,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
              if (!empty($postId))
              {
                  $queryString = "match  (u:User)-[r:GOT_REFERRED]->(p:Post)
-                                 where ID(p)=".$postId." return count(u)" ;
+                                 where ID(p)=".$postId." return count(distinct(u))" ;
                  $query = new CypherQuery($this->client, $queryString);
                 $countResult = $query->getResultSet(); 
                 if (!empty($countResult[0]) && !empty($countResult[0][0]))

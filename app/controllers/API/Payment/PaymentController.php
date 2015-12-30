@@ -4,7 +4,7 @@ use Mintmesh\Gateways\API\Payment\PaymentGateway;
 use Illuminate\Support\Facades\Redirect;
 use OAuth;
 use Auth;
-use Lang, Response;
+use Lang, Response,View;
 use Config ;
 
 class PaymentController extends \BaseController {
@@ -67,6 +67,95 @@ class PaymentController extends \BaseController {
         }
         
         /**
+	 * save user bank details
+         *  
+         * @param string $access_token
+         * @param string $bank_name
+         * @param string $account_name
+         * @param string $account_number
+         * @param string $ifsc_code
+         * @param string $address
+         * 
+	 * @return Response
+	 */
+        public function saveUserBank()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->paymentGateway->validatesaveUserBank($inputUserData);
+            if($validation['status'] == 'success') {
+                $result = $this->paymentGateway->saveUserBank($inputUserData);
+                return \Response::json($result);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+            
+        }
+        
+        /**
+	 * save user bank details
+         *  
+         * @param string $access_token
+         * @param string $bank_id
+         * 
+	 * @return Response
+	 */
+        public function editUserBank()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->paymentGateway->validateeditUserBank($inputUserData);
+            if($validation['status'] == 'success') {
+                $result = $this->paymentGateway->editUserBank($inputUserData);
+                return \Response::json($result);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+        }
+        
+        /**
+	 * delete user bank details
+         * 
+         * @param string $access_token
+         * @param string $bank_id
+         * 
+	 * @return Response
+	 */
+        public function deleteUserBank()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->paymentGateway->validatedeleteUserBank($inputUserData);
+            if($validation['status'] == 'success') {
+                $result = $this->paymentGateway->deleteUserBank($inputUserData);
+                return \Response::json($result);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+        }
+        
+        /**
+	 * delete user bank details
+         * 
+         * @param string $access_token
+         * 
+	 * @return Response
+	 */
+        public function listUserBanks()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            $result = $this->paymentGateway->listUserBanks($inputUserData);
+            return \Response::json($result);
+        }
+        
+        /**
 	 * braintree transaction
          * 
          * POST/bt_transaction
@@ -112,10 +201,70 @@ class PaymentController extends \BaseController {
             // Receiving user input data
             $inputUserData = \Input::all();
             $response = $this->paymentGateway->processCitrusTransaction($inputUserData);
-            return \Response::json($response);
+            //citrus need a view file as return url
+            if ($response['status_code'])
+            {
+                return View::make('landings/citrusReturn', array('data'=>$response['data']));
+            }
+            else
+            {
+                return  \Response::json($response);
+            }
+            
+            //return \Response::json($response);
         }
         
+        /**
+	 * payout
+         * 
+         * POST/payout
+         * 
+         * @param string $access_token
+         * @param string $paypal_emailid
+         * @param string $amount
+         * @param string $password user password
+	 * @return Response
+	 */
+        public function payout()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->paymentGateway->validatePayoutInput($inputUserData);
+            if($validation['status'] == 'success') {
+                $response = $this->paymentGateway->paypalPayout($inputUserData);
+                return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+        }
         
+        /**
+	 * manula payout
+         * 
+         * POST/manulapayout
+         * 
+         * @param string $access_token
+         * @param string $bank_id
+         * @param string $amount
+         * @param string $password user password
+	 * @return Response
+	 */
+        public function manualPayout()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->paymentGateway->validateManualPayoutInput($inputUserData);
+            if($validation['status'] == 'success') {
+                $response = $this->paymentGateway->manualPayout($inputUserData);
+                return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+        }
         
         
 

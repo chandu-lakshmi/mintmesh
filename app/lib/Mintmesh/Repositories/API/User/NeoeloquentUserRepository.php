@@ -214,7 +214,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                 $emailId = $this->appEncodeDecode->filterString(strtolower($emailId));
                 $queryString = "MATCH (n:User {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."]->(m) where HAS (m.login_source) RETURN m
                                 UNION
-                                MATCH (n:User {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-(m:User) where has(m.login_source) RETURN m order by m.firstname asc" ;
+                                MATCH (n:User {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-(m:User) where has(m.login_source) RETURN DISTINCT m order by m.firstname asc" ;
                 
                 /*$queryString = "MATCH (n:User {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."|".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."|".Config::get('constants.RELATIONS_TYPES.REQUESTED_CONNECTION')."]-(m:User) where has(m.login_source) RETURN m order by m.firstname asc" ;
                 */
@@ -568,6 +568,22 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                              delete r return 1";
             $query = new CypherQuery($this->client, $queryString);
             return $result = $query->getResultSet();
+        }
+        public function getCategoryNodeRelationCount($input, $sectionName='', $relationName='')
+        {
+            $queryString = "Match (m:User)-[r:".$relationName."]->(n:User:".$sectionName.")
+                            where m.emailid='".$input['emailid']."' 
+                            return count(n)";
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if (isset($result[0]) && isset($result[0][0]))
+            {
+                return $result[0][0];
+            }
+            else
+            {
+                return 0;
+            }
         }
         public function updateCategoryNodeNRelation($input=array(), $relationAttrs=array(), $sectionName='', $relationName='')
         {
@@ -1054,8 +1070,8 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             {
                 $userEmail = $this->appEncodeDecode->filterString(strtolower($userEmail));
                 $queryString = "match (u:User)-[r:ACCEPTED_CONNECTION]-(u1:User)-[r1:ACCEPTED_CONNECTION]-(u2:User) where u.emailid='".$userEmail."' and u2.emailid<>'".$userEmail."' and not (u)-[:ACCEPTED_CONNECTION]-(u2) with u2
-                                match (u2)-[r2:ACCEPTED_CONNECTION]-(u3) return u2,count(distinct(r2))
-                                order by count(distinct(r2)) desc  limit 20";
+                                match (u2)-[r2:ACCEPTED_CONNECTION]-(u3) return u2,count(distinct(u3))
+                                order by count(distinct(u3)) desc  limit 20";
                 $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();
             }

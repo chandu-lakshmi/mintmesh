@@ -14,7 +14,9 @@
 		"aloha/twilio": "^2.0",
 		"twilio/sdk": "^4.5",
 		"authy/php": "2.2",
-        "f2m2/apidocs": "1.0.0"
+        "f2m2/apidocs": "1.0.0",
+        "aws/aws-sdk-php-laravel": "1.*",
+		"paypal/rest-api-sdk-php": "*"
 	},
 	"autoload": {
 		"classmap": [

@@ -68,6 +68,8 @@ class ContactsGateway {
                         $contacts = json_decode($input['contacts']); //$input['contacts'] ;
                         if (!empty($contacts) && is_array($contacts))
                         {
+                            //delete all imported contacts
+                            $deletedResult = $this->contactsRepository->deleteImportedContacts($this->loggedinUserDetails->emailid);
                             $mintmeshEmails = array();
                             foreach($contacts as $contact)
                             {

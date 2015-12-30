@@ -620,7 +620,7 @@ class ReferralsGateway {
                     $suggestions = $this->getPostSuggestions($input);
                     $data['suggestions'] = !empty($suggestions['data']['users'])?$suggestions['data']['users']:array() ;
                 }
-                $data['referrals_count'] = 0;
+                $data['referrals_count'] = $this->referralsRepository->getPostReferralsCount($input['post_id']);
                 $message = array('msg'=>array(Lang::get('MINTMESH.referrals.no_referrals')));
                 return $this->commonFormatter->formatResponse(200, "success", $message, $data) ;
             }
@@ -737,17 +737,19 @@ class ReferralsGateway {
                             $transactionInput['status']=Config::get('constants.PAYMENTS.STATUSES.PENDING');
                             $payment_transaction = $this->paymentRepository->insertTransaction($transactionInput); 
                             $data['transaction_id'] = $t_id ;
-                            $data['comission_percentage'] = !empty($payment_per_res->comission_percentage)?$payment_per_res->comission_percentage:0;
-                            $data['amount'] = !empty($result[0][0]->service_cost)?$result[0][0]->service_cost:0;
+                            $data['comission_percentage'] = $percentage = !empty($payment_per_res->comission_percentage)?$payment_per_res->comission_percentage:0;
+                            $data['amount'] = $amount = !empty($result[0][0]->service_cost)?$result[0][0]->service_cost:0;
                             if ($transactionInput['payment_type'] == 1)
                             {
                                 $data['client_token'] = $this->paymentGateway->getBTClientToken();
+                                $data['total_amount'] = $this->paymentGateway->calculateTotalAmount($percentage, $amount);
                                 //insert into payment gateways inputs table
                                 $paymentInput = array();
                                 $paymentInput['token'] = !empty($data['client_token'])?$data['client_token']:'';
                                 $paymentInput['bill'] = !empty($data['bill_details'])?json_encode($data['bill_details']):'';
                                 $paymentInput['mm_transaction_id'] = !empty($transactionInput['mm_transaction_id'] )?$transactionInput['mm_transaction_id'] :'';
                                 $paymentInputRes = $this->paymentRepository->insertGatewayInput($paymentInput);
+                                
                             }
                             else
                             {
@@ -1157,7 +1159,7 @@ class ReferralsGateway {
                                 //details of third user
                                 foreach ($toUserDetails as $k=>$v)
                                 {
-                                    $a['to_user_'.$k] = $v ;
+                                    $a['other_user_'.$k] = $v ;
                                 }
                                 $to_emailid = $toUserDetails['emailid'] ;
                                 $a['other_status'] = !empty($relation[0]->status)?$relation[0]->status:Config::get('constants.REFERENCE_STATUS.PENDING');
@@ -1175,7 +1177,7 @@ class ReferralsGateway {
                                     $otherUserDetails = $this->userGateway->formUserDetailsArray($otherUserResult, 'attribute') ;
                                     foreach ($otherUserDetails as $k=>$v)
                                     {
-                                        $a['other_user_'.$k] = $v ;
+                                        $a['to_user_'.$k] = $v ;
                                     }
                                 }
                             }

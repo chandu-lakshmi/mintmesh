@@ -11,9 +11,33 @@ class PaymentValidator extends Validator {
              ),
         'transaction_input'=>array(
             'mm_transaction_id' => 'required'
+
+        ),
+        'payout'=>array(
+            'paypal_emailid'=>'required|email',
+            'amount'=>'required'
+        ),
+        'manualPayout'=>array(
+            'bank_id'=>'required',
+            'amount'=>'required'
+        ),
+        'user_bank_details_save'=>array(
+            //'user' => 'required',
+            'bank_name' => 'required',
+            'account_name' => 'required',
+            'account_number' => 'required',
+            'ifsc_code' => 'required',
+            'address' => 'required'
+        ),
+        'user_bank_details_edit'=>array(
+            'bank_id' => 'required'
+        ),
+        'user_bank_details_delete'=>array(
+            'bank_id' => 'required'
+        ),
+        'user_banks_list'=>array(
+            'user_id' => 'required'
         )
-        
-        
         );
 }
 ?>
