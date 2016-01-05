@@ -447,6 +447,7 @@ class PaymentGateway {
                     $pt_input['mm_transaction_id'] = $input['TxId'] ;
                     $pt_res = $this->paymentRepository->logPayment($pt_input);
                     $data = $input ;
+                    $data['citrus_success']=1;
                     return $this->commonFormatter->formatResponse(200, "success", Lang::get('MINTMESH.payment.success'), $data) ;								      
                 }										    
               else {
@@ -917,6 +918,74 @@ class PaymentGateway {
             {
                 return 0;
             }
+        }
+        public function getPayoutTransactions($input)
+        {
+            $this->loggedinUserDetails = $this->getLoggedInUser();
+            if ($this->loggedinUserDetails)
+            {
+                $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
+                $page=0;
+                if (!empty($input['page']))
+                {
+                    $page = $input['page'];
+                }
+                $result = $this->paymentRepository->getPayoutTransactions($this->loggedinUserDetails->emailid, $page);
+                $total_cash = 0;
+                if (count($result))
+                {
+                    $returnArray = array();
+                    $total_cash_res = $this->paymentRepository->getPaymentTotalCash($this->loggedinUserDetails->emailid,'1');
+                    if (!empty($total_cash_res))
+                    {
+                        $total_cash = $total_cash_res[0]->total_cash ;
+                    }
+                    foreach ($result as $res)
+                    {
+                        
+                        $r['from_email'] = $res->from_user;
+                        $r['my_email'] = $res->to_user ;
+                        $r['created_at'] = $res->created_at ;
+                        $r['amount'] = $res->amount ;
+                        if ($res->payout_types_id == 2)
+                        {
+                            $r['currency']=Config::get('constants.PAYMENTS.CURRENCY.INR');
+                        }
+                        else
+                        {
+                            $r['currency']=Config::get('constants.PAYMENTS.CURRENCY.USD');
+                        }
+                        /*$fromUser = $this->neoUserRepository->getNodeByEmailId($res->from_user) ;
+                        $fromUserDetails = $this->userGateway->formUserDetailsArray($fromUser);
+                        if (!empty($fromUserDetails))
+                        {
+                            foreach ($fromUserDetails as $k=>$v)
+                            {
+                                $r['from_user_'.$k]=$v ;
+                            }
+                        }
+                        else
+                        {
+                            $r['from_user_fullname']="";
+                        }*/
+                        $returnArray[] = $r ;
+                    }
+
+                    $data=array("referrals"=>$returnArray,"total_cash"=>$total_cash) ;
+                    $message = array('msg'=>array(Lang::get('MINTMESH.payout.success_list')));
+                    return $this->commonFormatter->formatResponse(200, "success", $message, $data) ;
+                }
+                else
+                {
+                    $message = array('msg'=>array(Lang::get('MINTMESH.payout.no_result')));
+                    return $this->commonFormatter->formatResponse(200, "success", $message, array()) ;
+                }
+            }
+            else {
+                $message = array('msg'=>array(Lang::get('MINTMESH.change_password.user_not_found')));
+                return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
+            }
+            
         }
     
 }

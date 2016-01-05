@@ -19,12 +19,12 @@
   border-radius: 5px;">
         <tr><td style="text-align:center; padding:10px 20px;" height="50px"><img src="<?php echo url(); ?>/public/images/tick-mark.png" alt="success_icon"/>
         </td>
-        <tr><td colspan="3" style="text-align:center; padding:10px 20px; color: #454545; font-size:16px;">We've sucessfully activated your email address</td></tr>
+        <tr><td colspan="3" style="text-align:center; padding:10px 20px; color: #454545; font-size:16px;">We have successfully activated your account.</td></tr>
         <tr><td colspan="3" style="text-align:center; padding:10px 20px; color: #777777;">Please login to MintMesh from mobile.</td></tr>
         <tr><td colspan="3" style="text-align:center; padding:30px 20px; color: #777777;">MintMesh  Team</td></tr>
         <tr><td colspan="3"  style="padding:10px 20px;"><hr style="margin: 0 auto;"></td></tr>
              <tr><td colspan="3" align="center"  style="text-align:center; padding:10px 20px; color: #777777;">If you need assistance, please contact MintMesh Support </td></tr>
-             <tr><td colspan="3" align="center"  style="text-align:center; padding:0px 20px; color:#454545;">(services@mintmesh.com)</td></tr>
+             <tr><td colspan="3" align="center"  style="text-align:center; padding:0px 20px; color:#454545;">(support@mintmesh.com)</td></tr>
              </tr></table>
              </td></tr></tbody></table>
         

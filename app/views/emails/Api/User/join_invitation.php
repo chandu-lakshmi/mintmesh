@@ -279,8 +279,9 @@ padding-top:0px !important;
                                                         <div style="text-align:left;font-family: 'Roboto', sans-serif;font-size:20px;margin-bottom:0;color:#777777;line-height:135%;letter-spacing:0.2px;">
 <p>You got an Invitation from <?php echo $sender_name ; ?> to try this
 app for free</p>
-<p>To try this app, download app from <b style="color:#333333;">App Store</b>
-and <b style="color:#333333;">Play Store</b></p>
+<p>To try this app, download app from <!--<b style="color:#333333;">App Store</b>
+and <b style="color:#333333;">Play Store</b></p>-->
+<a style="color:#333333;text-decoration:none;" href="mintmesh.com" target="_blank">mintmesh.com</a>
 </div>
                                                     </td>
                                                 </tr>
@@ -418,7 +419,7 @@ and <b style="color:#333333;">Play Store</b></p>
                                                     <td valign="top" class="textContent" style="padding:10px 30px 20px;">
                                                     <hr style="border-top:1px solid #c8c8c8;margin-top:5px;margin-bottom:20px;">
                                                         <div style="text-align:center;font-family: 'Roboto', sans-serif;font-size:20px;margin-bottom:0;margin-top:3px;color:#828282;line-height:135%;padding:0px 15px;" class="footer_txt">If you need assistance, please contact
-MintMesh Support <a style="color:#333333;text-decoration:none;" href="service@mintmesh.com" target="_blank">(service@mintmesh.com)</a></div>
+MintMesh Support <a style="color:#333333;text-decoration:none;" href="support@mintmesh.com" target="_blank">(support@mintmesh.com)</a></div>
                                                     </td>
                                                 </tr>
                                             </table>

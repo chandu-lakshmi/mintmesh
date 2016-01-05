@@ -121,17 +121,45 @@ class EloquentPaymentRepository extends BaseRepository implements PaymentReposit
         {
             if (!empty($email) && !empty($paymentReason))
             {
-                $sql = "select * from payment_transactions where to_user='".$email."'
+                $sql = "select id,service_id,for_user,from_user,to_user,last_modified_at,amount,payment_type from payment_transactions where to_user='".$email."'
                         and payment_reason=".$paymentReason." and status='".Config::get('constants.PAYMENTS.STATUSES.SUCCESS')."' order by id desc" ;
             
-               $skip = $limit = 0;
+                $skip = $limit = 0;
                 if (!empty($page))
                 {
                     $limit = $page*10 ;
                     $start = $limit - 10 ;
                     $sql.=" limit ".$start.",".$limit ;
                 }
-                return $result = DB::select($sql);
+
+                $result = DB::select($sql);
+//                echo "<pre>";print_r($result);exit;
+//                $result = DB::select($sql1);
+                return $result;
+            }
+            else
+            {
+                return 0 ;
+            }
+        }
+        
+        public function getPayoutTransactions($email="", $page=0)
+        {
+            if (!empty($email))
+            {
+                $sql = "select id,to_provided_user as for_user,from_user,to_mintmesh_user as to_user,created_at,amount,payout_types_id from payout_logs where to_mintmesh_user='".$email."' and status='".Config::get('constants.PAYMENTS.STATUSES.SUCCESS')."' order by id desc";
+            
+                $skip = $limit = 0;
+                if (!empty($page))
+                {
+                    $limit = $page*10 ;
+                    $start = $limit - 10 ;
+                    $sql.=" limit ".$start.",".$limit ;
+                }
+                $result = DB::select($sql);
+//                echo "<pre>";print_r($result);exit;
+//                $result = DB::select($sql1);
+                return $result;
             }
             else
             {

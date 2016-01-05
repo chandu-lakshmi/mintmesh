@@ -195,7 +195,7 @@ p{font-size:18px !important;}
                                                         <h3 style="color:#000000;line-height:125%;font-family: 'Roboto', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello <?php echo ucfirst($name) ; ?></h3>
                                                         
                                                         <div style="text-align:left;font-family: 'Roboto', sans-serif;font-size:20px;margin-bottom:0;color:#777777;line-height:135%;letter-spacing:0.2px;">
-<p>Just click the link below to reset your password</p>
+<p>Please click the link below to reset your password</p>
 <p>Thank you for choosing MintMesh</p>
 </div>
                                                     </td>
@@ -327,7 +327,7 @@ p{font-size:18px !important;}
                                                     <td valign="top" class="textContent" style="padding:10px 30px 20px;">
                                                     <hr style="border-top:1px solid #c8c8c8;margin-top:5px;margin-bottom:20px;">
                                                         <div style="text-align:center;font-family: 'Roboto', sans-serif;font-size:20px;margin-bottom:0;margin-top:3px;color:#828282;line-height:135%;padding:0px 15px;" class="footer_txt">If you need assistance, please contact
-MintMesh Support <a style="color:#333333;text-decoration:none;" href="service@mintmesh.com" target="_blank">(service@mintmesh.com)</a></div>
+MintMesh Support <a style="color:#333333;text-decoration:none;" href="support@mintmesh.com" target="_blank">(support@mintmesh.com)</a></div>
                                                     </td>
                                                 </tr>
                                             </table>

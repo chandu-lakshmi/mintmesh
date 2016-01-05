@@ -263,9 +263,13 @@ class UserController extends \BaseController {
            if (!empty($code))
            {
                $response = $this->userGateway->activateUser($code);
-               if (empty($os_type) && !empty($response['data']))
+               if (empty($os_type))
                {
-                   return View::make('landings/activation');
+                  if(empty($response['data'])) {
+                       return View::make('landings/activationResponce',array('msg' => $response['message']['msg'][0]));
+                   } else {
+                       return View::make('landings/activation');
+                   }
                }
                else
                {

@@ -190,7 +190,8 @@ td[class="buttonContent"] a{padding:15px !important;}
                                                     <h3 style="color:#000000;line-height:125%;font-family: 'Roboto', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello <?php echo ucfirst($name) ; ?></h3>
                                                         
                                                         <div style="text-align:left;font-family: 'Roboto', sans-serif;font-size:20px;margin-bottom:0;color:#777777;line-height:135%;letter-spacing:0.2px;">
-<p>You have successfully created MintMesh account for <a href="mailto:<?php echo $email ; ?>" style="color:#000;text-decoration:none;"><?php echo $email ; ?></a></p>
+                                                            <p>You have successfully created an account with Mintmesh for the ID given below.</br>
+<!--    You have successfully created MintMesh account for--> <a href="mailto:<?php echo $email ; ?>" style="color:#000;text-decoration:none;"><?php echo $email ; ?></a></p>
 <p>To activate your account, click the link below</p>
 </div>
                                                     </td>
@@ -317,7 +318,7 @@ td[class="buttonContent"] a{padding:15px !important;}
                                                     <td valign="top" class="textContent" style="padding:10px 30px 20px;">
                                                     <hr style="border-top:1px solid #c8c8c8;margin-top:5px;margin-bottom:20px;">
                                                         <div style="text-align:center;font-family: 'Roboto', sans-serif;font-size:20px;margin-bottom:0;margin-top:3px;color:#828282;line-height:135%;">If you need assistance, please contact <br/>
-MintMesh Support <a style="color:#333333;text-decoration:none;" href="service@mintmesh.com" target="_blank">(service@mintmesh.com)</a></div>
+MintMesh Support <a style="color:#333333;text-decoration:none;" href="support@mintmesh.com" target="_blank">(support@mintmesh.com)</a></div>
                                                     </td>
                                                 </tr>
                                             </table>

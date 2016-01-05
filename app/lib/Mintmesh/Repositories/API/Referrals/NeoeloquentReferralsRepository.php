@@ -687,6 +687,13 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             }
             
         }
+        
+        public function getServiceDetailsByCode($serviceCode)
+        {
+            $queryString = "match (u:User)-[r:".Config::get('constants.REFERRALS.POSTED')."]->(p:Post) where p.service_code='".$serviceCode."' return u,p limit 1";
+            $query = new CypherQuery($this->client, $queryString);
+            return $result = $query->getResultSet();
+        }
          
         
 

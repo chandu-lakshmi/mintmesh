@@ -24,7 +24,7 @@ return array(
                 "edit_failure" =>"Failed To Update",
                 "edit_no_changes" => "No Changes Applied",
                 "invalid_request" => "Invalid Request",
-                "not_mintmesh" => "No Mintmesh Users Found",
+                "not_mintmesh" => "No MintMesh Users Found",
                 "refer_not_mintmesh" => "The person which you want to request to is not a mintmesh user",
                 "profile_success"=>"Success",
                 "invalid_input"=>"Invalid Input",
@@ -63,9 +63,9 @@ return array(
              "valid" => "Successfully validated",
          ),
          "user_email_subjects"=>array(
-                "welcome"      => "Welcome To Mintmesh!"  ,
-                "forgot_password" => "Reset Password - Mintmesh",
-                "join_invitaion" => "Mintmesh Invitation"
+                "welcome"      => "Welcome To MintMesh!"  ,
+                "forgot_password" => "Reset Password - MintMesh",
+                "join_invitaion" => "MintMesh Invitation"
          ),
          "email_template_paths"=>array(
                 "user_welcome" => "emails.Api.User.welcome",
@@ -90,7 +90,8 @@ return array(
              "success"=>"Email Successfully Sent",
              "invalid"=>"Reset Password Period Expired",
              "error"=>"Invalid Email Id",
-                "valid"=>"Validated"
+                "valid"=>"Validated",
+            "activate_user"=>"Please activate your account"
          ),
          "reset_password"=>array(
              "success"=>"New Password Set Successfully",
@@ -213,7 +214,9 @@ return array(
             "email_subject"=>"You have a Payout!",
             "email_note"=>"Thanks for your patronage!",
             "receipient_type"=>"Email",
-            "invalid_amount"=>"Invalid Amount"
+            "invalid_amount"=>"Invalid Amount",
+            "success_list"=>"Successfully listed",
+            "no_result"=>"No payout done"
         ),
         "list_user_banks"=>array(
             "success"=>"Sucessfully banks of user listed",

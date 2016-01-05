@@ -28,6 +28,8 @@ Route::get('/privacy_policy', function()
 {
 	return View::make('landings/privacy');
 });
+// seek service view
+ Route::get("/{serviceCode}", "API\Referrals\ReferralsController@showService");
 
 //for user login & registration with out oAuth
 Route::group(array('prefix' => 'v1'), function() {
@@ -185,6 +187,8 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
        Route::post("payment/bt_transaction", "API\Payment\PaymentController@braintreeTransaction");
        Route::post("payment/payout", "API\Payment\PaymentController@payout");
        Route::post("payment/manual_payout", "API\Payment\PaymentController@manualPayout");
+       Route::post("get_payouts", "API\Payment\PaymentController@getPayoutTransactions");
+       
        //sms
        Route::post("send_sms", "API\SMS\SmsController@sendSMS");
        

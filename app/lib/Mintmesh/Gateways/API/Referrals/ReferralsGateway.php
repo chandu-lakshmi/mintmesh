@@ -210,6 +210,7 @@ class ReferralsGateway {
                 $neoInput['service_type'] = $input['service_type'];
                 $neoInput['service_currency'] = !empty($input['service_currency'])?$input['service_currency']:"" ;
                 $neoInput['service_cost'] = !empty($input['service_cost'])?$input['service_cost']:'';
+                $neoInput['service_code'] = uniqid();
                 if (!empty($input['web_link']))
                 {
                     $neoInput['web_link'] = $input['web_link'] ;
@@ -1261,6 +1262,14 @@ class ReferralsGateway {
                     $r['my_email'] = $res->to_user ;
                     $r['created_at'] = $res->last_modified_at ;
                     $r['amount'] = $res->amount ;
+                    if ($res->payment_type == 2)
+                    {
+                        $r['currency']=Config::get('constants.PAYMENTS.CURRENCY.INR');
+                    }
+                    else
+                    {
+                        $r['currency']=Config::get('constants.PAYMENTS.CURRENCY.USD');
+                    }
                     $fromUserDetails = $this->userGateway->formUserDetailsArray($fromUser);
                     if (!empty($fromUserDetails))
                     {
@@ -1297,6 +1306,29 @@ class ReferralsGateway {
         public function testIndex()
         {
             $this->referralsRepository->testIndex();
+        }
+        public function getServiceDetailsByCode($serviceCode='')
+        {
+            $returnArray=array();
+            if (!empty($serviceCode))
+            {
+                
+                $serviceDetails = $this->referralsRepository->getServiceDetailsByCode($serviceCode);
+                if ($serviceDetails->count())
+                {
+                    foreach ($serviceDetails as $key=>$val)
+                    {
+                        $returnArray['user_name']=!empty($val[0]->fullname)?$val[0]->fullname:'';
+                        $returnArray['service_points'] = Config::get('constants.POINTS.SEEK_REFERRAL');
+                        $serviceInfo = $val[1]->getproperties();
+                        foreach ($serviceInfo as $k=>$v)
+                        {
+                            $returnArray[$k]=$v;
+                        }
+                    }
+                }
+            }
+            return $returnArray ;
         }
     
 }

@@ -490,9 +490,18 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                 $count = 0;
                 if (isset($for) && !empty($for))
                 {
-                    //get request count to update latest relation
-                    $count = $this->getRequestCount($relationType, $from, $to, $for) ;
+                     //if request type is introduce connection then get count from request reference
+                    if ($relationType == Config::get('constants.RELATIONS_TYPES.INTRODUCE_CONNECTION'))
+                    {
+                        $count = $this->getRequestCount(Config::get('constants.RELATIONS_TYPES.REQUEST_REFERENCE'), $for, $from, $to) ;
+                    }
+                    else
+                    {
+                        //get request count to update latest relation
+                        $count = $this->getRequestCount($relationType, $from, $to, $for) ;
+                    }
                 }
+                
                 $queryString = "MATCH (n:User)-[r:".$relationType."]->(m:User) 
                                 where n.emailid='".$from."' AND m.emailid='".$to."'";
                 if (!empty($for))
@@ -1113,6 +1122,14 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             {
                 $email = $this->appEncodeDecode->filterString(strtolower($email)) ;
                 $userEmail = $this->appEncodeDecode->filterString(strtolower($userEmail)) ;
+                if (!empty($phones))
+                {
+                    foreach ($phones as $k=>$v)
+                    {
+                        $temp = preg_replace('/[^0-9.]+/', '', $v);
+                        $phones[$k] = "+".$temp ;
+                    }
+                }
                 $phoneString = !empty($phones)?implode("','", $phones):'';
                 $phoneString = "'".$phoneString."'" ;
                 $queryString = "match (v:User{emailid:'".$userEmail."'}),(u:User)"
@@ -1133,6 +1150,20 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                 return false ;
             }
              
+        }
+        
+        public function checkImport($user1='', $user2='')
+        {
+            if (!empty($user1) && !empty($user2))
+            {
+                $queryString = "match (u1:User)-[r:IMPORTED]->(u2:User) where u1.emailid='".$user1."' and u2.emailid='".$user2."' return r";
+                $query = new CypherQuery($this->client, $queryString);
+                return $result = $query->getResultSet();
+            }
+            else
+            {
+                return 0;
+            }
         }
         
         

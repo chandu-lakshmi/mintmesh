@@ -446,6 +446,22 @@ class ReferralsController extends \BaseController {
             $this->referralsGateway->testIndex();
         }
         
+        public function showService($serviceCode)
+        {
+            if (!empty($serviceCode))
+            {
+                $serviceDetails = $this->referralsGateway->getServiceDetailsByCode($serviceCode);
+                if (!empty($serviceDetails))
+                {
+                   return View::make('landings/showService', array('data'=>$serviceDetails)); 
+                }
+                else
+                {
+                    return View::make('landings/noDetailsFound'); 
+                }
+            }
+        }
+        
         
 }
 ?>

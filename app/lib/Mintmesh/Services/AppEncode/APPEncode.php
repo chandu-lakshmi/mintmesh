@@ -139,6 +139,13 @@ use Cache;
       }
        function cleanBadWords($str)
         {
+           if (!empty($this->profanity_list))
+           {
+               foreach ($this->profanity_list as $k=>$v)
+               {
+                   $this->profanity_list[$k]=trim($v);
+               }
+           }
             if (Cache::has('badWords')) { 
                 $this->profanity_list = Cache::get('badWords');
             } 

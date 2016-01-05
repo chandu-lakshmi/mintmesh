@@ -266,6 +266,24 @@ class PaymentController extends \BaseController {
             }
         }
         
+        /**
+	 * get payouts
+         * 
+         * POST/get_payouts
+         * 
+         * @param string $access_token The Access token of a user
+         * @param string $page page number
+	 * @return Response
+	 */
+        public function getPayoutTransactions()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            $response = $this->paymentGateway->getPayoutTransactions($inputUserData);
+            return \Response::json($response);
+            
+        }
+        
         
 
 
