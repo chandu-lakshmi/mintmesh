@@ -153,11 +153,11 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                {
                    if ($is_default)
                    {
-                       DB::update("update notifications_logs set other_status='".$other_status."', updated_at=now() where from_email=? and notifications_types_id=? and to_email=? and other_status=?",array($result->other_email, 4, $result->from_email, $other_status));
+                       DB::update("update notifications_logs set other_status='".$other_status."', updated_at='".date('Y-m-d H:i:s')."' where from_email=? and notifications_types_id=? and to_email=? and other_status=?",array($result->other_email, 4, $result->from_email, $other_status));
                    }
                    else
                    {
-                       DB::update("update notifications_logs set other_status='".$other_status."', updated_at=now() where from_email=? and notifications_types_id=? and to_email=?",array($result->other_email, 4, $result->from_email));
+                       DB::update("update notifications_logs set other_status='".$other_status."', updated_at='".date('Y-m-d H:i:s')."' where from_email=? and notifications_types_id=? and to_email=?",array($result->other_email, 4, $result->from_email));
                    }
                    
                }
@@ -165,11 +165,11 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                {
                    if ($is_default)
                    {
-                       return DB::update("update notifications_logs set status='0',other_status='".$other_status."', updated_at=now() where from_email=? and notifications_types_id=? and to_email=? and other_email=? and extra_info=? and other_status=?",array($result->from_email, $result->notifications_types_id, $result->to_email,$result->other_email,$result->extra_info, $other_status));
+                       return DB::update("update notifications_logs set status='0',other_status='".$other_status."', updated_at='".date('Y-m-d H:i:s')."' where from_email=? and notifications_types_id=? and to_email=? and other_email=? and extra_info=? and other_status=?",array($result->from_email, $result->notifications_types_id, $result->to_email,$result->other_email,$result->extra_info, $other_status));
                    }
                    else
                    {
-                       return DB::update("update notifications_logs set status='0',other_status='".$other_status."', updated_at=now() where from_email=? and notifications_types_id=? and to_email=? and other_email=? and extra_info=?",array($result->from_email, $result->notifications_types_id, $result->to_email,$result->other_email,$result->extra_info));
+                       return DB::update("update notifications_logs set status='0',other_status='".$other_status."', updated_at='".date('Y-m-d H:i:s')."' where from_email=? and notifications_types_id=? and to_email=? and other_email=? and extra_info=?",array($result->from_email, $result->notifications_types_id, $result->to_email,$result->other_email,$result->extra_info));
                    }
                    
                }
@@ -177,11 +177,11 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                {
                    if ($is_default)
                    {
-                       return DB::update("update notifications_logs set status='0',other_status='".$other_status."', updated_at=now() where from_email=? and notifications_types_id=? and to_email=? and other_status=?",array($result->from_email, $result->notifications_types_id, $result->to_email, $other_status));
+                       return DB::update("update notifications_logs set status='0',other_status='".$other_status."', updated_at='".date('Y-m-d H:i:s')."' where from_email=? and notifications_types_id=? and to_email=? and other_status=?",array($result->from_email, $result->notifications_types_id, $result->to_email, $other_status));
                    }
                    else
                    {
-                       return DB::update("update notifications_logs set status='0',other_status='".$other_status."', updated_at=now() where from_email=? and notifications_types_id=? and to_email=? ",array($result->from_email, $result->notifications_types_id, $result->to_email));
+                       return DB::update("update notifications_logs set status='0',other_status='".$other_status."', updated_at='".date('Y-m-d H:i:s')."' where from_email=? and notifications_types_id=? and to_email=? ",array($result->from_email, $result->notifications_types_id, $result->to_email));
                    }
                    
                }
@@ -193,7 +193,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
            }
            
         }
-        public function getNotifications($user, $notification_type=0, $page=0)
+        public function getNotifications($user, $notification_type=0, $page=0, $isNotificationCount=0)
         {
             if ($user->emailid)
             {
@@ -240,10 +240,19 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                 if (!empty($type))
                 {
                     $sql.=" and nl.notifications_types_id IN (".$type.")" ;
-                    $sql.=" and CASE WHEN nl.notifications_types_id=10 THEN 1 ELSE nl.other_status = '0' END" ;
+                    if (!empty($isNotificationCount))
+                    {
+                        $sql.=" and nl.other_status = '0'" ;
+                    }
+                    else
+                    {
+                        $sql.=" and CASE WHEN nl.notifications_types_id=10 THEN 1 ELSE nl.other_status = '0' END" ;
+                    }
+                    
                     $sql.=" GROUP BY CASE WHEN nl.notifications_types_id=10 THEN nl.extra_info
                             ELSE nl.id END  ";
                 }
+                
                $sql.=" order by nl.id desc" ;
                if (!empty($page))
                 {
@@ -258,41 +267,40 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
         {
             if ($user->emailid)
             {
-//                $type = 0;
-//                $excludeType = 0;
-//               switch ($notification_type)
-//                {
-//                    case 'request_connect':
-//                            $types= array(1,3,4,7,11,20,17);
-//                            $type = implode(",",$types);
-//                            break;
-//                    default:
-//                        $type = 0;
-//                        $excludeTypes=array(21);
-//                        $excludeType=implode(",",$excludeTypes);
-//
-//                } 
-//                $sql = "select count(id) as count from notifications_logs nl 
-//                        where nl.to_email = '".$user->emailid."'";
-//                if (!empty($excludeType))
-//                {
-//                    $sql.=" and nl.notifications_types_id NOT IN (".$excludeType.")" ;
-//                }
-//                if (!empty($type))
-//                {
-//                    $sql.=" and nl.notifications_types_id IN (".$type.")" ;
-//                    
-//                }
-//                $sql.=" and nl.status = '1'" ;
-//                $sql.=" group by nl.notifications_types_id, 
-//                            nl.from_email, nl.message,
-//                            CASE WHEN nl.extra_info IS NULL THEN 1
-//                            ELSE nl.extra_info END,
-//                            CASE WHEN nl.other_email IS NULL THEN 1
-//                            ELSE nl.other_email END" ;
-//                
-//                 $result = DB::select($sql);
-                 $result = $this->getNotifications($user, $notification_type);
+                if ($notification_type == 'request_connect')
+                {
+                    $result = $this->getNotifications($user, $notification_type,0,1);
+                }
+                else
+                {
+                    $type = 0;
+                    $excludeType = 0;
+                    $type = 0;
+                            $excludeTypes=array(21);
+                            $excludeType=implode(",",$excludeTypes);
+                    $sql = "select count(id) as count from notifications_logs nl 
+                            where nl.to_email = '".$user->emailid."'";
+                    if (!empty($excludeType))
+                    {
+                        $sql.=" and nl.notifications_types_id NOT IN (".$excludeType.")" ;
+                    }
+                    if (!empty($type))
+                    {
+                        $sql.=" and nl.notifications_types_id IN (".$type.")" ;
+
+                    }
+                    $sql.=" and nl.status = '1'" ;
+                    $sql.=" group by nl.notifications_types_id, 
+                                nl.from_email, nl.message,
+                                CASE WHEN nl.extra_info IS NULL THEN 1
+                                ELSE nl.extra_info END,
+                                CASE WHEN nl.other_email IS NULL THEN 1
+                                ELSE nl.other_email END" ;
+
+                     $result = DB::select($sql);
+                }
+                
+                 
                  return count($result) ;
             }
             else
@@ -565,6 +573,21 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
         {
             $sql = "select word from bad_words";
             return $result = DB::select($sql);
+        }
+        
+        public function closeVerifyOtpBattleCard($user)
+        {
+            if (!empty($user))
+            {
+                $user = $this->appEncodeDecode->filterString(strtolower($user));
+                $sql = "update notifications_logs set status='0', other_status='3' where from_email='".$user."' and to_email='".$user."' and notifications_types_id=21";
+                return $result = DB::statement($sql);
+            }
+            else
+            {
+                return false ;
+            }
+            
         }
         
         

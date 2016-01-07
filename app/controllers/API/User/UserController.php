@@ -275,7 +275,6 @@ class UserController extends \BaseController {
                {
                    return \Response::json($response);
                }
-               
            }
         }
         
@@ -319,6 +318,30 @@ class UserController extends \BaseController {
             }
         }
         /**
+	 * check reset user's password
+         * 
+         * POST/check_reset_password
+         * 
+         * @param string $code The reset password code
+         * 
+	 * @return Response
+	 */
+        public function checkResetPassword()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->userGateway->validateCheckResetPasswordInput($inputUserData);
+            if($validation['status'] == 'success') {
+               $response = $this->userGateway->checkResetPassword($inputUserData);
+               return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+        }
+        
+        /**
 	 * reset user's password
          * 
          * POST/reset_password
@@ -333,14 +356,16 @@ class UserController extends \BaseController {
         {
             // Receiving user input data
             $inputUserData = \Input::all();
-            // Validating user input data
-            $validation = $this->userGateway->validateResetPasswordInput($inputUserData);
-            if($validation['status'] == 'success') {
-               $response = $this->userGateway->resetPassword($inputUserData);
-               return \Response::json($response);
-            } else {
-                    // returning validation failure
-                return \Response::json($validation);
+            if(!empty($inputUserData['code'])) {
+                // Validating user input data
+                $validation = $this->userGateway->validateResetPasswordInput($inputUserData);
+                if($validation['status'] == 'success') {
+                   $response = $this->userGateway->resetPassword($inputUserData);
+                   return \Response::json($response);
+                } else {
+                        // returning validation failure
+                    return \Response::json($validation);
+                }
             }
         }
         

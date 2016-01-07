@@ -219,6 +219,8 @@ class SMSGateway {
                     {
                         //update verified phone field
                         $updPhoneVerifed=$this->neoUserRepository->updatePhoneVerified($this->loggedinUserDetails->emailid, 1);
+                        //change validate battle card status to closed
+                        $closeResult = $this->userRepository->closeVerifyOtpBattleCard($email);
                         $data = array();
                         $message = array('msg'=>array(Lang::get('MINTMESH.sms.otp_validated')));
                         return $this->commonFormatter->formatResponse(200, "success", $message, $data) ;

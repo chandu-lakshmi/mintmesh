@@ -139,48 +139,38 @@ use Cache;
       }
        function cleanBadWords($str)
         {
-           if (!empty($this->profanity_list))
-           {
-               foreach ($this->profanity_list as $k=>$v)
-               {
-                   $this->profanity_list[$k]=trim($v);
-               }
-           }
             if (Cache::has('badWords')) { 
                 $this->profanity_list = Cache::get('badWords');
             } 
-           $explodeString = explode(" ", $str) ;
-           if (is_string($str))
-           {
-               $explodeStringArray = explode(" ", $str) ;
-                if (is_array($explodeStringArray))
+            if (!empty($this->profanity_list)) {
+                foreach ($this->profanity_list as $k=>$v)
                 {
-                    foreach ($explodeStringArray as $key=>$val)
-                    {
-                        if (in_array(strtolower($val), $this->profanity_list))
-                        {
+                    $this->profanity_list[$k]=trim($v);
+                }
+            }
+            $explodeString = explode(" ", $str) ;
+            if (is_string($str)) {
+                $explodeStringArray = explode(" ", $str) ;
+                if (is_array($explodeStringArray)) {
+                    foreach ($explodeStringArray as $key=>$val) {
+                        if (in_array(strtolower($val), $this->profanity_list)) {
                             $temp = substr($val, 1,-1);
                             $replacedString = str_replace($temp, str_repeat('*',strlen($temp)),$val);
                             $explodeString[$key] = $replacedString;
                         }
                     }
                     $str = implode(' ', $explodeString);
-                }
-                else
-                {
-                    if (in_array(strtolower($str), $this->profanity_list))
-                    {
+                } else {
+                    if (in_array(strtolower($str), $this->profanity_list)) {
                         $temp = substr($val, 1,-1);
                         $replacedString = str_replace($temp, '*',$str);
                         $str = $replacedString;
                     }
                 }
                 return $str ; 
-           }
-           else
-           {
-               return '';
-           }
+            } else {
+                return '';
+            }
 
         }
      

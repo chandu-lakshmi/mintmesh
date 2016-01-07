@@ -101,7 +101,11 @@ return array(
              "valid"=>"Validated",
              "same"=>"New password cant be same as old password"
          ),
-         "import_contacts"=>array(
+         "check_reset_password"=>array(
+             "success"=>"sucess",
+             "failed"=>"fail"
+         ),
+        "import_contacts"=>array(
              "success"=>"Contacts Successfully Imported",
              "invalid"=>"Invalid Input",
              "error"=>"Some Error Occurred"

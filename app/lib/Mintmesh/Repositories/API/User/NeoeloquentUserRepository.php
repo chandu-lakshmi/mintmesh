@@ -212,7 +212,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             if (!empty($emailId))
             {
                 $emailId = $this->appEncodeDecode->filterString(strtolower($emailId));
-                $queryString = "MATCH (n:User {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."]->(m) where HAS (m.login_source) RETURN m
+                $queryString = "MATCH (n:User {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."]->(m) where HAS (m.login_source) RETURN DISTINCT m order by m.firstname
                                 UNION
                                 MATCH (n:User {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-(m:User) where has(m.login_source) RETURN DISTINCT m order by m.firstname asc" ;
                 

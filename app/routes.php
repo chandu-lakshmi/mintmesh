@@ -68,6 +68,7 @@ Route::group(array('prefix' => 'v1'), function() {
 
     // Mintmesh user reset password
     Route::get("redirect_to_app/{url}", "API\User\UserController@redirectToApp");
+    Route::post("user/check_reset_password/", "API\User\UserController@checkResetPassword");
     Route::post("user/reset_password/", "API\User\UserController@resetPassword");
     Route::post("testIndex", "API\Referrals\ReferralsController@testIndex");
     

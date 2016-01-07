@@ -19,7 +19,8 @@ class PaymentValidator extends Validator {
         ),
         'manualPayout'=>array(
             'bank_id'=>'required',
-            'amount'=>'required'
+            'amount'=>'required',
+            'password'=>'required'
         ),
         'user_bank_details_save'=>array(
             //'user' => 'required',

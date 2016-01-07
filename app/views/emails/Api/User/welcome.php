@@ -190,7 +190,7 @@ td[class="buttonContent"] a{padding:15px !important;}
                                                     <h3 style="color:#000000;line-height:125%;font-family: 'Roboto', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello <?php echo ucfirst($name) ; ?></h3>
                                                         
                                                         <div style="text-align:left;font-family: 'Roboto', sans-serif;font-size:20px;margin-bottom:0;color:#777777;line-height:135%;letter-spacing:0.2px;">
-                                                            <p>You have successfully created an account with Mintmesh for the ID given below.</br>
+                                                            <p>You have successfully created an account with MintMesh for the ID given below.</br>
 <!--    You have successfully created MintMesh account for--> <a href="mailto:<?php echo $email ; ?>" style="color:#000;text-decoration:none;"><?php echo $email ; ?></a></p>
 <p>To activate your account, click the link below</p>
 </div>

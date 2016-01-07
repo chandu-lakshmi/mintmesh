@@ -50,6 +50,9 @@ class UserValidator extends Validator {
             'password_confirmation' => 'required|min:6',
             'code'=>"required"        
             ),
+        'check_reset_password' => array(
+            'code'=>"required"        
+            ),
         'complete_profile' => array(
                 'dpImage'   => 'image',
                 'position'      => 'required',

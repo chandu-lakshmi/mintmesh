@@ -1132,6 +1132,7 @@ class ReferralsGateway {
         {
             $return = array();
             $loggedinUserDetails = $this->getLoggedInUser();
+            $posts = array();
             if ($loggedinUserDetails)
             {
                 $neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($loggedinUserDetails->emailid) ;
@@ -1145,6 +1146,7 @@ class ReferralsGateway {
                     
                     foreach ($relationDetails as $relation)
                     {
+                        $enterReferrals = true;
                         $p2Status = Config::get('constants.REFERENCE_STATUS.PENDING') ;
                         $to_emailid = "" ;
                         $a = $relation[0]->getProperties();
@@ -1192,6 +1194,15 @@ class ReferralsGateway {
                                 }
                                 $postDetails = $relation[2]->getProperties() ;
                                 $postId = $relation[2]->getId() ;
+                                if (!in_array($postId, $posts))
+                                {
+                                    $posts[]=$postId ;
+                                }
+                                else
+                                {
+                                    $enterReferrals = false;
+                                }
+                                
                                 foreach ($postDetails as $k=>$v)
                                 {
                                     $a['post_details_'.$k] = $v ;
@@ -1212,6 +1223,7 @@ class ReferralsGateway {
                                 $a['other_status'] = !empty($relation[0]->one_way_status)?$relation[0]->one_way_status:Config::get('constants.REFERENCE_STATUS.PENDING');
                             }
                         }
+                        if ($enterReferrals)
                         $return['referrals'][] = $a ;
                     }
                 }

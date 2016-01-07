@@ -85,7 +85,7 @@ class EloquentPaymentRepository extends BaseRepository implements PaymentReposit
         {
             if (!empty($input['mm_transaction_id']))
             {
-                $sql = "update payment_transactions set status='".$input['status']."', last_modified_at=now() 
+                $sql = "update payment_transactions set status='".$input['status']."', last_modified_at='".date('Y-m-d H:i:s')."' 
                         where mm_transaction_id='".$input['mm_transaction_id']."'" ;
                 $result = DB::statement($sql);
                 return true;
@@ -250,9 +250,13 @@ class EloquentPaymentRepository extends BaseRepository implements PaymentReposit
         
         public function logPayout($input = array())
         {
-            $sql = "insert into payout_logs (`from_user`,`to_mintmesh_user`,`to_provided_user`,`amount`,`payout_types_id`,`status`,`ip_address`,`service_response`,`paypal_item_id`,`paypal_batch_id`,`bank_id`)" ;
+            $sql = "insert into payout_logs (`from_user`,`to_mintmesh_user`,`to_provided_user`,`amount`,`payout_types_id`,`status`,`ip_address`,`service_response`,`paypal_item_id`,`paypal_batch_id`,`bank_id`,`payout_transaction_id`)" ;
             $sql.=" values('".$input['from_user']."','".$input['to_mintmesh_user']."',
-                            '".$input['to_provided_user']."',".$input['amount'].",".$input['payout_types_id'].",'".$input['status']."','".$_SERVER['REMOTE_ADDR']."','".$input['service_response']."','".$input['paypal_item_id']."','".$input['paypal_batch_id']."','".$input['bank_id']."')" ;
+                            '".$input['to_provided_user']."',".$input['amount'].","
+                            . "".$input['payout_types_id'].",'".$input['status']."',"
+                            . "'".$_SERVER['REMOTE_ADDR']."','".$input['service_response']."',"
+                            . "'".$input['paypal_item_id']."','".$input['paypal_batch_id']."',"
+                            . "'".$input['bank_id']."','".$input['payout_transaction_id']."')" ;
             //echo $sql ; exit;
             return $result = DB::statement($sql);
         }
@@ -275,7 +279,14 @@ class EloquentPaymentRepository extends BaseRepository implements PaymentReposit
             {
                 $sql = "select * from user_bank_details where id='".$bank_id."'";
                 $result = DB::select($sql);
-                return $result[0];
+                if (!empty($result))
+                {
+                    return $result[0];
+                }
+                else{
+                    return 0;
+                }
+                
             }
             else
             {
@@ -309,7 +320,7 @@ class EloquentPaymentRepository extends BaseRepository implements PaymentReposit
             {
                 if (!empty($input))
                 {
-                    $sql = "update balance_cash set last_modified_at=now(),ip_address='".$_SERVER['REMOTE_ADDR']."'";
+                    $sql = "update balance_cash set last_modified_at='".date('Y-m-d H:i:s')."',ip_address='".$_SERVER['REMOTE_ADDR']."'";
                     foreach ($input as $k=>$v)
                     {
                         if ($k == 'balance_cash')
@@ -353,7 +364,7 @@ class EloquentPaymentRepository extends BaseRepository implements PaymentReposit
                         $sql.="'".$v."'," ;
                     }
                 }
-                $sql.="now(),'".$_SERVER['REMOTE_ADDR']."')";
+                $sql.="'".date('Y-m-d H:i:s')."','".$_SERVER['REMOTE_ADDR']."')";
                 return $result = DB::statement($sql);
 
             }

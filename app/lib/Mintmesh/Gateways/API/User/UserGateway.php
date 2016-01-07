@@ -37,7 +37,7 @@ class UserGateway {
     protected $authorizer, $appEncodeDecode;
     protected $userValidator,$contactsGateway, $referralsGateway;
     protected $userEmailManager;
-    protected $userFileUploader,$declines, $refer_nots;
+    protected $userFileUploader,$declines, $refer_nots, $deleteUserTypes;
     protected $commonFormatter, $postNotifications, $other_status_diferrent, $referralsRepository;
     protected $loggedinUserDetails,$notificationsTypes,$extraTextsNotes,$directProfileRedirections,$infoTypes,$referFlowTypes ;
 	public function __construct(UserRepository $userRepository,
@@ -72,6 +72,7 @@ class UserGateway {
                 $this->selfReferNotifications = array(17) ;
                 $this->referFlowTypes = array(3,4,5,6,7,8,9);
                 $this->refer_nots = array(3,4,5,6,7,8,9);
+                $this->deleteUserTypes = array(1,2);
         }
         // validation on user inputs for change password
         public function validateChangePassword($input) {            
@@ -160,6 +161,12 @@ class UserGateway {
             return $this->doValidation('forgot_password','MINTMESH.forgot_password.valid');
         }
                 
+        //validation on reset password input
+        public function validateCheckResetPasswordInput($input)
+        {
+            return $this->doValidation('check_reset_password','MINTMESH.check_reset_password.valid');
+        }
+        
         //validation on reset password input
         public function validateResetPasswordInput($input)
         {
@@ -701,6 +708,26 @@ class UserGateway {
                 
             }
             
+        }
+        
+        /*
+         * reset a user password
+         */
+        public function checkResetPassword($input)
+        {
+            $decodedString = $this->base_64_decode($input['code']) ;
+            $sentTime = $decodedString['string1'] ;
+            $email = $decodedString['string2'];
+            //to get resetactivationcode 
+            $passwordData = $this->userRepository->getresetcodeNpassword($email);
+            if (!empty($email) && !empty($passwordData) && $passwordData->resetactivationcode == $input['code']) {
+                $message = array('msg'=>array(Lang::get('MINTMESH.check_reset_password.success')));
+                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
+                        
+            } else {
+                $message = array('msg'=>array(Lang::get('MINTMESH.check_reset_password.failed')));
+                return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
+            }
         }
         
         /*
@@ -2192,6 +2219,16 @@ class UserGateway {
                         $notes = array();
                         foreach ($notifications as $notification)
                         {
+                            //check if user is not detaileted for only some notification types
+                            $is_deleted = 0;
+                            if (in_array($notification->notifications_types_id,$this->deleteUserTypes))
+                            {
+                                $connectedToMe = $this->neoUserRepository->checkConnection($loggedinUserDetails->emailid,$notification->from_email);
+                                if (empty($connectedToMe))
+                                {
+                                    $is_deleted = 1;
+                                }
+                            }
                             if ($notification->notifications_types_id == 20){//if payment done notification the change the from and other details
                                 $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($notification->other_email) ;
                             }
@@ -2332,6 +2369,7 @@ class UserGateway {
                                         $noReferralsPost = true ;
                                     }
                                 }
+                                $note['is_deleted'] = $is_deleted ;
                                 if (!$noReferralsPost)//for post battle cards for which no referrals found
                                 $notes[] = $note ;
                             }
@@ -2386,7 +2424,7 @@ class UserGateway {
                         $referDetails = array();
                         foreach ($userDetails as $k_r=>$v_r)
                         {
-                            $referDetails['other_user_'.$k_r] = $v_r ;
+                            $referDetails['to_user_'.$k_r] = $v_r ;
                         }
                         foreach ($relationDetails as $k_r=>$v_r)
                         {
@@ -2553,7 +2591,6 @@ class UserGateway {
                         {
                             //check if connected to me
                             $connectedToMe = $this->neoUserRepository->checkConnection($loggedinUserDetails->emailid,$user[0]->emailid);
-                            print_r($connectedToMe);
                             if (!empty($connectedToMe))
                             {
                                 $u[$uId]['connected_to_me'] = 1 ;
