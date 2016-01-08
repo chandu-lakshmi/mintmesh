@@ -267,8 +267,8 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                         //check if any referred post has pending status
                         if ($row->notifications_types_id == 10)
                         {
-                            $sql1 = "select count(id) as count from notifications_logs nl where nl.other_status != '0' and nl.notifications_types_id=10"
-                                    . " and nl.extra_info=".$row->notifications_types_id." and to_email='".$user->emailid."'" ;
+                            $sql1 = "select count(id) as count from notifications_logs nl where nl.other_status = '0' and nl.notifications_types_id=10"
+                                    . " and nl.extra_info='".$row->extra_info."' and to_email='".$user->emailid."'" ;
                             $result1 = DB::select($sql1);
                             if (!empty($result))
                             {
