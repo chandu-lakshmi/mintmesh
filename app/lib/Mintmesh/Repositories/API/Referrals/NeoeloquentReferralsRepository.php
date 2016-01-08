@@ -32,7 +32,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
         }
         public function createPostAndRelation($fromId, $neoInput=array(),$relationAttrs = array())
         {
-            $queryString = "MATCH (u:User)
+            $queryString = "MATCH (u:User:Mintmesh)
                             WHERE ID(u) = ".$fromId."
                             CREATE (m:Post ";
             if (!empty($neoInput))
@@ -77,7 +77,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
         public function excludeContact($serviceId=0, $userEmail="", $relationAttrs=array())
         {
             $userEmail = $this->appEncodeDecode->filterString(strtolower($userEmail));
-            $queryString = "Match (u:User) , (p:Post)
+            $queryString = "Match (u:User:Mintmesh) , (p:Post)
                             where ID(p)=".$serviceId."  and u.emailid='".$userEmail."'
                             create unique (p)-[r:".Config::get('constants.REFERRALS.EXCLUDED');
                         if (!empty($relationAttrs))
@@ -111,7 +111,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             if (!empty($userEmail) && !empty ($postId))
             {
                 $userEmail = $this->appEncodeDecode->filterString(strtolower($userEmail));
-                $queryString = "match (u:User), (p:Post)
+                $queryString = "match (u:User:Mintmesh), (p:Post)
                                 where ID(p)=".$postId." and u.emailid='".$userEmail."'
                                 create unique (u)-[r:".Config::get('constants.REFERRALS.READ')."
                                 ]->(p) set r.created_at='".date("Y-m-d H:i:s")."'" ;
@@ -157,7 +157,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             if (!empty($email))
             {
                $email = $this->appEncodeDecode->filterString(strtolower($email));
-               $queryString = "match (n:User), (m:User), (p:Post)
+               $queryString = "match (n:User:Mintmesh), (m:User:Mintmesh), (p:Post)
                                 where n.emailid='".$email."' and m.emailid=p.created_by
                                 and (n-[:ACCEPTED_CONNECTION]-m)
                                 and not(n-[:EXCLUDED]-p) and not(n-[:READ]-p)
@@ -186,7 +186,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 }
                 //and p.service_scope='".$type."'
                 $email = $this->appEncodeDecode->filterString(strtolower($email));
-                $queryString = "match (n:User), (m:User), (p:Post)
+                $queryString = "match (n:User:Mintmesh), (m:User:Mintmesh), (p:Post)
                                 where n.emailid='".$email."' and m.emailid=p.created_by
                                 and (n-[:ACCEPTED_CONNECTION]-m)
                                 and not(n-[:EXCLUDED]-p) 
@@ -215,7 +215,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 $referredBy = $this->appEncodeDecode->filterString(strtolower($referredBy));
                 $referredFor = $this->appEncodeDecode->filterString(strtolower($referredFor));
                 //$statusList = "'".Config::get('constants.REFERRALS.STATUSES.ACCEPTED')."','".Config::get('constants.REFERRALS.STATUSES.PENDING')."'";
-                $queryString = "Match (n:User)-[r:".$relationString."]->(m:Post) 
+                $queryString = "Match (n:User:Mintmesh)-[r:".$relationString."]->(m:Post) 
                                 where ID(m)=".$postId." and r.referred_for='".$referredFor."' 
                                 and r.referred_by='".$referredBy."' ";
                 $queryString.=" RETURN count(r)" ;
@@ -238,7 +238,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             {
                 $userEmail = $this->appEncodeDecode->filterString(strtolower($userEmail));
                 $relationString = Config::get('constants.REFERRALS.GOT_REFERRED') ; //Config::get('constants.RELATIONS_TYPES.REQUEST_REFERENCE') ;
-                $queryString = "Match (n:User)-[r:".$relationString."]->(m:Post) 
+                $queryString = "Match (n:User:Mintmesh)-[r:".$relationString."]->(m:Post) 
                                 where ID(m)=".$postId." and n.emailid='".$userEmail."'";
                 $queryString.=" RETURN count(r)" ;
                 $query = new CypherQuery($this->client, $queryString);
@@ -257,7 +257,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
         public function referContact($referred_by, $referred_for, $referredUser, $postId, $relationAttrs=array())
         {
             $referredUser = $this->appEncodeDecode->filterString(strtolower($referredUser));
-            $queryString = "MATCH (u:User),(p:Post)
+            $queryString = "MATCH (u:User:Mintmesh),(p:Post)
                             WHERE u.emailid = '".$referredUser."' and ID(p)=".$postId."
                              and p.status='".Config::get('constants.REFERRALS.STATUSES.ACTIVE')."' 
                             CREATE (u)-[r:".Config::get('constants.REFERRALS.GOT_REFERRED')." ";
@@ -315,7 +315,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 {
                     $queryLimit = $limit ;
                 }
-                $queryString = "match (u:User)-[r:GOT_REFERRED]->(p:Post) 
+                $queryString = "match (u:User:Mintmesh)-[r:GOT_REFERRED]->(p:Post) 
                                 where ID(p)=".$post_id." 
                                 and p.status='".Config::get('constants.REFERRALS.STATUSES.ACTIVE')."' return u, r order by r.created_at desc" ;
                 if (!empty($limit) && !($limit < 0))
@@ -336,7 +336,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             if (!empty($post_id) && !empty($email))
             {
                 $email = $this->appEncodeDecode->filterString(strtolower($email));
-                $queryString = "match (u:User)-[r:GOT_REFERRED]->(p:Post) 
+                $queryString = "match (u:User:Mintmesh)-[r:GOT_REFERRED]->(p:Post) 
                                 where r.referred_by='".$email."' and ID(p)=".$post_id."   
                                 return u,r" ;
                 $query = new CypherQuery($this->client, $queryString);
@@ -382,7 +382,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                  $referred_by = $this->appEncodeDecode->filterString(strtolower($referred_by));
                  $referral = $this->appEncodeDecode->filterString(strtolower($referral));;
                  $status = strtoupper($status) ;
-                  $queryString = "match (u:User)-[r:GOT_REFERRED]->(p:Post)
+                  $queryString = "match (u:User:Mintmesh)-[r:GOT_REFERRED]->(p:Post)
                                   where ID(p)=".$post_id ;
                   if ($post_way == 'one')//ignore the state for p3
                   {
@@ -414,7 +414,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                  $input['referred_by'] = $this->appEncodeDecode->filterString(strtolower($input['referred_by']));;
                  $input['referral'] = $this->appEncodeDecode->filterString(strtolower($input['referral']));;
                  $input['from_user'] = $this->appEncodeDecode->filterString(strtolower($input['from_user']));
-                 $queryString = "Match (u:User)-[r:GOT_REFERRED]->(p:Post) 
+                 $queryString = "Match (u:User:Mintmesh)-[r:GOT_REFERRED]->(p:Post) 
                                  where ID(p)=".$input['post_id']." 
                                   and u.emailid='".$input['referral']."' and 
                                   r.referred_by='".$input['referred_by']."' and r.referred_for='".$input['from_user']."'
@@ -436,7 +436,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 }
                  $input['other_email'] = $this->appEncodeDecode->filterString(strtolower($input['other_email']));
                  $input['email'] = $this->appEncodeDecode->filterString(strtolower($input['email']));
-                 $queryString = "Match (m:User), (n:User), (o:User)
+                 $queryString = "Match (m:User:Mintmesh), (n:User:Mintmesh), (o:User:Mintmesh)
                                     where m.emailid='".$input['email']."' and n.emailid='".$input['other_email']."'
                                      and (m)-[:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-(o)    
                                     and not (n-[:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-o)
@@ -444,7 +444,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                  
                  if (!empty($input['suggestion']))
                  {
-                     $queryString = "Match (m:User), (n:User), (o:User),(p:Post)
+                     $queryString = "Match (m:User:Mintmesh), (n:User:Mintmesh), (o:User:Mintmesh),(p:Post)
                                     where m.emailid='".$input['email']."' and n.emailid='".$input['other_email']."'
                                      and (m)-[:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-(o)    
                                     and not (n-[:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-o)
@@ -469,7 +469,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
              if (!empty($post_id) && !empty($referred_by))
              {
                  //and p.status='ACTIVE'
-                 $queryString = "match (m1:User),(p:Post) where ID(p)=".$post_id." with m1,p
+                 $queryString = "match (m1:User:Mintmesh),(p:Post) where ID(p)=".$post_id." with m1,p
                                 match (m1)-[r1:GOT_REFERRED]-(p) where r1.referred_by='".$referred_by."'
                                 with max(r1.relation_count) as rel_count ,m1,r1  
                                 match (m1)-[r1:GOT_REFERRED]-(p) 
@@ -499,7 +499,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
              if (!empty($userEmail))
              {
                  $skills = array();
-                 $queryString = "match (u:User)-[:ACCEPTED_CONNECTION]-(u1:User)-[:ACCEPTED_CONNECTION]-(u2:User)";
+                 $queryString = "match (u:User:Mintmesh)-[:ACCEPTED_CONNECTION]-(u1:User)-[:ACCEPTED_CONNECTION]-(u2:User)";
                  if (!empty($searchInput['skills']))
                  {
                      $skills = json_decode($searchInput['skills']);
@@ -562,7 +562,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
          {
              if (!empty($userEmail1) && !empty($userEmail2))
              {
-                 $queryString = "match (u:User)-[:ACCEPTED_CONNECTION]-(u1:User)-[:ACCEPTED_CONNECTION]-(u2:User)
+                 $queryString = "match (u:User:Mintmesh)-[:ACCEPTED_CONNECTION]-(u1:User)-[:ACCEPTED_CONNECTION]-(u2:User)
                  where u.emailid='".$userEmail2."' and u2.emailid='".$userEmail1."' return distinct(u1) order by u1.firstname asc";
              $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();
@@ -577,7 +577,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
          {
              if (!empty($post_id) && !empty($referred_by) && !empty($userEmail))
              {
-                $query1 = "match (p:Post)-[r:GOT_REFERRED]-(u:User) where ID(p)=".$post_id." 
+                $query1 = "match (p:Post)-[r:GOT_REFERRED]-(u:User:Mintmesh) where ID(p)=".$post_id." 
                             and u.emailid='".$userEmail."' and r.referred_by='".$referred_by."' return max(r.relation_count) as count"  ;
                 $max_count = 1 ;
                 $query = new CypherQuery($this->client, $query1);
@@ -603,7 +603,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
          {
              if (!empty($postId))
              {
-                 $queryString = "match  (u:User)-[r:GOT_REFERRED]->(p:Post)
+                 $queryString = "match  (u:User:Mintmesh)-[r:GOT_REFERRED]->(p:Post)
                                  where ID(p)=".$postId." return count(distinct(u))" ;
                  $query = new CypherQuery($this->client, $queryString);
                 $countResult = $query->getResultSet(); 
@@ -623,7 +623,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
          {
              if (!empty($relation))
              {
-                 $queryString = "match (p:Post)-[r:GOT_REFERRED]-(u:User) where ID(r)=".$relation."
+                 $queryString = "match (p:Post)-[r:GOT_REFERRED]-(u:User:Mintmesh) where ID(r)=".$relation."
                                   set ";
                  if (!empty($status))
                  {
@@ -653,7 +653,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 }
                 $relations = array(Config::get('constants.RELATIONS_TYPES.INTRODUCE_CONNECTION'), Config::get('constants.REFERRALS.GOT_REFERRED'));
                 $relationString = implode("|",$relations) ;
-                $queryString="match (u:User)-[r:".$relationString."]->(p) where case type(r) when '".Config::get('constants.RELATIONS_TYPES.INTRODUCE_CONNECTION')."' then u.emailid='".$userEmail."' else r.referred_by='".$userEmail."' end return r, type(r) as relationName, p, u order by r.created_at desc";
+                $queryString="match (u:User:Mintmesh)-[r:".$relationString."]->(p) where case type(r) when '".Config::get('constants.RELATIONS_TYPES.INTRODUCE_CONNECTION')."' then u.emailid='".$userEmail."' else r.referred_by='".$userEmail."' end return r, type(r) as relationName, p, u order by r.created_at desc";
                 if (!empty($limit) && !($limit < 0))
                 {
                     $queryString.=" skip ".$skip." limit ".self::LIMIT ;
@@ -672,7 +672,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             $from = $this->appEncodeDecode->filterString(strtolower($from)) ;
             $to = $this->appEncodeDecode->filterString(strtolower($to)) ;
             $for = $this->appEncodeDecode->filterString(strtolower($for)) ;
-            $queryString = "match (u:User)-[r:".Config::get('constants.RELATIONS_TYPES.REQUEST_REFERENCE')."]-(u1:User) "
+            $queryString = "match (u:User:Mintmesh)-[r:".Config::get('constants.RELATIONS_TYPES.REQUEST_REFERENCE')."]-(u1:User:Mintmesh) "
                             . "where  u.emailid='".$from."' and u1.emailid='".$to."' and r.request_for_emailid='".$for."'"
                     . " and r.request_count='".$relation_count."' return ID(r) as relation_id" ;
             $query = new CypherQuery($this->client, $queryString);
@@ -690,7 +690,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
         
         public function getServiceDetailsByCode($serviceCode)
         {
-            $queryString = "match (u:User)-[r:".Config::get('constants.REFERRALS.POSTED')."]->(p:Post) where p.service_code='".$serviceCode."' return u,p limit 1";
+            $queryString = "match (u:User:Mintmesh)-[r:".Config::get('constants.REFERRALS.POSTED')."]->(p:Post) where p.service_code='".$serviceCode."' return u,p limit 1";
             $query = new CypherQuery($this->client, $queryString);
             return $result = $query->getResultSet();
         }

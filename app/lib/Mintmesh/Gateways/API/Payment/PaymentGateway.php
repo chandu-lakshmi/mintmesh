@@ -274,6 +274,7 @@ class PaymentGateway {
         }
         public function processBTTransaction($input=array())
         {
+            $loggedinUserDetails = $this->getLoggedInUser();
             $amount = $input['amount'];
             $nonce = $input['nonce'] ;
             if ($amount > 0)
@@ -294,6 +295,20 @@ class PaymentGateway {
 
                 if (!empty($result->success))
                 {
+                    //send email to user saying user payment is success
+                    $successSupportTemplate = Lang::get('MINTMESH.email_template_paths.payment_success_user');
+                    $receipientEmail = $loggedinUserDetails->emailid;
+                    $res = ( 20 / $input['amount']) * 100;
+                    $tax = round($res, 2); 
+                    $total = $input['amount']+$tax;
+                    $emailData = array('name' => $loggedinUserDetails->fullname, 
+                                        'transaction_id' => $input['mm_transaction_id'],
+                                        'date_of_payment' => date('Y-m-d H:i:s'),
+                                        'cost' => $input['amount'],
+                                        'tax' => $tax,
+                                        'total' => $total);
+                    $emailiSent = $this->sendPaymentSuccessEmailToUser($successSupportTemplate, $receipientEmail, $emailData);
+                    
                     $transactionDetails = $this->paymentRepository->getTransactionById($input['mm_transaction_id']) ;;
                     if ($updtStatus && $input['status'] == Config::get('constants.PAYMENTS.STATUSES.SUCCESS'))
                     {
@@ -333,6 +348,24 @@ class PaymentGateway {
                 return $this->commonFormatter->formatResponse(406, "error", Lang::get('MINTMESH.payment.invalid_amount'), array()) ;
             }
             
+        }
+        
+        public function sendPaymentSuccessEmailToUser($templatePath, $emailid, $data)
+        {
+           $this->userEmailManager->templatePath = $templatePath;
+            $this->userEmailManager->emailId = $emailid;
+            $dataSet = array();
+            $dataSet['name'] = "shweta" ;
+            $dataSet['email'] = "shwetapazarey@gmail.com";
+            /*$dataSet['name'] = $input['firstname'];
+            $dataSet['link'] = $appLink ;
+            $dataSet['email'] = $input['emailid'] ;*/
+
+           // $dataSet['link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/redirect_to_app/".$appLinkCoded ;;
+            $this->userEmailManager->dataSet = $dataSet;
+            $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.paymentSuccess');
+            $this->userEmailManager->name = 'user';
+            return $email_sent = $this->userEmailManager->sendMail();
         }
         
         public function getLoggedInUser()
@@ -430,6 +463,20 @@ class PaymentGateway {
                   $updtStatus = $this->paymentRepository->updatePaymentTransaction($input) ;
                   if ($updtStatus)
                   {
+                      //send email to user saying user payment is success
+                      $successSupportTemplate = Lang::get('MINTMESH.email_template_paths.payment_success_user');
+                      $receipientEmail = $loggedinUserDetails->emailid;
+                      $res = ( 20 / $amount) * 100;
+                      $tax = round($res, 2); 
+                      $total = $input['amount']+$tax;
+                      $emailData = array('name' => $loggedinUserDetails->fullname, 
+                                          'transaction_id' => $input['mm_transaction_id'],
+                                          'date_of_payment' => date('Y-m-d H:i:s'),
+                                          'cost' => $amount,
+                                          'tax' => $tax,
+                                          'total' => $total);
+                      $emailiSent = $this->sendPaymentSuccessEmailToUser($successSupportTemplate, $receipientEmail, $emailData);
+                      
                       //update balance cash info
                       $sqlUser = $this->userRepository->getUserByEmail($transactionDetails->to_user);
                       $mysqlUserId = $sqlUser->id ;
@@ -873,7 +920,7 @@ class PaymentGateway {
                 {
                     //change from dollar to rs
                     $rsRate = Config::get('constants.PAYMENTS.CONVERSION_RATES.USD_TO_INR');
-                    $convertedAmount = $amount*$rsRate ;
+                    $convertedAmount = $this->convertUSDToINR($amount);
                 }
                 else
                 {
@@ -885,9 +932,10 @@ class PaymentGateway {
                 //get balance cash info
                 if (!empty($currency) && $currency == Config::get('constants.PAYMENTS.CURRENCY.INR'))//if dollar then convert 
                 {
-                    //change from dollar to rs
+                    //change from rs to USD
+                    
                     $usdRate = Config::get('constants.PAYMENTS.CONVERSION_RATES.INR_TO_USD');
-                    $convertedAmount = round($amount/$usdRate) ;
+                    $convertedAmount = $this->convertINRToUSD($amount);
                 }
                 else
                 {
@@ -898,7 +946,6 @@ class PaymentGateway {
             $balanceCashInfo = $this->paymentRepository->getbalanceCashInfo($userEmail);
             if (!empty($balanceCashInfo))
             {
-                 \Log::info("-----in update brantree ------");
                 //edit balance cash info
                 $balanceCash = $convertedAmount+$balanceCashInfo->balance_cash ;
                 $bid = $balanceCashInfo->id ;
@@ -908,7 +955,6 @@ class PaymentGateway {
             }
             else //insert balance cash info
             {
-                \Log::info("-----in insert brantree ------");
                 //insert balance cash info
                 $inp = array();
                 $inp['user_id'] = $userID ;
@@ -964,6 +1010,7 @@ class PaymentGateway {
                         $r['my_email'] = $res->to_user ;
                         $r['created_at'] = $res->created_at ;
                         $r['amount'] = $res->amount ;
+                        $r['payout_transaction_id'] = $res->payout_transaction_id ;
                         if ($res->payout_types_id == 2)
                         {
                             $r['currency']=Config::get('constants.PAYMENTS.CURRENCY.INR');
@@ -988,13 +1035,13 @@ class PaymentGateway {
                         $returnArray[] = $r ;
                     }
 
-                    $data=array("referrals"=>$returnArray,"total_cash"=>$total_cash) ;
+                    $data=array("payouts"=>$returnArray,"total_cash"=>$total_cash) ;
                     $message = array('msg'=>array(Lang::get('MINTMESH.payout.success_list')));
                     return $this->commonFormatter->formatResponse(200, "success", $message, $data) ;
                 }
                 else
                 {
-                    $data=array("referrals"=>array(),"total_cash"=>$total_cash) ;
+                    $data=array("payouts"=>array(),"total_cash"=>$total_cash) ;
                     $message = array('msg'=>array(Lang::get('MINTMESH.payout.no_result')));
                     return $this->commonFormatter->formatResponse(200, "success", $message, $data) ;
                 }
@@ -1004,6 +1051,26 @@ class PaymentGateway {
                 return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
             }
             
+        }
+        public function convertINRToUSD($amount=0)
+        {
+            $returnAmount = 0;
+            if (!empty($amount))
+            {
+                $usdRate = Config::get('constants.PAYMENTS.CONVERSION_RATES.INR_TO_USD');
+                $returnAmount = round($amount/$usdRate) ;
+            }
+            return $returnAmount ;
+        }
+        public function convertUSDToINR($amount=0)
+        {
+            $returnAmount = 0;
+            if (!empty($amount))
+            {
+                $rsRate = Config::get('constants.PAYMENTS.CONVERSION_RATES.USD_TO_INR');
+                $returnAmount = $amount*$rsRate ;
+            }
+            return $returnAmount ;
         }
     
 }

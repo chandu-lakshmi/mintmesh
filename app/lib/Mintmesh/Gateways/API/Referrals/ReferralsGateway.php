@@ -1274,13 +1274,23 @@ class ReferralsGateway {
                     $r['my_email'] = $res->to_user ;
                     $r['created_at'] = $res->last_modified_at ;
                     $r['amount'] = $res->amount ;
-                    if ($res->payment_type == 2)
+                    if (!empty($this->neoLoggedInUserDetails->phone_country_name) && strtolower($this->neoLoggedInUserDetails->phone_country_name) == 'india')
                     {
                         $r['currency']=Config::get('constants.PAYMENTS.CURRENCY.INR');
+                        if ($res->payment_type == 1)//i.e brain tree
+                        {
+                            //convert cash to indian rupee
+                            $r['amount'] = $this->paymentGateway->convertUSDToINR($res->amount);
+                        }
                     }
                     else
                     {
                         $r['currency']=Config::get('constants.PAYMENTS.CURRENCY.USD');
+                        if ($res->payment_type == 2)//i.e citrus
+                        {
+                            //convert cash to indian rupee
+                            $r['amount'] = $this->paymentGateway->convertINRToUSD($res->amount);
+                        }
                     }
                     $fromUserDetails = $this->userGateway->formUserDetailsArray($fromUser);
                     if (!empty($fromUserDetails))

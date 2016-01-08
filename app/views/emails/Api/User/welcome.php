@@ -146,7 +146,7 @@ td[class="buttonContent"] a{padding:15px !important;}
                                 <table border="0"  cellspacing="0" width="100%">
                                     <tr>
 <td align="center" valign="top" class="textContent" style="padding:20px 30px 10px;">
-<img src="http://52.32.104.43/public/images/mintmesh-logo.png"   align="center" style="max-width:100%;text-align:center;" alt="logo" title="Text">
+<img src="http://staging.mintmesh.com/public/images/mintmesh-logo.png"   align="center" style="max-width:100%;text-align:center;" alt="logo" title="Text">
 <h2 style="text-align:center;font-weight:normal;font-family: 'Roboto', sans-serif;font-weight:300;font-size:28px;margin-bottom:10px;margin-top:20px;color:#000000;">Activate your Account</h2>
 
 <hr style="border-top:1px solid #c8c8c8;margin-top:20px;">

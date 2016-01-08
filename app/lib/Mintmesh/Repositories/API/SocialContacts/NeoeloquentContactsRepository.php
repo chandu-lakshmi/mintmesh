@@ -28,7 +28,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
         public function createContactAndRelation($fromId, $neoInput=array(),$relationAttrs = array())
         {
             try{
-                $queryString = "MATCH (u:User)
+                $queryString = "MATCH (u:User:Mintmesh)
                             WHERE ID(u) = ".$fromId."
                             CREATE (m:User ";
                 if (!empty($neoInput))
@@ -126,7 +126,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
             $toUserId = $toUser['id']->getId() ;
             if (!empty($fromUser) && !empty($toUser) && $toUserId != $fromUser->id )//ignore if same user
             {
-                $queryString = "Match (m:User), (n:User)
+                $queryString = "Match (m:User), (n:User:Mintmesh)
                                 where ID(m)=".$toUserId."  and ID(n)=".$fromUser->id."
                                 create unique (n)-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED');
 
@@ -193,7 +193,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
         */
         public function checkImportRelation($fromId="", $toId="")
         {
-            $queryString = "Match (n:User)-[r]->(m:User)
+            $queryString = "Match (n:User:Mintmesh)-[r]->(m:User)
                                 where ID(n)=".$fromId."  and ID(m)=".$toId." and n-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."]->m return r";
             $query = new CypherQuery($this->client, $queryString);
             return $result = $query->getResultSet();
@@ -203,7 +203,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
             
             if ($toUser->id != $fromUser->id )//ignore if same user
             {
-                $queryString = "Match (m:User), (n:User)
+                $queryString = "Match (m:User), (n:User:Mintmesh)
                                 where ID(m)=".$toUser->id."  and ID(n)=".$fromUser->id."
                                 create unique (n)-[r:".Config::get('constants.RELATIONS_TYPES.INVITED');
 
@@ -226,7 +226,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
         public function getRelatedMintmeshUsers($email='')
         {
             $email = $this->appEncodeDecode->filterString(strtolower($email)) ;
-            $queryString = "MATCH (n:User {emailid: '".$email."'})-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."]->(m) where HAS (m.login_source) RETURN m";
+            $queryString = "MATCH (n:User:Mintmesh {emailid: '".$email."'})-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."]->(m:User:Mintmesh) where HAS (m.login_source) RETURN m";
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             if ($result->count())
@@ -247,7 +247,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
         {
             if (!empty($userEmail))
             {
-                $queryString = "match (u:User)-[r:IMPORTED]->(n:User) where u.emailid='".$userEmail."' and not (u)-[:ACCEPTED_CONNECTION]-(n) and not (u)-[:REQUESTED_CONNECTION]-(n) delete r";
+                $queryString = "match (u:User:Mintmesh)-[r:IMPORTED]->(n:User) where u.emailid='".$userEmail."' and not (u)-[:ACCEPTED_CONNECTION]-(n) and not (u)-[:REQUESTED_CONNECTION]-(n) delete r";
                  $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();
             }

@@ -297,7 +297,8 @@ class UserGateway {
                             'other_email' => '',
                             'message' => "",
                             'ip_address' => $_SERVER['REMOTE_ADDR'],
-                            'other_status'=>0
+                            'other_status'=>0,
+                            'created_at' => date('Y-m-d H:i:s')
                         ) ;
                     $t = $this->userRepository->logNotification($notificationLog);
                     //send email to user
@@ -1023,7 +1024,8 @@ class UserGateway {
                         'other_email' => '',
                         'message' => "",
                         'ip_address' => $_SERVER['REMOTE_ADDR'],
-                        'other_status'=>0
+                        'other_status'=>0,
+                        'created_at' => date('Y-m-d H:i:s')
                     ) ;
                     $t = $this->userRepository->logNotification($notificationLog);
                 }
@@ -1387,20 +1389,20 @@ class UserGateway {
                 $neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($loggedinUserDetails->emailid) ;
                 if (count($neoLoggedInUserDetails))
                 {
-                    $return['userDetails'] = $this->formUserDetailsArray($neoLoggedInUserDetails, 'attribute') ;
+                    $userDetails = $this->formUserDetailsArray($neoLoggedInUserDetails, 'attribute') ;
                 }
                 else
                 {
-                    $return['userDetails'] = array();
+                    $userDetails = array();
                 }
                 $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($input['emailid']) ;
                 if (count($neoUserDetails))
                 {
-                    $return['fromUserDetails'] = $this->formUserDetailsArray($neoUserDetails, 'attribute') ;
+                    $toUserDetails = $this->formUserDetailsArray($neoUserDetails, 'attribute') ;
                 }
                 else
                 {
-                    $return['fromUserDetails'] = array() ;
+                    $toUserDetails = array() ;
                 }
                 
                 $relationDetails = $this->neoUserRepository->getMutualRequests($input['emailid'], $loggedinUserDetails->emailid); 
@@ -1432,6 +1434,20 @@ class UserGateway {
                                 $a['other_user_'.$k] = $v ;
                             }
 
+                        }
+                        if (!empty($toUserDetails))
+                        {
+                            foreach ($toUserDetails as $k=>$v)
+                            {
+                                $a["to_user_".$k] = $v ;
+                            }
+                        }
+                        if (!empty($userDetails))
+                        {
+                            foreach ($userDetails as $k=>$v)
+                            {
+                                $a["from_user_".$k] = $v ;
+                            }
                         }
                         $return['requests'][] = $a ;
                     }
@@ -2148,7 +2164,8 @@ class UserGateway {
                                     'to_email' => $userDetails['emailid'],
                                     'other_email' => $other_email,
                                     'message' => Lang::get('MINTMESH.notifications.messages.'.$notificationType),
-                                    'ip_address' => $_SERVER['REMOTE_ADDR']
+                                    'ip_address' => $_SERVER['REMOTE_ADDR'],
+                                    'created_at' => date('Y-m-d H:i:s')
                                 ) ;
                             //add other status 1 to redirect to profile
                             if (in_array($notificationType, $this->directProfileRedirections))
@@ -2859,7 +2876,8 @@ class UserGateway {
                                 'other_email' => "",
                                 'message' => Lang::get('MINTMESH.notifications.messages.8'),
                                 'extra_info'=>$rel_id,
-                                'ip_address' => $_SERVER['REMOTE_ADDR']
+                                'ip_address' => $_SERVER['REMOTE_ADDR'],
+                                'created_at' => date('Y-m-d H:i:s')
                             ) ;
                         $t = $this->userRepository->logNotification($notificationLog);
                         //add it for u2
@@ -2871,7 +2889,8 @@ class UserGateway {
                                 'other_email' => $notificationDetails->other_email,
                                 'message' => Lang::get('MINTMESH.notifications.messages.9'),
                                 'extra_info'=>$rel_id,
-                                'ip_address' => $_SERVER['REMOTE_ADDR']
+                                'ip_address' => $_SERVER['REMOTE_ADDR'],
+                                'created_at' => date('Y-m-d H:i:s')
                             ) ;
                         $t = $this->userRepository->logNotification($notificationLog);
                         $relationAttrs = array("reffered_by"=>$notificationDetails->from_email) ;

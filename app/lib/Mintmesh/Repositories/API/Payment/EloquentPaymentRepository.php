@@ -147,7 +147,7 @@ class EloquentPaymentRepository extends BaseRepository implements PaymentReposit
         {
             if (!empty($email))
             {
-                $sql = "select id,to_provided_user as for_user,from_user,to_mintmesh_user as to_user,created_at,amount,payout_types_id from payout_logs where to_mintmesh_user='".$email."' and status='".Config::get('constants.PAYMENTS.STATUSES.SUCCESS')."' order by id desc";
+                $sql = "select id,to_provided_user as for_user,from_user,to_mintmesh_user as to_user,created_at,amount,payout_types_id,payout_transaction_id from payout_logs where to_mintmesh_user='".$email."' and status='".Config::get('constants.PAYMENTS.STATUSES.SUCCESS')."' order by id desc";
             
                 $skip = $limit = 0;
                 if (!empty($page))

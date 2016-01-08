@@ -65,7 +65,8 @@ return array(
          "user_email_subjects"=>array(
                 "welcome"      => "Welcome To MintMesh!"  ,
                 "forgot_password" => "Reset Password - MintMesh",
-                "join_invitaion" => "MintMesh Invitation"
+                "join_invitaion" => "MintMesh Invitation",
+                "paymentSuccess" => "Payment Success"
          ),
          "email_template_paths"=>array(
                 "user_welcome" => "emails.Api.User.welcome",

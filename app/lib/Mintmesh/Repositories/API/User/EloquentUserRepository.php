@@ -240,15 +240,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                 if (!empty($type))
                 {
                     $sql.=" and nl.notifications_types_id IN (".$type.")" ;
-                    if (!empty($isNotificationCount))
-                    {
-                        $sql.=" and nl.other_status = '0'" ;
-                    }
-                    else
-                    {
-                        $sql.=" and CASE WHEN nl.notifications_types_id=10 THEN 1 ELSE nl.other_status = '0' END" ;
-                    }
-                    
+                    $sql.=" and CASE WHEN nl.notifications_types_id=10 THEN 1 ELSE nl.other_status = '0' END" ;
                     $sql.=" GROUP BY CASE WHEN nl.notifications_types_id=10 THEN nl.extra_info
                             ELSE nl.id END  ";
                 }
@@ -258,7 +250,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                 {
                     $sql.=" limit ".$start.",10" ;
                 }
-               // echo $sql ; exit;
+                //echo $sql ; exit;
                return $result = DB::select($sql);
             }
         }
@@ -270,6 +262,23 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                 if ($notification_type == 'request_connect')
                 {
                     $result = $this->getNotifications($user, $notification_type,0,1);
+                    foreach ($result as $key=>$row)
+                    {
+                        //check if any referred post has pending status
+                        if ($row->notifications_types_id == 10)
+                        {
+                            $sql1 = "select count(id) as count from notifications_logs nl where nl.other_status != '0' and nl.notifications_types_id=10"
+                                    . " and nl.extra_info=".$row->notifications_types_id." and to_email='".$user->emailid."'" ;
+                            $result1 = DB::select($sql1);
+                            if (!empty($result))
+                            {
+                                if ($result1[0]->count == 0)
+                                {
+                                    unset($result[$key]);
+                                }
+                            }
+                        }
+                    }
                 }
                 else
                 {
@@ -296,8 +305,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                                 ELSE nl.extra_info END,
                                 CASE WHEN nl.other_email IS NULL THEN 1
                                 ELSE nl.other_email END" ;
-
-                     $result = DB::select($sql);
+                    $result = DB::select($sql);
                 }
                 
                  

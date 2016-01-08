@@ -24,9 +24,13 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
          * Create new user node in neo
          */
         public function createUser($input) {
-            $queryString = "CREATE (n:User ";
+            $queryString = "CREATE (n:User";
             if (!empty($input))
             {
+                if(!empty($input['login_source'])) {
+                    $queryString = "CREATE (n:User:Mintmesh";
+                }
+
                 $queryString.="{";
                 foreach ($input as $k=>$v)
                 {
@@ -49,7 +53,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             if (!empty($emailid))
             {
                 $phone_verified=!empty($phoneverified)?$phoneverified:0;
-                $queryString="match (u:User) where u.emailid='".$emailid."' set u.phoneverified='".$phone_verified."' return u" ;
+                $queryString="match (u:User:Mintmesh) where u.emailid='".$emailid."' set u.phoneverified='".$phone_verified."' return u" ;
                 $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();
             }
@@ -65,7 +69,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
         //get user details by email id and check if it is a mintmesh user
         public function getNodeByEmailIdMM($email='')
         {
-            $queryString = "MATCH (n:User {emailid: '".$this->appEncodeDecode->filterString(strtolower($email))."'}) where HAS (n.login_source) RETURN n";
+            $queryString = "MATCH (n:User:Mintmesh {emailid: '".$this->appEncodeDecode->filterString(strtolower($email))."'}) where HAS (n.login_source) RETURN n";
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             if ($result->count())
@@ -111,7 +115,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
         {
             if ($toUserId != $fromUserId && (!empty($fromUserId) && !empty($toUserId)))//ignore if same user
             {
-                $queryString = "Match (m:User), (n:User)
+                $queryString = "Match (m:User:Mintmesh), (n:User:Mintmesh)
                                 where ID(m)=".$toUserId."  and ID(n)=".$fromUserId."
                                 create unique (n)-[r:".Config::get('constants.RELATIONS_TYPES.REQUESTED_CONNECTION');
 
@@ -136,7 +140,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
         {
             $to_email = $this->appEncodeDecode->filterString(strtolower($to_email));
             $from_email = $this->appEncodeDecode->filterString(strtolower($from_email));
-            $queryString = "Match (m:User), (n:User)
+            $queryString = "Match (m:User:Mintmesh), (n:User:Mintmesh)
                             where m.emailid='".$to_email."'  and n.emailid='".$from_email."'
                             create unique (n)-[r:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION');
 
@@ -160,7 +164,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             $to_email = $this->appEncodeDecode->filterString(strtolower($to_email));
             $from_email = $this->appEncodeDecode->filterString(strtolower($from_email));
             $other_email = $this->appEncodeDecode->filterString(strtolower($other_email));
-            $queryString = "Match (m:User)-[r:ACCEPTED_CONNECTION]-(n:User)
+            $queryString = "Match (m:User:Mintmesh)-[r:ACCEPTED_CONNECTION]-(n:User:Mintmesh)
                             where m.emailid='".$to_email."'  and n.emailid='".$from_email."' and r.refered_by_email='".$other_email."'
                              return r";
             $query = new CypherQuery($this->client, $queryString);
@@ -173,14 +177,14 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             {
                 $emailId = $this->appEncodeDecode->filterString(strtolower($emailId));
                 //unmap the user if assigned to any other device
-                //$query1 = "MATCH (u:User {emailid: '".$emailId."' })-[r:LOGGED_IN]-(d:Device) delete r" ;
+                //$query1 = "MATCH (u:User:Mintmesh {emailid: '".$emailId."' })-[r:LOGGED_IN]-(d:Device) delete r" ;
                 //$query = new CypherQuery($this->client, $query1);
                 //$deleteResult1 = $query->getResultSet();
                 //unmap the device if assigned to any other user
                 $query2 = "MATCH (d:Device { deviceToken: '".$deviceToken."' })-[r]-() set r.status=0 return r" ;
                 $query = new CypherQuery($this->client, $query2);
                 $deleteResult2 = $query->getResultSet();
-                $queryString = "MATCH (u:User) WHERE u.emailid='".$emailId."' MERGE (d:Device{deviceToken:'".$deviceToken."' }) CREATE unique (u)-[r:".Config::get('constants.RELATIONS_TYPES.MAPPED_TO')."]->(d)  set r.created_at='".date("Y-m-d H:i:s")."',r.status=1";
+                $queryString = "MATCH (u:User:Mintmesh) WHERE u.emailid='".$emailId."' MERGE (d:Device{deviceToken:'".$deviceToken."' }) CREATE unique (u)-[r:".Config::get('constants.RELATIONS_TYPES.MAPPED_TO')."]->(d)  set r.created_at='".date("Y-m-d H:i:s")."',r.status=1";
                 $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();
             }
@@ -191,7 +195,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             if (!empty($emailId))
             {
                 $emailId = $this->appEncodeDecode->filterString(strtolower($emailId));
-                $queryString = "MATCH (n:User {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.MAPPED_TO')."]->(d:Device) where r.status=1 RETURN n,d" ;
+                $queryString = "MATCH (n:User:Mintmesh {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.MAPPED_TO')."]->(d:Device) where r.status=1 RETURN n,d" ;
                 $query = new CypherQuery($this->client, $queryString);
                 $result = $query->getResultSet();
                 if (count($result))
@@ -200,7 +204,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                 }
                 else
                 {
-                    $queryString = "MATCH (n:User {emailid: '".$emailId."'}) RETURN n" ;
+                    $queryString = "MATCH (n:User:Mintmesh {emailid: '".$emailId."'}) RETURN n" ;
                     $query = new CypherQuery($this->client, $queryString);
                     return $result = $query->getResultSet();
                 }
@@ -212,9 +216,9 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             if (!empty($emailId))
             {
                 $emailId = $this->appEncodeDecode->filterString(strtolower($emailId));
-                $queryString = "MATCH (n:User {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."]->(m) where HAS (m.login_source) RETURN DISTINCT m order by m.firstname
+                $queryString = "MATCH (n:User:Mintmesh {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."]->(m) where HAS (m.login_source) RETURN DISTINCT m order by m.firstname
                                 UNION
-                                MATCH (n:User {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-(m:User) where has(m.login_source) RETURN DISTINCT m order by m.firstname asc" ;
+                                MATCH (n:User:Mintmesh {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-(m:User) where has(m.login_source) RETURN DISTINCT m order by m.firstname asc" ;
                 
                 /*$queryString = "MATCH (n:User {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."|".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."|".Config::get('constants.RELATIONS_TYPES.REQUESTED_CONNECTION')."]-(m:User) where has(m.login_source) RETURN m order by m.firstname asc" ;
                 */
@@ -227,7 +231,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             if (!empty($emailId))
             {
                 $emailId = $this->appEncodeDecode->filterString(strtolower($emailId));
-                $queryString = "Match (m:User)-[r:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-(n:User)
+                $queryString = "Match (m:User:Mintmesh)-[r:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-(n:User:Mintmesh)
                                 where m.emailid='".$emailId."'  
                                 RETURN DISTINCT n order by n.firstname asc" ;
                 $query = new CypherQuery($this->client, $queryString);
@@ -240,7 +244,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             if (!empty($emailId) && !empty($location))
             {
                 $emailId = $this->appEncodeDecode->filterString(strtolower($emailId));
-                $queryString = "Match (m:User)-[r:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-(n:User)
+                $queryString = "Match (m:User:Mintmesh)-[r:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-(n:User:Mintmesh)
                                 where m.emailid='".$emailId."' and n.location =~ '.*".$location.".*' 
                                 RETURN DISTINCT n" ;
                 $query = new CypherQuery($this->client, $queryString);
@@ -254,7 +258,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             if (!empty($emailId))
             {
                 $emailId = $this->appEncodeDecode->filterString(strtolower($emailId));
-                $queryString = "Match (m:User)-[r:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-(n:User)
+                $queryString = "Match (m:User:Mintmesh)-[r:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-(n:User:Mintmesh)
                                 where m.emailid='".$emailId."'  
                                 RETURN count(DISTINCT n)" ;
                 $query = new CypherQuery($this->client, $queryString);
@@ -279,7 +283,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                 $relationString = implode("|",$relations) ;
                 $fromEmail = $this->appEncodeDecode->filterString(strtolower($fromEmail));
                 $toEmail = $this->appEncodeDecode->filterString(strtolower($toEmail));
-                $queryString = "Match (m:User)-[r:".$relationString."]->(n:User) 
+                $queryString = "Match (m:User:Mintmesh)-[r:".$relationString."]->(n:User:Mintmesh) 
                                 where m.emailid='".$fromEmail."' and n.emailid='".$toEmail."' 
                                 RETURN r, type(r) as relationName" ;
                 $query = new CypherQuery($this->client, $queryString);
@@ -296,7 +300,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                 $relationString = implode("|",$relations) ;
                 $fromEmail = $this->appEncodeDecode->filterString(strtolower($fromEmail));
                 $toEmail = $this->appEncodeDecode->filterString(strtolower($toEmail));
-                $queryString = "Match (m:User)-[r:".$relationString."]->(n:User) 
+                $queryString = "Match (m:User:Mintmesh)-[r:".$relationString."]->(n:User:Mintmesh) 
                                 where m.emailid='".$fromEmail."' and n.emailid='".$toEmail."' 
                                 RETURN count(r)" ;
                 $query = new CypherQuery($this->client, $queryString);
@@ -325,7 +329,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                 $relations = array(Config::get('constants.RELATIONS_TYPES.REQUEST_REFERENCE'), Config::get('constants.REFERRALS.POSTED'));
                 $relationString = implode("|",$relations) ;
                 $fromEmail = $this->appEncodeDecode->filterString(strtolower($fromEmail));
-                $queryString = "Match (m:User)-[r:".$relationString."]->(n)
+                $queryString = "Match (m:User:Mintmesh)-[r:".$relationString."]->(n)
                                 where m.emailid='".$fromEmail."'  
                                 RETURN r, type(r) as relationName, n order by r.created_at desc" ;
                 if (!empty($limit) && !($limit < 0))
@@ -343,7 +347,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                 $relations = array(Config::get('constants.RELATIONS_TYPES.REQUEST_REFERENCE'), Config::get('constants.REFERRALS.POSTED'));
                 $relationString = implode("|",$relations) ;
                 $fromEmail = $this->appEncodeDecode->filterString(strtolower($fromEmail));
-                $queryString = "Match (m:User)-[r:".$relationString."]->(n) 
+                $queryString = "Match (m:User:Mintmesh)-[r:".$relationString."]->(n) 
                                 where m.emailid='".$fromEmail."'  
                                 RETURN count(r)" ;
                 $query = new CypherQuery($this->client, $queryString);
@@ -388,7 +392,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                                 where m.emailid='".$fromEmail."' and n.emailid='".$toEmail."' 
                                  and r.request_for_emailid='".$forEmail."'
                                 RETURN r" ;*/
-                 $queryString = "Match (m:User)-[r:".$relationString."]->(n:User)
+                 $queryString = "Match (m:User:Mintmesh)-[r:".$relationString."]->(n:User:Mintmesh)
                                 where m.emailid='".$fromEmail."' and n.emailid='".$toEmail."' 
                                  and r.request_for_emailid='".$forEmail."' and r.request_count='".$relationCount."' 
                                 RETURN r order by r.relation_count desc limit 1" ;
@@ -399,7 +403,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
         
         public function checkConnection($email1='', $email2='')
         {
-              $queryString = "Match (m:User)-[r:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-(n:User)
+              $queryString = "Match (m:User:Mintmesh)-[r:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-(n:User:Mintmesh)
                                 where m.emailid='".$email1."' and n.emailid='".$email2."' 
                                 RETURN SIGN(COUNT(r)) as con_count" ;
               $query = new CypherQuery($this->client, $queryString);
@@ -415,7 +419,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
         }
         public function checkPendingConnection($email1='', $email2='')
         {
-              $queryString = "Match (m:User)-[r:".Config::get('constants.RELATIONS_TYPES.REQUESTED_CONNECTION')."]-(n:User)
+              $queryString = "Match (m:User:Mintmesh)-[r:".Config::get('constants.RELATIONS_TYPES.REQUESTED_CONNECTION')."]-(n:User:Mintmesh)
                                 where m.emailid='".$email1."' and n.emailid='".$email2."' and r.status='".Config::get('constants.REFERENCE_STATUS.PENDING')."'
                                 RETURN SIGN(COUNT(r)) as con_count, r.created_at, r.status" ;
               $query = new CypherQuery($this->client, $queryString);
@@ -433,7 +437,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
         {
             if (!empty($deviceToken) && !empty($userDetails))
             {
-                $queryString = "MATCH (d:Device { deviceToken: '".$deviceToken."' })-[r]-(n:User { emailid: '".$userDetails->emailid."' }) set r.status=0" ;
+                $queryString = "MATCH (d:Device { deviceToken: '".$deviceToken."' })-[r]-(n:User:Mintmesh { emailid: '".$userDetails->emailid."' }) set r.status=0" ;
                 $query = new CypherQuery($this->client, $queryString);
                 $deleteResult = $query->getResultSet();
             }
@@ -460,7 +464,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                     
                     
                 }
-                $queryString = "Match (m:User), (n:User)
+                $queryString = "Match (m:User:Mintmesh), (n:User:Mintmesh)
                                 where m.emailid='".$to."'  and n.emailid='".$from."'
                                 create unique (n)-[r:".$relationType."";
 
@@ -502,7 +506,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                     }
                 }
                 
-                $queryString = "MATCH (n:User)-[r:".$relationType."]->(m:User) 
+                $queryString = "MATCH (n:User:Mintmesh)-[r:".$relationType."]->(m:User:Mintmesh) 
                                 where n.emailid='".$from."' AND m.emailid='".$to."'";
                 if (!empty($for))
                 {
@@ -530,7 +534,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
         {
             if (!empty($from) && !empty($to))
             {
-                $queryString = "Match (m:User), (n:User)
+                $queryString = "Match (m:User:Mintmesh), (n:User:Mintmesh)
                                 where m.emailid='".$to."'  and n.emailid='".$from."'
                                 create unique (n)-[r:".Config::get('constants.RELATIONS_TYPES.DECLINED')."";
 
@@ -556,7 +560,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             if (!empty($id))
             {
                 //$email = $this->appEncodeDecode->filterString(strtolower($input['emailid'])) ;
-                $queryString = "MATCH (n:User:".$sectionName.") where ID(n)=".$id." RETURN n";
+                $queryString = "MATCH (n:User:Mintmesh:".$sectionName.") where ID(n)=".$id." RETURN n";
                 $query = new CypherQuery($this->client, $queryString);
                 $result = $query->getResultSet();
                 if (!empty($result) && isset($result[0]) && isset($result[0][0]))
@@ -572,7 +576,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
         }
         public function removeCategoryNodeRelation($input, $sectionName='', $relationName='')
         {
-            $queryString = "Match (m:User)-[r:".$relationName."]->(n:User:".$sectionName.")
+            $queryString = "Match (m:User:Mintmesh)-[r:".$relationName."]->(n:User:Mintmesh:".$sectionName.")
                             where m.emailid='".$input['emailid']."' and ID(n)= ".$input['id']." 
                              delete r return 1";
             $query = new CypherQuery($this->client, $queryString);
@@ -580,7 +584,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
         }
         public function getCategoryNodeRelationCount($input, $sectionName='', $relationName='')
         {
-            $queryString = "Match (m:User)-[r:".$relationName."]->(n:User:".$sectionName.")
+            $queryString = "Match (m:User:Mintmesh)-[r:".$relationName."]->(n:User:Mintmesh:".$sectionName.")
                             where m.emailid='".$input['emailid']."' 
                             return count(n)";
             $query = new CypherQuery($this->client, $queryString);
@@ -597,7 +601,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
         public function updateCategoryNodeNRelation($input=array(), $relationAttrs=array(), $sectionName='', $relationName='')
         {
             
-            $queryString = "Match (m:User), (n:User:".$sectionName.")
+            $queryString = "Match (m:User:Mintmesh), (n:User:Mintmesh:".$sectionName.")
                             where m.emailid='".$input['emailid']."'  and ID(n)=".$input['id']."
                             create unique (m)-[r:".$relationName;
 
@@ -622,9 +626,9 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
         
         public function createCategoryNodeNRelation($input=array(), $relationAttrs=array(), $sectionName='', $relationName='')
         {
-            $queryString = "MATCH (u:User)
+            $queryString = "MATCH (u:User:Mintmesh)
                             WHERE u.emailid = '".$input['emailid']."'
-                            CREATE (m:User:".$sectionName." ";
+                            CREATE (m:User:Mintmesh:".$sectionName." ";
             if (!empty($input))
             {
                 if (isset($input['emailid']))
@@ -656,7 +660,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
         public function getMoreDetails($emailid="")
         {
             $emailid = $this->appEncodeDecode->filterString(strtolower($emailid));
-            $queryString = "MATCH (n:User)-[r:MORE_INFO]->(m) where n.emailid='".$emailid."' RETURN m as row, labels(m) as labelName";
+            $queryString = "MATCH (n:User:Mintmesh)-[r:MORE_INFO]->(m) where n.emailid='".$emailid."' RETURN m as row, labels(m) as labelName";
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             //echo "<pre>";
@@ -674,7 +678,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
         public function getUserSkills($emailid="")
         {
              $emailid = $this->appEncodeDecode->filterString(strtolower($emailid));
-            $queryString = "MATCH (n:User)-[r:KNOWS]->(m:Skills) where n.emailid='".$emailid."' RETURN m as row";
+            $queryString = "MATCH (n:User:Mintmesh)-[r:KNOWS]->(m:Skills) where n.emailid='".$emailid."' RETURN m as row";
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             //echo "<pre>";
@@ -691,7 +695,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
         public function getUserJobFunction($emailid="")
         {
              $emailid = $this->appEncodeDecode->filterString(strtolower($emailid));
-            $queryString = "MATCH (n:User)-[r:".Config::get('constants.RELATIONS_TYPES.POSSES_JOB_FUNCTION')."]->(m:Job_Functions) where n.emailid='".$emailid."' RETURN m";
+            $queryString = "MATCH (n:User:Mintmesh)-[r:".Config::get('constants.RELATIONS_TYPES.POSSES_JOB_FUNCTION')."]->(m:Job_Functions) where n.emailid='".$emailid."' RETURN m";
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             //echo "<pre>";
@@ -708,7 +712,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
         public function getUserIndustry($emailid="")
         {
              $emailid = $this->appEncodeDecode->filterString(strtolower($emailid));
-            $queryString = "MATCH (n:User)-[r:".Config::get('constants.RELATIONS_TYPES.HOLDS_INDUSTRY_EXPERIENCE')."]->(m:Industries) where n.emailid='".$emailid."' RETURN m";
+            $queryString = "MATCH (n:User:Mintmesh)-[r:".Config::get('constants.RELATIONS_TYPES.HOLDS_INDUSTRY_EXPERIENCE')."]->(m:Industries) where n.emailid='".$emailid."' RETURN m";
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             //echo "<pre>";
@@ -731,7 +735,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                 $relationString = $relation ; //Config::get('constants.RELATIONS_TYPES.REQUEST_REFERENCE') ;
                 $fromEmail = $this->appEncodeDecode->filterString(strtolower($fromEmail));
                 $toEmail = $this->appEncodeDecode->filterString(strtolower($toEmail));
-                $queryString = "Match (m:User)-[r:".$relationString."]->(n:User) 
+                $queryString = "Match (m:User:Mintmesh)-[r:".$relationString."]->(n:User:Mintmesh) 
                                 where m.emailid='".$fromEmail."' and n.emailid='".$toEmail."' 
                                 and r.request_for_emailid='".$forEmail."' 
                                 RETURN count(r)" ;
@@ -750,7 +754,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
         
         public function getRequestStatus($email1='', $email2='', $forEmail='', $relationType = "")
         {
-              $queryString = "Match (m:User)-[r:".$relationType."]-(n:User)
+              $queryString = "Match (m:User:Mintmesh)-[r:".$relationType."]-(n:User:Mintmesh)
                                 where ";
               
               if (!empty($email1))
@@ -795,7 +799,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
         {
             if (!empty($relationId))
             {
-                $queryString = "match (u:User)-[r]->(u1:User) where ID(r)=".$relationId." return r,u,u1 limit 1";
+                $queryString = "match (u:User:Mintmesh)-[r]->(u1:User:Mintmesh) where ID(r)=".$relationId." return r,u,u1 limit 1";
                 $query = new CypherQuery($this->client, $queryString);
                 return $res = $query->getResultSet();  
             }
@@ -809,7 +813,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
         {
             $fromEmail = $this->appEncodeDecode->filterString(strtolower($fromEmail));
             $toEmail = $this->appEncodeDecode->filterString(strtolower($toEmail));
-            $queryString = "Match (n:User)-[r:ACCEPTED_CONNECTION|REQUESTED_CONNECTION]-(m:User) 
+            $queryString = "Match (n:User:Mintmesh)-[r:ACCEPTED_CONNECTION|REQUESTED_CONNECTION]-(m:User:Mintmesh) 
                             where n.emailid='".$fromEmail."' and m.emailid='".$toEmail."' 
                             and (n-[:ACCEPTED_CONNECTION]-m) delete r";
             $query = new CypherQuery($this->client, $queryString);
@@ -821,7 +825,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             
             $fromEmail = $this->appEncodeDecode->filterString(strtolower($fromEmail));
             $toEmail = $this->appEncodeDecode->filterString(strtolower($toEmail));
-            $queryString = "Match (m:User),(n:User)
+            $queryString = "Match (m:User:Mintmesh),(n:User:Mintmesh)
                                     where m.emailid='".$fromEmail."' and n.emailid='".$toEmail."'
                                     create unique (m)-[r:".Config::get('constants.RELATIONS_TYPES.DELETED_CONTACT')."";
 
@@ -837,7 +841,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                foreach ($skills as $skill)
                {
                    $emailid = $this->appEncodeDecode->filterString(strtolower($emailid));
-                    $queryString = "Match (m:User),(s:Skills)
+                    $queryString = "Match (m:User:Mintmesh),(s:Skills)
                                     where m.emailid='".$emailid."' and s.mysql_id=".$skill."
                                     create unique (m)-[r:".Config::get('constants.RELATIONS_TYPES.KNOWS')."";
 
@@ -859,7 +863,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
            {
                
                 $emailid = $this->appEncodeDecode->filterString(strtolower($emailid));
-                 $queryString = "Match (m:User),(j:Job_Functions)
+                 $queryString = "Match (m:User:Mintmesh),(j:Job_Functions)
                                  where m.emailid='".$emailid."' and j.mysql_id=".$jobFunction."
                                  create unique (m)-[r:".Config::get('constants.RELATIONS_TYPES.POSSES_JOB_FUNCTION')."";
 
@@ -880,7 +884,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
            {
                
                 $emailid = $this->appEncodeDecode->filterString(strtolower($emailid));
-                 $queryString = "Match (m:User),(i:Industries)
+                 $queryString = "Match (m:User:Mintmesh),(i:Industries)
                                  where m.emailid='".$emailid."' and i.mysql_id=".$industry."
                                  create unique (m)-[r:".Config::get('constants.RELATIONS_TYPES.HOLDS_INDUSTRY_EXPERIENCE')."";
 
@@ -901,7 +905,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
            if (!empty($emailid))
            {
                $emailid = $this->appEncodeDecode->filterString(strtolower($emailid));
-               $queryString = "Match (m:User)-[r:".Config::get('constants.RELATIONS_TYPES.KNOWS')."]-(s:Skills)
+               $queryString = "Match (m:User:Mintmesh)-[r:".Config::get('constants.RELATIONS_TYPES.KNOWS')."]-(s:Skills)
                                 where m.emailid='".$emailid."'
                                 delete r";
 
@@ -919,7 +923,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
            if (!empty($emailid))
            {
                $emailid = $this->appEncodeDecode->filterString(strtolower($emailid));
-               $queryString = "Match (m:User)-[r:".Config::get('constants.RELATIONS_TYPES.POSSES_JOB_FUNCTION')."]-(j:Job_Functions)
+               $queryString = "Match (m:User:Mintmesh)-[r:".Config::get('constants.RELATIONS_TYPES.POSSES_JOB_FUNCTION')."]-(j:Job_Functions)
                                 where m.emailid='".$emailid."'
                                 delete r";
 
@@ -936,7 +940,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
            if (!empty($emailid))
            {
                $emailid = $this->appEncodeDecode->filterString(strtolower($emailid));
-               $queryString = "Match (m:User)-[r:".Config::get('constants.RELATIONS_TYPES.HOLDS_INDUSTRY_EXPERIENCE')."]-(i:Industries)
+               $queryString = "Match (m:User:Mintmesh)-[r:".Config::get('constants.RELATIONS_TYPES.HOLDS_INDUSTRY_EXPERIENCE')."]-(i:Industries)
                                 where m.emailid='".$emailid."'
                                 delete r";
 
@@ -1000,7 +1004,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
         {
             if (!empty($phone))
             {
-                $queryString = "match (u:User) where u.phone='".$phone."' and has(u.login_source) and u.phoneverified='1'";
+                $queryString = "match (u:User:Mintmesh) where u.phone='".$phone."' and has(u.login_source) and u.phoneverified='1'";
                 if (!empty($email))//exclude email
                 {
                     $queryString.=" and u.emailid<>'".$email."'";
@@ -1025,7 +1029,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             if (!empty($user))
             {
                 $user = $this->appEncodeDecode->filterString(strtolower($user));
-                $queryString = "Match (m:User), (n:User)
+                $queryString = "Match (m:User:Mintmesh), (n:User:Mintmesh)
                                 where m.emailid='".$user."' 
                                 and (n)-[:".Config::get('constants.RELATIONS_TYPES.INVITED')."]->(m)
                                 create unique (m)-[r:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION');
@@ -1052,7 +1056,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             {
                 $user = $this->appEncodeDecode->filterString(strtolower($user));
                 $toConnectEmail = $this->appEncodeDecode->filterString(strtolower($toConnectEmail));
-                $queryString = "Match (m:User), (n:User)
+                $queryString = "Match (m:User:Mintmesh), (n:User:Mintmesh)
                                 where m.emailid='".$user."' 
                                 and n.emailid='".$toConnectEmail."' 
                                 create unique (m)-[r:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION');
@@ -1078,7 +1082,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             if (!empty($userEmail))
             {
                 $userEmail = $this->appEncodeDecode->filterString(strtolower($userEmail));
-                $queryString = "match (u:User)-[r:ACCEPTED_CONNECTION]-(u1:User)-[r1:ACCEPTED_CONNECTION]-(u2:User) where u.emailid='".$userEmail."' and u2.emailid<>'".$userEmail."' and not (u)-[:ACCEPTED_CONNECTION]-(u2) with u2
+                $queryString = "match (u:User:Mintmesh)-[r:ACCEPTED_CONNECTION]-(u1:User:Mintmesh)-[r1:ACCEPTED_CONNECTION]-(u2:User:Mintmesh) where u.emailid='".$userEmail."' and u2.emailid<>'".$userEmail."' and not (u)-[:ACCEPTED_CONNECTION]-(u2) with u2
                                 match (u2)-[r2:ACCEPTED_CONNECTION]-(u3) return u2,count(distinct(u3))
                                 order by count(distinct(u3)) desc  limit 20";
                 $query = new CypherQuery($this->client, $queryString);
@@ -1101,7 +1105,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                     $skip = $limit - 10 ;
                 }
                 $userEmail = $this->appEncodeDecode->filterString(strtolower($userEmail));
-                $queryString = "MATCH (u:`User`),(u1:User) where lower(u1.you_are)='recruiter' and u1.location=~('.*' + u.location) and u.emailid='".$userEmail."' and u1.emailid<>'".$userEmail."' and not (u)-[:ACCEPTED_CONNECTION]-(u1) RETURN u1 ";
+                $queryString = "MATCH (u:User:Mintmesh),(u1:User:Mintmesh) where lower(u1.you_are)='recruiter' and u1.location=~('.*' + u.location) and u.emailid='".$userEmail."' and u1.emailid<>'".$userEmail."' and not (u)-[:ACCEPTED_CONNECTION]-(u1) RETURN u1 ";
                 //echo $queryString ; exit;
                 if (!empty($limit) && !($limit < 0))
                 {
@@ -1132,8 +1136,8 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                 }
                 $phoneString = !empty($phones)?implode("','", $phones):'';
                 $phoneString = "'".$phoneString."'" ;
-                $queryString = "match (v:User{emailid:'".$userEmail."'}),(u:User)"
-                                . " where (u.emailid='".$email."' and HAS (u.login_source) and (u)-[:IMPORTED]->(v) and not (u)-[:DELETED_CONTACT]-(v) and not (u)-[:ACCEPTED_CONNECTION]-(v)) or (replace(u.phone, '-', '') IN[".$phoneString."] and u.phoneverified='1' and HAS (u.login_source) and (u)-[:IMPORTED]->(v) and not (u)-[:DELETED_CONTACT]-(v) and not (u)-[:ACCEPTED_CONNECTION]-(v)) return u" ;
+                $queryString = "match (v:User:Mintmesh{emailid:'".$userEmail."'}),(u:User:Mintmesh)"
+                                . " where (u.emailid='".$email."' and (u)-[:IMPORTED]->(v) and not (u)-[:DELETED_CONTACT]-(v) and not (u)-[:ACCEPTED_CONNECTION]-(v)) or (replace(u.phone, '-', '') IN[".$phoneString."] and u.phoneverified='1' and (u)-[:IMPORTED]->(v) and not (u)-[:DELETED_CONTACT]-(v) and not (u)-[:ACCEPTED_CONNECTION]-(v)) return u" ;
                 $query = new CypherQuery($this->client, $queryString);
                 $result = $query->getResultSet();
                 if ($result->count())
@@ -1156,7 +1160,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
         {
             if (!empty($user1) && !empty($user2))
             {
-                $queryString = "match (u1:User)-[r:IMPORTED]->(u2:User) where u1.emailid='".$user1."' and u2.emailid='".$user2."' return r";
+                $queryString = "match (u1:User:Mintmesh)-[r:IMPORTED]->(u2:User) where u1.emailid='".$user1."' and u2.emailid='".$user2."' return r";
                 $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();
             }
