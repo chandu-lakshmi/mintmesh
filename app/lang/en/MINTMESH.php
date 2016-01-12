@@ -66,7 +66,8 @@ return array(
                 "welcome"      => "Welcome To MintMesh!"  ,
                 "forgot_password" => "Reset Password - MintMesh",
                 "join_invitaion" => "MintMesh Invitation",
-                "paymentSuccess" => "Payment Success"
+                "paymentSuccess" => "MintMesh Invoice",
+                "payout_success_user" => "MintMesh Payout confirmation"
          ),
          "email_template_paths"=>array(
                 "user_welcome" => "emails.Api.User.welcome",
@@ -79,7 +80,8 @@ return array(
                 "manual_payout_success_admin" => "emails.Api.Payment.manualPayout_success_admin",
                 "manual_payout_failure_admin" => "emails.Api.Payment.manualPayout_failure_admin",
                 "manual_payout_success_user" => "emails.Api.Payment.manualPayout_success_user",
-                "manual_payout_failure_user" => "emails.Api.Payment.manualPayout_failure_user"
+                "manual_payout_failure_user" => "emails.Api.Payment.manualPayout_failure_user",
+                "payment_success_user" => "emails.Api.Payment.payment_success_user"
          ),
          "activate_user"=>array(
              "success"=>"Successfully activated",
@@ -100,11 +102,12 @@ return array(
              "failed"=>"Some Error Occured",
              "error"=>"Invalid Token",
              "valid"=>"Validated",
-             "same"=>"New password cant be same as old password"
+             "same"=>"New password cant be same as old password",
+             "codeexpired"=>"code has been expired"
          ),
          "check_reset_password"=>array(
              "success"=>"sucess",
-             "failed"=>"fail"
+             "failed"=>"Reset password link has be expired"
          ),
         "import_contacts"=>array(
              "success"=>"Contacts Successfully Imported",

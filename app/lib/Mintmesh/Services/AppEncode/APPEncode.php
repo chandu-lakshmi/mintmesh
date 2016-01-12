@@ -137,7 +137,21 @@ use Cache;
               return 0;
           }
       }
-       function cleanBadWords($str)
+      
+        function cleanBadWords($str)
+        {
+            $strorg = $str;
+            if (Cache::has('badWords')) { 
+                $dbwords = Cache::get('badWords');
+            } 
+            $odbwords=$dbwords;
+            array_walk($dbwords,function(&$v,$k){$v=substr($v,0,1).str_repeat("*",(strlen($v)-2)).substr($v,(strlen($v)-1),1);});
+            $str=str_ireplace($odbwords,$dbwords,$str);
+            //echo $str;
+            return $str;
+        }
+        
+       function cleanBadWords_old($str)
         {
             if (Cache::has('badWords')) { 
                 $this->profanity_list = Cache::get('badWords');
@@ -145,33 +159,40 @@ use Cache;
             if (!empty($this->profanity_list)) {
                 foreach ($this->profanity_list as $k=>$v)
                 {
-                    $this->profanity_list[$k]=trim($v);
+                    $this->profanity_list[$k]=trim(strtolower($v));
                 }
             }
             $explodeString = explode(" ", $str) ;
             if (is_string($str)) {
-                $explodeStringArray = explode(" ", $str) ;
-                if (is_array($explodeStringArray)) {
-                    foreach ($explodeStringArray as $key=>$val) {
-                        if (in_array(strtolower($val), $this->profanity_list)) {
-                            $temp = substr($val, 1,-1);
-                            $replacedString = str_replace($temp, str_repeat('*',strlen($temp)),$val);
-                            $explodeString[$key] = $replacedString;
-                        }
-                    }
-                    $str = implode(' ', $explodeString);
+                if (in_array(strtolower($str), $this->profanity_list)) {
+                    $temp = substr($str, 1,-1);
+                    $replacedString = str_replace($temp, '*',$str);
+                    $str = $replacedString;
                 } else {
-                    if (in_array(strtolower($str), $this->profanity_list)) {
-                        $temp = substr($val, 1,-1);
-                        $replacedString = str_replace($temp, '*',$str);
-                        $str = $replacedString;
+                    $explodeStringArray = explode(" ", $str) ;
+                    if (is_array($explodeStringArray)) {
+                        foreach ($explodeStringArray as $key=>$val) {
+                            if (in_array(strtolower($val), $this->profanity_list)) {
+                                $temp = substr($val, 1,-1);
+                                $replacedString = str_replace($temp, str_repeat('*',strlen($temp)),$val);
+                                $explodeString[$key] = $replacedString;
+                            }
+                        }
+                        $str = implode(' ', $explodeString);
+                    } else {
+                        if (in_array(strtolower($str), $this->profanity_list)) {
+                            $temp = substr($val, 1,-1);
+                            $replacedString = str_replace($temp, '*',$str);
+                            $str = $replacedString;
+                        }
                     }
                 }
                 return $str ; 
             } else {
                 return '';
             }
-
         }
-     
+        
+
+
 }

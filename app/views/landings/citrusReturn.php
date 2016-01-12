@@ -14,9 +14,9 @@ CitrusResponse.pgResponse(data);      }
 </head>     
 <body>     
 </body>     
-</html>                
+</html>                  
 <?php                    
-$secret_key = Config::get('constants.CITRUS.SECRET_KEY');     
+  $secret_key = Config::get('constants.CITRUS.SECRET_KEY');     
   $txId = !empty($data['TxId'])?$data['TxId']:'';
   $TxStatus = !empty($data['TxStatus'])?$data['TxStatus']:'';
   $txamount = !empty($data['amount'])?$data['amount']:'';
@@ -28,19 +28,15 @@ $secret_key = Config::get('constants.CITRUS.SECRET_KEY');
   $pgRespCode = !empty($data['pgRespCode'])?$data['pgRespCode']:'';
   $addressZip = !empty($data['addressZip'])?$data['addressZip']:'';
   $txSignature = !empty($data['signature'])?$data['signature']:'';
-   $verification_data =  $txId                        
-                        . $TxStatus                        
-                        . $txamount                        
-                        . $pgTxnNo                        
-                        . $issuerRefNo                        
-                        . $authIdCode                        
-                        . $firstName                        
-                        . $lastName                        
-                        . $pgRespCode                        
-                        . $addressZip;     
-$signature = hash_hmac('sha1', $verification_data, $secret_key);     
-  if ($signature == $txSignature)  
-    {										          
+
+$verification_data =  $txId.$TxStatus.$txamount.$pgTxnNo.$issuerRefNo.$authIdCode.$firstName.$lastName.$pgRespCode.$addressZip;     
+$signature = hash_hmac('sha1', $verification_data, $secret_key);    
+$k = implode(",",array_keys($data));
+$v = implode(",",$data);
+
+  if ($signature == $data['signature'])  
+    {	
+      \Log::info("<<<<<<<< citrus in success >>>>>>>>>".$secret_key);
       $json_object = json_encode($data);										      	
       echo "<script> 
       postResponse('$json_object'); 

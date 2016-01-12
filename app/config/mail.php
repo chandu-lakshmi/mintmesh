@@ -54,8 +54,8 @@ return array(
 	|
 	*/
 
-	'from' => array('address' => 'no-reply@mintmesh.com', 'name' => 'mintmesh-admin'),
-
+//	'from' => array('address' => 'no-reply@mintmesh.com', 'name' => 'mintmesh-admin'),
+        'from' => array('address' => 'no-reply@mintmesh.com', 'name' => 'MintMesh'),
 	/*
 	|--------------------------------------------------------------------------
 	| E-Mail Encryption Protocol

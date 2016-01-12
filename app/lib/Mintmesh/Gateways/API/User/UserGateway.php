@@ -217,7 +217,8 @@ class UserGateway {
 	 */ 
         public function changePassword($input) 
         {
-            if ($this->loggedinUserDetails = $this->getLoggedInUser()) {
+            $this->loggedinUserDetails = $this->getLoggedInUser();
+            if ($this->loggedinUserDetails) {
                 if(Hash::check($input['password_old'],$this->loggedinUserDetails->password)) {
                     if($input['password_new'] == $input['password_new_confirmation']) {
                         $post=array();
@@ -365,30 +366,12 @@ class UserGateway {
         
         public function getSkills($input)
         { 
-            if (Cache::has('skills')) { 
-                $skillsR = Cache::get('skills');
+            if(empty($input)) {
+                return $this->getAllSkills();
             } else {
-                $skillsR = $this->userRepository->getSkills($input);
-                Cache::add('skills', $skillsR, 1000);                
-            }  
-            // $skillsR = $this->userRepository->getSkills($input);
-            if (!empty($skillsR))
-            {
-                $data = $skills = array();
-                foreach($skillsR as $key=>$val)
-                {
-                    $skills[] = array("skill_name"=>trim($val->name), "skill_id"=>$val->id,"skill_color"=>$val->color) ;
-                }
-                $data = array("skills"=>$skills) ;
-                $message = array('msg'=>array(Lang::get('MINTMESH.skills.success')));
-                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
+                return $this->getFilterSkills($input);
             }
-            else
-            {
-                $message = array('msg'=>array(Lang::get('MINTMESH.skills.error')));
-                return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
-            }
-       }
+        }
         /*
          * Completing user profile
          */
@@ -410,7 +393,8 @@ class UserGateway {
                 $linkedinFileName = $input['linkedinImage'] ;
                 $from_linkedin = 1 ;
             }
-            if ($this->loggedinUserDetails = $this->getLoggedInUser())
+            $this->loggedinUserDetails = $this->getLoggedInUser();
+            if ($this->loggedinUserDetails)
             {
                 //get loggedin user
                 $neoInput = array();
@@ -710,9 +694,8 @@ class UserGateway {
             }
             
         }
-        
         /*
-         * reset a user password
+         * check reset a user password
          */
         public function checkResetPassword($input)
         {
@@ -724,10 +707,10 @@ class UserGateway {
             if (!empty($email) && !empty($passwordData) && $passwordData->resetactivationcode == $input['code']) {
                 $message = array('msg'=>array(Lang::get('MINTMESH.check_reset_password.success')));
                 return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
-                        
             } else {
                 $message = array('msg'=>array(Lang::get('MINTMESH.check_reset_password.failed')));
                 return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
+                
             }
         }
         
@@ -742,7 +725,6 @@ class UserGateway {
             //to get resetactivationcode 
             $passwordData = $this->userRepository->getresetcodeNpassword($email);
             if (!empty($email) && !empty($passwordData) && $passwordData->resetactivationcode == $input['code']) {
-                
                     //set timezone of mysql if different servers are being used
                     //date_default_timezone_set('America/Los_Angeles');
                     $expiryTime =  date('Y-m-d H:i:s', strtotime($sentTime . " +".Config::get('constants.MNT_USER_EXPIRY_HR')." hours"));
@@ -765,8 +747,13 @@ class UserGateway {
                         return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
                     }
             } else {
-                $message = array('msg'=>array(Lang::get('MINTMESH.reset_password.error')));
-                return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
+                if(empty($passwordData->resetactivationcode)) {
+                    $message = array('msg'=>array(Lang::get('MINTMESH.reset_password.codeexpired')));
+                    return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
+                } else {
+                    $message = array('msg'=>array(Lang::get('MINTMESH.reset_password.error')));
+                    return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
+                }
             }
         }
         
@@ -858,7 +845,8 @@ class UserGateway {
                 $originalFileName = $renamedFileName = $linkedinFileName = "";
                 $from_linkedin =  0;
                 $data=array();
-                if ($this->loggedinUserDetails = $this->getLoggedInUser())
+                $this->loggedinUserDetails = $this->getLoggedInUser();
+                if ($this->loggedinUserDetails)
                 {
                     if (!empty($input['info_type']) && $input['info_type'] == 'contact')
                     {
@@ -1449,6 +1437,7 @@ class UserGateway {
                                 $a["from_user_".$k] = $v ;
                             }
                         }
+                        $a['referral_relation'] = !empty($relation[0]->getID())?$relation[0]->getID():0;
                         $return['requests'][] = $a ;
                     }
                 }
@@ -1985,15 +1974,13 @@ class UserGateway {
         public function getCountryCodes()
         {
             
-            if (Cache::has('countryCodes')) { 
-                \Log::info("data from memcache");
+            if (Cache::has('countryCodes')) {                 
                 $data         = Cache::get('countryCodes');
                 $responseCode = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg  = self::SUCCESS_RESPONSE_MESSAGE;
                 $message      = array('msg'=>array(Lang::get('MINTMESH.country_codes.success')));
                 
-            } else {
-                \Log::info("data from database");
+            } else {                
                 $countryCodes = $this->userRepository->getCountryCodes();
                 if (!empty($countryCodes))
                 {
@@ -2062,11 +2049,9 @@ class UserGateway {
         public function getIndustries()
         {
             if (Cache::has('industries')) { 
-                $industriesResult = Cache::get('industries');                
-                \Log::info("<<<<<<<<< In if >>>>>>>>>");
+                $industriesResult = Cache::get('industries');                                
             } else {
-                $industriesResult = $this->userRepository->getIndustries();
-                \Log::info("<<<<<<<<< In else >>>>>>>>>");
+                $industriesResult = $this->userRepository->getIndustries();                
                 Cache::add('industries', $industriesResult, 1000);                
             }            
             if (!empty($industriesResult))
@@ -2093,11 +2078,9 @@ class UserGateway {
         public function getJobFunctions()
         {
         	if (Cache::has('jobfunctions')) { 
-                $jobFunctionsResult = Cache::get('jobfunctions');                
-                \Log::info("<<<<<<<<< In if >>>>>>>>>");
+                $jobFunctionsResult = Cache::get('jobfunctions');                                
             } else {
-                $jobFunctionsResult = $this->userRepository->getJobFunctions();
-                \Log::info("<<<<<<<<< In else >>>>>>>>>");
+                $jobFunctionsResult = $this->userRepository->getJobFunctions();                
                 Cache::add('jobfunctions', $jobFunctionsResult, 1000);                
             }  
 	        // $jobFunctionsResult = $this->userRepository->getJobFunctions();
@@ -3444,24 +3427,36 @@ class UserGateway {
         
         public function getBadWords()
         {
-            if (Cache::has('badWords')) { 
-                $data = Cache::get('badWords');
-            } 
-            else
+            $badwords = array();
+            $badWordsList = $this->userRepository->getBadWords();
+            if (!empty($badWordsList))
             {
-                $badwords = array();
-                $badWordsList = $this->userRepository->getBadWords();
-                if (!empty($badWordsList))
+                foreach ($badWordsList as $badWord)
                 {
-                    foreach ($badWordsList as $badWord)
-                    {
-                        $badwords[]=$badWord->word ;
-                    }
+                    $badwords[]=$badWord->word ;
                 }
-                $data = $badwords;
-                Cache::forever('badWords', $badwords);
-                
             }
+            $data = $badwords;
+            Cache::forever('badWords', $badwords);
+                
+//            if (Cache::has('badWords')) { 
+//                $data = Cache::get('badWords');
+//            } 
+//            else
+//            {
+//                $badwords = array();
+//                $badWordsList = $this->userRepository->getBadWords();
+//                if (!empty($badWordsList))
+//                {
+//                    foreach ($badWordsList as $badWord)
+//                    {
+//                        $badwords[]=$badWord->word ;
+//                    }
+//                }
+//                $data = $badwords;
+//                Cache::forever('badWords', $badwords);
+//            }
+                
             $responseCode = self::SUCCESS_RESPONSE_CODE;
             $responseMsg  = self::SUCCESS_RESPONSE_MESSAGE;
             $message      = array('msg'=>array(Lang::get('MINTMESH.bad_words.success')));
@@ -3498,8 +3493,62 @@ class UserGateway {
             return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $responseData) ;
         }
         
+        public function getAllSkills() {            
+            if (Cache::has('allSkills')) {                 
+                $data = Cache::get('allSkills');
+                $responseCode = self::SUCCESS_RESPONSE_CODE;
+                $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
+                $message = array('msg'=>array(Lang::get('MINTMESH.skills.success')));
+            } else {                
+                $skillsR = $this->userRepository->getSkills();
+                if (!empty($skillsR))
+                {
+                    $data = $skills = array();
+                    foreach($skillsR as $key=>$val)
+                    {
+                        $skills[] = array("skill_name"=>trim($val->name), "skill_id"=>$val->id,"skill_color"=>$val->color) ;
+                    }
+                    $data = array("skills"=>$skills) ;
+                    $message = array('msg'=>array(Lang::get('MINTMESH.skills.success')));                    
+                    // adding to memcache
+                    Cache::add('allSkills', $data, false, 0);
+                    $responseCode = self::SUCCESS_RESPONSE_CODE;
+                    $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
+                }
+                else
+                {
+                    $message = array('msg'=>array(Lang::get('MINTMESH.skills.error')));
+                    $data    = aray();
+                    $responseCode = self::ERROR_RESPONSE_CODE;
+                    $responseStatus = self::ERROR_RESPONSE_MESSAGE;                    
+                }
+            }
+            return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $data);
+        }
         
-        
+        public function getFilterSkills($input) {
+            $skillsR = $this->userRepository->getSkills($input);
+            if (!empty($skillsR))
+            {
+                $data = $skills = array();
+                foreach($skillsR as $key=>$val)
+                {
+                    $skills[] = array("skill_name"=>trim($val->name), "skill_id"=>$val->id,"skill_color"=>$val->color) ;
+                }
+                $data = array("skills"=>$skills) ;
+                $message = array('msg'=>array(Lang::get('MINTMESH.skills.success')));              
+                $responseCode = self::SUCCESS_RESPONSE_CODE;
+                $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
+            }
+            else
+            {
+                $message = array('msg'=>array(Lang::get('MINTMESH.skills.error')));
+                $data    = aray();
+                $responseCode = self::ERROR_RESPONSE_CODE;
+                $responseStatus = self::ERROR_RESPONSE_MESSAGE;                    
+            }            
+            return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $data);
+        }
     
 }
 ?>

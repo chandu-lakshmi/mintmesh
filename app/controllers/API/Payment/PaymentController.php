@@ -204,7 +204,7 @@ class PaymentController extends \BaseController {
             //citrus need a view file as return url
             if ($response['status_code'])
             {
-                return View::make('landings/citrusReturn', array('data'=>$response['data']));
+               return View::make('landings/citrusReturn', array('data'=>$response['data']));
             }
             else
             {

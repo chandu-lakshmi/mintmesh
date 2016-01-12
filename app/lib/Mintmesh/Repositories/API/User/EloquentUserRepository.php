@@ -11,12 +11,13 @@ use DB;
 use Mintmesh\Repositories\BaseRepository;
 use Illuminate\Support\Facades\Hash;
 use Mintmesh\Services\APPEncode\APPEncode ;
+use Mintmesh\Repositories\API\Referrals\ReferralsRepository;
 class EloquentUserRepository extends BaseRepository implements UserRepository {
 
         protected $user;
-        protected $email, $level, $appEncodeDecode, $notifications;
+        protected $email, $level, $appEncodeDecode, $notifications,$referralsRepository;
         
-        public function __construct(User $user, Emails_Logs $email, Levels_Logs $level, APPEncode $appEncodeDecode, Notifications_Logs $notifications)
+        public function __construct(User $user, Emails_Logs $email, Levels_Logs $level, APPEncode $appEncodeDecode, Notifications_Logs $notifications, referralsRepository $referralsRepository)
         {
                 parent::__construct($user);
                 $this->user = $user;
@@ -24,6 +25,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                 $this->level = $level ;
                 $this->appEncodeDecode = $appEncodeDecode ;
                 $this->notifications = $notifications ;
+                $this->referralsRepository = $referralsRepository;
         }
         // creating new user in storage
         public function createUser($input)
@@ -267,15 +269,12 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                         //check if any referred post has pending status
                         if ($row->notifications_types_id == 10)
                         {
-                            $sql1 = "select count(id) as count from notifications_logs nl where nl.other_status = '0' and nl.notifications_types_id=10"
-                                    . " and nl.extra_info='".$row->extra_info."' and to_email='".$user->emailid."'" ;
-                            $result1 = DB::select($sql1);
-                            if (!empty($result))
+                             //check if any pending referrals are their
+                            $postId = !empty($row->extra_info)?$row->extra_info:0 ;
+                            $activeResult = $this->referralsRepository->checkActivePost($postId);
+                            if (!count($activeResult))
                             {
-                                if ($result1[0]->count == 0)
-                                {
-                                    unset($result[$key]);
-                                }
+                                unset($result[$key]);
                             }
                         }
                     }
@@ -509,12 +508,12 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
             }
         }
 
-        public function getSkills($input)
+        public function getSkills($input=null)
         {
             $sql = "select id,name,status,color from skills where status=1" ;
             if (!empty($input['search_for']))
             {
-                $sql.= " and LOWER(name) like '%".  $this->appEncodeDecode->filterString(strtolower($input['search_for']))."%'";
+                $sql.= " and name like '%".  $this->appEncodeDecode->filterString(strtolower($input['search_for']))."%'";
             }
             $sql.=" order by name asc" ;
             return $result = DB::select($sql);
@@ -579,7 +578,8 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
         
         public function getBadWords()
         {
-            $sql = "select word from bad_words";
+//            $sql = "select word from bad_words";
+            $sql = "select trim(word) as word from bad_words order by length(word) desc";
             return $result = DB::select($sql);
         }
         

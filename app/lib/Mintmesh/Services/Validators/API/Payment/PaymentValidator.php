@@ -15,7 +15,8 @@ class PaymentValidator extends Validator {
         ),
         'payout'=>array(
             'paypal_emailid'=>'required|email',
-            'amount'=>'required'
+            'amount'=>'required',
+            'password'=>'required'
         ),
         'manualPayout'=>array(
             'bank_id'=>'required',

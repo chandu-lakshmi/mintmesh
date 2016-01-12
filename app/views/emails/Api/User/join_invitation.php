@@ -1,12 +1,12 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="https://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 <meta name="format-detection" content="telephone=no" /> <!-- disable auto telephone linking in iOS -->
 <title>Mint Mesh</title>
-<link href='http://fonts.googleapis.com/css?family=Roboto:300,400,500,700' rel='stylesheet' type='text/css'>
+<link href='https://fonts.googleapis.com/css?family=Roboto:300,400,500,700' rel='stylesheet' type='text/css'>
 <style type="text/css">
 /* RESET STYLES */
 html { background-color:#E1E1E1; margin:0; padding:0; }
@@ -125,8 +125,8 @@ td[class="buttonContent"] a{padding:15px !important;}
 }
 
 /*  CONDITIONS FOR ANDROID DEVICES ONLY
-*   http://developer.android.com/guide/webapps/targeting.html
-*   http://pugetworks.com/2011/04/css-media-queries-for-targeting-different-mobile-devices/ ;
+*   https://developer.android.com/guide/webapps/targeting.html
+*   https://pugetworks.com/2011/04/css-media-queries-for-targeting-different-mobile-devices/ ;
 =====================================================*/
 
 @media only screen and (-webkit-device-pixel-ratio:.75){
@@ -233,7 +233,7 @@ padding-top:0px !important;
                                 <table border="0"  cellspacing="0" width="100%">
                                     <tr>
 <td align="center" valign="top" class="textContent" style="padding:20px 30px 10px;">
-<img src="http://staging.mintmesh.com/public/images/mintmesh-logo.png"   align="center" style="max-width:100%;text-align:center;" alt="logo" title="Text">
+<img src="https://staging.mintmesh.com/public/images/mintmesh-logo.png"   align="center" style="max-width:100%;text-align:center;" alt="logo" title="Text">
 <h2 style="text-align:center;font-weight:normal;font-family: 'Roboto', sans-serif;font-weight:300;font-size:28px;margin-bottom:10px;margin-top:20px;color:#000000;" class="main_heading">MintMesh</h2>
 
 <hr style="border-top:1px solid #c8c8c8;margin-top:20px;">

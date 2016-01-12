@@ -198,7 +198,8 @@ class ReferralsGateway {
             $this->loggedinUserDetails = $this->getLoggedInUser();
             $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
              $fromId = $this->neoLoggedInUserDetails->id ;
-            if ($this->loggedinUserDetails = $this->getLoggedInUser())
+//            if ($this->loggedinUserDetails = $this->getLoggedInUser())
+             if($this->loggedinUserDetails)
             {
                 //$this->loggedinUserDetails
                 $neoInput = array();
