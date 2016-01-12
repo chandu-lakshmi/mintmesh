@@ -44,7 +44,7 @@ return [
     'MANUAL'=>[
         'STATUS'=>[
             'ERROR'=>'ERROR',
-            'SUCESS'=>'SUCESS'
+            'SUCESS'=>'SUCCESS'
         ]
     ],
     'REFERENCE_STATUS'=>[
