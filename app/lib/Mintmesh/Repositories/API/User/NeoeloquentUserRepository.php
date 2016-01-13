@@ -1170,6 +1170,23 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             }
         }
         
+        public function changeUserLabel($emailid='')
+        {
+            if (!empty($emailid))
+            {
+                $queryString = "MATCH (n:User) where not n:User:Mintmesh and n.emailid='".$emailid."'
+                                SET n:Mintmesh
+                                RETURN n";
+               // echo $queryString;exit;
+                 $query = new CypherQuery($this->client, $queryString);
+                return $result = $query->getResultSet();
+
+            }
+            else{
+                return 0;
+            }
+        }
+        
         
          
 }

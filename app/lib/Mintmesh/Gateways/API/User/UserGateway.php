@@ -282,7 +282,10 @@ class UserGateway {
                 }
                 else
                 {
-                    $updatedNeoUser =  $this->neoUserRepository->updateUser($neoInput) ;
+                    //change user label
+                    $changeLabelNeoUser =  $this->neoUserRepository->changeUserLabel($input['emailid']) ;
+                    if (!empty($changeLabelNeoUser)){
+                    $updatedNeoUser =  $this->neoUserRepository->updateUser($neoInput) ;}
                 }
                 $deviceToken = $input['deviceToken'] ;
                 $this->neoUserRepository->mapToDevice($deviceToken, $input['emailid']) ;
@@ -441,7 +444,9 @@ class UserGateway {
                     $pushData['relationAttrs']=array('auto_connected'=>1);
                     Queue::push('Mintmesh\Services\Queues\ConnectToInviteesQueue', $pushData, 'IMPORT');
                     $message = array('msg'=>array(Lang::get('MINTMESH.user.success')));
-                    return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
+                    $data = array(); ;
+                    $data['dp_path'] = $renamedFileName ;
+                    return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
                 }
                 else {
                     $message = array('msg'=>array(Lang::get('MINTMESH.user.create_failure')));
@@ -1257,7 +1262,9 @@ class UserGateway {
             {
                 foreach ($levels_info_r as $row)
                 {
-                    $levels_info = array("level_id"=>$row->id, "name"=>$row->name, "points"=>$row->points, "earned_points"=>$row->earned_points);
+                    $rowID = !empty($row->id)?$row->id:0;
+                    //$rowID = !empty($row->id)?$row->id:0;
+                    $levels_info = array("level_id"=>$rowID, "name"=>$row->name, "points"=>$row->points, "earned_points"=>$row->earned_points);
                 }
             }
 

@@ -766,6 +766,7 @@ class PaymentGateway {
                         $successSupportTemplateUser = Lang::get('MINTMESH.email_template_paths.manual_payout_success_user');
                         $receipientEmailUser = $loggedinUserDetails->emailid;//Config::get('constants.MINTMESH_SUPPORT.EMAILID');
                         $bankDetails->amount = $input['amount'];
+                        $bankDetails->remaningAmount = $balanceCashInfo->balance_cash-$payoutAmount;
                         $emailSentAdmin = $this->sendManualEmailToMintMesh($successSupportTemplateAdmin, $receipientEmailAdmin, $bankDetails);
                         $emailSentUser = $this->sendManualEmailToUser($successSupportTemplateUser, $receipientEmailUser, $bankDetails);
                         //log payout
@@ -848,6 +849,8 @@ class PaymentGateway {
             $dataSet['ifsc_code'] = $data->ifsc_code;
             $dataSet['address'] = $data->address;
             $dataSet['amount'] = $data->amount;
+            $dataSet['remaningAmount'] = $data->remaningAmount;
+//            echo "<pre>";print_r($dataSet);exit;
             /*$dataSet['name'] = $input['firstname'];
             $dataSet['link'] = $appLink ;
             $dataSet['email'] = $input['emailid'] ;*/
@@ -872,6 +875,7 @@ class PaymentGateway {
             $dataSet['ifsc_code'] = $data->ifsc_code;
             $dataSet['address'] = $data->address;
             $dataSet['amount'] = $data->amount;
+            $dataSet['remaningAmount'] = $data->remaningAmount;
             /*$dataSet['name'] = $input['firstname'];
             $dataSet['link'] = $appLink ;
             $dataSet['email'] = $input['emailid'] ;*/

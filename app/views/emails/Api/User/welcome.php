@@ -117,6 +117,7 @@ td[class="buttonContent"] a{padding:15px !important;}
 
 }
 /* end IOS targeting */
+.fontsize{font-size:12px}
 </style>
 
 </head>
@@ -236,8 +237,8 @@ td[class="buttonContent"] a{padding:15px !important;}
                                         </td>
                                     </tr>
                                 </table>
-                                <p>
-                                    If this email is not set up on your mobile device, please use the link below to activate your MintMesh account using a browser.
+                                <p class="fontsize">
+                                    If this email is not set up on your mobile device, please use the link below to activate your MintMesh account using a browser.<br>
                                     <a style="font-family: 'Roboto', sans-serif;font-size:13px;line-height:80%;padding-top:5px;padding-bottom:5px;padding-right:15px;padding-left:15px;" href="<?php echo $desktop_link ; ?>" target="_blank">Activate Account Using Browser</a>
                                         
                                 </p>
