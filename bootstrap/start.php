@@ -28,6 +28,7 @@ $env = $app->detectEnvironment(array(
 	// hostname of the machine
 	'local' => array('sivaranjan-PC'),
 	'staging' => array('mintmeshstg.com'),
+        'live'   => array('ip-172-31-16-142'),
 ));
 
 /*

@@ -138,7 +138,7 @@ use Cache;
           }
       }
       
-        function cleanBadWords($str)
+        function cleanBadWords_mounika($str)
         {
             $strorg = $str;
             if (Cache::has('badWords')) { 
@@ -147,11 +147,10 @@ use Cache;
             $odbwords=$dbwords;
             array_walk($dbwords,function(&$v,$k){$v=substr($v,0,1).str_repeat("*",(strlen($v)-2)).substr($v,(strlen($v)-1),1);});
             $str=str_ireplace($odbwords,$dbwords,$str);
-            //echo $str;
             return $str;
         }
         
-       function cleanBadWords_old($str)
+       function cleanBadWords($str)
         {
             if (Cache::has('badWords')) { 
                 $this->profanity_list = Cache::get('badWords');

@@ -20,9 +20,9 @@ return [
     'IOS'=>'ios',
     'INVITE_SINGLE'=>TRUE,
     'INVITE_EMAIL'=>'mintmeshapp@gmail.com',
-    'PUSH_APP_ID' =>'0YORwFGpy2BsSW4g6ify3FxeBraHHiMDuzFUTJX0',// 'MTPajI5Vj2EzNUvKnvvynrZHh320Nk2pu9iW3x60',//'0YORwFGpy2BsSW4g6ify3FxeBraHHiMDuzFUTJX0',
-    'PUSH_REST_KEY' =>'dVGfvLnENYwyTXVKoUPJKvOW4J9Ww9UoRbQQfJg7',// '32zUISSPq5aAdkdWdrGYTQpad4JsRhoQsD4Exro8',//'dVGfvLnENYwyTXVKoUPJKvOW4J9Ww9UoRbQQfJg7',
-    'PUSH_MASTER_KEY' =>'noK7rjixKT90K6GICpVwzgoMIb8v8JOhq2U1Z6BA',// 'LJIrWD0drrfZC55wvKwpWpnSyeq9UhMl5Ybuern6',//'noK7rjixKT90K6GICpVwzgoMIb8v8JOhq2U1Z6BA'
+    'PUSH_APP_ID' =>'ZGERx5nx8qHcZyuJGWjjye3MsHFVO9YIbpzeNDcz',//'0YORwFGpy2BsSW4g6ify3FxeBraHHiMDuzFUTJX0',// 'MTPajI5Vj2EzNUvKnvvynrZHh320Nk2pu9iW3x60',//'0YORwFGpy2BsSW4g6ify3FxeBraHHiMDuzFUTJX0',
+    'PUSH_REST_KEY' =>'rumL8kIXQNlvU3QBkqwXm4CNQASWov71eztdNUGW',//'dVGfvLnENYwyTXVKoUPJKvOW4J9Ww9UoRbQQfJg7',// '32zUISSPq5aAdkdWdrGYTQpad4JsRhoQsD4Exro8',//'dVGfvLnENYwyTXVKoUPJKvOW4J9Ww9UoRbQQfJg7',
+    'PUSH_MASTER_KEY' =>'YPX0WWd3uk6CU8SuRk0TXp5KjB0e6Ybokmh36MZu',//'noK7rjixKT90K6GICpVwzgoMIb8v8JOhq2U1Z6BA',// 'LJIrWD0drrfZC55wvKwpWpnSyeq9UhMl5Ybuern6',//'noK7rjixKT90K6GICpVwzgoMIb8v8JOhq2U1Z6BA'
     'TWILIO'=>[
         'SID'=>'AC61f4636c861c92b39112a5898195777d',
         'AUTH_TOKEN'=>'5bf17a942a0a2781e3eaf8f9abbb4730',
@@ -120,7 +120,7 @@ return [
         ]
     ],
     'MINTMESH_SUPPORT'=>[
-        'EMAILID'=>'pshweta24@gmail.com'
+        'EMAILID'=>'support@mintmesh.com'
     ],
     'S3BUCKET' => 'mintmesh',
     'PROFILE_COMPLETION_VALUES'=>[
