@@ -1287,6 +1287,7 @@ class UserGateway {
         }
         public function formUserMoreDetailsArray($input=array())
         {
+            $categories = array(Config::get('constants.USER_CATEGORIES.EXPERIENCE'),Config::get('constants.USER_CATEGORIES.EDUCATION'),Config::get('constants.USER_CATEGORIES.CERTIFICATION'));
             
             $result = array();
             if (!empty($input))
@@ -1295,10 +1296,17 @@ class UserGateway {
                 {
                     $id = !empty($record[0])?$record[0]->getID():0;
                     $arr = !empty($record[0])?$record[0]->getProperties():array();
-                    if (!empty($record[1][1]) && !empty($arr))
+                    if (!empty($record[1][2]) && !empty($record[1][1]) && !empty($arr))
                     {
                         $arr['id'] = $id ;
-                        $result[$record[1][1]][]=$arr ;
+                        if (in_array($record[1][1], $categories))
+                        {
+                            $result[$record[1][1]][]=$arr ;
+                        }
+                        else{
+                            $result[$record[1][2]][]=$arr ;
+                        }
+                        
                     }
                 }
                 foreach ($result as $key=>$val)
