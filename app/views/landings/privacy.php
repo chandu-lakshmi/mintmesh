@@ -190,12 +190,12 @@ p{
 @media (min-width: 1200px){
 .container {
     width: 1000px;
-	}
+    }
 }
 @media (min-width: 992px){
-	.container {
-   	 width: 970px;
-	}
+    .container {
+     width: 970px;
+    }
 }
 
 @media (min-width: 768px){
@@ -219,93 +219,40 @@ p{
 
 <DIV class="dclr"></DIV>
 <h3 class="ft0">Privacy Policy</h3>
-<P class="ft2">Last Updated: Oct 5th 2015</P>
-<h4 class="ft4">PLEASE BE SURE TO READ THIS PRIVACY POLICY CAREFULLY IN 
+<p style="font-family:arial;font-style: italic;font-size:15px;">Our management has developed this Privacy Statement(Policy) to express our firm commitment to safeguard privacy and to aid our users better understand what information we collect about them and what may happen to that information.</p>
+<P class="ft2">This Privacy Policy was last updated: Jan 6th 2016</P>
+<P class="ft2">This Privacy Policy is effective as of: Jan 6th 2016</P>
 
-CONJUNCTION WITH THE TERMS OF SERVICE, AS IT   DESCRIBES HOW 
 
-MINTMESH INC(“MINTMESH”, “US”, “OUR”, AND “WE”) COLLECTS AND USES 
 
-INFORMATON WHEN YOU INTERACT WITH US.  THIS PRIVACY POLICY 
-
-SUPERCEDES AND REPLACES OUR LAST VERSION OF THE PRIVACY POLICY 
-
-FOR ALL USERS, INCLUDING THOSE THAT HAVE REGISTERED AS MINTMESH 
-
-MEMBERS PRIOR TO THE EFFECTIVE DATE OF THIS PRIVACY POLICY.  THIS 
-
-PRIVACY POLICY IS APPLICABLE TO ALL USERS OF MINTMESH’S MOBILE 
-
-DEVICE APPLICATIONS AND THE WEBSITE (MINTMESH.COM). THIS ALSO 
-
-APPLIES TO ANY OTHER WEBSITE WITH “MINTMESH” BRANDING.  SOME TERMS 
-
-USED IN THIS POLICY ARE DEFINED IN THE TERMS OF USE.</h4>
+<h4 class="ft4">PLEASE BE SURE TO READ THIS PRIVACY POLICY CAREFULLY IN CONJUNCTION WITH THE TERMS OF SERVICE, AS IT DESCRIBES HOW MINTMESH INC AND MINTMESH INDIA PVT. LTD. (AS THE CASE MAY BE)(“MINTMESH”, “US”, “OUR”, AND “WE”) COLLECTS AND USES INFORMATON WHEN YOU INTERACT WITH US.  THIS PRIVACY POLICY SUPERCEDES AND REPLACES OUR LAST VERSION OF THE PRIVACY POLICY FOR ALL USERS, INCLUDING THOSE THAT HAVE REGISTERED AS MINTMESH MEMBERS PRIOR TO THE EFFECTIVE DATE OF THIS PRIVACY POLICY.  THIS PRIVACY POLICY IS APPLICABLE TO ALL USERS OF MINTMESH’S MOBILE DEVICE APPLICATIONS AND THE WEBSITE (MINTMESH.COM). THIS ALSO APPLIES TO ANY OTHER WEBSITE WITH “MINTMESH” BRANDING.  SOME TERMS USED IN THIS POLICY ARE DEFINED IN THE TERMS OF USE.</h4>
+<p style="font-family:arial">If you have any questions or comments about the Privacy Policy, please contact us via email at <span><A href="mailto:support@mintmesh.com">support@mintmesh.com </A></span>This Policy is incorporated into and is subject to the MintMesh Terms of Service, which can be accessed at <span><a href="https://www.google.com"> www.mintmesh.com</a>.</span> Your use of the application and any personal information you provide on the application remains subject to the terms of the Policy and MintMesh’s Terms of Service.</p>
 <h3 class="ft5">1. What information do we collect from you?</h3>
 <P class="ft6">1.1 REGISTRATION PERSONAL INFORMATION</P>
-<p>We collect information when you register as a Member(Account) to use the application. 
-
-When you register as a Member, you will be required to enter your first name, last 
-
-name, email address, mobile phone number , country of residence and your photo. This 
-
-information is also variously called as personally identifiable information.<span class="ft7">.</span></p>
+<p>“Personal information” is defined to include information that whether on its own or in combination with other information may be used to readily identify or contact you such as: name, address, email address, phone number etc.</p>
+<p>We collect information when you register as a Member(Account) to use the application.When you register as a Member, you will be required to enter your first name, last name, email address, mobile phone number , country of residence and your photo.<span class="ft7">.</span></p>
 <P class="ft6">1.2 AUTHENTICATION PERSONAL INFORMATION</P>
-<p> We collect device identifiers, connection logs and related location data , email address and mobile
-
-number to authenticate your account.</p>
+<p> We collect device identifiers, connection logs and related location data , email address and mobile number to authenticate your account.</p>
 
 </DIV>
 <P class="ft6">1.3 PROFILE INFORMATION</P>
-<p>We collect information when you complete your profile as a Member(Account) of the
-
-application. You can optionally enter your work experience,  your current job, your 
-
-current organization, your skills, your education, your work phone number, your skype 
-
-ID, your social media handles and a copy of your resume.</p>
+<p>We collect information when you complete your profile as a Member(Account) of the application. You can optionally enter your work experience,  your current job, your current organization, your skills, your education, your work phone number, your skype ID, your social media handles and a copy of your resume.</p>
 <P class="ft6">1.4 SEARCH INFORMATION</P>
-<p>We collect information on the terms and keywords that you search for when using 
-
-MintMesh.</p>
+<p>We collect information on the terms and keywords that you search for when using MintMesh.</p>
 <P class="ft6">1.5 NETWORK INFORMATION</P>
-<p>When you import your contacts into MintMesh and establish relationships with them via 
-
-the application, we store that information as part of your account with us.</p>
+<p>When you import your contacts into MintMesh and establish relationships with them via the application, we store that information as part of your account with us.</p>
 <p><b>
-    When you use the Site and Services, and in particular when you install and use
-
-the MintMesh  Application, you agree to the terms of this Privacy Policy and the 
-
-collection, processing, use and disclosure by MintMesh and its service providers, 
-
-of  all the Information as stated above, that you enter into the MintMesh App.
+    When you use the Site and Services, and in particular when you install and use the MintMesh  Application, you agree to the terms of this Privacy Policy and the collection, processing, use and disclosure by MintMesh and its service providers, of  all the Information as stated above, that you enter into the MintMesh App.
     </b></p>
 <h3 class="ft5">2.What do we use your information for?</h3>
 <p>
     <ul>
-        <li><p>To communicate with you, in connection with the provision of the services made
-
-available through the MintMesh Application and Services as well as other similar 
-
-services that could be provided to you by MintMesh. We may also use such 
-
-information to provide to you marketing information relating to third parties’ products 
-
-and services, provided that you have consented to such communications;</p></li>
-        <li><p>To authenticate (verify) that it is actually you who is using the function, for which we
-
-                use the authentication personal information.</p></li>
+        <li><p>To communicate with you, in connection with the provision of the services made available through the MintMesh Application and Services as well as other similar services that could be provided to you by MintMesh. We may also use such information to provide to you marketing information relating to third parties’ products and services, provided that you have consented to such communications;</p></li>
+        <li><p>To authenticate (verify) that it is actually you who is using the function, for which we use the authentication personal information.</p></li>
         <li><p>To perform analytics</p></li>
-        <li><p>To communicate and provide additional information to you about MintMesh, its
-
-                offerings, special offers, announcements and marketing materials.</p></li>
-        <li><p>To send you reminders, notices, updates, security alerts, and administrative
-
-                messages.</p></li>
-        <li><p>To administer the application, analyze trends, manage the terms of use, preventing
-
-                fraud and to comply with the law</p></li>
+        <li><p>To communicate and provide additional information to you about MintMesh, its offerings, special offers, announcements and marketing materials.</p></li>
+        <li><p>To send you reminders, notices, updates, security alerts, and administrative messages.</p></li>
+        <li><p>To administer the application, analyze trends, manage the terms of use, preventing fraud and to comply with the law</p></li>
         <li><p>To carry out other purposes that are disclosed to you and to which you agree.</p></li>
     </ul>
 </p>
@@ -313,177 +260,47 @@ and services, provided that you have consented to such communications;</p></li>
 <p>
     <ul>
         <li>
-            <p>We do not sell, trade or otherwise transfer your personally identifiable information to
-
-outside parties. We share information for the following:</p>
+            <p>We do not sell, trade or otherwise transfer your personally identifiable information to outside parties. We share information for the following:</p>
         </li>
-        <li><p>MintMesh uses  service providers(like data hosting service provider, payment
-
-service providers, other service providers)that provide services for us to assist us in 
-
-hosting the application, carrying out purposes such as processing payments and 
-
-payouts, sending text messages on our behalf and sending emails on our behalf 
-
-who are obligated to keep your information confidential</p></li>
-        <li><p>If another company acquires or wishes to acquire or merge with our company,
-
-business, or our assets (including via bankruptcy),  that company will possess the 
-
-Information collected by us and will assume the rights and obligations regarding your 
-
-Information as described in this Privacy Policy. If there is a change of ownership, 
-
-you will be notified via email and/or a notice on our application or website.</p></li>
-        <li><p>We may also release your information when we believe release is appropriate to
-
-comply with the law, enforce our site policies, or protect others or ours rights, 
-
-property, or safety.</p></li>
-        <li><p>We will share information to investigate fraud, respond to a government request; or
-
-as needed to support auditing, compliance, and corporate governance functions.</p></li>
-        <li><p>We may also disclose Personal Information to defend ourselves in litigation or a
-
-regulatory action, and when required or advised to do so by law, such as in 
-
-response to a subpoena, or similar legal process, including to law enforcement 
-
-agencies, regulators, and courts in the United States and other countries where we 
-
-operate.</p></li>
+        <li><p>MintMesh uses  service providers(like data hosting service provider, payment service providers, other service providers)that provide services for us to assist us in hosting the application, carrying out purposes such as processing payments and payouts, sending text messages on our behalf and sending emails on our behalf who are obligated to keep your information confidential</p></li>
+        <li><p>If another company acquires or wishes to acquire or merge with our company,business, or our assets (including via bankruptcy),  that company will possess the Information collected by us and will assume the rights and obligations regarding your Information as described in this Privacy Policy. If there is a change of ownership, you will be notified via email and/or a notice on our application or website.</p></li>
+        <li><p>We may also release your information when we believe release is appropriate to comply with the law, enforce our site policies, or protect others or ours rights, property, or safety.</p></li>
+        <li><p>We will share information to investigate fraud, respond to a government request; or as needed to support auditing, compliance, and corporate governance functions.</p></li>
+        <li><p>We may also disclose Personal Information to defend ourselves in litigation or a regulatory action, and when required or advised to do so by law, such as in response to a subpoena, or similar legal process, including to law enforcement agencies, regulators, and courts in the United States and other countries where we operate.</p></li>
     </ul>
 </p>
 <h3 class="ft5">4. How do we protect your information?</h3>
 <p>
     <ul>
-        <li><p>We implement a variety of security measures and technical safeguards to protect
-
-your information. We use industry standard encryption and other security measures 
-
-to secure the safety of your information. Information sent to payment service 
-
-providers is via Secure Socket Layer(SSL) technology and then encrypted by the 
-
-payment service providers to ensure that database is only accessed by those 
-
-authorized with special rights to do so and are required to keep the information 
-
-confidential.</p></li>
-        <li><p>We cannot, however, ensure or warrant the security of any information you transmit
-
-to us or store on the Service and you do so at your own risk. We also cannot 
-
-guarantee that such information may not be accessed, disclosed, altered, or 
-
-destroyed by breach of any of our security safeguards.</p></li>
-        <li><p>If we learn of a security systems breach, then we may attempt to notify you
-
-electronically so that you can take appropriate protective steps. We may post a 
-
-notice through the Service if a security breach occurs. Depending on where you live, 
-
-you may have a legal right to receive notice of a security breach in writing which you 
-
-can do so by a specific request to support@mintmesh.com</p></li>
+        <li><p>We implement a variety of security measures and technical safeguards to protect your information. We use industry standard encryption and other security measures to secure the safety of your information. Information sent to payment service providers is via Secure Socket Layer(SSL) technology and then encrypted by the payment service providers to ensure that database is only accessed by those authorized with special rights to do so and are required to keep the information confidential.</p></li>
+        <li><p>We cannot, however, ensure or warrant the security of any information you transmit to us or store on the Service and you do so at your own risk. We also cannot guarantee that such information may not be accessed, disclosed, altered, or destroyed by breach of any of our security safeguards.</p></li>
+        <li><p>If we learn of a security systems breach, then we may attempt to notify you electronically so that you can take appropriate protective steps. We may post a notice through the Service if a security breach occurs. Depending on where you live, you may have a legal right to receive notice of a security breach in writing which you can do so by a specific request to <A href="mailto:support@mintmesh.com">support@mintmesh.com </A>.</p></li>
         
     </ul>
 </p>
 <h3 class="ft5">5. Do we use cookies?</h3>
-<p>
-    When you connect to the Site from your Device, we may send one or more cookies 
-
-(small text files containing a string of characters) to your Device. Such cookies are of 
-
-two types: (i) cookies enabling us to offer you a better experience when using the Site 
-
-(Session ID cookies), and (ii) cookies enabling us to ensure that you have authorized 
-
-the Device you are using for the purpose of accessing your Personal Information on 
-
-the Site. These cookies are required for the use of the Site. We do not use any other 
-
-type of cookies.
-</p>
-<h3 class="ft5">6. How can you access and manage your 
-
-Personal Information?</h3>
-<p>You can access and rectify your Personal Information directly on the MintMesh App.
-
-For any questions or concern you may have with respect to your Personal Information, 
-
-you can contact: <A href="mailto:support@mintmesh.com">support@mintmesh.com.</A></p>
-<p>If you prefer that we do not contact you for marketing purposes in connection with 
-
-products or services similar to the Services (including the App), please send us an 
-
-email at the following address: <A href="mailto:support@mintmesh.com">support@mintmesh.com.</A></p>
-
+<p>When you connect to the Site from your Device, we may send one or more cookies (small text files containing a string of characters) to your Device. Such cookies are of two types: (i) cookies enabling us to offer you a better experience when using the Site (Session ID cookies), and (ii) cookies enabling us to ensure that you have authorized the Device you are using for the purpose of accessing your Personal Information on the Site. These cookies are required for the use of the Site. We do not use any other type of cookies.</p>
+<h3 class="ft5">6. How can you access and manage your Personal Information?</h3>
+<p>You can access and rectify your Personal Information directly on the MintMesh App. For any questions or concern you may have with respect to your Personal Information, you can contact: <A href="mailto:support@mintmesh.com">support@mintmesh.com.</A></p>
+<p>If you prefer that we do not contact you for marketing purposes in connection with products or services similar to the Services (including the App), please send us an email at the following address: <A href="mailto:support@mintmesh.com">support@mintmesh.com.</A></p>
+<p style="font-family:arial;"><span style="font-weight: bold">For users in India </span>ONLY- In terms of the Information Technology (Intermediaries Guidelines) Rules, 2011 and the Information Technology (Reasonable Security Practices and Procedures and Sensitive Personal Data or Information) Rules, 2011, any grievance or complaint may be intimated to Ajay Rayaroth, Grievance Officer who may be reached at 07337419910. The Complaint shall be redressed within a period of 1 (one) month.</p>
 <h3 class="ft5">7. Global Applicability</h3>
-<p>
-    MintMesh is hosted in the United States. If you chose to use the application from the 
-
-European Union or other regions of the world with laws regarding data collection, 
-
-storage and use that differ from US law, then please note that you are transferring your personally identifiable information outside of those regions to the United States for
-
-processing and storage and by providing this information, you are consenting to that 
-
-transfer, processing and storage.
-</p>
+<p>MintMesh is hosted in the United States. If you chose to use the application from the European Union or other regions of the world with laws regarding data collection, storage and use that differ from US law, then please note that you are transferring your personally identifiable information outside of those regions to the United States for processing and storage and by providing this information, you are consenting to that transfer, processing and storage.</p>
 
 <h3 class="ft5">8. Options</h3>
-<p>MintMesh uses SMS programs. You may receive text messages from other users that 
-
-invite you to connect with them on MintMesh. We may also chose to use SMS 
-
-programs to authenticate your account. You have the option to unsubscribe from this 
-
-service by a message to <A href="mailto:support@mintmesh.com">support@mintmesh.com</A></p>
+<p>MintMesh uses SMS programs. You may receive text messages from other users that invite you to connect with them on MintMesh. We may also chose to use SMS programs to authenticate your account. You have the option to unsubscribe from this service by a message to <A href="mailto:support@mintmesh.com">support@mintmesh.com</A></p>
 
 <h3 class="ft5">9. Privacy Settings</h3>
-<p>As we do not control the actions of other users that you have chosen to share your 
-
-information with via the service, we cannot and do not guarantee that information you 
-
-post on the service will not be viewed by unauthorized persons. You understand and 
-
-acknowledge that, even after removal, copies of information that you have posted may 
-
-remain viewable in archives or caches or if other users have copied or stored this 
-
-information.</p>
+<p>As we do not control the actions of other users that you have chosen to share your information with via the service, we cannot and do not guarantee that information you post on the service will not be viewed by unauthorized persons. You understand and acknowledge that, even after removal, copies of information that you have posted may remain viewable in archives or caches or if other users have copied or stored this information.</p>
+<p>The application may contain links to other websites or resources over which MintMesh does not have any control. Such links do not constitute an endorsement by MintMesh of those external websites. You acknowledge that MintMesh is providing these links to you only as a convenience, and further agree that MintMesh is not responsible for the content of such external websites. We are not responsible for the protection and privacy of any information which you provide while visiting such external websites and such sites are not governed by this Policy. Your use of any external website is subject to the terms of use and privacy policy located on the those external website.</p>
 
 <h3 class="ft5">10. Modifications and updates to this policy</h3>
-<p>If you choose to use the MintMesh App, such use and any dispute over privacy is 
-
-subject to this Privacy Policy and to our Terms of Service Agreement.</p>
-<p>This Privacy Policy is subject to occasional revision, and if we make any material
-
-changes in the way we use your Personal Information, we will notify you by sending 
-
-you an e-mail to the last e- mail address you provided to us. Any changes to this 
-
-Privacy Policy will be effective thirty (30) calendar days following our dispatch of an e-
-
-mail notice to you. Please note that at all times you are responsible for updating your 
-
-Personal Information to provide us with your most current e- mail address. In the 
-
-event that the last e-mail address that you have provided us is not valid, or for any 
-
-reason is not capable of delivering to you the notice described above, our dispatch of 
-
-the e-mail  containing  such  notice  will  nonetheless  constitute  effective  notice  of the  changes described in the notice. Continued use of the MintMesh Application,
-
-following notice of such changes shall indicate your acknowledgement of such 
-
-changes and agreement to be bound by the terms and conditions of such changes.</p>
+<p>If you choose to use the MintMesh App, such use and any dispute over privacy is subject to this Privacy Policy and to our Terms of Service Agreement.</p>
+<p>This Privacy Policy is subject to occasional revision, and if we make any material changes in the way we use your Personal Information, we will notify you by sending you an e-mail to the last e- mail address you provided to us. Any changes to this Privacy Policy will be effective thirty (30) calendar days following our dispatch of an e-mail notice to you. Please note that at all times you are responsible for updating yourPersonal Information to provide us with your most current e- mail address. In the event that the last e-mail address that you have provided us is not valid, or for any reason is not capable of delivering to you the notice described above, our dispatch of the e-mail  containing  such  notice  will  nonetheless constitute  effective  notice  of the  changes described in the notice. Continued use of the MintMesh Application,following notice of such changes shall indicate your acknowledgement of such changes and agreement to be bound by the terms and conditions of such changes.</p>
 
 <h3 class="ft5">11. How to Contact Us?</h3>
 <p>For any questions regarding MintMesh’s privacy policy, email us at 
-
-    <A href="mailto:support@mintmesh.com">support@mintnmesh.com</A></p>
+<A href="mailto:support@mintmesh.com">support@mintnmesh.com</A></p>
 </DIV>
 </div>
 </BODY>

@@ -1988,7 +1988,6 @@ class UserGateway {
          */
         public function getCountryCodes()
         {
-            
             if (Cache::has('countryCodes')) {                 
                 $data         = Cache::get('countryCodes');
                 $responseCode = self::SUCCESS_RESPONSE_CODE;

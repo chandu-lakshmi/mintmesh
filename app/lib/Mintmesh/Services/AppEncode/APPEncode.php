@@ -104,6 +104,9 @@ use Cache;
 
             return $months+1;
         }
+        else if($dt2 == $dt1){
+            return 1 ;
+        }
         else
         {
             return 0 ;
@@ -120,7 +123,15 @@ use Cache;
                     $y = $months/12 ;
                     $years = floor($y) ;
                     $m =  $months-($years*12) ;
-                    $exp = $years." Year ".$m." Months" ;
+                    if ($years > 1 && $m > 1){
+                        $exp = $years." Years ".$m." Months" ;
+                    }
+                    else if ($years > 1 && $m <= 1){
+                        $exp = $years." Years ".$m." Month" ;
+                    }
+                    else{
+                       $exp = $years." Year ".$m." Months" ; 
+                    }
                 }
                 else if ($months == 12)
                 {
@@ -128,7 +139,11 @@ use Cache;
                 }
                 else
                 {
-                    $exp = $months." Months" ;
+                    if ($months > 1){
+                        $exp = $months." Months" ;
+                    }else{
+                        $exp = $months." Month" ;
+                    }
                 }
                 return $exp ;
           }
@@ -145,9 +160,13 @@ use Cache;
                 $dbwords = Cache::get('badWords');
             } 
             $odbwords=$dbwords;
+//            echo "<pre>";print_r($odbwords);exit;
+            array_walk($odbwords,function(&$v,$k){$v='/\b'.$v.'\b/i';});
             array_walk($dbwords,function(&$v,$k){$v=substr($v,0,1).str_repeat("*",(strlen($v)-2)).substr($v,(strlen($v)-1),1);});
-            $str=str_ireplace($odbwords,$dbwords,$str);
+            $str=preg_replace($odbwords, $dbwords, $str);
+//            $str=str_ireplace($odbwords,$dbwords,$str);
             return $str;
+            
         }
         
        function cleanBadWords($str)
@@ -164,9 +183,12 @@ use Cache;
             $explodeString = explode(" ", $str) ;
             if (is_string($str)) {
                 if (in_array(strtolower($str), $this->profanity_list)) {
-                    $temp = substr($str, 1,-1);
-                    $replacedString = str_replace($temp, '*',$str);
-                    $str = $replacedString;
+                    $strlenght = strlen($str);
+                    $str = substr($str,0,1).str_repeat("*",($strlenght-2)).substr($str,($strlenght-1),1);
+                    
+//                    $temp = substr($str, 1,-1);
+//                    $replacedString = str_replace($temp, '*',$str);
+//                    $str = $replacedString;
                 } else {
                     $explodeStringArray = explode(" ", $str) ;
                     if (is_array($explodeStringArray)) {

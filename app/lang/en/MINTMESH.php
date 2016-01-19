@@ -107,7 +107,7 @@ return array(
          ),
          "check_reset_password"=>array(
              "success"=>"sucess",
-             "failed"=>"Reset password link has be expired"
+             "failed"=>"Reset password link has been expired"
          ),
         "import_contacts"=>array(
              "success"=>"Contacts Successfully Imported",
@@ -173,9 +173,9 @@ return array(
              "success"=>"Successfully Processed",
              "failed"=>"Failed to process",
              "invalid_length"=>"Invalid Token. Unexpected length",
-             "otp_sent"=>"OTP sent to your inbox",
-             "otp_validated"=>"OTP validated successfully",
-             "max_reached"=>"Maximum number of OTPs reached",
+             "otp_sent"=>"Code sent to your inbox",
+             "otp_validated"=>"Code validated successfully",
+             "max_reached"=>"Maximum number of codes reached",
              "user_exist"=>" A user is already existing with this phone number,kindly change your phone number."
          ),
 

@@ -371,8 +371,8 @@ class UserController extends \BaseController {
         
         /**
 	 * list the countrycodes of countries
-         * 
-         * GET/country_codes
+         *  
+         * GET
          * 
 	 * @return Response
 	 */

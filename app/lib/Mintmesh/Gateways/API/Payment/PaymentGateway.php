@@ -419,7 +419,7 @@ class PaymentGateway {
                 $access_key = Config::get('constants.CITRUS.ACCESS_KEY') ;//"QZVFK264G28QZ6NJ43KB"; //put your own access_key - found in admin panel     
                 $secret_key = Config::get('constants.CITRUS.SECRET_KEY'); //put your own secret_key - found in admin panel     
                 $return_url = URL::to("/")."/v1/payment/citrus_transaction"; //put your own return_url.php here.    
-                //$return_url = "http://202.63.105.86/mintmesh/returnUrl.php";
+                //$return_url = "http://202.63.105.86/mintmesh/redirectURL.php";
                 //$txn_id = time() . rand(10000,99999);   
                 $txn_id = $transactionId ;
                 $value = $totalAmount; //Charge amount is in INR by default    

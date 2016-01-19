@@ -14,7 +14,7 @@ CitrusResponse.pgResponse(data);      }
 </head>     
 <body>     
 </body>     
-</html>                  
+</html>                
 <?php                    
   $secret_key = Config::get('constants.CITRUS.SECRET_KEY');     
   $txId = !empty($data['TxId'])?$data['TxId']:'';
@@ -39,9 +39,9 @@ $v = implode(",",$data);
       \Log::info("<<<<<<<< citrus in success >>>>>>>>>".$secret_key);
       $json_object = json_encode($data);										      	
       echo "<script> 
-      postResponse('$json_object'); 
+      postResponse(".$json_object."); 
       </script>";										      	
-      echo"<script> setdata ('$json_object');
+      echo"<script> setdata(".$json_object.");
       </script>";										      
     }										    
   else {										  	   
@@ -54,7 +54,7 @@ $v = implode(",",$data);
  </script>";	  	    
  echo"
  <script> 
- setdata ('$json_object'); 
+ setdata('$json_object'); 
  </script>";									      
  }      
 ?>

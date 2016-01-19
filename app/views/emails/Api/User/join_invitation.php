@@ -277,11 +277,14 @@ padding-top:0px !important;
                                                     <h3 style="color:#000000;line-height:125%;font-family: 'Roboto', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello <?php echo ucfirst($name) ; ?></h3>
                                                         
                                                         <div style="text-align:left;font-family: 'Roboto', sans-serif;font-size:20px;margin-bottom:0;color:#777777;line-height:135%;letter-spacing:0.2px;">
-<p>You got an Invitation from <?php echo $sender_name ; ?> to try this
-app for free</p>
-<p>To try this app, download app from <!--<b style="color:#333333;">App Store</b>
-and <b style="color:#333333;">Play Store</b></p>-->
-<a style="color:#333333;text-decoration:none;" href="mintmesh.com" target="_blank">mintmesh.com</a>
+<p>I discovered a great way to refer people and ask for referrals , using <font color="#8fca40">MintMesh</font>. </br>
+This is a free app that solves your problems while you earn goodwill and money. </p> 
+
+<p>I invite you to join my referral network . 
+</br>
+    <b>Download this at</b></p>
+
+<a style="color:#333333;text-decoration:none;" href="mintmesh.com" target="_blank">App Store</a>  | <a style="color:#333333;text-decoration:none;" href="mintmesh.com" target="_blank">Google Play</a>                                                            
 </div>
                                                     </td>
                                                 </tr>

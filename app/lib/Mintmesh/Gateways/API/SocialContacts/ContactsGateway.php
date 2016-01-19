@@ -342,7 +342,7 @@ class ContactsGateway {
                         $dataSet['sender_name'] =!empty($loginUserDetails->firstname)?$loginUserDetails->firstname:'';
                         $dataSet['sender_email'] =!empty($loginUserDetails->emailid)?$loginUserDetails->emailid:'';
                         $this->userEmailManager->dataSet = $dataSet;
-                        $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.join_invitaion');
+                        $this->userEmailManager->subject = "Invitation from ".$dataSet['sender_name'];//Lang::get('MINTMESH.user_email_subjects.join_invitaion');
                         $this->userEmailManager->name = $dataSet['name'];
                         $email_sent = $this->userEmailManager->sendMail();
                          //log email status
@@ -405,7 +405,7 @@ class ContactsGateway {
                         $dataSet['sender_name'] =!empty($loginUserDetails->firstname)?$loginUserDetails->firstname:'';
                         $dataSet['sender_email'] =!empty($loginUserDetails->emailid)?$loginUserDetails->emailid:'';
                         $this->userEmailManager->dataSet = $dataSet;
-                        $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.join_invitaion');
+                        $this->userEmailManager->subject = "Invitation from ".$dataSet['sender_name'];//Lang::get('MINTMESH.user_email_subjects.join_invitaion');
                         $this->userEmailManager->name = $dataSet['name'];
                         $email_sent = $this->userEmailManager->sendMail();
                          //log email status
