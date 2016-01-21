@@ -345,7 +345,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
         public function getresetcodeNpassword($emailid) 
         {
             $email = $this->appEncodeDecode->filterString(strtolower($emailid));
-            $sql = "select password, resetactivationcode from users where status = '1' and md5(emailid)='".$email."'";
+            $sql = "select password, resetactivationcode, emailid from users where status = '1' and md5(emailid)='".$email."'";
             $result = DB::select($sql);
             if (!empty($result))
             {

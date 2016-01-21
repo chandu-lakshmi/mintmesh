@@ -227,6 +227,38 @@ class UserGateway {
                         // change password of user
                         $changePwd = $this->userRepository->changePassword($post);
                         if (!empty($changePwd)) {
+                            
+                            
+                            $currentTime =  date('Y-m-d H:i:s');
+                            $code = $this->base_64_encode($currentTime, $this->loggedinUserDetails->emailid) ;
+                            //send mail
+                            $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.reset_password_success');
+                            $this->userEmailManager->emailId = $this->loggedinUserDetails->emailid;
+                            $dataSet = array();
+                            $dataSet['name'] =$this->loggedinUserDetails->firstname;
+                            $this->userEmailManager->dataSet = $dataSet;
+                            $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.reset_password_success');
+                            $this->userEmailManager->name = $this->loggedinUserDetails->firstname." ".$this->loggedinUserDetails->lastname;
+                            $email_sent = $this->userEmailManager->sendMail();
+                            //log email status
+                            $emailStatus = 0;
+                            if (!empty($email_sent))
+                            {
+                                $emailStatus = 1;
+                            }
+                            $emailLog = array(
+                                   'emails_types_id' => 2,
+                                   'from_user' => 0,
+                                   'from_email' => '',
+                                   'to_email' => !empty($this->loggedinUserDetails)?$this->loggedinUserDetails->emailid:'',
+                                   'related_code' => $code,
+                                   'sent' => $emailStatus,
+                                   'ip_address' => $_SERVER['REMOTE_ADDR']
+                               ) ;
+                            $this->userRepository->logEmail($emailLog);
+                    
+                            
+                            
                             $message = array('msg'=>array(Lang::get('MINTMESH.change_password.success')));
                             return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
                         } else {
@@ -741,6 +773,36 @@ class UserGateway {
                         // update status of the user to active
                         $updateCount = $this->userRepository->resetPassword($post);
                         if (!empty($updateCount)) {
+                            //get user details
+                            $userDetails = $this->userRepository->getUserByEmail($passwordData->emailid);
+                            $currentTime =  date('Y-m-d H:i:s');
+                            $code = $this->base_64_encode($currentTime, $email) ;
+                            //send mail
+                            $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.reset_password_success');
+                            $this->userEmailManager->emailId = $passwordData->emailid;
+                            $dataSet = array();
+                            $dataSet['name'] =$userDetails['firstname'];
+                            $this->userEmailManager->dataSet = $dataSet;
+                            $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.reset_password_success');
+                            $this->userEmailManager->name = $userDetails['firstname']." ".$userDetails['lastname'];;
+                            $email_sent = $this->userEmailManager->sendMail();
+                            //log email status
+                            $emailStatus = 0;
+                            if (!empty($email_sent))
+                            {
+                                $emailStatus = 1;
+                            }
+                            $emailLog = array(
+                                   'emails_types_id' => 2,
+                                   'from_user' => 0,
+                                   'from_email' => '',
+                                   'to_email' => !empty($userDetails)?$userDetails['emailid']:'',
+                                   'related_code' => $code,
+                                   'sent' => $emailStatus,
+                                   'ip_address' => $_SERVER['REMOTE_ADDR']
+                               ) ;
+                            $this->userRepository->logEmail($emailLog);
+                    
                             $message = array('msg'=>array(Lang::get('MINTMESH.reset_password.success')));
                             return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
                         } else {
@@ -3233,7 +3295,8 @@ class UserGateway {
         
         public function checkPhoneExistance($input)
         {
-            $userCount = $this->neoUserRepository->getUserByPhone($input['phone']);
+            $userCount = $this->userRepository->getUserByPhone($input['phone']);
+//            $userCount = $this->neoUserRepository->getUserByPhone($input['phone']);
             if (!empty($userCount))
             {
                 $message = array('msg'=>array(Lang::get('MINTMESH.user.user_found')));

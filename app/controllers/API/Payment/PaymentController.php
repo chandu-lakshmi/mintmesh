@@ -284,6 +284,18 @@ class PaymentController extends \BaseController {
             
         }
         
+        /**
+	 * citrus return url
+         * 
+         * POST/citrus_return_url
+	 */
+        public function citrusReturn()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            return View::make('landings/citrusReturnUrl', array('data'=>$inputUserData));
+        }
+        
         
 
 

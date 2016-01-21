@@ -75,6 +75,8 @@ Route::group(array('prefix' => 'v1'), function() {
     //citrus payment\
     Route::any("payment/generate_bill", "API\Payment\PaymentController@generateCitrusBill");
     Route::post("payment/citrus_transaction", "API\Payment\PaymentController@citrusTransaction");
+    //citrus return url
+    Route::any("payment/citrus_return_url", "API\Payment\PaymentController@citrusReturn");
     
     //cache badwords
     Route::post("cache_badwords", "API\User\UserController@cacheBadWords");
@@ -192,6 +194,7 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
        
        //sms
        Route::post("send_sms", "API\SMS\SmsController@sendSMS");
+       
        
         
         

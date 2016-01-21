@@ -67,7 +67,8 @@ return array(
                 "forgot_password" => "Reset Password - MintMesh",
                 "join_invitaion" => "MintMesh Invitation",
                 "paymentSuccess" => "MintMesh Invoice",
-                "payout_success_user" => "MintMesh Payout confirmation"
+                "payout_success_user" => "MintMesh Payout confirmation",
+                "reset_password_success" => "Your password changed - MintMesh"
          ),
          "email_template_paths"=>array(
                 "user_welcome" => "emails.Api.User.welcome",
@@ -81,7 +82,8 @@ return array(
                 "manual_payout_failure_admin" => "emails.Api.Payment.manualPayout_failure_admin",
                 "manual_payout_success_user" => "emails.Api.Payment.manualPayout_success_user",
                 "manual_payout_failure_user" => "emails.Api.Payment.manualPayout_failure_user",
-                "payment_success_user" => "emails.Api.Payment.payment_success_user"
+                "payment_success_user" => "emails.Api.Payment.payment_success_user",
+                "reset_password_success" => "emails.Api.User.reset_password_success"
          ),
          "activate_user"=>array(
              "success"=>"Successfully activated",
