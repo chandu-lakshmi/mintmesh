@@ -68,7 +68,7 @@ return array(
                 "join_invitaion" => "MintMesh Invitation",
                 "paymentSuccess" => "MintMesh Invoice",
                 "payout_success_user" => "MintMesh Payout confirmation",
-                "reset_password_success" => "Your password changed - MintMesh"
+                "reset_password_success" => "MintMesh - Your password changed"
          ),
          "email_template_paths"=>array(
                 "user_welcome" => "emails.Api.User.welcome",
