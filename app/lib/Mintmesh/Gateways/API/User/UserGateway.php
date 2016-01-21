@@ -3295,8 +3295,8 @@ class UserGateway {
         
         public function checkPhoneExistance($input)
         {
-            $userCount = $this->userRepository->getUserByPhone($input['phone']);
-//            $userCount = $this->neoUserRepository->getUserByPhone($input['phone']);
+            //$userCount = $this->userRepository->getUserByPhone($input['phone']);
+            $userCount = $this->neoUserRepository->getUserByPhone($input['phone']);
             if (!empty($userCount))
             {
                 $message = array('msg'=>array(Lang::get('MINTMESH.user.user_found')));
