@@ -107,7 +107,7 @@ p{font-size:18px !important;}
 .footer_txt{  font-size: 12px !important;  padding: 0px !important;}
 }
 /* Put CSS for low density (ldpi) Android layouts in here */
-}
+
 
 @media only screen and (-webkit-device-pixel-ratio:1){
 			img{  max-width:80%!important}
@@ -117,7 +117,7 @@ p{font-size:18px !important;}
 .footer_txt{  font-size: 12px !important;  padding: 0px !important;}
 }
 /* Put CSS for medium density (mdpi) Android layouts in here */
-}
+
 
 @media only screen and (-webkit-device-pixel-ratio:1.5){
 			img{  max-width:80%!important}
@@ -127,7 +127,7 @@ p{font-size:18px !important;}
 .footer_txt{  font-size: 12px !important;  padding: 0px !important;}
 }
 /* Put CSS for high density (hdpi) Android layouts in here */
-}
+
 /* end Android targeting */
 
 /* CONDITIONS FOR IOS DEVICES ONLY
@@ -169,7 +169,7 @@ p{font-size:18px !important;}
                                 <table border="0"  cellspacing="0" width="100%">
                                     <tr>
 <td align="center" valign="top" class="textContent" style="padding:20px 30px 10px;">
-<img src="mintmesh-logo.png"   align="center" style="max-width:100%;text-align:center;" alt="logo" title="Text">
+<img src="https://staging.mintmesh.com/public/images/mintmesh-logo.png"   align="center" style="max-width:100%;text-align:center;" alt="logo" title="Text">
 <h2 style="text-align:center;font-weight:normal;font-family: 'Roboto', sans-serif;font-weight:300;font-size:28px;margin-bottom:10px;margin-top:20px;color:#000000;" class="main_heading">Password change confirmation</h2>
 
 <hr style="border-top:1px solid #c8c8c8;margin-top:20px;">
@@ -213,7 +213,7 @@ p{font-size:18px !important;}
                                                         <h3 style="color:#000000;line-height:125%;font-family: 'Roboto', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello <?php echo ucfirst($name);?>,</h3>
                                                         
                                                         <div style="text-align:left;font-family: 'Roboto', sans-serif;font-size:20px;margin-bottom:0;color:#777777;line-height:135%;letter-spacing:0.2px;">
-<p> The password for the MintMesh account: <?php echo $emailId;?> was recently changed.</p>
+<p> The password for the MintMesh account: <?php echo $email;?> was recently changed.</p>
 <p>If you requested this change then you can ignore this email.</p>
 <p>If this wasn't you, your account may have been compromised. Please reset your password immediately from MintMesh app.</p>
 </div>
