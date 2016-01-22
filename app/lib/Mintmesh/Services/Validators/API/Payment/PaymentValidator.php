@@ -28,8 +28,7 @@ class PaymentValidator extends Validator {
             'bank_name' => 'required',
             'account_name' => 'required',
             'account_number' => 'required',
-            'ifsc_code' => 'required',
-            'address' => 'required'
+            'ifsc_code' => 'required'
         ),
         'user_bank_details_edit'=>array(
             'bank_id' => 'required'

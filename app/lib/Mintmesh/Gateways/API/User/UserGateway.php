@@ -1792,24 +1792,24 @@ class UserGateway {
                         $battle_cards_count = $this->userRepository->getNotificationsCount($loggedinUserDetails, 'request_connect');
                         $notification = $notification[0];
                          if ($notification->notifications_types_id == 20){//if payment done notification the change the from and other details
-                            $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($notification->other_email) ;
+                            $otherNoteUser = $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($notification->other_email) ;
                         }
                         else{
-                            $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($notification->from_email) ;
+                            $fromNoteUser = $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($notification->from_email) ;
                         }
                         $r = $this->formUserDetailsArray($neoUserDetails, 'attribute') ;
                         $thirdName = "";
                         if (!empty($notification->other_email))
                         {
                             if ($notification->notifications_types_id == 20){//if payment done notification the change the from and other details
-                                $otherEmailDetails = $this->neoUserRepository->getNodeByEmailId($notification->from_email) ;
+                                $fromNoteUser = $otherEmailDetails = $this->neoUserRepository->getNodeByEmailId($notification->from_email) ;
                             }
                             else{
-                                $otherEmailDetails = $this->neoUserRepository->getNodeByEmailId($notification->other_email) ;
+                               $otherNoteUser = $otherEmailDetails = $this->neoUserRepository->getNodeByEmailId($notification->other_email) ;
                             }
                             if (in_array($notification->notifications_types_id, $this->notificationsTypes))
                             {
-                                $thirdName = $otherEmailDetails->fullname ;
+                                $thirdName = !empty($otherNoteUser->fullname)?$otherNoteUser->fullname:'' ;
                             }
                             $otherUserDetails = $this->formUserDetailsArray($otherEmailDetails, 'attribute');
                             foreach ($otherUserDetails as $k=>$v)
@@ -1825,7 +1825,7 @@ class UserGateway {
                         }
                         if (!empty($notification->other_message))
                                 $r['optional_message'] = $this->appEncodeDecode->filterStringDecode($notification->other_message) ;
-                        $r['notification'] = $neoUserDetails->fullname." ".$notification->message." ".$thirdName ;
+                        $r['notification'] = $fromNoteUser->fullname." ".$notification->message." ".$thirdName ;
                         $r['notify_time'] = $notification->created_at ;
                         $r['notification_type'] = $notification->not_type ;
                         $r['push_id'] = $notification->id ;
@@ -2306,10 +2306,10 @@ class UserGateway {
                                 }
                             }
                             if ($notification->notifications_types_id == 20){//if payment done notification the change the from and other details
-                                $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($notification->other_email) ;
+                                $otherNoteUser = $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($notification->other_email) ;
                             }
                             else{
-                                $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($notification->from_email) ;
+                                $fromNoteUser = $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($notification->from_email) ;
                             }
                             
                             if (!empty($neoUserDetails))
@@ -2321,15 +2321,15 @@ class UserGateway {
                                 if (!empty($notification->other_email))
                                 {
                                     if ($notification->notifications_types_id == 20){//if payment done notification the change the from and other details
-                                        $otherEmailDetails = $this->neoUserRepository->getNodeByEmailId($notification->from_email) ;
+                                       $fromNoteUser = $otherEmailDetails = $this->neoUserRepository->getNodeByEmailId($notification->from_email) ;
                                     }
                                     else{
-                                        $otherEmailDetails = $this->neoUserRepository->getNodeByEmailId($notification->other_email) ;
+                                        $otherNoteUser = $otherEmailDetails = $this->neoUserRepository->getNodeByEmailId($notification->other_email) ;
                                     }
                                     
                                     if (in_array($notification->notifications_types_id, $this->notificationsTypes))
                                     {
-                                        $thirdName = !empty($otherEmailDetails->fullname)?$otherEmailDetails->fullname:'' ;
+                                        $thirdName = !empty($otherNoteUser->fullname)?$otherNoteUser->fullname:'' ;
                                     }
                                     $otherUserDetails = $this->formUserDetailsArray($otherEmailDetails, 'attribute');
                                     foreach ($otherUserDetails as $k=>$v)
@@ -2345,7 +2345,7 @@ class UserGateway {
                                 }
                                 if (!empty($notification->other_message))
                                 $note['optional_message'] = $this->appEncodeDecode->filterStringDecode($notification->other_message) ;
-                                $note['notification'] = $neoUserDetails->fullname." ".$notification->message." ".$thirdName." ".$extra_msg ;
+                                $note['notification'] = $fromNoteUser->fullname." ".$notification->message." ".$thirdName." ".$extra_msg ;
                                 $note['notify_time'] = $notification->created_at ;
                                 $note['notification_type'] = $notification->not_type ;
                                 $note['message'] = $notification->message ;

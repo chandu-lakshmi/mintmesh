@@ -74,7 +74,7 @@ class PaymentController extends \BaseController {
          * @param string $account_name
          * @param string $account_number
          * @param string $ifsc_code
-         * @param string $address
+         * @param string $address 
          * 
 	 * @return Response
 	 */
@@ -202,7 +202,7 @@ class PaymentController extends \BaseController {
             $inputUserData = \Input::all();
             $response = $this->paymentGateway->processCitrusTransaction($inputUserData);
             //citrus need a view file as return url
-            if ($response['status_code'])
+            /*if ($response['status_code'])
             {
                return View::make('landings/citrusReturn', array('data'=>$response['data']));
             }
@@ -210,8 +210,8 @@ class PaymentController extends \BaseController {
             {
                 return  \Response::json($response);
             }
-            
-            //return \Response::json($response);
+            */
+            return \Response::json($response);
         }
         
         /**
@@ -283,18 +283,7 @@ class PaymentController extends \BaseController {
             return \Response::json($response);
             
         }
-        
-        /**
-	 * citrus return url
-         * 
-         * POST/citrus_return_url
-	 */
-        public function citrusReturn()
-        {
-            // Receiving user input data
-            $inputUserData = \Input::all();
-            return View::make('landings/citrusReturnUrl', array('data'=>$inputUserData));
-        }
+
         
         
 
