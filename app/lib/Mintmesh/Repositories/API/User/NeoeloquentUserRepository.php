@@ -8,7 +8,7 @@ use Everyman\Neo4j\Cypher\Query as CypherQuery;
 use Mintmesh\Services\APPEncode\APPEncode ;
 class NeoeloquentUserRepository extends BaseRepository implements NeoUserRepository {
 
-        protected $neoUser, $db_user, $db_pwd, $appEncodeDecode;
+        protected $neoUser, $db_user, $db_pwd, $appEncodeDecode, $db_host, $db_port;
         const LIMIT=10;
         public function __construct(NeoUser $neoUser,APPEncode $appEncodeDecode)
         {
@@ -16,7 +16,9 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                 $this->neoUser = $neoUser;
                 $this->db_user=Config::get('database.connections.neo4j.username') ;
                 $this->db_pwd=Config::get('database.connections.neo4j.password') ;
-                $this->client = new NeoClient();
+                $this->db_host=Config::get('database.connections.neo4j.host') ;
+                $this->db_port=Config::get('database.connections.neo4j.port') ;
+                $this->client = new NeoClient($this->db_host, $this->db_port);
                 $this->appEncodeDecode = $appEncodeDecode ;
                 $this->client->getTransport()->setAuth($this->db_user, $this->db_pwd);
         }

@@ -20,7 +20,7 @@ return array(
                 "valid"   => "Successfully Validated",
                 "failure" => "Failed To Process",
                 "success" => "Nicely Done",
-                "edit_success" => "Successfully Updated",
+                "edit_success" => "Your details have been saved",
                 "edit_failure" =>"Failed To Update",
                 "edit_no_changes" => "No Changes Applied",
                 "invalid_request" => "Invalid Request",

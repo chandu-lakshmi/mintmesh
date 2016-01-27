@@ -1847,12 +1847,12 @@ class UserGateway {
                                 $e = $notification->to_email ;
                                 $f = $notification->from_email ;
                             }
-                            else if ($notification->notifications_types_id == 14)
+                            else if ($notification->notifications_types_id == 14 || $notification->notifications_types_id == 22)
                             {
                                 $e = $notification->from_email ;
                                 $f = $notification->to_email ;
                             }
-                            else if ($notification->notifications_types_id == 16)
+                            else if ($notification->notifications_types_id == 16 || $notification->notifications_types_id == 13)
                             {
                                 $e = $notification->from_email ;
                                 $f = $notification->other_email ;
@@ -2367,12 +2367,12 @@ class UserGateway {
                                         $e = $notification->to_email ;
                                         $f = $notification->from_email ;
                                     }
-                                    else if ($notification->notifications_types_id == 14)
+                                    else if ($notification->notifications_types_id == 14 || $notification->notifications_types_id == 22)
                                     {
                                         $e = $notification->from_email ;
                                         $f = $notification->to_email ;
                                     }
-                                    else if ($notification->notifications_types_id == 16)
+                                    else if ($notification->notifications_types_id == 16 || $notification->notifications_types_id == 13)
                                     {
                                         $e = $notification->from_email ;
                                         $f = $notification->other_email ;

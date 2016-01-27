@@ -10,7 +10,7 @@ use Everyman\Neo4j\Cypher\Query as CypherQuery;
 use Mintmesh\Services\APPEncode\APPEncode ;
 class NeoeloquentContactsRepository extends BaseRepository implements ContactsRepository {
 
-        protected $neoUser, $db_user, $db_pwd, $client,$appEncodeDecode;
+        protected $neoUser, $db_user, $db_pwd, $client,$appEncodeDecode, $db_host, $db_port;
 
         public function __construct(NeoUser $neoUser,APPEncode $appEncodeDecode)
         {
@@ -21,7 +21,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
                 //\Log::info("db password used".$this->db_pwd);
                  //\Log::info("db username used".$this->db_user);
                 //$this->db_pwd = "m!ntm35h";
-                $this->client = new NeoClient();
+                $this->client = new NeoClient($this->db_host, $this->db_port);
                 $this->appEncodeDecode = $appEncodeDecode ;
                 $this->client->getTransport()->setAuth($this->db_user, $this->db_pwd);
         }

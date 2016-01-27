@@ -97,8 +97,11 @@ class SMSGateway {
                 $successList = array();
                 foreach ($numbers as $number)
                 {
+                    $firstName = !empty($this->loggedinUserDetails->firstname)?$this->loggedinUserDetails->firstname:'';
+                    $lastName = !empty($this->loggedinUserDetails->lastname)?$this->loggedinUserDetails->lastname:'';
+                    $senderName = $firstName." ".$lastName ;
                     $pushData = array() ;
-                    $pushData['message'] = "test message from mintmesh";
+                    $pushData['message'] = $senderName." discovered a great way to refer people and ask for referrals, using MintMesh.Download app from www.mintmesh.com";
                     $pushData['number'] = $number ;
                     $pushData['from'] = $this->loggedinUserDetails->emailid ;
                     $pushData['type_sms'] = $input['sms_type'];

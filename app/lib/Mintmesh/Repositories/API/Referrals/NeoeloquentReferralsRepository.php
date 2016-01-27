@@ -13,7 +13,7 @@ use Mintmesh\Services\APPEncode\APPEncode ;
 
 class NeoeloquentReferralsRepository extends BaseRepository implements ReferralsRepository {
 
-        protected $neoUser, $db_user, $db_pwd, $client,$appEncodeDecode;
+        protected $neoUser, $db_user, $db_pwd, $client,$appEncodeDecode, $db_host, $db_port;
         const LIMIT=10;
         public function __construct(NeoUser $neoUser,APPEncode $appEncodeDecode)
         {
@@ -21,7 +21,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 $this->neoUser = $neoUser;
                 $this->db_user=Config::get('database.connections.neo4j.username') ;
                 $this->db_pwd=Config::get('database.connections.neo4j.password') ;
-                $this->client = new NeoClient();
+                $this->client = new NeoClient($this->db_host, $this->db_port);
                 $this->appEncodeDecode = $appEncodeDecode ;
                 $this->client->getTransport()->setAuth($this->db_user, $this->db_pwd);
         }
