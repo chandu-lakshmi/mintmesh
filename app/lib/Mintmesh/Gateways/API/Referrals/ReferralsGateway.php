@@ -18,6 +18,7 @@ use Mintmesh\Gateways\API\Payment\PaymentGateway;
 use LucaDegasperi\OAuth2Server\Authorizer;
 use Mintmesh\Services\ResponseFormatter\API\CommonFormatter ;
 use Mintmesh\Services\APPEncode\APPEncode ;
+use Mintmesh\Services\Emails\API\User\UserEmailManager ;
 use Lang;
 use Config;
 use Log;
@@ -29,6 +30,7 @@ class ReferralsGateway {
     protected $referralsRepository, $referralsValidator, $neoUserRepository, $userRepository;  
     protected $authorizer, $appEncodeDecode,$paymentRepository,$paymentGateway;
     protected $commonFormatter, $loggedinUserDetails,$neoLoggedInUserDetails, $userGateway;
+    protected $userEmailManager,$service_scopes,$job_types;
 	public function __construct(referralsRepository $referralsRepository, 
                                     referralsValidator $referralsValidator, 
                                     NeoUserRepository $neoUserRepository,
@@ -38,18 +40,22 @@ class ReferralsGateway {
                                     UserGateway $userGateway,
                                     PaymentRepository $paymentRepository,
                                     PaymentGateway $paymentGateway,
-                                    APPEncode $appEncodeDecode) {
+                                    APPEncode $appEncodeDecode,
+                                    UserEmailManager $userEmailManager) {
                 //ini_set('max_execution_time', 500);
 		$this->referralsRepository = $referralsRepository;
                 $this->referralsValidator = $referralsValidator;
                 $this->neoUserRepository = $neoUserRepository;
                 $this->userRepository = $userRepository;
+                $this->userEmailManager = $userEmailManager ;
                 $this->authorizer = $authorizer;
                 $this->commonFormatter = $commonFormatter ;
                 $this->userGateway = $userGateway ;
                 $this->appEncodeDecode = $appEncodeDecode ;
                 $this->paymentRepository = $paymentRepository ;
                 $this->paymentGateway = $paymentGateway ;
+                $this->service_scopes = array('get_service','provide_service');
+                $this->job_types = array('find_candidate','find_job');
                 
 	}
         
@@ -197,13 +203,14 @@ class ReferralsGateway {
            
             $this->loggedinUserDetails = $this->getLoggedInUser();
             $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
-             $fromId = $this->neoLoggedInUserDetails->id ;
-//            if ($this->loggedinUserDetails = $this->getLoggedInUser())
-             if($this->loggedinUserDetails)
+            $fromId = $this->neoLoggedInUserDetails->id ;
+//          if ($this->loggedinUserDetails = $this->getLoggedInUser())
+            if($this->loggedinUserDetails)
             {
                 //$this->loggedinUserDetails
                 $neoInput = array();
                 //form insert array
+                $neoInput['looking_for'] = !empty($input['looking_for'])?$input['looking_for']:0 ; 
                 $neoInput['service'] = $input['service'] ;
                 $neoInput['service_location'] = !empty($input['service_location'])?$input['service_location']:"" ;
                 $neoInput['service_period'] = $input['service_period'];
@@ -230,10 +237,24 @@ class ReferralsGateway {
                 //relation attributes
                 $relationAttrs = array();
                 $relationAttrs['created_at'] = date("Y-m-d H:i:s") ;
+                //create a relation between service/job and user 
+                if (!empty($input['looking_for'])){
+                    //map user and service/job
+                    if (in_array($input['service_scope'],$this->service_scopes)){//if service
+                        $serviceResult = $this->neoUserRepository->mapServices(array($input['looking_for']), $this->loggedinUserDetails->emailid, Config::get('constants.RELATIONS_TYPES.LOOKING_FOR'));
+                        //print_r($serviceResult);exit;
+                        $neoInput['service_name'] = !empty($serviceResult[0][0]->name)?$serviceResult[0][0]->name:'' ;
+                    }
+                    else{//if job
+                        $serviceResult = $this->neoUserRepository->mapJobs(array($input['looking_for']), $this->loggedinUserDetails->emailid, Config::get('constants.RELATIONS_TYPES.LOOKING_FOR'));
+                        $neoInput['service_name'] = !empty($serviceResult[0][0]->name)?$serviceResult[0][0]->name:'' ;
+                    }
+
+                }
                 $createdService = $this->referralsRepository->createPostAndRelation($fromId, $neoInput, $relationAttrs);
                 if (isset($createdService[0]) && isset($createdService[0][0]))
                 {
-                    $serviceId = $createdService[0][0]->getID() ;
+                     $serviceId = $createdService[0][0]->getID() ;
                 }
                 else
                 {
@@ -253,6 +274,16 @@ class ReferralsGateway {
                         }
                     }
                 }
+                
+                
+                //send email to user after post done successfully
+                $successSupportTemplate = Lang::get('MINTMESH.email_template_paths.post_success');
+                $receipientEmail = $this->loggedinUserDetails->emailid;
+                $emailData = array('name' => $this->loggedinUserDetails->firstname." ".$this->loggedinUserDetails->lastname,
+                                    'email'=>$this->loggedinUserDetails->emailid);
+                $emailiSent = $this->sendEmailToUser($successSupportTemplate, $receipientEmail, $emailData);
+                
+                
                 $message = array('msg'=>array(Lang::get('MINTMESH.referrals.success')));
                 return $this->commonFormatter->formatResponse(200, "success", $message, array()) ;
             }
@@ -262,6 +293,31 @@ class ReferralsGateway {
                 return $this->commonFormatter->formatResponse(406, "error", $message, array()) ;
             }
             
+        }
+        
+        public function sendEmailToUser($templatePath, $emailid, $data)
+        {
+           $this->userEmailManager->templatePath = $templatePath;
+            $this->userEmailManager->emailId = $emailid;
+            $dataSet = array();
+           // $dataSet['name'] = "shweta" ;
+           // $dataSet['email'] = "shwetapazarey@gmail.com";
+            if (!empty($data))
+            {
+                foreach ($data as $k=>$v)
+                {
+                    $dataSet[$k] = $v ;
+                }
+            }
+            /*$dataSet['name'] = $input['firstname'];
+            $dataSet['link'] = $appLink ;
+            $dataSet['email'] = $input['emailid'] ;*/
+
+           // $dataSet['link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/redirect_to_app/".$appLinkCoded ;;
+            $this->userEmailManager->dataSet = $dataSet;
+            $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.post_success');
+            $this->userEmailManager->name = 'user';
+            return $email_sent = $this->userEmailManager->sendMail();
         }
         
         public function closePost($input)
@@ -403,6 +459,8 @@ class ReferralsGateway {
                $result = $this->referralsRepository->referContact($userEmail, $input['refer_to'], $input['referring'], $input['post_id'], $relationAttrs);
                if (!empty($result))
                {
+                  //if self referrence
+                  //if ($this->loggedinUserDetails->emailid == $input['referring'])
                    //send notification to the person who created post
                    $this->userGateway->sendNotification($this->loggedinUserDetails, $this->neoLoggedInUserDetails, $input['refer_to'], 10, array('extra_info'=>$input['post_id']), array('other_user'=>$input['referring'])) ;
                    $message = array('msg'=>array(Lang::get('MINTMESH.referrals.success')));
@@ -769,7 +827,7 @@ class ReferralsGateway {
                         {
                             $postUpdateStatus = $this->referralsRepository->updatePostPaymentStatus(!empty($result[0][1])?$result[0][1]->getID():0,'');
                             //send notifications
-                            //send notification to the person who get referred to the post
+                            //send notification to the person who referred to the post
                             $sqlUser = $this->userRepository->getUserByEmail($input['referred_by']);
                             $mysqlId = $sqlUser->id ;
                             $referred_by_details = $this->userRepository->getUserById($mysqlId);

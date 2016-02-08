@@ -301,7 +301,8 @@ class PaymentGateway {
                 {
                     
                     
-                    $transactionDetails = $this->paymentRepository->getTransactionById($input['mm_transaction_id']) ;;
+                    $transactionDetails = $this->paymentRepository->getTransactionById($input['mm_transaction_id']);
+                    $emailTransaction = $this->paymentRepository->insertTransactionIdBT($transactionDetails->id);
                     if ($updtStatus && $input['status'] == Config::get('constants.PAYMENTS.STATUSES.SUCCESS'))
                     {
                         //update balance cash info
@@ -321,7 +322,7 @@ class PaymentGateway {
                         $tax = round($res, 2); 
                         $total = $transactionDetails->amount+$tax;
                         $emailData = array('name' => $neoLoggedinUserDetails->fullname, 
-                                            'transaction_id' => $input['mm_transaction_id'],
+                                            'transaction_id' => $emailTransaction[0]->last_id,
                                             'date_of_payment' => date('d F Y'),
                                             'cost' => $transactionDetails->amount,
                                             'tax' => $tax,
@@ -329,6 +330,10 @@ class PaymentGateway {
                                             'is_doller' => 1,
                                             'email'=>$neoLoggedinUserDetails->emailid);
                         $emailiSent = $this->sendPaymentSuccessEmailToUser($successSupportTemplate, $receipientEmail, $emailData);
+
+                        $successSupportTemplateServiceFee = Lang::get('MINTMESH.email_template_paths.payment_servicfee_success_user');
+                        $emailiSent = $this->sendPaymentSuccessEmailToUser($successSupportTemplateServiceFee, $receipientEmail, $emailData);
+
                         $postUpdateStatus = $this->referralsRepository->updatePostPaymentStatus($transactionDetails->relation_id,Config::get('constants.PAYMENTS.STATUSES.SUCCESS'));
                         //send notifications to the respective people
                         $sendNotes = $this->processPostPaymentCompletion($transactionDetails);
@@ -493,6 +498,7 @@ class PaymentGateway {
                   
                   if (!empty($transactionDetails))
                   {
+                        $emailTransaction = $this->paymentRepository->insertTransactionIdCitrus($transactionDetails->id);
                         //send email to user saying user payment is success
                         $successSupportTemplate = Lang::get('MINTMESH.email_template_paths.payment_success_user');
                         $loggedinUserDetails = $this->neoUserRepository->getNodeByEmailId($transactionDetails->from_user) ;
@@ -501,7 +507,7 @@ class PaymentGateway {
                         $tax = round($res, 2); 
                         $total = $transactionDetails->amount+$tax;
                         $emailData = array('name' => $loggedinUserDetails->fullname, 
-                                            'transaction_id' => $input['mm_transaction_id'],
+                                            'transaction_id' => $emailTransaction[0]->last_id,
                                             'date_of_payment' => date('d F Y'),
                                             'cost' => $transactionDetails->amount,
                                             'tax' => $tax,
@@ -510,7 +516,10 @@ class PaymentGateway {
                                             'email'=>$loggedinUserDetails->emailid);
                         $emailiSent = $this->sendPaymentSuccessEmailToUser($successSupportTemplate, $receipientEmail, $emailData);
 
-
+                        
+                        $successSupportTemplateServiceFee = Lang::get('MINTMESH.email_template_paths.payment_servicfee_success_user');
+                        $emailiSent = $this->sendPaymentSuccessEmailToUser($successSupportTemplateServiceFee, $receipientEmail, $emailData);
+                        
                         $postUpdateStatus = $this->referralsRepository->updatePostPaymentStatus($transactionDetails->relation_id,Config::get('constants.PAYMENTS.STATUSES.SUCCESS'));
 
                         $sendNotes = $this->processPostPaymentCompletion($transactionDetails);

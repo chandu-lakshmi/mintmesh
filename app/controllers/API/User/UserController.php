@@ -88,7 +88,7 @@ class UserController extends \BaseController {
 	}
         
         /**
-	 * update an existing resource
+	 * update an existing resource version1
          * 
          * POST/user
          * 
@@ -121,6 +121,47 @@ class UserController extends \BaseController {
             }
 	}
         
+        /**
+	 * update an existing resource version2
+         * 
+         * POST/user
+         * 
+         * @param string $access_token The Access token of a user
+	 * @param string $position The position of a user
+         * @param string $company The company of a user
+         * @param string $industry The industry of a user
+         * @param string $location The location of a user 
+         * @param string $job_function The job function of a user
+         * @param string $fromLinkedin if user is from linkedin 
+         * @param string $linkedinImage if user is from linkedin then profile image url
+         * @param file $dpImage The profile image of a user profile
+         * @param string $you_are The you are field
+         * @param string $to_be_referred like to be referred field 0|1
+         * @param string $services json encoded list of services, list of ids (text in case of new one)
+         * @param string $user_description describe yourself field
+         * @param string $website link of website
+         * @param string $profession profession field
+         * @param string $specialization specialization field
+         * @param string $college college field
+         * @param string $course course field
+         * 
+	 * @return Response
+	 */
+	public function completeUserProfile_v2()
+	{
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->userGateway->validateCompleteProfileUserInput_v2($inputUserData);
+            if($validation['status'] == 'success') 
+            {
+               //update entry in neo4j DB
+               return \Response::json($this->userGateway->completeUserProfile_v2($inputUserData));
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+	}
         
         /**
 	 * Authenticate a user login
@@ -422,6 +463,23 @@ class UserController extends \BaseController {
             // Receiving user input data
             $inputUserData = \Input::all();
             $response = $this->userGateway->getSkills($inputUserData);
+            return \Response::json($response);
+        }
+        
+        /**
+	 * list the skills
+         * 
+         * POST/get_skills
+         * 
+         * @param string $search_for search string
+         * 
+	 * @return Response
+	 */
+        public function getSkills_v2()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            $response = $this->userGateway->getSkills_v2($inputUserData);
             return \Response::json($response);
         }
         
@@ -1032,6 +1090,45 @@ class UserController extends \BaseController {
             
             
         }
+        
+        /**
+	 * get services for ask flow
+         * 
+         * POST/get_services
+         * 
+         * @param string $access_token
+         * @param string $service_type type of service list service|job
+         * @param string $user_country
+         * @param string $search
+	 * @return Response
+	 */
+        public function getServices(){
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->userGateway->validategetServicesInfo($inputUserData);
+            if($validation['status'] == 'success') {
+                $response = $this->userGateway->getServices($inputUserData);
+                return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+        }
+        
+        /**
+	 * get professions for your are field
+         * 
+         * POST/get_professions
+         * 
+         * @param string $access_token
+	 * @return Response
+	 */
+        public function getProfessions(){
+            $response = $this->userGateway->getProfessions();
+            return \Response::json($response);
+            
+        }
+        
         
 		
 		

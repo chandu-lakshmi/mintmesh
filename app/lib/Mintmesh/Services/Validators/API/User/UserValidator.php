@@ -62,6 +62,11 @@ class UserValidator extends Validator {
                 'job_function' => 'required',
                 'you_are'   => 'required'
             ),
+        'complete_profile_v2' => array(
+                'dpImage'   => 'image',
+                'you_are'   => 'required',
+                'to_be_referred'=>'required'
+            ),
         'connection_request'=>array(
             'emails'=>'required'
         ),
@@ -103,7 +108,23 @@ class UserValidator extends Validator {
         ) ,
         'check_user_password'=>array(
             'password'=>'required'
+        ),
+        'get_services'=>array(
+            'service_type'=>'required',
+            'user_country'=>'required'
         )
         );
+    //conditional checks for you_are field in user profile
+        public static $conditional_rules = array('c_rule1','c_rule2','c_rule3','c_rule4','c_rule5','c_rule6','c_rule7','c_rule8');
+        public static $conditional_rules_keys = array('c_rule1'=>'you_are','c_rule2'=>'you_are','c_rule3'=>'you_are','c_rule4'=>'you_are','c_rule5'=>'you_are','c_rule6'=>'you_are','c_rule7'=>'you_are', 'c_rule8'=>'to_be_referred');
+        public static $conditional_rules_values = array('c_rule1'=>'1','c_rule2'=>'2','c_rule3'=>'3','c_rule4'=>'4','c_rule5'=>'5','c_rule6'=>'6','c_rule7'=>'7','c_rule8'=>'1');
+        public static $c_rule1 = array('industry','job_function','position','company');
+        public static $c_rule2 = array('industry','position','company');
+        public static $c_rule3 = array('profession');
+        public static $c_rule4 = array('specialization','company');
+        public static $c_rule5 = array('college','course');
+        public static $c_rule6 = array();
+        public static $c_rule7 = array('position','company');
+        public static $c_rule8 = array('services');
 }
 ?>

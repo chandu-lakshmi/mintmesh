@@ -68,7 +68,8 @@ return array(
                 "join_invitaion" => "MintMesh Invitation",
                 "paymentSuccess" => "MintMesh Invoice",
                 "payout_success_user" => "MintMesh Payout confirmation",
-                "reset_password_success" => "MintMesh - Your password changed"
+                "reset_password_success" => "MintMesh - Your password changed",
+                "post_success" => "MintMesh - Post Success"
          ),
          "email_template_paths"=>array(
                 "user_welcome" => "emails.Api.User.welcome",
@@ -83,6 +84,8 @@ return array(
                 "manual_payout_success_user" => "emails.Api.Payment.manualPayout_success_user",
                 "manual_payout_failure_user" => "emails.Api.Payment.manualPayout_failure_user",
                 "payment_success_user" => "emails.Api.Payment.payment_success_user",
+                "payment_servicfee_success_user" => "emails.Api.Payment.payment_servicfee_success_user",
+                "post_success" => "emails.Api.User.post_success",
                 "reset_password_success" => "emails.Api.User.reset_password_success"
          ),
          "activate_user"=>array(
@@ -122,7 +125,8 @@ return array(
          ),
         "skills"=>array(
              "success"=>"Successfully Listed",
-             "error"=>"Some Error Occured"
+             "error"=>"Some Error Occured",
+             "no_data_found"=>"No Data Found"
          ),
          "industries"=>array(
              "success"=>"Successfully Listed",
@@ -178,7 +182,7 @@ return array(
              "otp_sent"=>"Code sent to your inbox",
              "otp_validated"=>"Code validated successfully",
              "max_reached"=>"Maximum number of codes reached",
-             "user_exist"=>" A user is already existing with this phone number,kindly change your phone number."
+             "user_exist"=>" A user is already existing with this phone number, kindly change your phone number."
          ),
 
         "reference_flow"=>array(
@@ -242,6 +246,15 @@ return array(
         ),
         "bad_words"=>array(
             "success"=>"Successfully cached"
+        ),
+        "services"=>array(
+            'valid'=>'Successfully validated',
+            'success'=>'Listed',
+            'error'=>'Invalid input',
+            'not_found'=>'No Result Found'
+        ),
+        "professions"=>array(
+            'success'=>'Listed'
         )
 
 

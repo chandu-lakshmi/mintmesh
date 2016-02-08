@@ -24,7 +24,7 @@
         <tr><td colspan="3" style="text-align:center; padding:30px 20px; color: #777777;">MintMesh  Team</td></tr>
         <tr><td colspan="3"  style="padding:10px 20px;"><hr style="margin: 0 auto;"></td></tr>
              <tr><td colspan="3" align="center"  style="text-align:center; padding:10px 20px; color: #777777;">If you need assistance, please contact MintMesh Support </td></tr>
-             <tr><td colspan="3" align="center"  style="text-align:center; padding:0px 20px; color:#454545;">(support@mintmesh.com)</td></tr>
+             <tr><td colspan="3" align="center"  style="text-align:center; padding:0px 20px; color:#454545;"><a style="color:#333333;text-decoration:none;" href="mailto:support@mintmesh.com">(support@mintmesh.com)</a></td></tr>
              </tr></table>
              </td></tr></tbody></table>
         

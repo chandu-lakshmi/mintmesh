@@ -214,6 +214,24 @@ class EloquentPaymentRepository extends BaseRepository implements PaymentReposit
             return 0 ;
         }
         
+        public function insertTransactionIdBT($mm_transaction_id)
+        {
+            $sql = "insert into transaction_ids_braintree (`payment_transaction_id`)" ;
+            $sql.=" values('".$mm_transaction_id."')" ;
+            //echo $sql ; exit;
+            $result = DB::statement($sql);
+            return $last_insert_id = DB::Select("SELECT LAST_INSERT_ID() as last_id");
+        }
+
+        public function insertTransactionIdCitrus($mm_transaction_id)
+        {
+            $sql = "insert into transaction_ids_citrus (`payment_transaction_id`)" ;
+            $sql.=" values('".$mm_transaction_id."')" ;
+            //echo $sql ; exit;
+            $result = DB::statement($sql);
+            return $last_insert_id = DB::Select("SELECT LAST_INSERT_ID() as last_id");
+        }
+
         public function getTransactionDetails($input)
         {
             if (!empty($input['from_user']) && !empty($input['to_user']) && !empty($input['for_user']) && !empty($input['service_id']) && !empty($input['relation_id']))

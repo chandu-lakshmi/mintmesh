@@ -327,7 +327,7 @@ p{font-size:18px !important;}
                                                     <td valign="top" class="textContent" style="padding:10px 30px 20px;">
                                                     <hr style="border-top:1px solid #c8c8c8;margin-top:5px;margin-bottom:20px;">
                                                         <div style="text-align:center;font-family: 'Roboto', sans-serif;font-size:20px;margin-bottom:0;margin-top:3px;color:#828282;line-height:135%;padding:0px 15px;" class="footer_txt">If you need assistance, please contact
-MintMesh Support <a style="color:#333333;text-decoration:none;" href="support@mintmesh.com" target="_blank">(support@mintmesh.com)</a></div>
+MintMesh Support <a style="color:#333333;text-decoration:none;" href="mailto:support@mintmesh.com" target="_blank">(support@mintmesh.com)</a></div>
                                                     </td>
                                                 </tr>
                                             </table>

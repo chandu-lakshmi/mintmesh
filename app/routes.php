@@ -75,8 +75,6 @@ Route::group(array('prefix' => 'v1'), function() {
     //citrus payment\
     Route::any("payment/generate_bill", "API\Payment\PaymentController@generateCitrusBill");
     Route::post("payment/citrus_transaction", "API\Payment\PaymentController@citrusTransaction");
-    //citrus return url
-    Route::any("payment/citrus_return_url", "API\Payment\PaymentController@citrusReturn");
     
     //cache badwords
     Route::post("cache_badwords", "API\User\UserController@cacheBadWords");
@@ -85,6 +83,7 @@ Route::group(array('prefix' => 'v1'), function() {
 //Route::group(array('prefix' => 'v1'), function() {
 Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
 
+    
         //complete user profile
         Route::post("user/complete_profile", "API\User\UserController@completeUserProfile");
         //edit user profile
@@ -195,6 +194,10 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
        //sms
        Route::post("send_sms", "API\SMS\SmsController@sendSMS");
        
+       //services
+       Route::post("get_services", "API\User\UserController@getServices");
+       //professions
+       Route::post("get_professions", "API\User\UserController@getProfessions");
        
         
         
@@ -260,3 +263,14 @@ Route::post('setSmsQueue', function()
     Queue::push('Mintmesh\Services\Queues\SMSQueue', "test");
 });
 
+////////////////////////////******V2 apis*******///////////////////////////////////
+Route::group(array('prefix' => 'v2', 'before' => 'oauth'), function() {
+    
+    //complete user profile
+    Route::post("user/complete_profile", "API\User\UserController@completeUserProfile_v2");
+});
+
+Route::group(array('prefix' => 'v2'), function() {
+    //get skills
+    Route::post("get_skills", "API\User\UserController@getSkills_v2");        
+});

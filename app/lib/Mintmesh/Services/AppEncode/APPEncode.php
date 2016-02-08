@@ -129,6 +129,9 @@ use Cache;
                     else if ($years > 1 && $m <= 1){
                         $exp = $years." Years ".$m." Month" ;
                     }
+                    else if ($years <= 1 && $m <= 1){
+                        $exp = $years." Year ".$m." Month" ;
+                    }
                     else{
                        $exp = $years." Year ".$m." Months" ; 
                     }
@@ -212,6 +215,14 @@ use Cache;
             } else {
                 return '';
             }
+        }
+        function callFirstNameSort($array = array()){
+             usort($array, array($this, "sortByFirstName"));
+             return $array ;
+        }
+        function sortByFirstName($a, $b)
+        {
+            return strcmp(strtolower($a["firstname"]), strtolower($b["firstname"]));
         }
         
 

@@ -598,5 +598,62 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
             
         }
         
+        public function getServices($searchString='', $country=''){
+            $searchString = $this->appEncodeDecode->filterString(strtolower($searchString)) ;
+            $countryList = "('all')";
+            if (!empty($country)){
+                if (strtolower($country) == 'india'){
+                    $countryList = "('india','all')";
+                }
+                else if (strtolower(trim($country)) == 'united states'){
+                    $countryList = "('united states','all')";
+                }
+                else{
+                    $countryList = "('all')";
+                }
+            }
+            $sql = "select id,name from services where country IN ".$countryList." and status=1" ;
+            if (!empty($searchString)){
+                $sql.=" and lower(name) like '".$searchString."%'";
+            }
+            $sql.=" order by name asc";
+            return $result = DB::select($sql);
+            
+        }
+        
+        public function getJobs($searchString=''){
+            $searchString = $this->appEncodeDecode->filterString(strtolower($searchString)) ;
+            $sql = "select id,name from jobs where status=1" ;
+            if (!empty($searchString)){
+                $sql.=" and lower(name) like '".$searchString."%'";
+            }
+            $sql.=" order by name asc";
+            return $result = DB::select($sql);
+        }
+        public function getProfessions(){
+            $sql = "select id,name,value from professions" ;
+            return $result = DB::select($sql);
+            
+        }
+        
+        public function getProfessionName($id=0){
+            if (!empty($id) && is_numeric($id)){
+            $sql = "select name from professions where id=".$id ;
+            $result = DB::select($sql);
+                if (!empty($result))
+                {
+                    return $result[0]->name ;
+                }
+                else
+                {
+                    return "";
+                }
+            }
+            else{
+                return '';
+            }
+            
+        }
+        
         
 }

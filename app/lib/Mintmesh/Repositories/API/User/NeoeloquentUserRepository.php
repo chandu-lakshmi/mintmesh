@@ -412,11 +412,19 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
               $count = $query->getResultSet();  
               if (!empty($count[0]) && !empty($count[0][0]))
               {
-                  return $count[0][0] ;
+                  return array('connected'=>1) ;
               }
               else
               {
-                  return false ;
+                  //check if deleted contact
+                  $deletedCount=$this->checkDeletedContact($email1, $email2);
+                  if (!empty($deletedCount)){
+                      return array('deleted'=>1) ;
+                  }
+                  else{
+                      return false ;
+                  }
+                  
               }
         }
         public function checkPendingConnection($email1='', $email2='')
@@ -1107,8 +1115,8 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                     $skip = $limit - 10 ;
                 }
                 $userEmail = $this->appEncodeDecode->filterString(strtolower($userEmail));
-                $queryString = "MATCH (u:User:Mintmesh),(u1:User:Mintmesh) where lower(u1.you_are)='recruiter' and u1.location=~('.*' + u.location) and u.emailid='".$userEmail."' and u1.emailid<>'".$userEmail."' and not (u)-[:ACCEPTED_CONNECTION]-(u1) RETURN u1 ";
-                //echo $queryString ; exit;
+                $queryString = "MATCH (u:User:Mintmesh),(u1:User:Mintmesh) where lower(u1.you_are)='4' and u1.location=~('.*' + u.location) and u.emailid='".$userEmail."' and u1.emailid<>'".$userEmail."' and not (u)-[:ACCEPTED_CONNECTION]-(u1) RETURN u1 ";
+                //4 is the mysql id of recruiter profession
                 if (!empty($limit) && !($limit < 0))
                 {
                     $queryString.=" skip ".$skip." limit ".self::LIMIT ;
@@ -1190,6 +1198,232 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
         }
         
         
-         
+        public function checkDeletedContact($user1='', $user2='')
+        {
+            if (!empty($user1) && !empty($user2))
+            {
+                $queryString = "match (u1:User:Mintmesh)-[r:".Config::get('constants.RELATIONS_TYPES.DELETED_CONTACT')."]-(u2:User) where u1.emailid='".$user1."' and u2.emailid='".$user2."' return SIGN(COUNT(r)) as con_count";
+                $query = new CypherQuery($this->client, $queryString);
+                $count = $query->getResultSet();
+                if (!empty($count[0]) && !empty($count[0][0]))
+                {
+                    return $count[0][0] ;
+                }
+                else
+                {
+                    return false ;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
+        public function getRecruitersListCount($userEmail = ''){
+			 if(!empty($userEmail)){
+				$queryString = "MATCH (u:User:Mintmesh),(u1:User:Mintmesh) where lower(u1.you_are)='4' and u1.location=~('.*' + u.location) and u.emailid='".$userEmail."' and u1.emailid<>'".$userEmail."' and not (u)-[:ACCEPTED_CONNECTION]-(u1) RETURN count(DISTINCT(u1)) ";
+				$query = new CypherQuery($this->client, $queryString);
+                $result = $query->getResultSet();
+                if (isset($result[0]) && isset($result[0][0]))
+                {
+                    return $result[0][0];
+                }
+                else
+                {
+                    return 0;
+                }
+			 }
+			 else{
+				 return 0;
+			 }
+	}
+        
+        public function mapServices($services=array(), $emailid='',$relationType=''){
+            
+           if (!empty($services) && !empty($emailid) && !empty($relationType))
+           {
+               foreach ($services as $service)
+               {
+                   $emailid = $this->appEncodeDecode->filterString(strtolower($emailid));
+                    $queryString = "Match (m:User:Mintmesh),(s:Service)
+                                    where m.emailid='".$emailid."' and s.mysql_id='".$service."'
+                                    create unique (m)-[r:".$relationType."";
+
+                    $queryString.="]->(s)  set r.created_at='".date("Y-m-d H:i:s")."' return s";
+
+                    $query = new CypherQuery($this->client, $queryString);
+                    $result = $query->getResultSet();
+                    if (!count($result)){//service doesnot exist..create a new one
+                        $createdNewService = $this->createAndAddService($emailid, $service, $relationType);
+                    }
+               }
+               return $result ;
+           }
+           else
+           {
+               return 0;
+           }
+        }
+        
+        public function unMapServices($emailid=''){
+            
+           if (!empty($emailid))
+           {
+               
+               $emailid = $this->appEncodeDecode->filterString(strtolower($emailid));
+               $queryString = "Match (m:User:Mintmesh)-[r:".Config::get('constants.RELATIONS_TYPES.PROVIDES')."]-(s:Service)
+                                where m.emailid='".$emailid."'
+                                delete r";
+
+                $query = new CypherQuery($this->client, $queryString);
+                return $result = $query->getResultSet();
+           }
+           else
+           {
+               return 0;
+           }
+        }
+        
+        public function createAndAddService($emailid='', $service='', $relationType){
+            if (!empty($emailid) && !empty($service) && !empty($relationType)){
+                $neoInput=array('name'=>$service,'country'=>'all','status'=>'1','mysql_id'=>0);//for new service added country is all and mysql_id 0 represents it is new one
+                $relationAttrs=array('created_at'=>date("Y-m-d H:i:s"));
+                $queryString = "MATCH (u:User:Mintmesh)
+                            WHERE u.emailid = '".$emailid."'
+                            CREATE (m:Service ";
+                if (!empty($neoInput))
+                {
+                    $queryString.="{";
+                    foreach ($neoInput as $k=>$v)
+                    {
+                        $queryString.=$k.":'".$this->appEncodeDecode->filterString($v)."'," ;
+                    }
+                    $queryString = rtrim($queryString, ",") ;
+                    $queryString.="}";
+                }
+                $queryString.=")<-[:".$relationType;
+                if (!empty($relationAttrs))
+                {
+                    $queryString.="{";
+                    foreach ($relationAttrs as $k=>$v)
+                    {
+                        $queryString.=$k.":'".$this->appEncodeDecode->filterString($v)."'," ;
+                    }
+                    $queryString = rtrim($queryString, ",") ;
+                    $queryString.="}";
+                }
+                $queryString.="]-(u)" ;
+                $query = new CypherQuery($this->client, $queryString);
+                return $result = $query->getResultSet();
+            }
+            else{
+                return false ;
+            }
+            
+        }
+        
+        public function mapJobs($jobs=array(), $emailid='',$relationType=''){
+            
+           if (!empty($jobs) && !empty($emailid) && !empty($relationType))
+           {
+               foreach ($jobs as $job)
+               {
+                   $emailid = $this->appEncodeDecode->filterString(strtolower($emailid));
+                    $queryString = "Match (m:User:Mintmesh),(s:Job)
+                                    where m.emailid='".$emailid."' and s.mysql_id='".$job."'
+                                    create unique (m)-[r:".$relationType."";
+
+                    $queryString.="]->(s)  set r.created_at='".date("Y-m-d H:i:s")."' return s";
+
+                    $query = new CypherQuery($this->client, $queryString);
+                    $result = $query->getResultSet();
+                    if (!count($result)){//service doesnot exist..create a new one
+                        $createdNewService = $this->createAndAddJob($emailid, $job, $relationType);
+                    }
+               }
+               return $result ;
+           }
+           else
+           {
+               return 0;
+           }
+        }
+        
+        public function createAndAddJob($emailid='', $job='', $relationType){
+            if (!empty($emailid) && !empty($job) && !empty($relationType)){
+                $neoInput=array('name'=>$job,'status'=>'1','mysql_id'=>0);//for new service added country is all and mysql_id 0 represents it is new one
+                $relationAttrs=array('created_at'=>date("Y-m-d H:i:s"));
+                $queryString = "MATCH (u:User:Mintmesh)
+                            WHERE u.emailid = '".$emailid."'
+                            CREATE (m:Job ";
+                if (!empty($neoInput))
+                {
+                    $queryString.="{";
+                    foreach ($neoInput as $k=>$v)
+                    {
+                        $queryString.=$k.":'".$this->appEncodeDecode->filterString($v)."'," ;
+                    }
+                    $queryString = rtrim($queryString, ",") ;
+                    $queryString.="}";
+                }
+                $queryString.=")<-[:".$relationType;
+                if (!empty($relationAttrs))
+                {
+                    $queryString.="{";
+                    foreach ($relationAttrs as $k=>$v)
+                    {
+                        $queryString.=$k.":'".$this->appEncodeDecode->filterString($v)."'," ;
+                    }
+                    $queryString = rtrim($queryString, ",") ;
+                    $queryString.="}";
+                }
+                $queryString.="]-(u)" ;
+                $query = new CypherQuery($this->client, $queryString);
+                return $result = $query->getResultSet();
+            }
+            else{
+                return false ;
+            }
+            
+        }
+        
+        public function getInfluencersListCount($userEmail = ''){
+            if(!empty($userEmail)){
+                   $queryString = "match (u:User:Mintmesh)-[r:ACCEPTED_CONNECTION]-(u1:User:Mintmesh)-[r1:ACCEPTED_CONNECTION]-(u2:User:Mintmesh) where u.emailid='".$userEmail."' and u2.emailid<>'".$userEmail."' and not (u)-[:ACCEPTED_CONNECTION]-(u2) with u2
+                   match (u2)-[r2:ACCEPTED_CONNECTION]-(u3) return count(distinct(u2)),count(distinct(u3))
+                   order by count(distinct(u3)) desc  limit 20";
+                   //$queryString = "MATCH (u:User:Mintmesh),(u1:User:Mintmesh) where lower(u1.you_are)='4' and u1.location=~('.*' + u.location) and u.emailid='".$userEmail."' and u1.emailid<>'".$userEmail."' and not (u)-[:ACCEPTED_CONNECTION]-(u1) RETURN count(DISTINCT(u1)) ";
+                   $query = new CypherQuery($this->client, $queryString);
+                    $result = $query->getResultSet();
+                    if (isset($result[0]) && isset($result[0][0]))
+                    {
+                        return $result[0][0];
+                    }
+                    else
+                    {
+                        return 0;
+                    }
+            }
+            else{
+                    return 0;
+            }
+	}
+        
+        public function getUserServices($emailid="")
+        {
+            $emailid = $this->appEncodeDecode->filterString(strtolower($emailid));
+            $queryString = "MATCH (n:User:Mintmesh)-[r:".Config::get('constants.RELATIONS_TYPES.PROVIDES')."]->(m:Service) where n.emailid='".$emailid."' RETURN m as row";
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if ($result->count())
+            {
+                return $result ;
+            }
+            else
+            {
+                return false ;
+            }
+        }
+		 
 }
 ?>

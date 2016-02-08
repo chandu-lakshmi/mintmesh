@@ -73,6 +73,7 @@ class UserGateway {
                 $this->referFlowTypes = array(3,4,5,6,7,8,9);
                 $this->refer_nots = array(3,4,5,6,7,8,9);
                 $this->deleteUserTypes = array(1,2);
+                $this->you_are = array('Recruiter'=>4, 'Professional'=>1, 'Self Employed Professional'=>2, 'Service Provider'=>3, 'Student'=>5, 'Retired Professional'=>7, 'Homemaker'=>6);
         }
         // validation on user inputs for change password
         public function validateChangePassword($input) {            
@@ -123,6 +124,12 @@ class UserGateway {
         public function validateCompleteProfileUserInput($input)
         {
             return $this->doValidation('complete_profile','MINTMESH.user.valid');           
+        }
+        
+        // validation on user inputs for updating a user
+        public function validateCompleteProfileUserInput_v2($input)
+        {
+            return $this->doValidation('complete_profile_v2','MINTMESH.user.valid');           
         }
         
         // validation on user inputs for authenticating a user
@@ -207,6 +214,12 @@ class UserGateway {
         public function validateCheckUserPasswordInfo($input)
         {
             return $this->doValidation('check_user_password','MINTMESH.user.valid');
+        }
+        
+        //validation on get services input
+        public function validategetServicesInfo($input)
+        {
+            return $this->doValidation('get_services','MINTMESH.services.valid');
         }
         
         
@@ -407,8 +420,22 @@ class UserGateway {
                 return $this->getFilterSkills($input);
             }
         }
+        
+        public function getSkills_v2($input)
+        { 
+            if(empty($input)) {
+                $data = array() ;
+                $message = array('msg'=>array(Lang::get('MINTMESH.skills.no_data_found')));              
+                $responseCode = self::SUCCESS_RESPONSE_CODE;
+                $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
+                return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $data);
+            } else {
+                return $this->getFilterSkills($input);
+            }
+        }
+        
         /*
-         * Completing user profile
+         * Completing user profile version1
          */
         public function completeUserProfile($input)
         {
@@ -439,7 +466,7 @@ class UserGateway {
                 $neoInput['industry'] = $input['industry'];
                 $neoInput['location'] = $input['location'];
                 $neoInput['job_function'] = $input['job_function'];
-                $neoInput['you_are'] = $input['you_are'];
+                $neoInput['you_are'] = $this->you_are[$input['you_are']];
                 $neoInput['from_linkedin'] = $from_linkedin ;
                 $neoInput['dp_path'] = url('/').Config::get('constants.DP_PATH') ;
                 $neoInput['dp_original_name'] = $originalFileName ;
@@ -491,9 +518,106 @@ class UserGateway {
                 $message = array('msg'=>array(Lang::get('MINTMESH.user.user_not_found')));
                 return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
             }
+        }
+        
+        /*
+         * Completing user profile version2
+         */
+        public function completeUserProfile_v2($input)
+        {
+            $originalFileName = $renamedFileName = $linkedinFileName = "";
+            $from_linkedin =  0;
+            if (!empty($input['dpImage']))
+            {
+                $originalFileName = $input['dpImage']->getClientOriginalName();
+                //upload the file
+                $this->userFileUploader->source = $input['dpImage'] ;
+                $this->userFileUploader->destination = Config::get('constants.S3BUCKET') ;
+                $renamedFileName = $this->userFileUploader->uploadToS3();
+            }
             
-            
-            
+            if (!empty($input['fromLinkedin']))
+            {
+                $linkedinFileName = $input['linkedinImage'] ;
+                $from_linkedin = 1 ;
+            }
+            $this->loggedinUserDetails = $this->getLoggedInUser();
+            if ($this->loggedinUserDetails)
+            {
+                //get loggedin user
+                $neoInput = array();
+                $neoInput['emailid'] = $this->loggedinUserDetails->emailid ;
+                $neoInput['position'] = !empty($input['position'])?$input['position']:'';
+                $neoInput['company'] = !empty($input['company'])?$input['company']:'';
+                $neoInput['industry'] = !empty($input['industry'])?$input['industry']:'';
+                $neoInput['location'] = !empty($input['location'])?$input['location']:'';
+                $neoInput['job_function'] = !empty($input['job_function'])?$input['job_function']:'';
+                //$neoInput['profession'] = !empty($input['profession'])?$input['profession']:'';
+                $neoInput['specialization'] = !empty($input['specialization'])?$input['specialization']:'';
+                $neoInput['college'] = !empty($input['college'])?$input['college']:'';
+                $neoInput['course'] = !empty($input['course'])?$input['course']:'';
+                $neoInput['user_description'] = !empty($input['user_description'])?$input['user_description']:'';
+                $neoInput['website'] = !empty($input['website'])?$input['website']:'';
+                $neoInput['to_be_referred'] = $input['to_be_referred'];
+                $neoInput['you_are'] = $input['you_are'];
+                $neoInput['from_linkedin'] = $from_linkedin ;
+                $neoInput['dp_path'] = url('/').Config::get('constants.DP_PATH') ;
+                $neoInput['dp_original_name'] = $originalFileName ;
+                $neoInput['dp_renamed_name'] = $renamedFileName ;
+                $neoInput['linkedinImage'] = $linkedinFileName ;
+                $neoInput['points_earned'] = Config::get('constants.POINTS.COMPLETE_PROFILE') ;
+                $neoInput['completed_contact'] = 1 ;
+                $updatedNeoUser =  $this->neoUserRepository->updateUser($neoInput) ;
+                if (count($updatedNeoUser))
+                {
+                    // log the points
+                    $countLevel = $this->userRepository->checkCompleteProfileExistance($this->loggedinUserDetails->emailid);
+                    if (empty($countLevel))
+                    {
+                        $this->userRepository->logLevel(2, $this->loggedinUserDetails->emailid, "", "",Config::get('constants.POINTS.COMPLETE_PROFILE'));
+                    }
+                    if (!empty($input['job_function']))
+                    {
+                        //remove the job function associated
+                        $this->neoUserRepository->unMapJobFunction($this->loggedinUserDetails->emailid);
+                        //relate to job functions
+                        $this->neoUserRepository->mapJobFunction($input['job_function'], $this->loggedinUserDetails->emailid);
+                    }
+                    if (!empty($input['industry']))
+                    {
+                        //remove the job function associated
+                        $this->neoUserRepository->unMapIndustry($this->loggedinUserDetails->emailid);
+                        //relate to job functions
+                        $this->neoUserRepository->mapIndustry($input['industry'], $this->loggedinUserDetails->emailid);
+                    }
+                    if (!empty($input['services']))
+                    {
+                        $services = json_decode($input['services']);
+                        //relate to services
+                        $this->neoUserRepository->mapServices($services, $this->loggedinUserDetails->emailid, Config::get('constants.RELATIONS_TYPES.PROVIDES'));
+                    }
+                    // connect to the people who has invited this person
+                    $pushData = array();
+                    $pushData['user_email']=$this->loggedinUserDetails->emailid;
+                    $pushData['relationAttrs']=array('auto_connected'=>1);
+                    Queue::push('Mintmesh\Services\Queues\ConnectToInviteesQueue', $pushData, 'IMPORT');
+                    $message = array('msg'=>array(Lang::get('MINTMESH.user.success')));
+                    $data = array(); 
+                    $neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
+                    $data['user']=$this->formUserDetailsArray($neoLoggedInUserDetails);
+                    return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
+                }
+                else {
+                    $message = array('msg'=>array(Lang::get('MINTMESH.user.create_failure')));
+                    return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
+                }
+                
+            }
+            else
+            {
+                $message = array('msg'=>array(Lang::get('MINTMESH.user.user_not_found')));
+                return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
+            }
         }
         
         /*
@@ -514,40 +638,16 @@ class UserGateway {
             if (isset($oauthResult['access_token']))
             {
                 $neoUser =  $this->neoUserRepository->getNodeByEmailId($inputUserData['username']) ;
+                //print_r($oauthResult);exit
                 if (!empty($neoUser))
                 {
-                    if (!empty($neoUser->industry))//user has completed profile
-                    {
-                        if (!empty($neoUser->from_linkedin))//if  linked in
-                        {
-                            $neoUser->dp_path = $neoUser->linkedinImage ;
-                        }
-                        else if (!empty($neoUser->dp_renamed_name))
-                        {
-                            $neoUser->dp_path = $neoUser->dp_renamed_name ;
-                        }
-                        else
-                        {
-                            $neoUser->dp_path = "";
-                        }
+                    $userDetails = $this->formUserDetailsArray($neoUser) ;
+                    $loggedinUserDetails = $this->userRepository->getUserByEmail($inputUserData['username']);
+                    $userCountDetails = $this->getUserBadgeCounts($loggedinUserDetails);
+                    foreach ($userCountDetails as $k=>$v){
+                        $userDetails[$k]=$v ;
                     }
-                    $job_function_name = $industry_name = "";
-                    if (!empty($neoUser->job_function))//get job function name
-                    {
-                        $job_function_result = $this->neoUserRepository->getUserJobFunction($neoUser->emailid) ;
-                        $job_function_name = !empty($job_function_result[0])?$job_function_result[0][0]->name:"";
-                    }
-                    if (!empty($neoUser->industry))//get job function name
-                    {
-                        $industry_name_result = $this->neoUserRepository->getUserIndustry($neoUser->emailid) ;
-                        $industry_name = !empty($industry_name_result[0])?$industry_name_result[0][0]->name:"";
-                    }
-                     
-                    $neoUser->job_function_name = $job_function_name;
-                    $neoUser->industry_name = $industry_name ;
-                    if (isset($neoUser->id))
-                            unset($neoUser->id);
-                    $oauthResult['user'] = $neoUser ;
+                    $oauthResult['user'] = $userDetails ;
                     
                 }
                 //create a relation for device token
@@ -603,37 +703,13 @@ class UserGateway {
                             $neoUser =  $this->neoUserRepository->getNodeByEmailId($userDetails->emailid) ;
                             if (!empty($neoUser))
                             {
-                                if (!empty($neoUser->industry))//user has completed profile
-                                {
-                                    if (!empty($neoUser->from_linkedin))//if  linked in
-                                    {
-                                        $neoUser->dp_path = $neoUser->linkedinImage ;
-                                    }
-                                    else if (!empty($neoUser->dp_renamed_name))
-                                    {
-                                        $neoUser->dp_path = $neoUser->dp_renamed_name ;
-                                    }
-                                    else
-                                    {
-                                        $neoUser->dp_path = "";
-                                    }
+                                $userDetails = $this->formUserDetailsArray($neoUser) ;
+                                $loggedinUserDetails = $this->userRepository->getUserByEmail($userDetails->emailid);
+                                $userCountDetails = $this->getUserBadgeCounts($loggedinUserDetails);
+                                foreach ($userCountDetails as $k=>$v){
+                                    $userDetails[$k]=$v ;
                                 }
-                                $job_function_name = $industry_name = "";
-                                if (!empty($neoUser->job_function))//get job function name
-                                {
-                                    $job_function_result = $this->neoUserRepository->getUserJobFunction($neoUser->emailid) ;
-                                    $job_function_name = !empty($job_function_result[0])?$job_function_result[0][0]->name:"";
-                                }
-                                if (!empty($neoUser->industry))//get job function name
-                                {
-                                    $industry_name_result = $this->neoUserRepository->getUserIndustry($neoUser->emailid) ;
-                                    $industry_name = !empty($industry_name_result[0])?$industry_name_result[0][0]->name:"";
-                                }
-                                $neoUser->job_function_name = $job_function_name;
-                                $neoUser->industry_name = $industry_name ;
-                                if (isset($neoUser->id))
-                                        unset($neoUser->id);
-                                $oauthResult['user'] = $neoUser ;
+                                $oauthResult['user'] = $userDetails ;
 
                             }
                             //create a relation for device token
@@ -1055,6 +1131,9 @@ class UserGateway {
                 {
                     $neoInput[$key] = $val ;
                 }
+                if (!empty($input['you_are'])){
+                $neoInput['you_are'] = !empty($this->you_are[$input['you_are']])?$this->you_are[$input['you_are']]:$input['you_are'];
+                }
                 if (!empty($input['firstname']) && !empty($input['lastname']))
                 {
                     $neoInput["fullname"] =  $input['firstname']." ".$input['lastname'];
@@ -1100,6 +1179,15 @@ class UserGateway {
                     //relate to job functions
                     $this->neoUserRepository->mapIndustry($input['industry'], $this->loggedinUserDetails->emailid);
                 }
+                if (!empty($input['services']))
+                {
+                    $services = json_decode($input['services']);
+                    //remove the services associated
+                    $this->neoUserRepository->unMapServices($this->loggedinUserDetails->emailid);
+                    //relate to services
+                    $this->neoUserRepository->mapServices($services, $this->loggedinUserDetails->emailid, Config::get('constants.RELATIONS_TYPES.PROVIDES'));
+                }
+                
                 
             }
             return $returnDp ;
@@ -1276,6 +1364,7 @@ class UserGateway {
                             $r[$key]=$val ;
                         }
                     }
+                    
                     $data = array("user"=>$r);
                     $responseCode = self::SUCCESS_RESPONSE_CODE;
                     $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
@@ -1345,6 +1434,12 @@ class UserGateway {
                 $total_cash = !empty($referral_cash_res[0]->total_cash)?$referral_cash_res[0]->total_cash:0 ;
             }
             $returnArray['total_cash'] = $total_cash ;
+            //get recruiters count
+            $recruitersCount = $this->neoUserRepository->getRecruitersListCount($loggedinUserDetails->emailid);
+            $returnArray['recriutersCount'] = $recruitersCount ;
+            //get influencers count
+            $influencersCount = $this->neoUserRepository->getInfluencersListCount($loggedinUserDetails->emailid);
+            $returnArray['influencersCount'] = $influencersCount ;
             return $returnArray ;
         }
         public function formUserMoreDetailsArray($input=array())
@@ -1577,6 +1672,18 @@ class UserGateway {
                                 $a['post_id'] = $postId ;
                                 $a['post_status'] = !empty($postDetails['status'])?strtolower($postDetails['status']):'' ;
                                 $a['referrals_count'] = $this->referralsRepository->getPostReferralsCount($postId);
+                                /*//get name of service/job user is looking for
+                                if (!empty($postDetails['looking_for'])){
+                                    //get name of service/job
+                                    if (!empty($postDetails['service_scope'])){
+                                        if (in_array($postDetails['service_scope'],$this->service_scopes)){//from service
+                                            $a['service_name'] = $this->neoUserRepository->getServiceName($postDetails['looking_for']);
+                                        }
+                                        else{//from job
+                                            $a['service_name'] = $this->neoUserRepository->getJobName($postDetails['looking_for']);
+                                        }
+                                    }
+                                }*/
                             }
 
                         }
@@ -1710,7 +1817,11 @@ class UserGateway {
             $connected = $this->neoUserRepository->checkConnection($loggedInUser,$currentUser);
             if (!empty($connected))
             {
-                $returnArray['connected'] = 1 ;
+                if (!empty($connected['connected'])){//connected
+                    $returnArray['connected'] = 1 ;
+                }else{//deleted
+                    $returnArray['connected'] = 0 ;
+                }
                 $returnArray['request_sent_at'] = 0;
             }else
             {
@@ -1925,7 +2036,7 @@ class UserGateway {
                 {
                     //check if both are connected
                     $connected = $this->neoUserRepository->checkConnection($neoLoggedInUserDetails->emailid,$neoUserDetails->emailid);
-                    if (!empty($connected))// if connected
+                    if (!empty($connected) && !empty($connected['connected']))// if connected
                     {
                         $moreDetails = $this->neoUserRepository->getMoreDetails($input['emailid']);
                         if (!empty($moreDetails))
@@ -2000,8 +2111,14 @@ class UserGateway {
                     $industry_name_result = $this->neoUserRepository->getUserIndustry($neoLoggedInUserDetails->emailid) ;
                     $industry_name = !empty($industry_name_result[0])?$industry_name_result[0][0]->name:"";
                 }
+                $you_are_name = "";
+                if (isset($r['you_are']))//get job function name
+                {
+                    $you_are_name = $this->userRepository->getProfessionName($r['you_are']);
+                }
                 $r['job_function_name'] = $job_function_name;
                 $r['industry_name'] = $industry_name ;
+                $r['you_are_name'] = $you_are_name ;
                 if (isset($r['id']))
                     unset($r['id']);
                 if (!empty($neoLoggedInUserDetails->dp_renamed_name))//user has completed profile
@@ -2022,6 +2139,19 @@ class UserGateway {
                 else
                 {
                     $r['dp_path']="";
+                }
+                unset($r['services']);
+                //change response for services
+                $services = $this->neoUserRepository->getUserServices($neoLoggedInUserDetails->emailid);
+                if (!empty($services))
+                {
+                    $servicesArray = array();
+                    foreach ($services as $service)
+                    {
+                        $servicesArray[] = $service[0]->getProperties();
+                        //$servicesArray[] = array('service_name'=>$servD['name'],'service_id'=>$servD['mysql_id']);
+                    }
+                    $r['services'] = $servicesArray ;
                 }
                 //get profile completion percentage
                 $r['profile_completion_percentage'] = $this->calculateProfilePercentageCompletion($neoLoggedInUserDetails);
@@ -2297,14 +2427,14 @@ class UserGateway {
                         {
                             //check if user is not detaileted for only some notification types
                             $is_deleted = 0;
-                            if (in_array($notification->notifications_types_id,$this->deleteUserTypes))
-                            {
+                            /*if (in_array($notification->notifications_types_id,$this->deleteUserTypes))//commented to check for every notification
+                            {*/
                                 $connectedToMe = $this->neoUserRepository->checkConnection($loggedinUserDetails->emailid,$notification->from_email);
-                                if (empty($connectedToMe))
+                                if (!empty($connectedToMe) && !empty($connectedToMe['deleted']))
                                 {
                                     $is_deleted = 1;
                                 }
-                            }
+                            //}
                             if ($notification->notifications_types_id == 20){//if payment done notification the change the from and other details
                                 $otherNoteUser = $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($notification->other_email) ;
                             }
@@ -2669,9 +2799,13 @@ class UserGateway {
                             $connectedToMe = $this->neoUserRepository->checkConnection($loggedinUserDetails->emailid,$user[0]->emailid);
                             if (!empty($connectedToMe))
                             {
-                                $u[$uId]['connected_to_me'] = 1 ;
-                            }else
-                            {
+                                if (!empty($connectedToMe['connected'])){
+                                    $u[$uId]['connected_to_me'] = 1 ;
+                                }else{//deleted
+                                    $u[$uId]['connected_to_me'] = 0 ;
+                                }
+                                
+                            }{
                                 //check if in pending state
                                 $pending_with_me = $this->neoUserRepository->checkPendingConnection($loggedinUserDetails->emailid,$user[0]->emailid);
                                 if (!empty($pending_with_me))// if pending
@@ -2689,8 +2823,12 @@ class UserGateway {
 
                         if (!empty($connected))
                         {
-                            $u[$uId]['connected'] = 1 ;
-                            $u[$uId]['request_sent_at'] = 0;
+                            if (!empty($connected['connected'])){
+                                $u[$uId]['connected'] = 1 ;
+                            }else{ //deleted
+                                $u[$uId]['connected'] = 0 ;
+                            }
+                           $u[$uId]['request_sent_at'] = 0;
                         }else
                         {
                             //check if in pending state
@@ -2708,6 +2846,7 @@ class UserGateway {
                         }
                    }
                 }
+                $u=$this->appEncodeDecode->callFirstNameSort($u);
                 $data = array("users"=>array_values($u)) ;
                 $message = array('msg'=>array(Lang::get('MINTMESH.get_contacts.success')));
                 return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
@@ -3402,7 +3541,9 @@ class UserGateway {
                         }
                         $influencersList[] = $details ;
                     }
-                    $data = array("influencers"=>$influencersList) ;
+                    //get count of influencers
+                    $influencersCount = count($influencersList);
+                    $data = array("influencers"=>$influencersList, "influencersCount"=>$influencersCount) ;
                     $message = array('msg'=>array(Lang::get('MINTMESH.influencers.success')));
                     return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
                 }
@@ -3464,7 +3605,9 @@ class UserGateway {
                         }
                         $recruitersList[] = $details;
                     }
-                    $data = array("recruiters"=>$recruitersList) ;
+                    //get count of recruiters
+                    $recruitersCount = $this->neoUserRepository->getRecruitersListCount($loggedinUserDetails->emailid);
+                    $data = array("recruiters"=>$recruitersList,"recriutersCount"=>$recruitersCount) ;
                     $message = array('msg'=>array(Lang::get('MINTMESH.recruiters.success')));
                     return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ; 
                 }
@@ -3624,6 +3767,88 @@ class UserGateway {
                 $responseCode = self::ERROR_RESPONSE_CODE;
                 $responseStatus = self::ERROR_RESPONSE_MESSAGE;                    
             }            
+            return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $data);
+        }
+        
+        /*
+         * get services list for ask flow in profile
+         */
+        public function getServices($input){
+            $loggedinUserDetails = $this->getLoggedInUser();
+            if ($loggedinUserDetails) {
+               $searchString = !empty($input['search'])?strtolower($input['search']):'';
+                $serviceType = !empty($input['service_type'])?strtolower($input['service_type']):'';
+                $userCountry = !empty($input['user_country'])?strtolower($input['user_country']):'';
+                if (!empty($serviceType) && $serviceType == 'job'){
+                    $servicesListResult = $this->userRepository->getJobs($searchString);
+                }
+                else{
+                    $servicesListResult = $this->userRepository->getServices($searchString, $userCountry);
+                }
+                
+                if (!empty($servicesListResult)){
+                    $services = array();
+                    foreach ($servicesListResult as $service){
+                        $services[] = array("service_name"=>trim($service->name), "service_id"=>$service->id) ;
+                    }
+                    $data = array("services"=>$services) ;
+                    $message = array('msg'=>array(Lang::get('MINTMESH.services.success')));              
+                    $responseCode = self::SUCCESS_RESPONSE_CODE;
+                    $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
+                }
+                else{
+                    $data = array() ;
+                    $message = array('msg'=>array(Lang::get('MINTMESH.services.not_found')));              
+                    $responseCode = self::SUCCESS_RESPONSE_CODE;
+                    $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
+                } 
+            }
+            else {
+                $message = Lang::get('MINTMESH.user.user_not_found');
+                $responseCode = self::ERROR_RESPONSE_CODE;
+                $responseStatus = self::ERROR_RESPONSE_MESSAGE;
+                $data = array();
+            }
+            return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $data);
+        }
+        
+        /*
+         * get professions list for you are field
+         */
+        public function getProfessions(){
+            $loggedinUserDetails = $this->getLoggedInUser();
+            if ($loggedinUserDetails) {
+                if (Cache::has('allProfessions')) {                 
+                    $data = Cache::get('allProfessions');
+                    $responseCode = self::SUCCESS_RESPONSE_CODE;
+                    $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
+                    $message = array('msg'=>array(Lang::get('MINTMESH.professions.success')));
+                } else {                
+                    $professionsR = $this->userRepository->getProfessions();
+                    if (!empty($professionsR))
+                    {
+                       // print_r($professionsR);exit;
+                        $data = $professions = array();
+                        foreach($professionsR as $key=>$val)
+                        {
+                            $professions[] = array("profession_name"=>trim($val->name), "profession_value"=>$val->id) ;
+                        }
+                        $data = array("professions"=>$professions) ;
+                        $message = array('msg'=>array(Lang::get('MINTMESH.professions.success')));                    
+                        // adding to memcache
+                        Cache::forever('allProfessions', $data);
+                        $responseCode = self::SUCCESS_RESPONSE_CODE;
+                        $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
+                        $message = array('msg'=>array(Lang::get('MINTMESH.professions.success')));
+                    }
+                }
+            }
+            else{
+                $message = Lang::get('MINTMESH.user.user_not_found');
+                $responseCode = self::ERROR_RESPONSE_CODE;
+                $responseStatus = self::ERROR_RESPONSE_MESSAGE;
+                $data = array();
+            }
             return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $data);
         }
     

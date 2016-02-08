@@ -126,7 +126,11 @@ class ContactsGateway {
                                                 $connected = $this->neoUserRepository->checkConnection($fromUser->emailid,$res[0]->emailid);
                                                 if (!empty($connected))
                                                 {
-                                                    $r['connected'] = 1 ;
+                                                    if (!empty($connected['connected'])){
+                                                        $r['connected'] = 1 ;
+                                                    }else{
+                                                        $r['connected'] = 0 ;
+                                                    }
                                                     $r['request_sent_at'] = 0 ;
                                                 }
                                                 else

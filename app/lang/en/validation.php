@@ -88,6 +88,9 @@ return array(
 		'attribute-name' => array(
 			'rule-name' => 'custom-message',
 		),
+                'emailid' => array(
+                        'required' => 'The email id field is required.'
+                )
 	),
 
 	/*

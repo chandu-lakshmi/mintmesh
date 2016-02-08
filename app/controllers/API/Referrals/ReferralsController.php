@@ -25,12 +25,11 @@ class ReferralsController extends \BaseController {
          * @param string $service_scope Service scope get_service|provide_service|find_candidate|find_job
          * @param string $service_cost Service cost
          * @param string $free_service Service free 0|1
-         * @param string $web_link Service web url
+         * @param string $looking_for id of the service/job text in case of new one
          * @param string $service_location Service location
          * @param string $service_period Service Period
          * @param string $service_currency Service curreny
          * @param string $service_type Service Type global|in_location|change_location
-         * @param string $changed_location location where the service should be posted
          * @param string $excluded_list Users that are to be excluded
          * 
 	 * @return Response
@@ -175,7 +174,7 @@ class ReferralsController extends \BaseController {
          * POST/refer_contact
          * 
          * @param string $access_token The Access token of a user
-         * @param string $refering
+         * @param string $referring
          * @param string $refer_to
          * @param string $post_id
          * @param string $message
@@ -461,6 +460,8 @@ class ReferralsController extends \BaseController {
                 }
             }
         }
+        
+        
         
         
 }

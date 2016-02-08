@@ -5,6 +5,7 @@ class ReferralsValidator extends Validator {
     public static $rules = array(
         'seek_service_referral' => array(
                 'service'      => 'required',
+                'looking_for'   => 'required',
                 //'service_location'   => 'required',
                 'service_period'    => 'required',
                 'service_scope'    => 'required',

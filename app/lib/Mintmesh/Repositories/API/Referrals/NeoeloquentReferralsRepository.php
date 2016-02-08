@@ -315,9 +315,10 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 {
                     $queryLimit = $limit ;
                 }
+                //p.status='".Config::get('constants.REFERRALS.STATUSES.ACTIVE')."'
                 $queryString = "match (u:User:Mintmesh)-[r:GOT_REFERRED]->(p:Post) 
                                 where ID(p)=".$post_id." 
-                                and p.status='".Config::get('constants.REFERRALS.STATUSES.ACTIVE')."' return u, r order by r.created_at desc" ;
+                                return u, r order by r.created_at desc" ;
                 if (!empty($limit) && !($limit < 0))
                 {
                     $queryString.=" skip ".$skip." limit ".$queryLimit ;
