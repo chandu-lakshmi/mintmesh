@@ -1254,7 +1254,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                     $query = new CypherQuery($this->client, $queryString);
                     $result = $query->getResultSet();
                     if (!count($result)){//service doesnot exist..create a new one
-                        $createdNewService = $this->createAndAddService($emailid, $service, $relationType);
+                        $result = $this->createAndAddService($emailid, $service, $relationType);
                     }
                }
                return $result ;
@@ -1312,7 +1312,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                     $queryString = rtrim($queryString, ",") ;
                     $queryString.="}";
                 }
-                $queryString.="]-(u)" ;
+                $queryString.="]-(u) return m" ;
                 $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();
             }
@@ -1338,7 +1338,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                     $query = new CypherQuery($this->client, $queryString);
                     $result = $query->getResultSet();
                     if (!count($result)){//service doesnot exist..create a new one
-                        $createdNewService = $this->createAndAddJob($emailid, $job, $relationType);
+                        $result = $this->createAndAddJob($emailid, $job, $relationType);
                     }
                }
                return $result ;
@@ -1377,7 +1377,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                     $queryString = rtrim($queryString, ",") ;
                     $queryString.="}";
                 }
-                $queryString.="]-(u)" ;
+                $queryString.="]-(u) return m" ;
                 $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();
             }

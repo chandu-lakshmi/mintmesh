@@ -211,7 +211,7 @@ class ReferralsGateway {
                 $neoInput = array();
                 //form insert array
                 $neoInput['looking_for'] = !empty($input['looking_for'])?$input['looking_for']:0 ; 
-                $neoInput['service'] = $input['service'] ;
+                $neoInput['service'] = !empty($input['service'])?$input['service']:""  ;
                 $neoInput['service_location'] = !empty($input['service_location'])?$input['service_location']:"" ;
                 $neoInput['service_period'] = $input['service_period'];
                 $neoInput['service_scope'] = $input['service_scope'];

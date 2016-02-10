@@ -4,7 +4,7 @@ use Mintmesh\Services\Validators\Validator;
 class ReferralsValidator extends Validator {
     public static $rules = array(
         'seek_service_referral' => array(
-                'service'      => 'required',
+                //'service'      => 'required',
                 'looking_for'   => 'required',
                 //'service_location'   => 'required',
                 'service_period'    => 'required',
