@@ -149,6 +149,7 @@ class ContactsGateway {
                                                 }
                                                 if (!empty($contact->recordID))
                                                 $r['recordID'] = $contact->recordID ;
+                                                unset($r['services']);//unset it as it causes chrash
                                                 if (!empty($r['emailid']) && in_array($r['emailid'],$connectResult))
                                                 {
                                                     $r['connected']=1;

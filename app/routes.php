@@ -14,6 +14,9 @@
 Route::get('docs', function() {
 	return View::make('docs.v1.index');
 });
+Route::get('docs/v2', function() {
+	return View::make('docs.v2.index');
+});
 
 /* Home page of Mintmesh webservice */
 Route::get('/', function()
@@ -78,6 +81,7 @@ Route::group(array('prefix' => 'v1'), function() {
     
     //cache badwords
     Route::post("cache_badwords", "API\User\UserController@cacheBadWords");
+    
 });
 
 //Route::group(array('prefix' => 'v1'), function() {
@@ -196,10 +200,11 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
        
        //services
        Route::post("get_services", "API\User\UserController@getServices");
-       //professions
-       Route::post("get_professions", "API\User\UserController@getProfessions");
+       //you are values
+       Route::post("get_you_are_values", "API\User\UserController@getYouAreValues");
        
-        
+       //get professions for provider service provider
+       Route::post("get_professions", "API\User\UserController@getPofessions");
         
 });
 
@@ -241,6 +246,9 @@ Route::group(array("prefix" => "admin"), function() {
         {
                 return View::make('Admin.app');
         });
+        //clear memcache
+        Route::post("clear_memcache", "Admin\AdminController@clearMemcache");
+
 });
 
 Route::post('setMailQueue', function()
@@ -266,11 +274,17 @@ Route::post('setSmsQueue', function()
 ////////////////////////////******V2 apis*******///////////////////////////////////
 Route::group(array('prefix' => 'v2', 'before' => 'oauth'), function() {
     
-    //complete user profile
+    //complete user profile,v2 only should be used
     Route::post("user/complete_profile", "API\User\UserController@completeUserProfile_v2");
+
+    //you are values, changed for edit profile..v1 should be used
+    Route::post("get_you_are_values", "API\User\UserController@getYouAreValues_v2");
+
 });
 
 Route::group(array('prefix' => 'v2'), function() {
-    //get skills
-    Route::post("get_skills", "API\User\UserController@getSkills_v2");        
+
+    //get skills,v2 should be used
+    Route::post("get_skills", "API\User\UserController@getSkills_v2"); 
+       
 });

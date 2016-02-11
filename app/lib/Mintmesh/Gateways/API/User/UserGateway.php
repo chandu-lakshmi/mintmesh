@@ -73,7 +73,7 @@ class UserGateway {
                 $this->referFlowTypes = array(3,4,5,6,7,8,9);
                 $this->refer_nots = array(3,4,5,6,7,8,9);
                 $this->deleteUserTypes = array(1,2);
-                $this->you_are = array('Recruiter'=>4, 'Professional'=>1, 'Self Employed Professional'=>2, 'Service Provider'=>3, 'Student'=>5, 'Retired Professional'=>7, 'Homemaker'=>6);
+                $this->you_are = array('recruiter'=>4, 'salaried_professional'=>1, 'self_employed'=>2, 'professional_service_provider'=>3, 'student'=>5, 'retired_professional'=>7, 'homemaker'=>6);
         }
         // validation on user inputs for change password
         public function validateChangePassword($input) {            
@@ -423,7 +423,7 @@ class UserGateway {
         
         public function getSkills_v2($input)
         { 
-            if(empty($input)) {
+            if(empty($input) || empty($input['search_for'])) {
                 $data = array() ;
                 $message = array('msg'=>array(Lang::get('MINTMESH.skills.no_data_found')));              
                 $responseCode = self::SUCCESS_RESPONSE_CODE;
@@ -552,7 +552,7 @@ class UserGateway {
                 $neoInput['industry'] = !empty($input['industry'])?$input['industry']:'';
                 $neoInput['location'] = !empty($input['location'])?$input['location']:'';
                 $neoInput['job_function'] = !empty($input['job_function'])?$input['job_function']:'';
-                //$neoInput['profession'] = !empty($input['profession'])?$input['profession']:'';
+                $neoInput['profession'] = !empty($input['profession'])?$input['profession']:'';
                 $neoInput['specialization'] = !empty($input['specialization'])?$input['specialization']:'';
                 $neoInput['college'] = !empty($input['college'])?$input['college']:'';
                 $neoInput['course'] = !empty($input['course'])?$input['course']:'';
@@ -604,7 +604,13 @@ class UserGateway {
                     $message = array('msg'=>array(Lang::get('MINTMESH.user.success')));
                     $data = array(); 
                     $neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
-                    $data['user']=$this->formUserDetailsArray($neoLoggedInUserDetails);
+                    $userDetails = $this->formUserDetailsArray($neoLoggedInUserDetails);
+                    $loggedinUserDetails = $this->userRepository->getUserByEmail($this->loggedinUserDetails->emailid);
+                    $userCountDetails = $this->getUserBadgeCounts($loggedinUserDetails);
+                    foreach ($userCountDetails as $k=>$v){
+                        $userDetails[$k]=$v ;
+                    }
+                    $data['user']=$userDetails;
                     return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
                 }
                 else {
@@ -1408,7 +1414,7 @@ class UserGateway {
                 $returnArray['total_credits'] = 0;
             }
             $levels_info_r = $this->userRepository->getCurrentLevelInfo($loggedinUserDetails->emailid);
-            $levels_info = array();
+            $levels_info = $levels_info = array("level_id"=>'0', "name"=>'', "points"=>'0', "earned_points"=>'0');
             if (!empty($levels_info_r))
             {
                 foreach ($levels_info_r as $row)
@@ -2114,11 +2120,17 @@ class UserGateway {
                 $you_are_name = "";
                 if (isset($r['you_are']))//get job function name
                 {
-                    $you_are_name = $this->userRepository->getProfessionName($r['you_are']);
+                    $you_are_name = $this->userRepository->getYouAreName($r['you_are']);
+                }
+                $profession_name = "";
+                if (isset($r['profession']))//get job function name
+                {
+                    $profession_name = $this->userRepository->getProfessionName($r['profession']);
                 }
                 $r['job_function_name'] = $job_function_name;
                 $r['industry_name'] = $industry_name ;
                 $r['you_are_name'] = $you_are_name ;
+                $r['profession_name'] = $profession_name ;
                 if (isset($r['id']))
                     unset($r['id']);
                 if (!empty($neoLoggedInUserDetails->dp_renamed_name))//user has completed profile
@@ -3815,7 +3827,87 @@ class UserGateway {
         /*
          * get professions list for you are field
          */
-        public function getProfessions(){
+        public function getYouAreValues(){
+            $loggedinUserDetails = $this->getLoggedInUser();
+            if ($loggedinUserDetails) {
+                if (Cache::has('allYouAreValues')) {                 
+                    $data = Cache::get('allYouAreValues');
+                    $responseCode = self::SUCCESS_RESPONSE_CODE;
+                    $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
+                    $message = array('msg'=>array(Lang::get('MINTMESH.professions.success')));
+                } else {                
+                    $professionsR = $this->userRepository->getYouAreValues();
+                    if (!empty($professionsR))
+                    {
+                       // print_r($professionsR);exit;
+                        $data = $professions = array();
+                        foreach($professionsR as $key=>$val)
+                        {
+                            $professions[] = array("you_are_name"=>trim($val->name), "you_are_value"=>$val->id) ;
+                        }
+                        $data = array("you_are_options"=>$professions) ;
+                        $message = array('msg'=>array(Lang::get('MINTMESH.you_are.success')));                    
+                        // adding to memcache
+                        Cache::forever('allYouAreValues', $data);
+                        $responseCode = self::SUCCESS_RESPONSE_CODE;
+                        $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
+                        $message = array('msg'=>array(Lang::get('MINTMESH.you_are.success')));
+                    }
+                }
+            }
+            else{
+                $message = Lang::get('MINTMESH.user.user_not_found');
+                $responseCode = self::ERROR_RESPONSE_CODE;
+                $responseStatus = self::ERROR_RESPONSE_MESSAGE;
+                $data = array();
+            }
+            return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $data);
+        }
+        
+        /*
+         * get professions list for you are field
+         */
+        public function getYouAreValues_v2(){
+            $loggedinUserDetails = $this->getLoggedInUser();
+            if ($loggedinUserDetails) {
+                if (Cache::has('allYouAreValues_v2')) {                 
+                    $data = Cache::get('allYouAreValues_v2');
+                    $responseCode = self::SUCCESS_RESPONSE_CODE;
+                    $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
+                    $message = array('msg'=>array(Lang::get('MINTMESH.professions.success')));
+                } else {                
+                    $professionsR = $this->userRepository->getYouAreValues();
+                    if (!empty($professionsR))
+                    {
+                       // print_r($professionsR);exit;
+                        $data = $professions = array();
+                        foreach($professionsR as $key=>$val)
+                        {
+                            $professions[] = array("you_are_name"=>trim($val->name), "you_are_value"=>$val->value) ;
+                        }
+                        $data = array("you_are_options"=>$professions) ;
+                        $message = array('msg'=>array(Lang::get('MINTMESH.you_are.success')));                    
+                        // adding to memcache
+                        Cache::forever('allYouAreValues_v2', $data);
+                        $responseCode = self::SUCCESS_RESPONSE_CODE;
+                        $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
+                        $message = array('msg'=>array(Lang::get('MINTMESH.you_are.success')));
+                    }
+                }
+            }
+            else{
+                $message = Lang::get('MINTMESH.user.user_not_found');
+                $responseCode = self::ERROR_RESPONSE_CODE;
+                $responseStatus = self::ERROR_RESPONSE_MESSAGE;
+                $data = array();
+            }
+            return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $data);
+        }
+    
+	/*
+         * get professions list for you are field
+         */
+        public function getPofessions(){
             $loggedinUserDetails = $this->getLoggedInUser();
             if ($loggedinUserDetails) {
                 if (Cache::has('allProfessions')) {                 
@@ -3824,7 +3916,7 @@ class UserGateway {
                     $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
                     $message = array('msg'=>array(Lang::get('MINTMESH.professions.success')));
                 } else {                
-                    $professionsR = $this->userRepository->getProfessions();
+                    $professionsR = $this->userRepository->getPofessions();
                     if (!empty($professionsR))
                     {
                        // print_r($professionsR);exit;
@@ -3851,6 +3943,6 @@ class UserGateway {
             }
             return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $data);
         }
-    
+        
 }
 ?>

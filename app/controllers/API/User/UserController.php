@@ -1118,23 +1118,44 @@ class UserController extends \BaseController {
         /**
 	 * get professions for your are field
          * 
-         * POST/get_professions
+         * POST/get_you_are_values
          * 
          * @param string $access_token
 	 * @return Response
 	 */
-        public function getProfessions(){
-            $response = $this->userGateway->getProfessions();
+        public function getYouAreValues(){
+            $response = $this->userGateway->getYouAreValues();
             return \Response::json($response);
             
         }
         
+        /**
+	 * get professions for your are field v2
+         * 
+         * POST/get_you_are_values_v2
+         * 
+         * @param string $access_token
+	 * @return Response
+	 */
+        public function getYouAreValues_v2(){
+            $response = $this->userGateway->getYouAreValues_v2();
+            return \Response::json($response);
+            
+        }
         
-		
-		
+	/**
+	 * get professions for provider service provider in your are field
+         * 
+         * POST/get_provider_professions
+         * 
+         * @param string $access_token
+	 * @return Response
+	 */
+        public function getPofessions(){
+            $response = $this->userGateway->getPofessions();
+            return \Response::json($response);
+            
+        }		
         
-        
-
-
 }
 ?>

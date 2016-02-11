@@ -69,7 +69,7 @@ return array(
                 "paymentSuccess" => "MintMesh Invoice",
                 "payout_success_user" => "MintMesh Payout confirmation",
                 "reset_password_success" => "MintMesh - Your password changed",
-                "post_success" => "MintMesh - Post Success"
+                "post_success" => "Request Posted Successfully! Next Steps"
          ),
          "email_template_paths"=>array(
                 "user_welcome" => "emails.Api.User.welcome",
@@ -253,9 +253,15 @@ return array(
             'error'=>'Invalid input',
             'not_found'=>'No Result Found'
         ),
+        "you_are"=>array(
+            'success'=>'Listed'
+        ),
         "professions"=>array(
             'success'=>'Listed'
+        ),
+        "clear_memcache"=>array(
+            'success'=>'Memcache Cleared successfully',
+            'dont_exist'=>'Cache for perticular key does not exist'
         )
-
 
 );

@@ -484,7 +484,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                 $sql = "select l.id, sum(ll.points) as earned_points, l.name, l.points as points from levels l 
                         left join  levels_logs ll on l.id=ll.levels_id
                         where ll.levels_id=(select max(levels_id) from levels_logs 
-                        where user_email='".$email."') and ll.user_email='".$email."'
+                        where user_email='".$email."') and ll.user_email='".$email."' having sum(ll.points)>=0
                         " ;
                 return $result = DB::select($sql); 
             }
@@ -630,30 +630,44 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
             $sql.=" order by name asc";
             return $result = DB::select($sql);
         }
-        public function getProfessions(){
-            $sql = "select id,name,value from professions" ;
+        public function getYouAreValues(){
+            $sql = "select id,name,value from you_are_values where status=1" ;
             return $result = DB::select($sql);
             
         }
         
-        public function getProfessionName($id=0){
+        public function getYouAreName($id=0){
             if (!empty($id) && is_numeric($id)){
-            $sql = "select name from professions where id=".$id ;
+            $sql = "select name from you_are_values where id=".$id ;
             $result = DB::select($sql);
-                if (!empty($result))
-                {
+                if (!empty($result)) {
                     return $result[0]->name ;
+                } else {
+                    return "";
                 }
-                else
-                {
+            } else {
+                return '';
+            }
+        }
+
+     public function getPofessions(){
+            $sql = "select id,name from professions where status=1" ;
+            return $result = DB::select($sql);
+        }
+        
+        public function getProfessionName($id=0){
+            if (!empty($id)){
+                $sql = "select name from professions where id=".$id ;
+                $result = DB::select($sql);
+                if (!empty($result)) {
+                    return $result[0]->name ;
+                } else {
                     return "";
                 }
             }
             else{
                 return '';
             }
-            
         }
-        
         
 }

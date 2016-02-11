@@ -51,7 +51,7 @@ class UserValidator extends Validator {
             'code'=>"required"        
             ),
         'check_reset_password' => array(
-            'code'=>"required"        
+            'code'=>"required"       
             ),
         'complete_profile' => array(
                 'dpImage'   => 'image',
@@ -65,7 +65,9 @@ class UserValidator extends Validator {
         'complete_profile_v2' => array(
                 'dpImage'   => 'image',
                 'you_are'   => 'required',
-                'to_be_referred'=>'required'
+                'location'    => 'required',
+                'to_be_referred'=>'required',
+                'dpImage'=>'required'
             ),
         'connection_request'=>array(
             'emails'=>'required'
@@ -111,7 +113,8 @@ class UserValidator extends Validator {
         ),
         'get_services'=>array(
             'service_type'=>'required',
-            'user_country'=>'required'
+            'user_country'=>'required',
+            'search'=>'required'
         )
         );
     //conditional checks for you_are field in user profile
