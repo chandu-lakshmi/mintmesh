@@ -397,16 +397,14 @@ class UserController extends \BaseController {
         {
             // Receiving user input data
             $inputUserData = \Input::all();
-            if(!empty($inputUserData['code'])) {
-                // Validating user input data
-                $validation = $this->userGateway->validateResetPasswordInput($inputUserData);
-                if($validation['status'] == 'success') {
-                   $response = $this->userGateway->resetPassword($inputUserData);
-                   return \Response::json($response);
-                } else {
-                        // returning validation failure
-                    return \Response::json($validation);
-                }
+            // Validating user input data
+            $validation = $this->userGateway->validateResetPasswordInput($inputUserData);
+            if($validation['status'] == 'success') {
+               $response = $this->userGateway->resetPassword($inputUserData);
+               return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
             }
         }
         

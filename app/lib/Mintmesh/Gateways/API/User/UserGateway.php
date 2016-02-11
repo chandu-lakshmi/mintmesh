@@ -2809,14 +2809,9 @@ class UserGateway {
                         {
                             //check if connected to me
                             $connectedToMe = $this->neoUserRepository->checkConnection($loggedinUserDetails->emailid,$user[0]->emailid);
-                            if (!empty($connectedToMe))
+                            if (!empty($connectedToMe) && !empty($connectedToMe['connected']))//checking for deletion is not required for normal refer and one to one connection
                             {
-                                if (!empty($connectedToMe['connected'])){
-                                    $u[$uId]['connected_to_me'] = 1 ;
-                                }else{//deleted
-                                    $u[$uId]['connected_to_me'] = 0 ;
-                                }
-                                
+                                $u[$uId]['connected_to_me'] = 1 ;
                             }{
                                 //check if in pending state
                                 $pending_with_me = $this->neoUserRepository->checkPendingConnection($loggedinUserDetails->emailid,$user[0]->emailid);
@@ -2833,14 +2828,10 @@ class UserGateway {
 
                         }
 
-                        if (!empty($connected))
+                        if (!empty($connected) && !empty($connected['connected']))//checking for deletion is not required for normal refer and one to one connection
                         {
-                            if (!empty($connected['connected'])){
-                                $u[$uId]['connected'] = 1 ;
-                            }else{ //deleted
-                                $u[$uId]['connected'] = 0 ;
-                            }
-                           $u[$uId]['request_sent_at'] = 0;
+                            $u[$uId]['connected'] = 1 ;
+                            $u[$uId]['request_sent_at'] = 0;
                         }else
                         {
                             //check if in pending state
@@ -3750,7 +3741,7 @@ class UserGateway {
                 else
                 {
                     $message = array('msg'=>array(Lang::get('MINTMESH.skills.error')));
-                    $data    = aray();
+                    $data    = array();
                     $responseCode = self::ERROR_RESPONSE_CODE;
                     $responseStatus = self::ERROR_RESPONSE_MESSAGE;                    
                 }
@@ -3775,7 +3766,7 @@ class UserGateway {
             else
             {
                 $message = array('msg'=>array(Lang::get('MINTMESH.skills.error')));
-                $data    = aray();
+                $data    = array();
                 $responseCode = self::ERROR_RESPONSE_CODE;
                 $responseStatus = self::ERROR_RESPONSE_MESSAGE;                    
             }            

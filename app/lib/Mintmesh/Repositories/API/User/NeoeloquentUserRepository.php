@@ -1397,7 +1397,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                     $result = $query->getResultSet();
                     if (isset($result[0]) && isset($result[0][0]))
                     {
-                        return $result[0][0];
+                        return ($result[0][0]>20)?20:$result[0][0];
                     }
                     else
                     {
