@@ -709,13 +709,13 @@ class UserGateway {
                             $neoUser =  $this->neoUserRepository->getNodeByEmailId($userDetails->emailid) ;
                             if (!empty($neoUser))
                             {
-                                $userDetails = $this->formUserDetailsArray($neoUser) ;
+                                $userDetailsArray = $this->formUserDetailsArray($neoUser) ;
                                 $loggedinUserDetails = $this->userRepository->getUserByEmail($userDetails->emailid);
                                 $userCountDetails = $this->getUserBadgeCounts($loggedinUserDetails);
                                 foreach ($userCountDetails as $k=>$v){
-                                    $userDetails[$k]=$v ;
+                                    $userDetailsArray[$k]=$v ;
                                 }
-                                $oauthResult['user'] = $userDetails ;
+                                $oauthResult['user'] = $userDetailsArray ;
 
                             }
                             //create a relation for device token
