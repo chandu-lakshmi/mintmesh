@@ -562,12 +562,15 @@ class PaymentGateway {
                 $referred_by_neo_user = $this->neoUserRepository->getNodeByEmailId($transactionDetails->to_user) ;
 
                 $this->userRepository->logLevel(3, $transactionDetails->to_user, $transactionDetails->from_user, $transactionDetails->for_user,Config::get('constants.POINTS.SEEK_REFERRAL'));
-                $this->userGateway->sendNotification($referred_by_details, $referred_by_neo_user, $transactionDetails->for_user, 11, array('extra_info'=>str_replace(",","",$transactionDetails->service_id)), array('other_user'=>$transactionDetails->from_user),1) ;
-                //send notification to via person
-                $this->userGateway->sendNotification($loggedinUserDetails, $neoLoggedInUserDetails, $transactionDetails->to_user, 12, array('extra_info'=>str_replace(",","",$transactionDetails->service_id)), array('other_user'=>$transactionDetails->for_user),1) ;
-                //send battle card to u1 containing u3 details
-                $this->userGateway->sendNotification($referred_by_details, $referred_by_neo_user, $loggedinUserDetails->emailid, 20, array('extra_info'=>str_replace(",","",$transactionDetails->service_id)), array('other_user'=>$transactionDetails->for_user),1) ;
-                
+                if($transactionDetails->for_user == $transactionDetails->to_user) {
+                    $this->userGateway->sendNotification($loggedinUserDetails, $neoLoggedInUserDetails, $transactionDetails->to_user, 24, array('extra_info'=>str_replace(",","",$transactionDetails->service_id)), array('other_user'=>$transactionDetails->for_user),1) ;
+                } else {
+                    $this->userGateway->sendNotification($referred_by_details, $referred_by_neo_user, $transactionDetails->for_user, 11, array('extra_info'=>str_replace(",","",$transactionDetails->service_id)), array('other_user'=>$transactionDetails->from_user),1) ;
+                    //send notification to via person
+                    $this->userGateway->sendNotification($loggedinUserDetails, $neoLoggedInUserDetails, $transactionDetails->to_user, 12, array('extra_info'=>str_replace(",","",$transactionDetails->service_id)), array('other_user'=>$transactionDetails->for_user),1) ;
+                    //send battle card to u1 containing u3 details
+                    $this->userGateway->sendNotification($referred_by_details, $referred_by_neo_user, $loggedinUserDetails->emailid, 20, array('extra_info'=>str_replace(",","",$transactionDetails->service_id)), array('other_user'=>$transactionDetails->for_user),1) ;
+                }
                 return true ;
             }
             else

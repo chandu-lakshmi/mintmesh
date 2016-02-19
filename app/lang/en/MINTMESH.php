@@ -52,7 +52,8 @@ return array(
              "closed_post"=>"This request has been closed",
              "no_referrals"=>"You have not referred any of your contacts for this post",
              "no_result"=>"No Result Found",
-             "invalid_input"=>"Invalid Input"
+             "invalid_input"=>"Invalid Input",
+             "no_import"=>"You have not imported this contact, please try importing first"
          ),
          "login"=>array(
                 "login_valid"   => "Successfully Validated",
@@ -64,7 +65,7 @@ return array(
          ),
          "user_email_subjects"=>array(
                 "welcome"      => "Welcome To MintMesh!"  ,
-                "forgot_password" => "Reset Password - MintMesh",
+                "forgot_password" => "MintMesh - Reset Password",
                 "join_invitaion" => "MintMesh Invitation",
                 "paymentSuccess" => "MintMesh Invoice",
                 "payout_success_user" => "MintMesh Payout confirmation",
@@ -150,10 +151,11 @@ return array(
              "success" => "Success",
              "no_notifications" => "No Notifications",
              "messages"=>array('1'=>'would like to connect with you', '2'=>'has accepted your connection request', '3' => 'requests you for an introduction to', '4' => 'wants to refer you to',
-                                '5'=>'has referred you to ', '6'=>'has accepted to be connected to', '7'=>'has accepted your connection','8'=>'has parked this request in the "No" Zone', '9'=>'has parked this request in the "No" Zone'
-                                ,'10'=>'has referred','11'=>'would like to refer you to','12'=>'accepted your referral of','13'=>'has accepted a service of you referred by','14'=>'has accepted a service of','15'=>'has turned down your referral of',
-                 '16'=>'has turned down your service request','17'=>'wants to introduce you to','18'=>'accepted your reference for','19'=>'accepted to connect with you, referred by','20'=>'has shared details of','22'=>'does not want to be referred to'),
-             "extra_texts"=>array('10'=>'for your request','11'=>'for a service','12'=>'for this request','22'=>'for this service')
+                                '5'=>'has referred you to ', '6'=>'has accepted to be connected to', '7'=>'has accepted your connection','8'=>'has parked this request in the "No" Zone', '9'=>'has parked this request in the "No" Zone',
+                                '10'=>'has referred','11'=>'would like to refer you to','12'=>'accepted your referral of','13'=>'has accepted a service of you referred by','14'=>'has accepted a service of','15'=>'has turned down your referral of',
+                                '16'=>'has turned down your service request','17'=>'wants to introduce you to','18'=>'accepted your reference for','19'=>'accepted to connect with you, referred by','20'=>'has shared details of',
+                                '22'=>'does not want to be referred to','23'=>'self referred for your service','24'=>'accepted your self referrence', '25'=>'has turned down your self reference'),
+             "extra_texts"=>array('10'=>'for your request','11'=>'for a service','12'=>'for this request','22'=>'for this service','23'=>'for your request')
          ),
          "get_requests"=>array(
              "success"=>"Successfully Listed"

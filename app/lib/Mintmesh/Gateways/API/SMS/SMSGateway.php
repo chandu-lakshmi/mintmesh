@@ -275,6 +275,37 @@ class SMSGateway {
             return $this->userRepository->getUserById($resourceOwnerId);
         }
         
+        public function sendSMSForReferring($input)
+        {
+            $numbers = json_decode($input['numbers']);
+            $sms_type= $input['sms_type'] ;
+            $other_name = !empty($input['other_name'])?$input['other_name']:"" ;
+            if (!empty($numbers) && is_array($numbers))
+            {
+                $successList = array();
+                foreach ($numbers as $number)
+                {
+                    $firstName = !empty($this->loggedinUserDetails->firstname)?$this->loggedinUserDetails->firstname:'';
+                    $lastName = !empty($this->loggedinUserDetails->lastname)?$this->loggedinUserDetails->lastname:'';
+                    $senderName = $firstName." ".$lastName ;
+                    $pushData = array() ;
+                    $pushData['message'] = $senderName." wants to introduce you to ".$other_name." for a service, using MintMesh.Download app from www.mintmesh.com";
+                    $pushData['number'] = $number ;
+                    $pushData['from'] = $this->loggedinUserDetails->emailid ;
+                    $pushData['type_sms'] = $input['sms_type'];
+                    Queue::push('Mintmesh\Services\Queues\SMSQueue', $pushData, 'SMS');
+                }
+                $data = array("success_list"=>$successList);
+                $message = array('msg'=>array(Lang::get('MINTMESH.sms.success')));
+                return $this->commonFormatter->formatResponse(200, "success", $message, $data) ;
+            }
+            else
+            {
+                $message = array('msg'=>array(Lang::get('MINTMESH.sms.invalid_input')));
+                return $this->commonFormatter->formatResponse(406, "error", $message, array()) ;
+            }
+        }
+          
      
         
     

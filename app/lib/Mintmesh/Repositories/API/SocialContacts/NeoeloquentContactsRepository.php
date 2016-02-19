@@ -121,12 +121,19 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
         /*
          * create relationships among users
         */
-        public function relateContacts($fromUser , $toUser , $relationAttrs = array())
+        public function relateContacts($fromUser , $toUser , $relationAttrs = array(),$nonMintmesh=0)
         {
             $toUserId = $toUser['id']->getId() ;
+            if (empty($fromUser->id)){
+                $fromUser->id = $fromUser['id']->getId();
+            }
             if (!empty($fromUser) && !empty($toUser) && $toUserId != $fromUser->id )//ignore if same user
             {
-                $queryString = "Match (m:User), (n:User:Mintmesh)
+                $label = "User";
+                if (!empty($nonMintmesh)){
+                    $label = "NonMintmesh";
+                }
+                $queryString = "Match (m:".$label."), (n:User:Mintmesh)
                                 where ID(m)=".$toUserId."  and ID(n)=".$fromUser->id."
                                 create unique (n)-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED');
 
@@ -254,6 +261,102 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
             else
             {
                 return 0;
+            }
+        }
+        
+        public function getContactByPhoneAndName($phone='', $name=""){
+            $phone = $this->appEncodeDecode->filterString(strtolower($phone));
+            $name = $this->appEncodeDecode->filterString(strtolower($name));
+            $queryString = "match (u:User) where fullname='".$name."' and phone='".$phone."' return u limit 1";
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if ($result->count())
+            {
+                return $result ;
+            }
+            else
+            {
+                return false ;
+            }
+        }
+        public function getContactByEmailid($emailid=""){
+            $emailid = $this->appEncodeDecode->filterString(strtolower($emailid));
+            $queryString = "match (u:User) where u.emailid='".$emailid."' return u limit 1";
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if ($result->count())
+            {
+                return $result ;
+            }
+            else
+            {
+                return false ;
+            }
+        }
+        
+        public function createNodeAndRelationForPhoneContacts($from, $neoInput=array(),$relationAttrs = array())
+        {
+            $from = $this->appEncodeDecode->filterString(strtolower($from));
+            try{
+                $queryString = "MATCH (u:User:Mintmesh)
+                            WHERE u.emailid = '".$from."'
+                            CREATE (m:NonMintmesh ";
+                if (!empty($neoInput))
+                {
+                    $queryString.="{";
+                    foreach ($neoInput as $k=>$v)
+                    {
+                        if ($k == 'emailid')
+                            $v= strtolower ($v);
+                        $queryString.=$k.":'".$this->appEncodeDecode->filterString($v)."'," ;
+                    }
+                    $queryString = rtrim($queryString, ",") ;
+                    $queryString.="}";
+                }
+                $queryString.=")<-[:".Config::get('constants.RELATIONS_TYPES.IMPORTED');
+                if (!empty($relationAttrs))
+                {
+                    $queryString.="{";
+                    foreach ($relationAttrs as $k=>$v)
+                    {
+                        $queryString.=$k.":'".$this->appEncodeDecode->filterString($v)."'," ;
+                    }
+                    $queryString = rtrim($queryString, ",") ;
+                    $queryString.="}";
+                }
+                $queryString.="]-(u)" ;
+                //echo $queryString ; exit;
+                $query = new CypherQuery($this->client, $queryString);
+                $result = $query->getResultSet();
+                //$result = NeoUser::whereIn('emailid', $emails)->get();
+                if ($result->count())
+                {
+                    return $result ;
+                }
+                else
+                {
+                    return false ;
+                }
+            } catch (\Everyman\Neo4j\Exception $ex) {
+                    return false ;
+            }
+            
+        }
+        
+        public function getNonMintmeshContact($phone=''){
+            if (!empty($phone)){
+                $phone = $this->appEncodeDecode->filterString(strtolower($phone));
+                $queryString = "match (u:NonMintmesh) where u.phone='".$phone."' return u limit 1";
+                $query = new CypherQuery($this->client, $queryString);
+                $result = $query->getResultSet();
+                if ($result->count())
+                {
+                    return $result ;
+                }
+                else
+                {
+                    return 0 ;
+                }
             }
         }
        

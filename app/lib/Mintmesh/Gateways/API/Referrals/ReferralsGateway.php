@@ -13,12 +13,15 @@ use Mintmesh\Services\Validators\API\Referrals\ReferralsValidator ;
 use Mintmesh\Repositories\API\User\NeoUserRepository;
 use Mintmesh\Repositories\API\User\UserRepository;
 use Mintmesh\Gateways\API\User\UserGateway;
+use Mintmesh\Gateways\API\SocialContacts\ContactsGateway;
 use Mintmesh\Repositories\API\Payment\PaymentRepository;
 use Mintmesh\Gateways\API\Payment\PaymentGateway;
 use LucaDegasperi\OAuth2Server\Authorizer;
 use Mintmesh\Services\ResponseFormatter\API\CommonFormatter ;
 use Mintmesh\Services\APPEncode\APPEncode ;
 use Mintmesh\Services\Emails\API\User\UserEmailManager ;
+use Mintmesh\Repositories\API\SocialContacts\ContactsRepository;
+use Mintmesh\Gateways\API\SMS\SMSGateway;
 use Lang;
 use Config;
 use Log;
@@ -29,7 +32,7 @@ class ReferralsGateway {
     const ERROR_RESPONSE_MESSAGE = 'error';
     protected $referralsRepository, $referralsValidator, $neoUserRepository, $userRepository;  
     protected $authorizer, $appEncodeDecode,$paymentRepository,$paymentGateway;
-    protected $commonFormatter, $loggedinUserDetails,$neoLoggedInUserDetails, $userGateway;
+    protected $commonFormatter, $loggedinUserDetails,$neoLoggedInUserDetails, $userGateway, $contactsGateway, $contactsRepository, $smsGateway;
     protected $userEmailManager,$service_scopes,$job_types;
 	public function __construct(referralsRepository $referralsRepository, 
                                     referralsValidator $referralsValidator, 
@@ -41,7 +44,10 @@ class ReferralsGateway {
                                     PaymentRepository $paymentRepository,
                                     PaymentGateway $paymentGateway,
                                     APPEncode $appEncodeDecode,
-                                    UserEmailManager $userEmailManager) {
+                                    UserEmailManager $userEmailManager,
+                                    ContactsGateway $contactsGateway,
+                                    ContactsRepository $contactsRepository,
+                                    SMSGateway $smsGateway) {
                 //ini_set('max_execution_time', 500);
 		$this->referralsRepository = $referralsRepository;
                 $this->referralsValidator = $referralsValidator;
@@ -56,6 +62,9 @@ class ReferralsGateway {
                 $this->paymentGateway = $paymentGateway ;
                 $this->service_scopes = array('get_service','provide_service');
                 $this->job_types = array('find_candidate','find_job');
+                $this->contactsGateway=$contactsGateway ;
+                $this->contactsRepository=$contactsRepository;
+                $this->smsGateway = $smsGateway ;
                 
 	}
         
@@ -279,7 +288,7 @@ class ReferralsGateway {
                 //send email to user after post done successfully
                 $successSupportTemplate = Lang::get('MINTMESH.email_template_paths.post_success');
                 $receipientEmail = $this->loggedinUserDetails->emailid;
-                $emailData = array('name' => $this->loggedinUserDetails->firstname." ".$this->loggedinUserDetails->lastname,
+                $emailData = array('name' => $this->loggedinUserDetails->firstname,
                                     'email'=>$this->loggedinUserDetails->emailid);
                 $emailiSent = $this->sendEmailToUser($successSupportTemplate, $receipientEmail, $emailData);
                 
@@ -420,6 +429,7 @@ class ReferralsGateway {
         
         public function referContact($input)
         {
+            $referNonMintmesh = 0;
             $this->loggedinUserDetails = $this->getLoggedInUser();
             $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
             $userEmail = $this->neoLoggedInUserDetails->emailid ;
@@ -441,6 +451,48 @@ class ReferralsGateway {
                {
                    $relationCount = 1 ;
                }
+               if (!empty($input['refer_non_mm_email']) && !empty($input['referring'])){//non mintmesh and refer by email
+                   
+                   if (!empty($input['referring_phone_no'])){//create node for this and relate
+                       //check if phone number contact exist
+                       $nonMintmeshContactExist = $this->contactsRepository->getNonMintmeshContact($input['referring']);
+                        if (!empty($nonMintmeshContactExist)){
+                           //create import relation
+                           $relationCreated = $this->contactsRepository->relateContacts($this->neoLoggedInUserDetails , $nonMintmeshContactExist[0] , array(), 1);
+                       }else{
+                       $phoneContactInput = array();
+                       $phoneContactInput['firstname'] = !empty($input['referring_user_firstname'])?$this->appEncodeDecode->filterString($input['referring_user_firstname']):'';
+                       $phoneContactInput['lastname'] = !empty($input['referring_user_lastname'])?$this->appEncodeDecode->filterString($input['referring_user_lastname']):'';
+                       $phoneContactInput['fullname'] = $this->appEncodeDecode->filterString($phoneContactInput['firstname'])." ".$this->appEncodeDecode->filterString($phoneContactInput['lastname']);
+                       $phoneContactInput['phone'] = !empty($input['referring'])?$this->appEncodeDecode->filterString($input['referring']):'';
+                       $importedContact = $this->contactsRepository->createNodeAndRelationForPhoneContacts($userEmail, $phoneContactInput, array());
+                       }
+                       //send sms invitation to p3
+                       $smsInput=array();
+                       $smsInput['numbers'] = json_encode(array($input['referring']));
+                       $otherUserDetails = $this->neoUserRepository->getNodeByEmailId($input['refer_to']) ;
+                       $smsInput['other_name'] = !empty($otherUserDetails->fullname)?$otherUserDetails->fullname:"";
+                       $smsInput['sms_type']=3;
+                       $smsSent = $this->smsGateway->sendSMSForReferring($smsInput);
+                       $referNonMintmesh = 1 ;
+                       
+                   }else{
+                       //check if p2 imported p3
+                        $isImported = $this->contactsRepository->getContactByEmailid($input['referring']);
+                        if (empty($isImported)){
+                            $message = array('msg'=>array(Lang::get('MINTMESH.referrals.no_import')));
+                            return $this->commonFormatter->formatResponse(406, "error", $message, array()) ;
+                            die();
+                        }
+                        else{//send invitation email to p3
+                            $postInvitationArray = array();
+                            $postInvitationArray['emails'] = json_encode(array($input['referring']));
+                            $postInvitationArray['post_id'] = $input['post_id'] ;
+                            $invited = $this->contactsGateway->sendPostReferralInvitations($postInvitationArray);
+                        }
+                   }
+                   
+               }
                $relationAttrs = array();
                $relationAttrs['referred_by'] = strtolower($userEmail) ;
                $relationAttrs['referred_for'] = strtolower($input['refer_to']) ;
@@ -456,13 +508,22 @@ class ReferralsGateway {
                    $relationAttrs['bestfit_message'] = $input['bestfit_message'] ;
                }
                $relationAttrs['relation_count'] = $relationCount ;
-               $result = $this->referralsRepository->referContact($userEmail, $input['refer_to'], $input['referring'], $input['post_id'], $relationAttrs);
+               if (!empty($referNonMintmesh)){
+                   $result = $this->referralsRepository->referContactByPhone($userEmail, $input['refer_to'], $input['referring'], $input['post_id'], $relationAttrs);
+               }else{
+                   $result = $this->referralsRepository->referContact($userEmail, $input['refer_to'], $input['referring'], $input['post_id'], $relationAttrs);
+               }
+               
                if (!empty($result))
                {
-                  //if self referrence
-                  //if ($this->loggedinUserDetails->emailid == $input['referring'])
+//                  if self referrence
+                    if ($this->loggedinUserDetails->emailid == $input['referring']) {
+                        $notificationType = 23;
+                    } else {
+                        $notificationType = 10;
+                    }
                    //send notification to the person who created post
-                   $this->userGateway->sendNotification($this->loggedinUserDetails, $this->neoLoggedInUserDetails, $input['refer_to'], 10, array('extra_info'=>$input['post_id']), array('other_user'=>$input['referring'])) ;
+                   $this->userGateway->sendNotification($this->loggedinUserDetails, $this->neoLoggedInUserDetails, $input['refer_to'], $notificationType, array('extra_info'=>$input['post_id']), array('other_user'=>$input['referring'],'p3_non_mintmesh'=>1)) ;
                    $message = array('msg'=>array(Lang::get('MINTMESH.referrals.success')));
                     return $this->commonFormatter->formatResponse(200, "success", $message, array()) ;
                }
@@ -558,11 +619,29 @@ class ReferralsGateway {
                             {
                                 $postDetails['to_user_'.$k1] = $v1 ;
                             }
+                            //get label of user
+                            if (!empty($v[2][0]) && $v[2][0]=='NonMintmesh'){
+                                $postDetails['to_user_refered_by'] = 'phone';
+                                $postDetails['to_user_is_mintmesh'] = 0;
+                                $postDetails['referred_by_phone'] = 1 ;
+                            }else if(!empty($v[2][1]) && $v[2][1]=='Mintmesh'){
+                                 $postDetails['to_user_is_mintmesh'] = 1;
+                            }else{
+                                 $postDetails['to_user_referred_by'] = 'emailid';
+                                 $postDetails['to_user_is_mintmesh'] = 0;
+                            }
+                            
                             $viaUserDetails = $this->neoUserRepository->getNodeByEmailId($v[1]->referred_by) ;
                             $referred_by_details = $this->userGateway->formUserDetailsArray($viaUserDetails, 'attribute');
                             foreach ($referred_by_details as $k2=>$v2)
                             {
                                 $postDetails['from_user_'.$k2] = $v2 ;
+                            }
+                            //check if self referred
+                            if (!empty($postDetails['to_user_emailid']) && $postDetails['to_user_emailid'] == $postDetails['from_user_emailid']){
+                                $postDetails['to_is_self_referred']=1;
+                            }else{
+                                $postDetails['to_is_self_referred']=0;
                             }
                             $relationDetails = $v[1]->getProperties();
                             if (!empty($relationDetails['one_way_status']))
@@ -632,7 +711,6 @@ class ReferralsGateway {
             $userEmail = $this->neoLoggedInUserDetails->emailid ;
             $users = $this->referralsRepository->getMyReferrals($input['post_id'], $userEmail);
             $postCreatedBy = '' ;
-                        
             if (count($users))
             {
                 $userDetails = array();
@@ -658,6 +736,23 @@ class ReferralsGateway {
                     }
                     $u['relation_count']=$relation_details['relation_count'];
                     $input['post_created_by'] = $u['post_created_by']=$relation_details['referred_for'];
+                    //add label if non mintmesh
+                    if (!empty($v[2][0]) && $v[2][0]=='NonMintmesh'){
+                        $u["is_mintmesh"] = 0 ;
+                        $u["user_referred_by"] = 'phone' ;
+                        $u['referred_by_phone'] = 1 ;
+                    }else if (!empty($v[2][1]) && $v[2][1]=='Mintmesh'){
+                        $u["is_mintmesh"] = 1 ;
+                    }else{
+                        $u["is_mintmesh"] = 0 ;
+                        $u["user_referred_by"] = 'emailid' ;
+                    }
+                    //check if self referred
+                    if (!empty($u['emailid']) && $u['emailid'] == $userEmail){
+                        $u['is_self_referred']=1;
+                    }else{
+                        $u['is_self_referred']=0;
+                    }
                     $userDetails[] = $u ;
                     
                 }
@@ -666,6 +761,7 @@ class ReferralsGateway {
                 $data=array("users"=>$userDetails) ;
                 $data['suggestions'] = !empty($suggestions['data']['users'])?$suggestions['data']['users']:array() ;
                 $data['referrals_count'] = $this->referralsRepository->getPostReferralsCount($input['post_id']);
+                $data['is_self_referred'] = !empty($u['is_self_referred'])?$u['is_self_referred']:0;
                 $message = array('msg'=>array(Lang::get('MINTMESH.referrals.success')));
                 return $this->commonFormatter->formatResponse(200, "success", $message, $data) ;
             }
@@ -743,7 +839,7 @@ class ReferralsGateway {
             $this->loggedinUserDetails = $this->getLoggedInUser();
             $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
             $parse = 1 ;
-            $payment_transaction_id = 0;
+            $payment_transaction_id = $phoneNumberReferred = 0;
             $data = array();
             $userEmail = $this->neoLoggedInUserDetails->emailid ;
             if ($input['post_way'] == 'one')
@@ -754,11 +850,11 @@ class ReferralsGateway {
             {
                 $referral = $userEmail ;
             }
-            /*if ($input['status'] == 'declined')
+            if (!empty($input['referred_by_phone']))
             {
-                $parse = 0;
-            }*/
-            $result = $this->referralsRepository->processPost($input['post_id'], $input['referred_by'], $referral, $input['status'], $input['post_way'], $input['relation_count']);
+                $phoneNumberReferred = 1;
+            }
+            $result = $this->referralsRepository->processPost($input['post_id'], $input['referred_by'], $referral, $input['status'], $input['post_way'], $input['relation_count'], $phoneNumberReferred);
             if (count($result))
             {
                 if ($input['post_way'] == 'one')
@@ -768,7 +864,7 @@ class ReferralsGateway {
                    
                     if ($input['status'] != 'declined')
                     {
-                       
+
                         //enter into payment transactions if not free service
                         if (!empty($result[0][0]) && empty($result[0][0]->free_service))
                         {
@@ -834,17 +930,25 @@ class ReferralsGateway {
                             $referred_by_neo_user = $this->neoUserRepository->getNodeByEmailId($input['referred_by']) ;
                             //add credits
                             $this->userRepository->logLevel(3, $input['referred_by'], $userEmail, $referral,Config::get('constants.POINTS.SEEK_REFERRAL'));
-                            $this->userGateway->sendNotification($referred_by_details, $referred_by_neo_user, $referral, 11, array('extra_info'=>$input['post_id']), array('other_user'=>$userEmail),1) ;
-                            //send notification to via person
-                            $this->userGateway->sendNotification($this->loggedinUserDetails, $this->neoLoggedInUserDetails, $input['referred_by'], 12, array('extra_info'=>$input['post_id']), array('other_user'=>$referral),1) ;
-                            //send battle card to u1 containing u3 details
-                            $this->userGateway->sendNotification($referred_by_details, $referred_by_neo_user, $this->loggedinUserDetails->emailid, 20, array('extra_info'=>$input['post_id']), array('other_user'=>$referral),1) ;
-                
+                            if($input['from_user'] == $input['referred_by']) {
+                                //send notification to via person
+                                $this->userGateway->sendNotification($this->loggedinUserDetails, $this->neoLoggedInUserDetails, $input['referred_by'], 24, array('extra_info'=>$input['post_id']), array('other_user'=>$referral),1) ;
+                            } else {
+                                $this->userGateway->sendNotification($referred_by_details, $referred_by_neo_user, $referral, 11, array('extra_info'=>$input['post_id']), array('other_user'=>$userEmail),1) ;
+                                //send notification to via person
+                                $this->userGateway->sendNotification($this->loggedinUserDetails, $this->neoLoggedInUserDetails, $input['referred_by'], 12, array('extra_info'=>$input['post_id']), array('other_user'=>$referral),1) ;
+                                //send battle card to u1 containing u3 details
+                                $this->userGateway->sendNotification($referred_by_details, $referred_by_neo_user, $this->loggedinUserDetails->emailid, 20, array('extra_info'=>$input['post_id']), array('other_user'=>$referral),1) ;
+                            }
                         }
                     }
                     else
                     {
-                        $this->userGateway->sendNotification($this->loggedinUserDetails, $this->neoLoggedInUserDetails, $input['referred_by'], 15, array('extra_info'=>$input['post_id']), array('other_user'=>$referral),$parse) ;
+                        if($input['from_user'] == $input['referred_by']) {
+                            $this->userGateway->sendNotification($this->loggedinUserDetails, $this->neoLoggedInUserDetails, $input['referred_by'], 25, array('extra_info'=>$input['post_id']), array('other_user'=>$referral),$parse) ;
+                        } else {
+                            $this->userGateway->sendNotification($this->loggedinUserDetails, $this->neoLoggedInUserDetails, $input['referred_by'], 15, array('extra_info'=>$input['post_id']), array('other_user'=>$referral),$parse) ;
+                        }
                     }
                     
                 }
@@ -928,10 +1032,28 @@ class ReferralsGateway {
                                 $returnArray["to_".$k] = $v ;
                             }
                         }
+                        //add label if non mintmesh
+                        if (!empty($result[0][3][0]) && $result[0][3][0]=='NonMintmesh'){
+                            $returnArray["to_is_mintmesh"] = 0 ;
+                            $returnArray["to_referred_by"] = 'phone' ;
+                            $returnArray['referred_by_phone'] = 1 ;
+                        }else if (!empty($result[0][3][1]) && $result[0][3][1]=='Mintmesh'){
+                            $returnArray["to_is_mintmesh"] = 1 ;
+                            $returnArray["to_referred_by"] = '' ;
+                        }else{
+                            $returnArray["to_is_mintmesh"] = 0 ;
+                            $returnArray["to_referred_by"] = 'emailid' ;
+                        }
+                        //check if self referred
+                        if (!empty($returnArray['to_emailid']) && $returnArray['to_emailid'] == $returnArray['from_emailid']){
+                            $returnArray['is_self_referred']=1;
+                        }else{
+                            $returnArray['is_self_referred']=0;
+                        }
                         //check if phone is verified if p3 is loggedin
                         $this->loggedinUserDetails = $this->getLoggedInUser();
                         $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
-                        if ($returnArray['to_emailid'] == $this->loggedinUserDetails->emailid)
+                        if (isset($returnArray['to_emailid']) && $returnArray['to_emailid'] == $this->loggedinUserDetails->emailid)
                         {
                             $phone_verified = !empty($this->neoLoggedInUserDetails->phoneverified)?$this->neoLoggedInUserDetails->phoneverified:0;
                             $returnArray['phone_verified'] = $phone_verified ;
@@ -1001,7 +1123,8 @@ class ReferralsGateway {
                     $returnArray["optional_message"] = !empty($result[0][0]->message)?$result[0][0]->message:"";
                     $returnArray["bestfit_message"] = !empty($result[0][0]->bestfit_message)?$result[0][0]->bestfit_message:"";
                     $returnArray["p2_updated_at"] = !empty($result[0][0]->created_at)?$result[0][0]->created_at:"";
-                    $returnArray["service_name"] = !empty($result[0][2]->service)?$result[0][2]->service:"";
+                    $returnArray["service_name"] = !empty($result[0][2]->service_name)?$result[0][2]->service_name:"";
+                    $returnArray["service_description"] = !empty($result[0][2]->service)?$result[0][2]->service:"";
                     $returnArray["service_created_at"] = !empty($result[0][2]->created_at)?$result[0][2]->created_at:"";
                     $returnArray['points_awarded'] = Config::get('constants.POINTS.SEEK_REFERRAL') ;
                     if ($isReferredUser)//p3 is veiwing it
@@ -1026,16 +1149,20 @@ class ReferralsGateway {
         
         public function getMyReferralContacts($input)
         {
+            $selfReferred = 0;
             $this->loggedinUserDetails = $this->getLoggedInUser();
             $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
             $input['email'] = $userEmail = $this->neoLoggedInUserDetails->emailid ;
             $postReferralsResult = $this->referralsRepository->getPostReferrals($input['post_id'], $userEmail);
-            $referrals = $users = array();
+            $referrals = $users = $nonMintmeshReferrals = array();
             if (count($postReferralsResult))
             {
                 foreach ($postReferralsResult as $k=>$v)
                 {
                     $referrals[]=$v[0]->emailid ;
+                    if ($v[0]->emailid == $this->loggedinUserDetails->emailid){//i.e if seld referred
+                        $selfReferred = 1 ;
+                    }
                 }
                 
             }
@@ -1053,7 +1180,19 @@ class ReferralsGateway {
                         
                     }
                 }
-                $data = array("users"=>$users) ;
+                //get non mintmesh users who already got referred
+                $nonMintmeshUsersResult = $this->referralsRepository->getMyNonMintmeshReferrals($input['post_id'], $userEmail);
+                if (count($nonMintmeshUsersResult))
+                {
+                        foreach ($nonMintmeshUsersResult as $k=>$v)
+                        {
+                            
+                            if (empty($v[1][1]))//this skips the mintmesh users, i.e label with user:Mintmesh
+                                $nonMintmeshReferrals[]=$this->userGateway->formUserDetailsArray($v[0],'property') ;
+                        }
+
+                }
+                $data = array("users"=>$users,"self_referred"=>$selfReferred, "non_mintmesh_referrals"=>$nonMintmeshReferrals) ;
                 $message = array('msg'=>array(Lang::get('MINTMESH.referrals.success')));
                 return $this->commonFormatter->formatResponse(200, "success", $message, $data) ;
             }
@@ -1276,6 +1415,12 @@ class ReferralsGateway {
                                         $a['other_user_'.$k] = $v ;
                                     }
                                 }
+                                //add if referred by phone number
+                                if ($relation[4][0] == 'NonMintmesh'){
+                                    $a['referred_by_phone'] = 1 ;
+                                }else{
+                                    $a['referred_by_phone'] = 0 ;
+                                }
                                 $a['post_id'] = $postId ;
                                 $a['post_status'] = !empty($postDetails['status'])?strtolower($postDetails['status']):'' ;
                                 $a['referrals_count'] = $this->referralsRepository->getPostReferralsCount($postId);
@@ -1360,7 +1505,12 @@ class ReferralsGateway {
                         }
                     }
                     $forUser = $this->neoUserRepository->getNodeByEmailId($res->for_user);
+                    if (!count($forUser)){//i.e if details not found in email users list
+                        $forUser = $this->neoUserRepository->getNonMintmeshUserDetails($res->for_user);//find details in non mintmesh users list
+                        $forUserDetails = $this->userGateway->formUserDetailsArray($forUser, 'property') ;
+                    }else{
                     $forUserDetails = $this->userGateway->formUserDetailsArray($forUser) ;
+                    }
                     if (!empty($forUserDetails))
                     {
                         foreach ($forUserDetails as $k=>$v)

@@ -61,10 +61,10 @@
 		</tr>
 		<tr style="border-bottom:1px solid #C9C9C9">
 			<td colspan="2" style="font-size:18px;padding:90px 20px 70px;line-height:30px;">
-					<p style="padding-bottom:50px;margin:0px">Sincerely,<br>
+					<p style="padding-bottom:50px;margin:0px">Sincerely, <br>
 					<span style="color:#C9C9C9;margin:0px">(MintMesh team)</span></p>
 				
-                                        <p align="center" style="padding-top:20px;border-top:1px solid #C9C9C9;color:#C9C9C9;margin:0px">If you need assistance,please contact <br>MintMesh Support<span style="color:black;margin:0px"><a style="color:#333333;text-decoration:none;" href="mailto:support@mintmesh.com" >(support@mintmesh.com)</a></span></p>
+                                        <p align="center" style="padding-top:20px;border-top:1px solid #C9C9C9;color:#C9C9C9;margin:0px">If you need assistance, please contact <br>MintMesh Support<span style="color:black;margin:0px"><a style="color:#333333;text-decoration:none;" href="mailto:support@mintmesh.com" >(support@mintmesh.com)</a></span></p>
 				</td>
 		</tr>
 	</table>

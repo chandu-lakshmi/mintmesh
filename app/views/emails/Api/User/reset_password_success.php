@@ -28,14 +28,14 @@
   </tr>
   <tr>
     <td valign="top" class="textContent" style="padding:20px 20px 10px;line-height:135%;letter-spacing:0.2px;font-size:18px; font-weight:normal; color:#777777;">
-      <h3 style="color:#000000;line-height:125%;font-family: 'Roboto', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello <?php echo ucfirst($name);?>,</h3>
+      <h3 style="color:#000000;line-height:125%;font-family: 'Roboto', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello <?php echo ucfirst($name);?>, </h3>
       <p>The password for the MintMesh account: <a href="mailto:<?php echo $email;?>" target="_blank"><?php echo $email;?></a> was recently changed.</p>
       <p>If you requested this change then you can ignore this email.</p>
       <p>If this wasn't you, your account may have been compromised. Please reset your password immediately from MintMesh app.</p>
        </td>
   </tr>
   <tr>
-    <td valign="top" class="textContent" style="padding:30px 20px 10px;font-size:18px; font-weight:normal; color:#777777;  line-height:135%;"><p style="color:#333333; font-family: 'Roboto', sans-serif;font-size:18px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Sincerely</p>
+    <td valign="top" class="textContent" style="padding:30px 20px 10px;font-size:18px; font-weight:normal; color:#777777;  line-height:135%;"><p style="color:#333333; font-family: 'Roboto', sans-serif;font-size:18px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Sincerely, </p>
       <p style="color:#777777;font-size:18px; margin:5px 0px 0px; ">MintMesh Team</p></td>
   </tr>
   <tr>

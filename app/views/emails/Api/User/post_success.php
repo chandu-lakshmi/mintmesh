@@ -27,18 +27,18 @@
   </tr>
   <tr>
     <td valign="top" class="textContent" style="padding:20px 20px 10px;line-height:135%;letter-spacing:0.2px;font-size:18px; font-weight:normal; color:#777777;"><h2 style="text-align:center;font-weight:normal;font-family: 'Roboto', sans-serif;font-size:26px;margin-bottom:35px;margin-top:0px; color:#cc6e35;letter-spacing:0.4px;font-weight:300;" class="wish_txt">MintMesh Invitation</h2>
-      <h3 style="color:#000000;line-height:125%;font-family: 'Roboto', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Dear <?php echo ucfirst($name) ; ?>,</h3>
-      <p>Now that you posted your request,here's what will happen next.</p>
+      <h3 style="color:#000000;line-height:125%;font-family: 'Roboto', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello <?php echo ucfirst($name) ; ?>, </h3>
+      <p>Now that you posted your request, here's what will happen next.</p>
       <p style="text-align:center" ><img src="https://staging.mintmesh.com/public/images/img1.png"   align="center" style="max-width:100%;text-align:center;padding:20px 30px 10px;" alt="logo" title="Text"></p>
             <p style="text-align:center; color:#000; "> <b>1.</b>This request is visible to your network.They will pick these requests and refer suitable contacts.</p>
             <p style="text-align:center"><img src="https://staging.mintmesh.com/public/images/img2.png"   align="center" style="max-width:100%;text-align:center;padding:20px 30px 10px;" alt="logo" title="Text"></p>
-            <p style="text-align:center;color:#000000;"> <b>2.</b>The referrals made by your friends appear as action cards on your home screen.you can review these referrals,check out the personalized messages and accept or decline this referral. </p>
+            <p style="text-align:center;color:#000000;"> <b>2.</b>The referrals made by your friends appear as action cards on your home screen.you can review these referrals, check out the personalized messages and accept or decline this referral. </p>
             <p style="text-align:center;" ><img src="https://staging.mintmesh.com/public/images/img3.png"   align="center" style="max-width:100%;text-align:center;padding:20px 30px 10px;" alt="logo" title="Text"></p>
-            <p style="text-align:center;color:#000000;"> <b>3.</b>Once you accept the referral,you will see complete profile details of the referred contact and get an action card to add this contact. </p>
+            <p style="text-align:center;color:#000000;"> <b>3.</b>Once you accept the referral, you will see complete profile details of the referred contact and get an action card to add this contact. </p>
       </td>
   </tr>
   <tr>
-    <td valign="top" class="textContent" style="padding:30px 20px 10px;font-size:18px; font-weight:normal; color:#777777;  line-height:135%;"><p style="color:#333333; font-family: 'Roboto', sans-serif;font-size:18px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Thank You,</p>
+    <td valign="top" class="textContent" style="padding:30px 20px 10px;font-size:18px; font-weight:normal; color:#777777;  line-height:135%;"><p style="color:#333333; font-family: 'Roboto', sans-serif;font-size:18px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Sincerely, </p>
       <p style="color:#777777;font-size:18px; margin:5px 0px 0px; ">MintMesh Team</p></td>
   </tr>
   <tr>

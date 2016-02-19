@@ -209,7 +209,7 @@ p{font-size:18px !important;}
                                                 <tr>
                                                     <td valign="top" class="textContent" style="padding:10px 30px 10px;">
                                                     <h2 style="text-align:left;font-weight:normal;font-family: 'Roboto', sans-serif;font-size:30px;margin-bottom:35px;margin-top:0px; color:#cc6e35;line-height:135%;letter-spacing:0.4px;font-weight:300;" class="wish_txt">Thank you for using MintMesh.</h2>
-                                                        <h3 style="color:#000000;line-height:125%;font-family: 'Roboto', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello Chris,</h3>
+                                                        <h3 style="color:#000000;line-height:125%;font-family: 'Roboto', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello <?php echo ucfirst($name) ; ?>, </h3>
                                                         
                                                         <div style="text-align:left;font-family: 'Roboto', sans-serif;font-size:20px;margin-bottom:0;color:#777777;line-height:135%;letter-spacing:0.2px;">
 <p>You have requested for a payout of &#x20B9; <?php echo $amount;?> amount.</p>

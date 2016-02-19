@@ -38,7 +38,7 @@
 				<table>
 				<tr>
 					<td>
-						 <h3 style="color:#000000;line-height:125%;font-family: 'Roboto', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello Admin,</h3>
+						 <h3 style="color:#000000;line-height:125%;font-family: 'Roboto', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello Admin, </h3>
 					</td>
 				</tr>
 				<tr>

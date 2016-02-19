@@ -28,13 +28,13 @@
   </tr>
   <tr>
     <td valign="top" class="textContent" style="padding:20px 20px 10px;line-height:135%;letter-spacing:0.2px;font-size:18px; font-weight:normal; color:#777777;">
-      <h3 style="color:#000000;line-height:125%;font-family: 'Roboto', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello <?php echo ucfirst($name) ; ?>,</h3>
+      <h3 style="color:#000000;line-height:125%;font-family: 'Roboto', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello <?php echo ucfirst($name) ; ?>, </h3>
       <p>Please click the button below to reset your password activation.</p>
       <p>Thank you for choosing MintMesh.</p>
       <p style="text-align:center; margin-top:50px;" ><a style="color:#FFFFFF;text-decoration:none;font-family: 'Roboto', sans-serif;font-size:20px;padding-top:20px;padding-bottom:20px;padding-right:15px;padding-left:15px;display: block; background:#269b7b; width:60%; margin:0px auto; border-radius:5px; line-height:20px; " href="<?php echo $link ; ?>" target="_blank">Reset Password</a> </p></td>
   </tr>
   <tr>
-    <td valign="top" class="textContent" style="padding:30px 20px 10px;font-size:18px; font-weight:normal; color:#777777;  line-height:135%;"><p style="color:#333333; font-family: 'Roboto', sans-serif;font-size:18px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Sincerely</p>
+    <td valign="top" class="textContent" style="padding:30px 20px 10px;font-size:18px; font-weight:normal; color:#777777;  line-height:135%;"><p style="color:#333333; font-family: 'Roboto', sans-serif;font-size:18px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Sincerely, </p>
       <p style="color:#777777;font-size:18px; margin:5px 0px 0px; ">MintMesh Team</p></td>
   </tr>
   <tr>

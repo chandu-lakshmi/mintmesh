@@ -24,12 +24,12 @@ class ReferralsValidator extends Validator {
                 //'page_no'          =>'required'
              ),
         'refer_contact' => array(
-                'referring'      => 'required|email',
+                'referring'      => 'required',
                 'refer_to'          =>'required|email',
                 'post_id'          =>'required'
              ),
         'process_post' => array(
-                'from_user'      => 'required|email',
+                'from_user'      => 'required',
                 'referred_by'          =>'required|email',
                 'post_way'          =>'required',
                 'post_id'          =>'required',
@@ -39,7 +39,7 @@ class ReferralsValidator extends Validator {
         'post_status_details' => array(
                 'from_user'      => 'required|email',
                 'referred_by'          =>'required|email',
-                'referral'          =>'required|email',
+                'referral'          =>'required',
                 'relation_count'          =>'required',
                 'post_id'          =>'required'
              ),

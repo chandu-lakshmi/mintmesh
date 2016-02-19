@@ -206,7 +206,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                 }
                 else
                 {
-                    $queryString = "MATCH (n:User:Mintmesh {emailid: '".$emailId."'}) RETURN n" ;
+                    $queryString = "MATCH (n:User {emailid: '".$emailId."'}) RETURN n" ;
                     $query = new CypherQuery($this->client, $queryString);
                     return $result = $query->getResultSet();
                 }
@@ -1094,7 +1094,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                 $userEmail = $this->appEncodeDecode->filterString(strtolower($userEmail));
                 $queryString = "match (u:User:Mintmesh)-[r:ACCEPTED_CONNECTION]-(u1:User:Mintmesh)-[r1:ACCEPTED_CONNECTION]-(u2:User:Mintmesh) where u.emailid='".$userEmail."' and u2.emailid<>'".$userEmail."' and not (u)-[:ACCEPTED_CONNECTION]-(u2) with u2
                                 match (u2)-[r2:ACCEPTED_CONNECTION]-(u3) return u2,count(distinct(u3))
-                                order by count(distinct(u3)) desc  limit 20";
+                                order by count(distinct(u3)) desc  limit 5";
                 $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();
             }
@@ -1391,13 +1391,13 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             if(!empty($userEmail)){
                    $queryString = "match (u:User:Mintmesh)-[r:ACCEPTED_CONNECTION]-(u1:User:Mintmesh)-[r1:ACCEPTED_CONNECTION]-(u2:User:Mintmesh) where u.emailid='".$userEmail."' and u2.emailid<>'".$userEmail."' and not (u)-[:ACCEPTED_CONNECTION]-(u2) with u2
                    match (u2)-[r2:ACCEPTED_CONNECTION]-(u3) return count(distinct(u2)),count(distinct(u3))
-                   order by count(distinct(u3)) desc  limit 20";
+                   order by count(distinct(u3)) desc  limit 5";
                    //$queryString = "MATCH (u:User:Mintmesh),(u1:User:Mintmesh) where lower(u1.you_are)='4' and u1.location=~('.*' + u.location) and u.emailid='".$userEmail."' and u1.emailid<>'".$userEmail."' and not (u)-[:ACCEPTED_CONNECTION]-(u1) RETURN count(DISTINCT(u1)) ";
                    $query = new CypherQuery($this->client, $queryString);
                     $result = $query->getResultSet();
                     if (isset($result[0]) && isset($result[0][0]))
                     {
-                        return ($result[0][0]>20)?20:$result[0][0];
+                        return ($result[0][0]>5)?5:$result[0][0];
                     }
                     else
                     {
@@ -1424,6 +1424,26 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                 return false ;
             }
         }
+        
+        public function getNonMintmeshUserDetails($val)
+        {
+            if (!empty($val))
+            {
+                $val = $this->appEncodeDecode->filterString(strtolower($val));
+                $queryString = "MATCH (n:NonMintmesh {phone: '".$val."'}) RETURN n" ;
+                $query = new CypherQuery($this->client, $queryString);
+                $result = $query->getResultSet();
+                 if (count($result) && count($result[0]))
+                {
+                    return $result[0][0] ;
+                }
+            }
+            else{
+                return 0;
+            }
+        }
+        
+        
 		 
 }
 ?>

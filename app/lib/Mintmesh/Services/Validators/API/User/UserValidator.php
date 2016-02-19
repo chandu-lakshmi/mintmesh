@@ -124,7 +124,7 @@ class UserValidator extends Validator {
         public static $c_rule1 = array('industry','job_function','position','company');
         public static $c_rule2 = array('industry','position','company');
         public static $c_rule3 = array('profession');
-        public static $c_rule4 = array('specialization','company');
+        public static $c_rule4 = array('industry','company');
         public static $c_rule5 = array('college','course');
         public static $c_rule6 = array();
         public static $c_rule7 = array('position','company');

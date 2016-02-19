@@ -67,7 +67,7 @@ class UserGateway {
                 $this->infoTypes = array('experience', 'education', 'certification');
                 $this->directProfileRedirections = array('2','12','14');
                 $this->declines = array('15','16');
-                $this->postNotifications = array(10,11,12,13,14,15,16,22);
+                $this->postNotifications = array(10,11,12,13,14,15,16,20,22,23,24,25);
                 $this->other_status_diferrent = array(10,12);
                 $this->selfReferNotifications = array(17) ;
                 $this->referFlowTypes = array(3,4,5,6,7,8,9);
@@ -1370,7 +1370,8 @@ class UserGateway {
                             $r[$key]=$val ;
                         }
                     }
-                    
+                    $r['position'] = empty($r['position'])?$r['you_are_name']:$r['position'];
+                    //$r['company'] = empty($r['company'])?'Company not yet added':$r['company'];
                     $data = array("user"=>$r);
                     $responseCode = self::SUCCESS_RESPONSE_CODE;
                     $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
@@ -1954,14 +1955,14 @@ class UserGateway {
                         if (in_array($notification->notifications_types_id,$this->postNotifications))
                         {
                             $postDetails = $postRelationsDetails = $postDetailsR = array() ;
-                            if ($notification->notifications_types_id == 10)
+                            if ($notification->notifications_types_id == 10 || $notification->notifications_types_id == 23)
                             {
-                                $e = $notification->other_email ;
+                                $e = !empty($notification->other_email)?$notification->other_email:$notification->other_phone ;
                                 $f = $notification->from_email ;
                             }
-                            else if ($notification->notifications_types_id == 11 || $notification->notifications_types_id == 20)
+                            else if ($notification->notifications_types_id == 20)
                             {
-                                $e = $notification->to_email ;
+                                $e = !empty($notification->other_email)?$notification->other_email:$notification->other_phone ;
                                 $f = $notification->from_email ;
                             }
                             else if ($notification->notifications_types_id == 14 || $notification->notifications_types_id == 22)
@@ -1972,11 +1973,11 @@ class UserGateway {
                             else if ($notification->notifications_types_id == 16 || $notification->notifications_types_id == 13)
                             {
                                 $e = $notification->from_email ;
-                                $f = $notification->other_email ;
+                                $f = !empty($notification->other_email)?$notification->other_email:$notification->other_phone ;
                             }
-                            else if ($notification->notifications_types_id == 12 || $notification->notifications_types_id == 15)
+                            else if ($notification->notifications_types_id == 12 || $notification->notifications_types_id == 15 || $notification->notifications_types_id == 24 || $notification->notifications_types_id == 25)
                             {
-                                $e = $notification->other_email ;
+                                $e = !empty($notification->other_email)?$notification->other_email:$notification->other_phone ;
                                 $f = $notification->to_email ;
                             }
                             else
@@ -2123,7 +2124,7 @@ class UserGateway {
                     $you_are_name = $this->userRepository->getYouAreName($r['you_are']);
                 }
                 $profession_name = "";
-                if (isset($r['profession']))//get job function name
+                if (isset($r['profession']))//get profession name
                 {
                     $profession_name = $this->userRepository->getProfessionName($r['profession']);
                 }
@@ -2320,7 +2321,7 @@ class UserGateway {
 	        }
         }
         
-        public function sendNotification($fromUser, $neofromUser, $email, $notificationType = 0, $extraInserts = array(), $otherInfoParams = array(),$parse=1)
+        public function sendNotification($fromUser, $neofromUser, $email, $notificationType = 0, $extraInserts = array(), $otherInfoParams = array(),$parse=1, $nonMintmesh=0)
         {
             if (!empty($parse))//send if direct notification
             {
@@ -2328,10 +2329,12 @@ class UserGateway {
                 {
                     
                     $userDeviceResults = $this->neoUserRepository->getDeviceToken($email);
+                    $is_mintmesh = 1 ;
+                    
                     if (!empty($userDeviceResults))
                     foreach ($userDeviceResults as $userDeviceResult)
                     {
-                        $other_email = "" ;
+                        $other_email = $other_phone = "" ;
                         $userDetails = isset($userDeviceResult[0])?$userDeviceResult[0]->getProperties():array() ;
                         $deviceDetails = isset($userDeviceResult[1])?$userDeviceResult[1]->getProperties():array() ;
                         if (!empty($userDetails))
@@ -2340,20 +2343,26 @@ class UserGateway {
 
                             if (!empty($otherInfoParams))
                             {
-                                if (!empty($otherInfoParams['other_user']))
+                                if (!empty($otherInfoParams['other_user']))//for not mintmesh
                                 {
-                                $otherUserDetails = $this->neoUserRepository->getNodeByEmailId($otherInfoParams['other_user']) ; 
+                                    $otherUserDetails = $this->neoUserRepository->getNodeByEmailId($otherInfoParams['other_user']) ;
+                                    if (!count($otherUserDetails)){//if non mintmesh user
+                                        $otherUserDetails = $this->neoUserRepository->getNonMintmeshUserDetails($otherInfoParams['other_user']) ; 
+                                        $is_mintmesh = 0 ;
+                                        $other_phone = $otherUserDetails->phone ;
+                                    }
+                                
                                 if (count($otherUserDetails))
                                 {
                                     if (in_array($notificationType, $this->notificationsTypes))
                                     {
-                                        $msg = $msg." ". $otherUserDetails->fullname;
+                                        $msg = $msg." ". !empty($otherUserDetails->fullname)?$otherUserDetails->fullname:"";
                                     }
                                     if (in_array($notificationType,$this->extraTextsNotes))//for posts
                                     {
                                         $msg = $msg." ".Lang::get('MINTMESH.notifications.extra_texts.'.$notificationType) ;
                                     }
-                                    $other_email = $otherUserDetails->emailid ;
+                                    $other_email = !empty($otherUserDetails->emailid)?$otherUserDetails->emailid:"" ;//for non mintmesh users
                                 }
                                 }
                             }
@@ -2364,6 +2373,8 @@ class UserGateway {
                                     'from_email' => $fromUser->emailid,
                                     'to_email' => $userDetails['emailid'],
                                     'other_email' => $other_email,
+                                    'other_phone'=>$other_phone,
+                                    'for_mintmesh' => $is_mintmesh,
                                     'message' => Lang::get('MINTMESH.notifications.messages.'.$notificationType),
                                     'ip_address' => $_SERVER['REMOTE_ADDR'],
                                     'created_at' => date('Y-m-d H:i:s')
@@ -2438,7 +2449,7 @@ class UserGateway {
                         foreach ($notifications as $notification)
                         {
                             //check if user is not detaileted for only some notification types
-                            $is_deleted = 0;
+                            $is_deleted = $normalFlow = 0;
                             /*if (in_array($notification->notifications_types_id,$this->deleteUserTypes))//commented to check for every notification
                             {*/
                                 $connectedToMe = $this->neoUserRepository->checkConnection($loggedinUserDetails->emailid,$notification->from_email);
@@ -2448,32 +2459,57 @@ class UserGateway {
                                 }
                             //}
                             if ($notification->notifications_types_id == 20){//if payment done notification the change the from and other details
-                                $otherNoteUser = $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($notification->other_email) ;
+                                if (empty($notification->for_mintmesh)){//i.e refred non mintmesh user
+                                    $otherNoteUser = $neoUserDetails = $this->neoUserRepository->getNonMintmeshUserDetails($notification->other_phone) ;
+                                    $normalFlow = 0;
+                                }else{
+                                    $otherNoteUser = $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($notification->other_email) ;
+                                     $normalFlow = 1 ;
+                                }
+                                
                             }
                             else{
                                 $fromNoteUser = $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($notification->from_email) ;
+                                $normalFlow = 1 ;
                             }
                             
                             if (!empty($neoUserDetails))
                             {
                                 $noReferralsPost = false ;
                                 $note = array();
-                                $note = $this->formUserDetailsArray($neoUserDetails, 'attribute');
+                                 if (empty($notification->for_mintmesh) && empty($normalFlow)){
+                                    $note = $this->formUserDetailsArray($neoUserDetails, 'property');
+                                    //print_r($note);exit;
+                                 }else{
+                                     $note = $this->formUserDetailsArray($neoUserDetails, 'attribute');
+                                 }
                                 $thirdName = "";
-                                if (!empty($notification->other_email))
+                                if (!empty($notification->other_email) || !empty($notification->other_phone))//consider mintmesh and non mintmesh users
                                 {
                                     if ($notification->notifications_types_id == 20){//if payment done notification the change the from and other details
                                        $fromNoteUser = $otherEmailDetails = $this->neoUserRepository->getNodeByEmailId($notification->from_email) ;
+                                       $normalFlow = 1 ;
                                     }
                                     else{
-                                        $otherNoteUser = $otherEmailDetails = $this->neoUserRepository->getNodeByEmailId($notification->other_email) ;
+                                        if (empty($notification->for_mintmesh)){//i.e refred non mintmesh user
+                                            $otherNoteUser = $otherEmailDetails = $this->neoUserRepository->getNonMintmeshUserDetails($notification->other_phone) ;
+                                            $normalFlow = 0;
+                                        }else{
+                                            $otherNoteUser = $otherEmailDetails = $this->neoUserRepository->getNodeByEmailId($notification->other_email) ;
+                                             $normalFlow = 1 ;
+                                        }
                                     }
-                                    
                                     if (in_array($notification->notifications_types_id, $this->notificationsTypes))
                                     {
                                         $thirdName = !empty($otherNoteUser->fullname)?$otherNoteUser->fullname:'' ;
                                     }
-                                    $otherUserDetails = $this->formUserDetailsArray($otherEmailDetails, 'attribute');
+                                    if (empty($notification->for_mintmesh) && empty($normalFlow)){
+                                        //echo "here";exit;
+                                        $otherUserDetails = $this->formUserDetailsArray($otherEmailDetails, 'property');
+                                    }else{
+                                        $otherUserDetails = $this->formUserDetailsArray($otherEmailDetails, 'attribute');
+                                    }
+                                    
                                     foreach ($otherUserDetails as $k=>$v)
                                     {
                                         $note['other_user_'.$k] = $v ;
@@ -2494,19 +2530,23 @@ class UserGateway {
                                 $note['push_id'] = $notification->id ;
                                 $note['read_status'] = $notification->status ;
                                 $note['other_status'] = $notification->other_status ;
+                                if (empty($notification->for_mintmesh) && !empty($notification->other_phone))//i.e referrals by phone contact
+                                {
+                                    $note['referred_by_phone'] = 1;
+                                }
                                 //get post details if post type
                                 if (in_array($notification->notifications_types_id,$this->postNotifications))
                                 {
 
                                     $postDetails = $postRelationsDetails = $postDetailsR = array() ;
-                                    if ($notification->notifications_types_id == 10)
+                                    if ($notification->notifications_types_id == 10 || $notification->notifications_types_id == 23)
                                     {
-                                        $e = $notification->other_email ;
+                                        $e = !empty($notification->other_email)?$notification->other_email:$notification->other_phone ;
                                         $f = $notification->from_email ;
                                     }
-                                    else if ($notification->notifications_types_id == 11 || $notification->notifications_types_id == 20)
+                                    else if ($notification->notifications_types_id == 20)
                                     {
-                                        $e = $notification->to_email ;
+                                        $e = !empty($notification->other_email)?$notification->other_email:$notification->other_phone ;
                                         $f = $notification->from_email ;
                                     }
                                     else if ($notification->notifications_types_id == 14 || $notification->notifications_types_id == 22)
@@ -2517,11 +2557,11 @@ class UserGateway {
                                     else if ($notification->notifications_types_id == 16 || $notification->notifications_types_id == 13)
                                     {
                                         $e = $notification->from_email ;
-                                        $f = $notification->other_email ;
+                                        $f = !empty($notification->other_email)?$notification->other_email:$notification->other_phone ;
                                     }
-                                    else if ($notification->notifications_types_id == 12 || $notification->notifications_types_id == 15)
+                                    else if ($notification->notifications_types_id == 12 || $notification->notifications_types_id == 15 || $notification->notifications_types_id == 24 || $notification->notifications_types_id == 25)
                                     {
-                                        $e = $notification->other_email ;
+                                        $e = !empty($notification->other_email)?$notification->other_email:$notification->other_phone ;
                                         $f = $notification->to_email ;
                                     }
                                     else
@@ -2529,8 +2569,11 @@ class UserGateway {
                                         $e = $notification->to_email ;
                                         $f = $notification->from_email ;
                                     }
-                                    if (!empty($notification->extra_info))
-                                    $postDetailsR = $this->referralsRepository->getPostAndReferralDetails($notification->extra_info,$f,$e);
+                                    if (!empty($notification->extra_info) && empty($notification->other_phone)){//i.e for email referrals
+                                        $postDetailsR = $this->referralsRepository->getPostAndReferralDetails($notification->extra_info,$f,$e);
+                                    }else if(!empty($notification->extra_info) && !empty($notification->other_phone)){//i.e for non mintmesh referrals
+                                        $postDetailsR = $this->referralsRepository->getPostAndReferralDetailsNonMintmesh($notification->extra_info,$f,$e);
+                                    }
                                     if (count($postDetailsR))
                                     {
                                         $postRelationsDetails = isset($postDetailsR[0][0])?$postDetailsR[0][0]->getProperties():array();
@@ -2546,6 +2589,9 @@ class UserGateway {
                                         }
                                         $note['referral'] = $e ;
                                         $note['post_id'] = !empty($notification->extra_info)?$notification->extra_info:0;
+                                        if ($e == $f){//self referred
+                                            $note['is_self_referred'] = 1 ;
+                                        }
                                     }
 
 
@@ -2561,7 +2607,7 @@ class UserGateway {
 
                                 }
                                 // open requests battle cards
-                                if ($notification->notifications_types_id == 10 && $input['notification_type'] == 'request_connect')//10 is for referenced notification type
+                                if (($notification->notifications_types_id == 10 || $notification->notifications_types_id == 23) && $input['notification_type'] == 'request_connect')//10 is for referenced notification type
                                 {
                                     //check if any pending referrals are their
                                     $postId = !empty($notification->extra_info)?$notification->extra_info:0 ;
@@ -2652,6 +2698,17 @@ class UserGateway {
                         foreach ($fromUserDetails as $k_r=>$v_r)
                         {
                             $referDetails['from_user_'.$k_r] = $v_r ;
+                        }
+                        //check if self referred
+                        if (!empty($referDetails['from_user_emailid']) && !empty($referDetails['to_user_emailid'])){
+                            if ($referDetails['from_user_emailid'] == $referDetails['to_user_emailid']){
+                                $referDetails['is_self_referred'] = 1 ;
+                            }
+                        }
+                        //check if referred by phone
+                        if (!empty($referral[2][0]) && $referral[2][0] == 'NonMintmesh')//i.e non mintmesh phone contact
+                        {
+                            $referDetails['referred_by_phone'] = 1 ;
                         }
                         if ($referral[1]->one_way_status == Config::get('constants.REFERRALS.STATUSES.ACCEPTED'))
                         {

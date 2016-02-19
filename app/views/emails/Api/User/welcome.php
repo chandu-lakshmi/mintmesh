@@ -33,7 +33,7 @@
   </tr>
   <tr>
     <td valign="top" class="textContent" style="padding:20px 20px 10px;line-height:135%;letter-spacing:0.2px;font-size:18px; font-weight:normal; color:#777777;"><h2 style="text-align:center;font-weight:normal;font-family: 'Roboto', sans-serif;font-size:30px;margin-bottom:35px;margin-top:0px; color:#cc6e35;letter-spacing:0.4px;font-weight:300; line-height: 40px;" class="wish_txt">Thank you for joining MintMesh</h2>
-      <h3 style="color:#000000;font-family: 'Roboto', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello <?php echo ucfirst($name) ; ?>,</h3>
+      <h3 style="color:#000000;font-family: 'Roboto', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello <?php echo ucfirst($name) ; ?>, </h3>
       <p>You have successfully created MintMesh account for <a href="mailto:<?php echo $email ; ?>" style="color:#000;text-decoration:none;"><?php echo $email ; ?></a>.</p>
 <p>To complete the process, activate your account using the below activation link.</p>
 <p style="text-align:center; margin-top:50px; margin-bottom:50px;" ><a class="activate_btn" style="color:#FFFFFF;text-decoration:none;font-family: 'Roboto', sans-serif;font-size:20px;padding:10px 15px; text-align: center;  background:#269b7b; width:auto; margin:0px auto; border-radius:5px; line-height:20px; " href="<?php echo $link ; ?>" target="_blank">Activate Account</a></p>
@@ -45,7 +45,7 @@
                                 </p></td>
   </tr>
   <tr>
-    <td valign="top" class="textContent" style="padding:30px 20px 10px;font-size:18px; font-weight:normal; color:#777777;  line-height:135%;"><p style="color:#333333; font-family: 'Roboto', sans-serif;font-size:18px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Sincerely </p>
+    <td valign="top" class="textContent" style="padding:30px 20px 10px;font-size:18px; font-weight:normal; color:#777777;  line-height:135%;"><p style="color:#333333; font-family: 'Roboto', sans-serif;font-size:18px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Sincerely, </p>
       <p style="color:#777777;font-size:18px; margin:5px 0px 0px; ">MintMesh Team</p></td>
   </tr>
   <tr>

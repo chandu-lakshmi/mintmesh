@@ -267,7 +267,8 @@ class ContactsGateway {
                     $neoInput = array();
                     $neoInput['firstname'] = isset($contact->firstName)?$contact->firstName:'';
                     $neoInput['lastname'] = isset($contact->lastName)?$contact->lastName:'';
-                    $neoInput['fullname'] = isset($contact->fullname)?$contact->fullname:'';
+                    $fullname = $neoInput['firstname']." ".$neoInput['lastname'];
+                    $neoInput['fullname'] = isset($contact->fullname)?$contact->fullname:$fullname;
                     $neoInput['emailid'] = $email;
                     //$neoInput['secondary_emails'] = isset($emails)?$emails:array('0');
                     $neoInput['phone'] = isset($phones[0])?$phones[0]:'';
@@ -466,6 +467,70 @@ class ContactsGateway {
         {
             $resourceOwnerId = $this->authorizer->getResourceOwnerId();
             return $this->userRepository->getUserById($resourceOwnerId);
+        }
+        
+        public function sendPostReferralInvitations($input)
+        {
+            $this->loggedinUserDetails = $this->getLoggedInUser();
+            $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
+            $fromUser = $this->neoLoggedInUserDetails ;
+            if (!empty($input['emails']))
+            {
+                $loginUserDetails = $this->loggedinUserDetails;
+                $emails = $input['emails'] ;
+                $emails = json_decode($emails);
+                foreach ($emails as $email)
+                {
+                    //call mail 
+                    $userDetails = $this->neoUserRepository->getNodeByEmailId($email);
+                    if (!empty($userDetails))
+                    {
+                        // set email required params
+                        $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.join_invitation');
+                        if (Config::get('constants.INVITE_SINGLE'))
+                        {
+                            $email = Config::get('constants.INVITE_EMAIL') ;
+                        }
+                        $this->userEmailManager->emailId = $email;
+                        $dataSet = array();
+                        $dataSet['name'] =!empty($userDetails['firstname'])?$userDetails['firstname']:'';
+                        $dataSet['sender_name'] =!empty($loginUserDetails->firstname)?$loginUserDetails->firstname:'';
+                        $dataSet['sender_email'] =!empty($loginUserDetails->emailid)?$loginUserDetails->emailid:'';
+                        $this->userEmailManager->dataSet = $dataSet;
+                        $this->userEmailManager->subject = "Invitation from ".$dataSet['sender_name'];//Lang::get('MINTMESH.user_email_subjects.join_invitaion');
+                        $this->userEmailManager->name = $dataSet['name'];
+                        $email_sent = $this->userEmailManager->sendMail();
+                         //log email status
+                         $emailStatus = 0;
+                         if (!empty($email_sent))
+                         {
+                             $emailStatus = 1;
+                         }
+                         $emailLog = array(
+                                'emails_types_id' => 3,
+                                'from_user' => !empty($loginUserDetails->id)?$loginUserDetails->id:0,
+                                'from_email' => !empty($loginUserDetails->emailid)?$loginUserDetails->emailid:'',
+                                'to_email' => $this->appEncodeDecode->filterString(strtolower($email)),
+                                'related_code' => '',
+                                'sent' => $emailStatus,
+                                'ip_address' => $_SERVER['REMOTE_ADDR']
+                            ) ;
+                         $this->userRepository->logEmail($emailLog);
+                         $relationAttrs = array();
+                         $relationAttrs['request_for_post_id'] = $input['post_id'] ;
+                         $relation = $this->contactsRepository->relateInvitees($fromUser, $userDetails, $relationAttrs); 
+                    }
+ 
+                }
+                $message = array('msg'=>array(Lang::get('MINTMESH.join_invitation.success')));
+                return $this->commonFormatter->formatResponse(200, "success", $message, array()) ;
+                
+            }
+            else
+            {
+                $message = array('msg'=>array(Lang::get('MINTMESH.join_invitation.invalid')));
+                return $this->commonFormatter->formatResponse(201, "error", $message, array()) ;
+            }
         }
         
         

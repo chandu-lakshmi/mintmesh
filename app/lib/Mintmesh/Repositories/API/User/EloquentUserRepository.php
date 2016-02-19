@@ -204,7 +204,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                switch ($notification_type)
                 {
                     case 'request_connect':
-                            $types= array(1,3,4,7,10,11,20,17,21);
+                            $types= array(1,3,4,7,10,11,20,17,21,23);
                             $type = implode(",",$types);
                             break;
                     default:
