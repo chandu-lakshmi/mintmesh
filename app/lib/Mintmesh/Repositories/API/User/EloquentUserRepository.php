@@ -267,7 +267,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                     foreach ($result as $key=>$row)
                     {
                         //check if any referred post has pending status
-                        if ($row->notifications_types_id == 10)
+                        if ($row->notifications_types_id == 10 || $row->notifications_types_id == 23)
                         {
                              //check if any pending referrals are their
                             $postId = !empty($row->extra_info)?$row->extra_info:0 ;
@@ -668,6 +668,12 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
             else{
                 return '';
             }
+        }
+        
+    public function getUserByEmailWithoutStatus($email) {
+            return User::whereRaw('emailid = ?', array($this->appEncodeDecode->filterString(strtolower($email))))->first();
+            //return User::whereRaw('emailid', '=', $this->appEncodeDecode->filterString(strtolower($email)))->first();
+            
         }
         
 }

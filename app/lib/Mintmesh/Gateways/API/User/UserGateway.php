@@ -503,7 +503,7 @@ class UserGateway {
                     $pushData['relationAttrs']=array('auto_connected'=>1);
                     Queue::push('Mintmesh\Services\Queues\ConnectToInviteesQueue', $pushData, 'IMPORT');
                     $message = array('msg'=>array(Lang::get('MINTMESH.user.success')));
-                    $data = array(); ;
+                    $data = array(); 
                     $data['dp_path'] = $renamedFileName ;
                     return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
                 }
@@ -601,6 +601,19 @@ class UserGateway {
                     $pushData['user_email']=$this->loggedinUserDetails->emailid;
                     $pushData['relationAttrs']=array('auto_connected'=>1);
                     Queue::push('Mintmesh\Services\Queues\ConnectToInviteesQueue', $pushData, 'IMPORT');
+                    //add education details if college and student details are added
+                    if ($input['you_are'] == 5){
+                        $educationInput = array();
+                        $educationInput['emailid'] = $this->loggedinUserDetails->emailid ;
+                        $educationInput['info_type']='education';
+                        $educationInput['action']='add';
+                        $educationInput['school_college']=!empty($input['college'])?$input['college']:'';
+                        $educationInput['degree']=!empty($input['course'])?$input['course']:'';
+                        $educationInput['start_year']='';
+                        $educationInput['end_year']='';
+                        $educationInput['description']='';
+                        $edcationAdded = $this->editProfile($educationInput);
+                    }
                     $message = array('msg'=>array(Lang::get('MINTMESH.user.success')));
                     $data = array(); 
                     $neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
@@ -1906,30 +1919,63 @@ class UserGateway {
                     $notification = $this->userRepository->getNotification($input['push_id']);
                     if (!empty($notification))
                     {
+                        $notification = $notification[0];
+                        $noReferralsPost = false ;
+                        $is_deleted = $normalFlow = 0;
+                        $connectedToMe = $this->neoUserRepository->checkConnection($loggedinUserDetails->emailid,$notification->from_email);
+                        if (!empty($connectedToMe) && !empty($connectedToMe['deleted']))
+                        {
+                            $is_deleted = 1;
+                        }
                         $notifications_count = $this->userRepository->getNotificationsCount($loggedinUserDetails, 'all');
                         $battle_cards_count = $this->userRepository->getNotificationsCount($loggedinUserDetails, 'request_connect');
-                        $notification = $notification[0];
-                         if ($notification->notifications_types_id == 20){//if payment done notification the change the from and other details
-                            $otherNoteUser = $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($notification->other_email) ;
+                        
+                        if ($notification->notifications_types_id == 20){//if payment done notification the change the from and other details
+                            if (empty($notification->for_mintmesh) && empty($notification->other_email)){//i.e refred non mintmesh user
+                                $otherNoteUser = $neoUserDetails = $this->neoUserRepository->getNonMintmeshUserDetails($notification->other_phone) ;
+                                $normalFlow = 0;
+                            }else{
+                                $otherNoteUser = $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($notification->other_email) ;
+                                 $normalFlow = 1 ;
+                            }
+                                
                         }
                         else{
                             $fromNoteUser = $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($notification->from_email) ;
+                            $normalFlow = 1 ;
                         }
-                        $r = $this->formUserDetailsArray($neoUserDetails, 'attribute') ;
+                        if (empty($notification->for_mintmesh) && empty($normalFlow)){
+                            $r = $this->formUserDetailsArray($neoUserDetails, 'property');
+                            //print_r($note);exit;
+                         }else{
+                             $r = $this->formUserDetailsArray($neoUserDetails, 'attribute');
+                         }
                         $thirdName = "";
-                        if (!empty($notification->other_email))
+                        if (!empty($notification->other_email) || !empty($notification->other_phone))//consider mintmesh and non mintmesh users
                         {
                             if ($notification->notifications_types_id == 20){//if payment done notification the change the from and other details
                                 $fromNoteUser = $otherEmailDetails = $this->neoUserRepository->getNodeByEmailId($notification->from_email) ;
+                                $normalFlow = 1 ;
                             }
                             else{
-                               $otherNoteUser = $otherEmailDetails = $this->neoUserRepository->getNodeByEmailId($notification->other_email) ;
+                                if (empty($notification->for_mintmesh) && empty($notification->other_email)){//i.e refred non mintmesh user
+                                    $otherNoteUser = $otherEmailDetails = $this->neoUserRepository->getNonMintmeshUserDetails($notification->other_phone) ;
+                                    $normalFlow = 0;
+                                }else{
+                                    $otherNoteUser = $otherEmailDetails = $this->neoUserRepository->getNodeByEmailId($notification->other_email) ;
+                                     $normalFlow = 1 ;
+                                }
                             }
                             if (in_array($notification->notifications_types_id, $this->notificationsTypes))
                             {
                                 $thirdName = !empty($otherNoteUser->fullname)?$otherNoteUser->fullname:'' ;
                             }
-                            $otherUserDetails = $this->formUserDetailsArray($otherEmailDetails, 'attribute');
+                            if (empty($notification->for_mintmesh) && empty($normalFlow)){
+                                //echo "here";exit;
+                                $otherUserDetails = $this->formUserDetailsArray($otherEmailDetails, 'property');
+                            }else{
+                                $otherUserDetails = $this->formUserDetailsArray($otherEmailDetails, 'attribute');
+                            }
                             foreach ($otherUserDetails as $k=>$v)
                             {
                                 $r['other_user_'.$k] = $v ;
@@ -1949,7 +1995,10 @@ class UserGateway {
                         $r['push_id'] = $notification->id ;
                         $r['status'] = $notification->status ;
                         $r['other_status'] = $notification->other_status ;
-
+                        if (empty($notification->for_mintmesh) && !empty($notification->other_phone))//i.e referrals by phone contact
+                        {
+                            $r['referred_by_phone'] = 1;
+                        }
 
                         //get post details if post type
                         if (in_array($notification->notifications_types_id,$this->postNotifications))
@@ -1985,8 +2034,11 @@ class UserGateway {
                                 $e = $notification->to_email ;
                                 $f = $notification->from_email ;
                             }
-                            if (!empty($notification->extra_info))
-                            $postDetailsR = $this->referralsRepository->getPostAndReferralDetails($notification->extra_info,$f,$e);
+                            if (!empty($notification->extra_info) && empty($notification->other_phone)){//i.e for email referrals
+                                $postDetailsR = $this->referralsRepository->getPostAndReferralDetails($notification->extra_info,$f,$e);
+                            }else if(!empty($notification->extra_info) && !empty($notification->other_phone)){//i.e for non mintmesh referrals
+                                $postDetailsR = $this->referralsRepository->getPostAndReferralDetailsNonMintmesh($notification->extra_info,$f,$e);
+                            }
 
                             if (count($postDetailsR))
                             {
@@ -2002,16 +2054,20 @@ class UserGateway {
                                     $r['post_'.$k] = $v ;
                                 }
                                 $r['post_id'] = !empty($notification->extra_info)?$notification->extra_info:0;
+                                if ($e == $f){//self referred
+                                    $r['is_self_referred'] = 1 ;
+                                }
                             }
                         }
                         else if( !empty($notification->extra_info) && in_array($notification->notifications_types_id,$this->refer_nots))
                         {
-                            $note['referral_relation'] =  $notification->extra_info ;
+                            $r['referral_relation'] =  $notification->extra_info ;
                         }
                         else if (in_array($notification->notifications_types_id,$this->selfReferNotifications))//if self reference type
                         {
                             $r['relation_id']= !empty($notification->extra_info)?$notification->extra_info:0;
                         }
+                        
                     }
                     $phone_verified = !empty($neoUserDetails->phoneverified)?$neoUserDetails->phoneverified:0;
                     $data = array("notifications"=>array($r), "notifications_count"=>$notifications_count,"battle_cards_count"=>$battle_cards_count,"phone_verified"=>$phone_verified) ;
@@ -2459,7 +2515,7 @@ class UserGateway {
                                 }
                             //}
                             if ($notification->notifications_types_id == 20){//if payment done notification the change the from and other details
-                                if (empty($notification->for_mintmesh)){//i.e refred non mintmesh user
+                                if (empty($notification->for_mintmesh) && empty($notification->other_email)){//i.e refred non mintmesh user
                                     $otherNoteUser = $neoUserDetails = $this->neoUserRepository->getNonMintmeshUserDetails($notification->other_phone) ;
                                     $normalFlow = 0;
                                 }else{
@@ -2491,7 +2547,7 @@ class UserGateway {
                                        $normalFlow = 1 ;
                                     }
                                     else{
-                                        if (empty($notification->for_mintmesh)){//i.e refred non mintmesh user
+                                        if (empty($notification->for_mintmesh) && empty($notification->other_email)){//i.e refred non mintmesh user
                                             $otherNoteUser = $otherEmailDetails = $this->neoUserRepository->getNonMintmeshUserDetails($notification->other_phone) ;
                                             $normalFlow = 0;
                                         }else{
@@ -3478,7 +3534,7 @@ class UserGateway {
         
         public function checkEmailExistance($input)
         {
-            $user = $this->userRepository->getUserByEmail($input['emailid']);
+            $user = $this->userRepository->getUserByEmailWithoutStatus($input['emailid']);
             if (count($user))
             {
                 $message = array('msg'=>array(Lang::get('MINTMESH.user.user_found')));
