@@ -27,13 +27,16 @@
 							<img src="https://staging.mintmesh.com/public/images/mintmesh-logo.png" style="width:70px;" /></td>
 						<td style="width:50%;"align="right">
 							<p style="font-size:16px; margin:0px; line-height:20px; padding-bottom:5px;"><?php echo $name; ?></p>
-								<p style="font-size:16px; margin:0px; line-height:20px;padding-bottom:5px;">Invoice #<?php echo $transaction_id; ?></p>
-								<p style="font-size:16px; margin:0px; line-height:20px;padding-bottom:5px;"><?php echo $date_of_payment;?></p>
+                                                        <?php if($is_doller){ ?>
+                                                            <p style="font-size:16px; margin:0px; line-height:20px;padding-bottom:5px;">Invoice #<?php echo $transaction_id; ?></p>
+                                                        <?php } ?> 
+							<p style="font-size:16px; margin:0px; line-height:20px;padding-bottom:5px;">Invoice #<?php echo $transaction_id; ?></p>
+							<p style="font-size:16px; margin:0px; line-height:20px;padding-bottom:5px;"><?php echo $date_of_payment;?></p>
 						</td>
 					</tr>
 					<tr>
 				<td colspan="2">
-					<h2 align="center" style="margin:0px auto;margin-top:20px; font-size:30px; color:#333; font-weight:normal;padding-bottom:10px; ">Invoice</h2>
+					<h2 align="center" style="margin:0px auto;margin-top:20px; font-size:30px; color:#333; font-weight:normal;padding-bottom:10px; "><?php if($is_doller){ ?>Invoice<?php } else { ?> Summary <?php } ?></h2>
 					<p align="center" style="font-family:arial;font-size:16px;margin:0px;padding-bottom:20px;">Thank you for choosing MintMesh to<br> grow your network</p>
 				</td>
 				</tr>
