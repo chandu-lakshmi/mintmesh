@@ -27,10 +27,9 @@
 							<img src="https://staging.mintmesh.com/public/images/mintmesh-logo.png" style="width:70px;" /></td>
 						<td style="width:50%;"align="right">
 							<p style="font-size:16px; margin:0px; line-height:20px; padding-bottom:5px;"><?php echo $name; ?></p>
-                                                        <?php if($is_doller){ ?>
+                                                        <?php if(!empty($is_doller)){ ?>
                                                             <p style="font-size:16px; margin:0px; line-height:20px;padding-bottom:5px;">Invoice #<?php echo $transaction_id; ?></p>
                                                         <?php } ?> 
-							<p style="font-size:16px; margin:0px; line-height:20px;padding-bottom:5px;">Invoice #<?php echo $transaction_id; ?></p>
 							<p style="font-size:16px; margin:0px; line-height:20px;padding-bottom:5px;"><?php echo $date_of_payment;?></p>
 						</td>
 					</tr>

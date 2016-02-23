@@ -383,10 +383,10 @@ class PaymentGateway {
 
            // $dataSet['link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/redirect_to_app/".$appLinkCoded ;;
             $this->userEmailManager->dataSet = $dataSet;
-            if($dataSet['is_doller']){
-                $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.paymentSuccess_braintree');
-            } else {
+            if(empty($dataSet['is_doller']) && $templatePath == Lang::get('MINTMESH.email_template_paths.payment_success_user')){
                 $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.paymentSuccess_citrus');
+            } else {
+                $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.paymentSuccess_braintree');
             }
             $this->userEmailManager->name = 'user';
             return $email_sent = $this->userEmailManager->sendMail();
