@@ -23,7 +23,7 @@
 <table bgcolor="#FFFFFF"  border="0" cellpadding="0" cellspacing="0" class="main_table" style="background:#fff;  margin:0px auto;" >
   <tr>
     <td align="center" valign="top"  style="padding:20px 20px 10px;"><img src="https://staging.mintmesh.com/public/images/mintmesh-logo.png"   align="center" style="max-width:100%;text-align:center;" alt="logo" title="Text">
-      <h2 style="text-align:center;font-weight:normal;font-family: 'Roboto', sans-serif;font-weight:300;font-size:24px;margin-bottom:10px;margin-top:20px;color:#000000;">Password change confirmation</h2>
+      <h2 style="text-align:center;font-weight:normal;font-family: 'Roboto', sans-serif;font-weight:300;font-size:24px;margin-bottom:10px;margin-top:20px;color:#000000;">Password Change Confirmation</h2>
       <hr style="border-top:1px solid #c8c8c8;margin-top:20px;"></td>
   </tr>
   <tr>

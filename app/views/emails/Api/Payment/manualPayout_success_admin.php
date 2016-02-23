@@ -19,6 +19,8 @@
 <head>
 	<title></title>
 	 <link href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet" type="text/css">
+         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
 	
 </head>
 <body bgcolor="#E1E1E1" style="font-family: 'Roboto', sans-serif">
@@ -53,14 +55,14 @@
 				<tr>
 					<td>
 						<table class="details"  style="font-size:16px;line-height:180%">
-							<tr>
+<!--							<tr>
 								<td align="left" style="color:#777777">
 									User name:
 								</td>
 								<td style="color:#000">
 									<?php echo ucfirst($name) ; ?>
 								</td>
-							</tr>
+							</tr>-->
 							<tr>
 								<td align="left" style="color:#777777">
 									User email-id:
@@ -140,11 +142,11 @@
 			</td>
 		</tr>
 		<tr>
-                <td valign="top" class="textContent" >
+<!--                <td valign="top" class="textContent" >
                         <hr style="border-top:1px solid #c8c8c8;margin-top:5px;margin-bottom:20px;">
                         <div style="text-align:center;font-family: 'Roboto', sans-serif;font-size:18px;margin-bottom:0;margin-top:3px;color:#828282;line-height:135%;padding:0px 15px 15px;" class="footer_txt">If you need assistance, please contact 
                        MintMesh Support <a style="color:#333333;text-decoration:none;" href="mailto:support@mintmesh.com" target="_blank">(support@mintmesh.com)</a></div>
-               </td>
+               </td>-->
         </tr>
 		
 		
