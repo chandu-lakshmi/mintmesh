@@ -26,7 +26,7 @@
       <hr style="border-top:1px solid #c8c8c8;margin-top:20px;"></td>
   </tr>
   <tr>
-    <td valign="top" class="textContent" style="padding:20px 20px 10px;line-height:135%;letter-spacing:0.2px;font-size:18px; font-weight:normal; color:#777777;"><h2 style="text-align:center;font-weight:normal;font-family: 'Roboto', sans-serif;font-size:26px;margin-bottom:35px;margin-top:0px; color:#cc6e35;letter-spacing:0.4px;font-weight:300;" class="wish_txt">MintMesh Invitation</h2>
+    <td valign="top" class="textContent" style="padding:20px 20px 10px;line-height:135%;letter-spacing:0.2px;font-size:18px; font-weight:normal; color:#777777;">
       <h3 style="color:#000000;line-height:125%;font-family: 'Roboto', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello <?php echo ucfirst($name) ; ?>, </h3>
       <p>Now that you posted your request, here's what will happen next.</p>
       <p style="text-align:center" ><img src="https://staging.mintmesh.com/public/images/img1.png"   align="center" style="max-width:100%;text-align:center;padding:20px 30px 10px;" alt="logo" title="Text"></p>

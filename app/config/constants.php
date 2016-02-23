@@ -122,7 +122,8 @@ return [
         ]
     ],
     'MINTMESH_SUPPORT'=>[
-        'EMAILID'=>'support@mintmesh.com'
+//        'EMAILID'=>'support@mintmesh.com'
+        'EMAILID'=>'v.gopi314@gmail.com'
     ],
     'S3BUCKET' => 'mintmesh',
     'PROFILE_COMPLETION_VALUES'=>[

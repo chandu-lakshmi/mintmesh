@@ -331,8 +331,8 @@ class PaymentGateway {
                                             'email'=>$neoLoggedinUserDetails->emailid);
                         $emailiSent = $this->sendPaymentSuccessEmailToUser($successSupportTemplate, $receipientEmail, $emailData);
 
-                        $successSupportTemplateServiceFee = Lang::get('MINTMESH.email_template_paths.payment_servicfee_success_user');
-                        $emailiSent = $this->sendPaymentSuccessEmailToUser($successSupportTemplateServiceFee, $receipientEmail, $emailData);
+//                        $successSupportTemplateServiceFee = Lang::get('MINTMESH.email_template_paths.payment_servicfee_success_user');
+//                        $emailiSent = $this->sendPaymentSuccessEmailToUser($successSupportTemplateServiceFee, $receipientEmail, $emailData);
 
                         $postUpdateStatus = $this->referralsRepository->updatePostPaymentStatus($transactionDetails->relation_id,Config::get('constants.PAYMENTS.STATUSES.SUCCESS'));
                         //send notifications to the respective people
@@ -513,10 +513,12 @@ class PaymentGateway {
                                             'tax' => $tax,
                                             'total' => $total,
                                             'is_doller' => 0,
-                                            'email'=>$loggedinUserDetails->emailid);
+                                            'email'=>$loggedinUserDetails->emailid,
+                                            'location'=>$loggedinUserDetails->location,
+                                            'phone_country_name'=>$loggedinUserDetails->phone_country_name);
                         $emailiSent = $this->sendPaymentSuccessEmailToUser($successSupportTemplate, $receipientEmail, $emailData);
 
-                        
+
                         $successSupportTemplateServiceFee = Lang::get('MINTMESH.email_template_paths.payment_servicfee_success_user');
                         $emailiSent = $this->sendPaymentSuccessEmailToUser($successSupportTemplateServiceFee, $receipientEmail, $emailData);
                         
@@ -760,6 +762,7 @@ class PaymentGateway {
         public function manualPayout($input=array())
         {
             $loggedinUserDetails = $this->getLoggedInUser();
+            $neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($loggedinUserDetails->emailid) ;      
             if ($loggedinUserDetails) {
 
                 //get balance cash info
@@ -783,6 +786,8 @@ class PaymentGateway {
                         $receipientEmailUser = $loggedinUserDetails->emailid;//Config::get('constants.MINTMESH_SUPPORT.EMAILID');
                         $bankDetails->amount = $input['amount'];
                         $bankDetails->remaningAmount = $balanceCashInfo->balance_cash-$payoutAmount;
+                        $bankDetails->name = $neoLoggedInUserDetails->firstname;
+                        $bankDetails->email = $neoLoggedInUserDetails->emailid;
                         $emailSentAdmin = $this->sendManualEmailToMintMesh($successSupportTemplateAdmin, $receipientEmailAdmin, $bankDetails);
                         $emailSentUser = $this->sendManualEmailToUser($successSupportTemplateUser, $receipientEmailUser, $bankDetails);
                         //log payout
@@ -857,24 +862,23 @@ class PaymentGateway {
            $this->userEmailManager->templatePath = $templatePath;
             $this->userEmailManager->emailId = $emailid;
             $dataSet = array();
-            $dataSet['name'] = "shweta" ;
-            $dataSet['email'] = "shwetapazarey@gmail.com";
-            $dataSet['bank_name'] = $data->bank_name;
-            $dataSet['account_name'] = $data->account_name;
-            $dataSet['account_number'] = $data->account_number;
-            $dataSet['ifsc_code'] = $data->ifsc_code;
-            $dataSet['address'] = $data->address;
-            $dataSet['amount'] = $data->amount;
-            $dataSet['remaningAmount'] = $data->remaningAmount;
-//            echo "<pre>";print_r($dataSet);exit;
+            if (!empty($data))
+            {
+                foreach ($data as $k=>$v)
+                {
+                    $dataSet[$k] = $v ;
+                }
+            }
+            $dataSet['name'] = "Admin";
+            $dataSet['email'] = Config::get('constants.MINTMESH_SUPPORT.EMAILID');
             /*$dataSet['name'] = $input['firstname'];
             $dataSet['link'] = $appLink ;
             $dataSet['email'] = $input['emailid'] ;*/
 
            // $dataSet['link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/redirect_to_app/".$appLinkCoded ;;
             $this->userEmailManager->dataSet = $dataSet;
-            $this->userEmailManager->subject = "test email for manual payout";
-            $this->userEmailManager->name = 'test user';
+            $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.payout_success_admin');
+            $this->userEmailManager->name = 'admin';
             return $email_sent = $this->userEmailManager->sendMail();
             
         }
@@ -883,15 +887,13 @@ class PaymentGateway {
            $this->userEmailManager->templatePath = $templatePath;
             $this->userEmailManager->emailId = $emailid;
             $dataSet = array();
-            $dataSet['name'] = "shweta" ;
-            $dataSet['email'] = "shwetapazarey@gmail.com";
-            $dataSet['bank_name'] = $data->bank_name;
-            $dataSet['account_name'] = $data->account_name;
-            $dataSet['account_number'] = $data->account_number;
-            $dataSet['ifsc_code'] = $data->ifsc_code;
-            $dataSet['address'] = $data->address;
-            $dataSet['amount'] = $data->amount;
-            $dataSet['remaningAmount'] = $data->remaningAmount;
+            if (!empty($data))
+            {
+                foreach ($data as $k=>$v)
+                {
+                    $dataSet[$k] = $v ;
+                }
+            }
             /*$dataSet['name'] = $input['firstname'];
             $dataSet['link'] = $appLink ;
             $dataSet['email'] = $input['emailid'] ;*/
@@ -907,16 +909,23 @@ class PaymentGateway {
            $this->userEmailManager->templatePath = $templatePath;
             $this->userEmailManager->emailId = $emailid;
             $dataSet = array();
-            $dataSet['name'] = "shweta" ;
-            $dataSet['email'] = "shwetapazarey@gmail.com";
+            if (!empty($data))
+            {
+                foreach ($data as $k=>$v)
+                {
+                    $dataSet[$k] = $v ;
+                }
+            }
+            $dataSet['name'] = "Admin";
+            $dataSet['email'] = Config::get('constants.MINTMESH_SUPPORT.EMAILID');
             /*$dataSet['name'] = $input['firstname'];
             $dataSet['link'] = $appLink ;
             $dataSet['email'] = $input['emailid'] ;*/
 
            // $dataSet['link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/redirect_to_app/".$appLinkCoded ;;
             $this->userEmailManager->dataSet = $dataSet;
-            $this->userEmailManager->subject = "test email";
-            $this->userEmailManager->name = 'user';
+            $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.payout_success_admin');
+            $this->userEmailManager->name = 'admin';
             return $email_sent = $this->userEmailManager->sendMail();
             
         }
@@ -925,8 +934,8 @@ class PaymentGateway {
            $this->userEmailManager->templatePath = $templatePath;
             $this->userEmailManager->emailId = $emailid;
             $dataSet = array();
-            $dataSet['name'] = "shweta" ;
-            $dataSet['email'] = "shwetapazarey@gmail.com";
+//            $dataSet['name'] = "shweta" ;
+//            $dataSet['email'] = "shwetapazarey@gmail.com";
             $dataSet['amount'] = !empty($data->amount)?$data->amount:'';
             /*$dataSet['name'] = $input['firstname'];
             $dataSet['link'] = $appLink ;

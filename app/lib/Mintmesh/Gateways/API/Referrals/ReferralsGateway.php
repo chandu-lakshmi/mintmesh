@@ -211,7 +211,7 @@ class ReferralsGateway {
         {
            
             $this->loggedinUserDetails = $this->getLoggedInUser();
-            $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
+            $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;      
             $fromId = $this->neoLoggedInUserDetails->id ;
 //          if ($this->loggedinUserDetails = $this->getLoggedInUser())
             if($this->loggedinUserDetails)
@@ -288,8 +288,8 @@ class ReferralsGateway {
                 //send email to user after post done successfully
                 $successSupportTemplate = Lang::get('MINTMESH.email_template_paths.post_success');
                 $receipientEmail = $this->loggedinUserDetails->emailid;
-                $emailData = array('name' => $this->loggedinUserDetails->firstname,
-                                    'email'=>$this->loggedinUserDetails->emailid);
+                $emailData = array('name' => $this->neoLoggedInUserDetails->firstname,
+                                    'email'=>$this->neoLoggedInUserDetails->emailid);
                 $emailiSent = $this->sendEmailToUser($successSupportTemplate, $receipientEmail, $emailData);
                 
                 

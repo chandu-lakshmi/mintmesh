@@ -69,6 +69,7 @@ return array(
                 "join_invitaion" => "MintMesh Invitation",
                 "paymentSuccess" => "MintMesh Invoice",
                 "payout_success_user" => "MintMesh Payout confirmation",
+                "payout_success_admin" => "MintMesh Payout confirm admin",
                 "reset_password_success" => "MintMesh - Your password changed",
                 "post_success" => "Request Posted Successfully! Next Steps"
          ),
@@ -265,5 +266,6 @@ return array(
             'success'=>'Memcache Cleared successfully',
             'dont_exist'=>'Cache for perticular key does not exist'
         )
+
 
 );

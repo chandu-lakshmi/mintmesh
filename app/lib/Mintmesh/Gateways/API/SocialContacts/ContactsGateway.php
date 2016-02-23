@@ -345,8 +345,8 @@ class ContactsGateway {
                         $this->userEmailManager->emailId = $email;
                         $dataSet = array();
                         $dataSet['name'] =!empty($userDetails['firstname'])?$userDetails['firstname']:'';
-                        $dataSet['sender_name'] =!empty($loginUserDetails->firstname)?$loginUserDetails->firstname:'';
-                        $dataSet['sender_email'] =!empty($loginUserDetails->emailid)?$loginUserDetails->emailid:'';
+                        $dataSet['sender_name'] =!empty($this->neoLoggedInUserDetails->firstname)?$this->neoLoggedInUserDetails->firstname:'';
+                        $dataSet['sender_email'] =!empty($this->neoLoggedInUserDetails->emailid)?$this->neoLoggedInUserDetails->emailid:'';
                         $this->userEmailManager->dataSet = $dataSet;
                         $this->userEmailManager->subject = "Invitation from ".$dataSet['sender_name'];//Lang::get('MINTMESH.user_email_subjects.join_invitaion');
                         $this->userEmailManager->name = $dataSet['name'];
@@ -408,8 +408,8 @@ class ContactsGateway {
                         $this->userEmailManager->emailId = $email;
                         $dataSet = array();
                         $dataSet['name'] =!empty($userDetails['firstname'])?$userDetails['firstname']:'';
-                        $dataSet['sender_name'] =!empty($loginUserDetails->firstname)?$loginUserDetails->firstname:'';
-                        $dataSet['sender_email'] =!empty($loginUserDetails->emailid)?$loginUserDetails->emailid:'';
+                        $dataSet['sender_name'] =!empty($fromUser->firstname)?$fromUser->firstname:'';
+                        $dataSet['sender_email'] =!empty($fromUser->emailid)?$fromUser->emailid:'';
                         $this->userEmailManager->dataSet = $dataSet;
                         $this->userEmailManager->subject = "Invitation from ".$dataSet['sender_name'];//Lang::get('MINTMESH.user_email_subjects.join_invitaion');
                         $this->userEmailManager->name = $dataSet['name'];
