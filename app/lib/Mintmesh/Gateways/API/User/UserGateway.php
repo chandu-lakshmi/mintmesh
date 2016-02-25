@@ -2418,7 +2418,15 @@ class UserGateway {
                                 {
                                     if (in_array($notificationType, $this->notificationsTypes))
                                     {
-                                        $thirdFullName = !empty($otherUserDetails->fullname)?$otherUserDetails->fullname:"";
+                                        //check if user has name
+                                        if (!empty($otherUserDetails->fullname)){
+                                           $thirdFullName = $otherUserDetails->fullname ;
+                                        }else if(!empty($otherUserDetails->emailid)){
+                                            $thirdFullName = $otherUserDetails->emailid ;
+                                        }else{
+                                            $thirdFullName = !empty($otherUserDetails->phone)?$otherUserDetails->phone:"";
+                                        }
+                                        //$thirdFullName = !empty($otherUserDetails->fullname)?$otherUserDetails->fullname:"";
                                         $msg = $msg." ".$thirdFullName ;
                                     }
                                     if (in_array($notificationType,$this->extraTextsNotes))//for posts
