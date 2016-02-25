@@ -1782,8 +1782,12 @@ class UserGateway {
             $loggedinUserDetails = $this->getLoggedInUser();
             if ($loggedinUserDetails)
             {
-                $userConnections = array();
+                $userConnections = $connections = array();
+                //check if these two users are connected
+                $isConnected = $this->neoUserRepository->checkConnection($loggedinUserDetails->emailid, $input['emailid']);
+                if (!empty($isConnected) && !empty($isConnected['connected'])){
                 $connections = $this->neoUserRepository->getConnectedUsers($input['emailid']);
+                }
                 if (count($connections))
                 {
                     foreach ($connections as $connection)

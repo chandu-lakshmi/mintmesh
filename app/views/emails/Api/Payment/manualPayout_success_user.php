@@ -234,23 +234,36 @@ p{font-size:18px !important;}
     </td>
 </tr>
 <!-- // MODULE ROW -->
- <!-- // MODULE ROW -->
 
-
-<!-- MODULE ROW // -->
 <tr>
-    <td align="center" valign="top">
+    <td align="left" valign="top">
         <!-- CENTERING TABLE // -->
         <table border="0" cellpadding="0" cellspacing="0" width="100%">
-            <tr style="padding-top:0;">
+            <tr>
                 <td align="center" valign="top">
                     <!-- FLEXIBLE CONTAINER // -->
-                    <table border="0" cellpadding="30" cellspacing="0" width="500" class="flexibleContainer">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" class="flexibleContainer" style="margin-top:0px;">
                         <tr>
-                            <td style="padding-top:0;" align="center" valign="top" width="500" class="flexibleContainerCell">
+                            <td align="center" valign="top" width="100%" class="flexibleContainerCell">
+                                <table border="0" cellspacing="0" width="100%">
+                                    <tr>
+                                        <td align="center" valign="top">
 
-                              
+                                            <!-- CONTENT TABLE // -->
+                                            <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                                <tr>
+                                                    <td  class="textContent" style="padding:10px 30px 10px;">
+                                                        <p style="color:#000000;font-family: 'Roboto', sans-serif;font-size:20px;font-weight:normal;margin:0px !important;text-align:left;float:left !important;width:100%;">Sincerely,</p>
+                                                        
+                                                        <p style="text-align:left;font-family: 'Roboto', sans-serif;font-size:20px;margin:0;color:#777777;float:left !important;width:100%;">(MintMesh Team)</p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            <!-- // CONTENT TABLE -->
 
+                                        </td>
+                                    </tr>
+                                </table>
                             </td>
                         </tr>
                     </table>
@@ -261,48 +274,7 @@ p{font-size:18px !important;}
         <!-- // CENTERING TABLE -->
     </td>
 </tr>
-<!-- // MODULE ROW -->
 
-<!--    last from-->
-<tr>
-                            <td align="center" valign="top">
-                                <!-- CENTERING TABLE // -->
-                                <table border="0" cellpadding="0" cellspacing="0" width="100%">
-                                    <tbody><tr>
-                                        <td align="center" valign="top">
-                                            <!-- FLEXIBLE CONTAINER // -->
-                                            <table border="0" cellpadding="0" cellspacing="0" width="500" class="flexibleContainer">
-                                                <tbody><tr>
-                                                    <td align="center" valign="top" width="500" class="flexibleContainerCell">
-                                                        <table border="0"  cellspacing="0" width="100%">
-                                                            <tbody><tr>
-                                                                <td align="center" valign="top">
-
-                                                                    <!-- CONTENT TABLE // -->
-                                                                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
-                                                                        <tbody><tr>
-<td valign="top" class="textContent" style="padding:50px 30px 10px;">
-                                                                                <p style="color:#333333;line-height:15%;font-family: 'Roboto', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Sincerely,
-</p>
-<p style="color:#777777;font-size:18px;">(MintMesh Team)</p>
-                                                                            </td>
-                                                                        </tr>
-                                                                    </tbody></table>
-                                                                    <!-- // CONTENT TABLE -->
-
-                                                                </td>
-                                                            </tr>
-                                                        </tbody></table>
-                                                    </td>
-                                                </tr>
-                                            </tbody></table>
-                                            <!-- // FLEXIBLE CONTAINER -->
-                                        </td>
-                                    </tr>
-                                </tbody></table>
-                                <!-- // CENTERING TABLE -->
-                            </td>
-                        </tr>
 
 
 

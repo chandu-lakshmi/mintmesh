@@ -608,6 +608,12 @@ class PaymentGateway {
                                     $paypal_client_secret      // ClientSecret
                                 )
                             );
+                            $apiContext->setConfig(
+                                array(
+                                    'mode' => Config::get('constants.PAYPAL.MODE'),
+                                    'validation.level' => Config::get('constants.PAYPAL.VALIDATIONLEVEL'),
+                                )
+                            );
                             $senderbatchId = uniqid();
                             $payouts = new \PayPal\Api\Payout();
                             $senderBatchHeader = new \PayPal\Api\PayoutSenderBatchHeader();

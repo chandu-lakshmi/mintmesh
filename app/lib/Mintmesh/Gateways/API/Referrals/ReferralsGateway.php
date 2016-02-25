@@ -714,6 +714,7 @@ class ReferralsGateway {
             if (count($users))
             {
                 $userDetails = array();
+                $self_referred = 0 ;
                 foreach ($users as $k=>$v)
                 {
                     $u = $this->userGateway->formUserDetailsArray($v[0], 'property') ;
@@ -750,6 +751,7 @@ class ReferralsGateway {
                     //check if self referred
                     if (!empty($u['emailid']) && $u['emailid'] == $userEmail){
                         $u['is_self_referred']=1;
+                        $self_referred = 1 ;
                     }else{
                         $u['is_self_referred']=0;
                     }
@@ -761,7 +763,7 @@ class ReferralsGateway {
                 $data=array("users"=>$userDetails) ;
                 $data['suggestions'] = !empty($suggestions['data']['users'])?$suggestions['data']['users']:array() ;
                 $data['referrals_count'] = $this->referralsRepository->getPostReferralsCount($input['post_id']);
-                $data['is_self_referred'] = !empty($u['is_self_referred'])?$u['is_self_referred']:0;
+                $data['is_self_referred'] = $self_referred ;
                 $message = array('msg'=>array(Lang::get('MINTMESH.referrals.success')));
                 return $this->commonFormatter->formatResponse(200, "success", $message, $data) ;
             }

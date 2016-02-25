@@ -39,7 +39,9 @@ return [
         'CLIENT_SECRET'=>'EOI1RV1C5ZUoHaYs5UabDaqBYFjH_t00kgtdx3P_OThTF0Wthlpn9qvDrrz0SB5CijEW2wIYeYX4BV0P',//'EDuYEHHqzWEX7Uisehy8GTROOAsYZfjswrBRY-xikFWt_BHUwxa_qr-_N16AsGxXplgDS_eFNOpLAj9J'//'ELcx1IzIF_6cjCPAXQ15MEX5M9SsCQQfbNHvbk4pOIeZRhZxpfcAJ9g60Li8bagpDLRmA2REqfzXYQ6T'
         'STATUS'=>[
             'ERROR'=>'ERROR'
-        ]
+        ],
+        'MODE'=>'sandbox',
+        'VALIDATIONLEVEL'=>'strict'
     ],
     'MANUAL'=>[
         'STATUS'=>[
