@@ -460,12 +460,13 @@ class ReferralsGateway {
                            //create import relation
                            $relationCreated = $this->contactsRepository->relateContacts($this->neoLoggedInUserDetails , $nonMintmeshContactExist[0] , array(), 1);
                        }else{
-                       $phoneContactInput = array();
-                       $phoneContactInput['firstname'] = !empty($input['referring_user_firstname'])?$this->appEncodeDecode->filterString($input['referring_user_firstname']):'';
-                       $phoneContactInput['lastname'] = !empty($input['referring_user_lastname'])?$this->appEncodeDecode->filterString($input['referring_user_lastname']):'';
-                       $phoneContactInput['fullname'] = $this->appEncodeDecode->filterString($phoneContactInput['firstname'])." ".$this->appEncodeDecode->filterString($phoneContactInput['lastname']);
+                       $phoneContactInput = $phoneContactRelationInput = array();
+                       $phoneContactInput['firstname'] = $phoneContactInput['lastname'] = $phoneContactInput['fullname'] = "";
+                       $phoneContactRelationInput['firstname'] = !empty($input['referring_user_firstname'])?$this->appEncodeDecode->filterString($input['referring_user_firstname']):'';
+                       $phoneContactRelationInput['lastname'] = !empty($input['referring_user_lastname'])?$this->appEncodeDecode->filterString($input['referring_user_lastname']):'';
+                       $phoneContactRelationInput['fullname'] = $phoneContactRelationInput['firstname']." ".$phoneContactRelationInput['lastname'];
                        $phoneContactInput['phone'] = !empty($input['referring'])?$this->appEncodeDecode->filterString($input['referring']):'';
-                       $importedContact = $this->contactsRepository->createNodeAndRelationForPhoneContacts($userEmail, $phoneContactInput, array());
+                       $importedContact = $this->contactsRepository->createNodeAndRelationForPhoneContacts($userEmail, $phoneContactInput, $phoneContactRelationInput);
                        }
                        //send sms invitation to p3
                        $smsInput=array();
@@ -610,6 +611,8 @@ class ReferralsGateway {
                     
                     foreach ($result as $k=>$v)
                     {
+                        $nonMintmeshUserDetails = array();
+                        $isNonMintmesh = 0;
                         if (isset($v[0]) && isset($v[1]))
                         {
                             $postDetails = array();
@@ -624,11 +627,17 @@ class ReferralsGateway {
                                 $postDetails['to_user_refered_by'] = 'phone';
                                 $postDetails['to_user_is_mintmesh'] = 0;
                                 $postDetails['referred_by_phone'] = 1 ;
+                                $isNonMintmesh = 1;
+                                if (!empty($v[0]->phone))
+                                    $nonMintmeshUserDetails = $this->contactsRepository->getImportRelationDetailsByPhone($v[1]->referred_by, $v[0]->phone);
                             }else if(!empty($v[2][1]) && $v[2][1]=='Mintmesh'){
                                  $postDetails['to_user_is_mintmesh'] = 1;
                             }else{
                                  $postDetails['to_user_referred_by'] = 'emailid';
                                  $postDetails['to_user_is_mintmesh'] = 0;
+                                 $isNonMintmesh = 1 ;
+                                 if (!empty($v[0]->emailid))
+                                    $nonMintmeshUserDetails = $this->contactsRepository->getImportRelationDetailsByEmail($v[1]->referred_by, $v[0]->emailid);
                             }
                             
                             $viaUserDetails = $this->neoUserRepository->getNodeByEmailId($v[1]->referred_by) ;
@@ -636,6 +645,12 @@ class ReferralsGateway {
                             foreach ($referred_by_details as $k2=>$v2)
                             {
                                 $postDetails['from_user_'.$k2] = $v2 ;
+                            }
+                            //form user name details for non mintmesh contacts
+                            if (!empty($nonMintmeshUserDetails) || !empty($isNonMintmesh)){
+                                $postDetails['to_user_firstname'] = !empty($nonMintmeshUserDetails->firstname)?$nonMintmeshUserDetails->firstname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                                $postDetails['to_user_lastname'] = !empty($nonMintmeshUserDetails->lastname)?$nonMintmeshUserDetails->lastname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                                $postDetails['to_user_fullname'] = !empty($nonMintmeshUserDetails->fullname)?$nonMintmeshUserDetails->fullname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
                             }
                             //check if self referred
                             if (!empty($postDetails['to_user_emailid']) && $postDetails['to_user_emailid'] == $postDetails['from_user_emailid']){
@@ -711,12 +726,16 @@ class ReferralsGateway {
             $userEmail = $this->neoLoggedInUserDetails->emailid ;
             $users = $this->referralsRepository->getMyReferrals($input['post_id'], $userEmail);
             $postCreatedBy = '' ;
+            //get post details
+            $postDetails = $this->referralsRepository->getPostDetails($input['post_id']);
             if (count($users))
             {
                 $userDetails = array();
                 $self_referred = 0 ;
                 foreach ($users as $k=>$v)
                 {
+                    $isNonMintmesh = 0 ;
+                    $nonMintmeshUserDetails = array();
                     $u = $this->userGateway->formUserDetailsArray($v[0], 'property') ;
                     $u['relation_id']=$v[1]->getId();
                     $relation_details = $v[1]->getProperties();
@@ -742,11 +761,23 @@ class ReferralsGateway {
                         $u["is_mintmesh"] = 0 ;
                         $u["user_referred_by"] = 'phone' ;
                         $u['referred_by_phone'] = 1 ;
+                        $isNonMintmesh = 1 ;
+                        if (!empty($v[0]->phone))
+                        $nonMintmeshUserDetails = $this->contactsRepository->getImportRelationDetailsByPhone($this->loggedinUserDetails->emailid, $v[0]->phone);
                     }else if (!empty($v[2][1]) && $v[2][1]=='Mintmesh'){
                         $u["is_mintmesh"] = 1 ;
                     }else{
                         $u["is_mintmesh"] = 0 ;
                         $u["user_referred_by"] = 'emailid' ;
+                        $isNonMintmesh = 1 ;
+                        if (!empty($v[0]->emailid))
+                        $nonMintmeshUserDetails = $this->contactsRepository->getImportRelationDetailsByEmail($this->loggedinUserDetails->emailid, $v[0]->emailid);
+                    }
+                    //form user name details for non mintmesh contacts
+                    if (!empty($nonMintmeshUserDetails) || !empty($isNonMintmesh)){
+                        $u['firstname'] = !empty($nonMintmeshUserDetails->firstname)?$nonMintmeshUserDetails->firstname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                        $u['lastname'] = !empty($nonMintmeshUserDetails->lastname)?$nonMintmeshUserDetails->lastname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                        $u['fullname'] = !empty($nonMintmeshUserDetails->fullname)?$nonMintmeshUserDetails->fullname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
                     }
                     //check if self referred
                     if (!empty($u['emailid']) && $u['emailid'] == $userEmail){
@@ -761,6 +792,11 @@ class ReferralsGateway {
                 
                 $suggestions = $this->getPostSuggestions($input);
                 $data=array("users"=>$userDetails) ;
+                $data['postDetails'] = array();
+                if (count($postDetails) && isset($postDetails[0][0]))
+                {
+                    $data['postDetails'] = $postDetails = $this->formPostDetailsArray($postDetails[0][0]);
+                }
                 $data['suggestions'] = !empty($suggestions['data']['users'])?$suggestions['data']['users']:array() ;
                 $data['referrals_count'] = $this->referralsRepository->getPostReferralsCount($input['post_id']);
                 $data['is_self_referred'] = $self_referred ;
@@ -770,13 +806,12 @@ class ReferralsGateway {
             else
             {
                 $data=array("users"=>array()) ;
-                //get post details
-                $postDetails = $this->referralsRepository->getPostDetails($input['post_id']);
                 if (count($postDetails) && isset($postDetails[0][0]))
                 {
                     $input['post_created_by'] = !empty($postDetails[0][0]->created_by)?$postDetails[0][0]->created_by:'';
                     $suggestions = $this->getPostSuggestions($input);
                     $data['suggestions'] = !empty($suggestions['data']['users'])?$suggestions['data']['users']:array() ;
+                    $data['postDetails'] = $postDetails = $this->formPostDetailsArray($postDetails[0][0]);
                 }
                 $data['referrals_count'] = $this->referralsRepository->getPostReferralsCount($input['post_id']);
                 $message = array('msg'=>array(Lang::get('MINTMESH.referrals.no_referrals')));
@@ -990,6 +1025,7 @@ class ReferralsGateway {
         public function getPostStatusDetails($input)
         {
             $isReferredUser = false;
+            $isNonMintmesh = 0 ;
             $result = $this->referralsRepository->getPostStatusDetails($input);
             if (count($result))
             {
@@ -1025,7 +1061,7 @@ class ReferralsGateway {
                     }
                     if (!empty($result[0][1]))
                     {
-                        
+                        $nonMintmeshUserDetails = array();
                         $toUserDetails = $this->userGateway->formUserDetailsArray($result[0][1], 'property');
                         if (!empty($toUserDetails))
                         {
@@ -1039,18 +1075,30 @@ class ReferralsGateway {
                             $returnArray["to_is_mintmesh"] = 0 ;
                             $returnArray["to_referred_by"] = 'phone' ;
                             $returnArray['referred_by_phone'] = 1 ;
+                            $isNonMintmesh = 1 ;
+                            if (!empty($result[0][1]->phone))
+                                $nonMintmeshUserDetails = $this->contactsRepository->getImportRelationDetailsByPhone($result[0][0]->referred_by, $result[0][1]->phone);
                         }else if (!empty($result[0][3][1]) && $result[0][3][1]=='Mintmesh'){
                             $returnArray["to_is_mintmesh"] = 1 ;
                             $returnArray["to_referred_by"] = '' ;
                         }else{
                             $returnArray["to_is_mintmesh"] = 0 ;
                             $returnArray["to_referred_by"] = 'emailid' ;
+                            $isNonMintmesh = 1 ;
+                            if (!empty($result[0][1]->emailid))
+                                $nonMintmeshUserDetails = $this->contactsRepository->getImportRelationDetailsByEmail($result[0][0]->referred_by, $result[0][1]->emailid);
                         }
                         //check if self referred
                         if (!empty($returnArray['to_emailid']) && $returnArray['to_emailid'] == $returnArray['from_emailid']){
                             $returnArray['is_self_referred']=1;
                         }else{
                             $returnArray['is_self_referred']=0;
+                        }
+                        //form user name details for non mintmesh contacts
+                        if (!empty($nonMintmeshUserDetails) || !empty($isNonMintmesh)){
+                            $returnArray['to_firstname'] = !empty($nonMintmeshUserDetails->firstname)?$nonMintmeshUserDetails->firstname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                            $returnArray['to_lastname'] = !empty($nonMintmeshUserDetails->lastname)?$nonMintmeshUserDetails->lastname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                            $returnArray['to_fullname'] = !empty($nonMintmeshUserDetails->fullname)?$nonMintmeshUserDetails->fullname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
                         }
                         //check if phone is verified if p3 is loggedin
                         $this->loggedinUserDetails = $this->getLoggedInUser();
@@ -1349,6 +1397,7 @@ class ReferralsGateway {
                         $enterReferrals = true;
                         $p2Status = Config::get('constants.REFERENCE_STATUS.PENDING') ;
                         $to_emailid = "" ;
+                        $is_non_mintmesh = 0 ;
                         $a = $relation[0]->getProperties();
                         if (!empty($relation[1]) && !empty($a))
                         {
@@ -1388,6 +1437,8 @@ class ReferralsGateway {
                             {
                                 //get details of the person who got referred(p3)
                                 $toUserDetails = $this->userGateway->formUserDetailsArray($relation[3], 'property') ;
+                                //if (!empty($toUserDetails['emailid']) && $toUserDetails['emailid'] == 'ugh@gmail.com'){
+                                //echo "Fds";exit;}
                                 foreach ($toUserDetails as $k=>$v)
                                 {
                                     $a['to_user_'.$k] = $v ;
@@ -1420,13 +1471,28 @@ class ReferralsGateway {
                                 //add if referred by phone number
                                 if ($relation[4][0] == 'NonMintmesh'){
                                     $a['referred_by_phone'] = 1 ;
+                                    $is_non_mintmesh = 1 ;
+                                    if (!empty($relation[3]->phone))
+                                    $nonMintmeshUserDetails = $this->contactsRepository->getImportRelationDetailsByPhone($loggedinUserDetails->emailid, $relation[3]->phone);
+                                }else if (!empty($relation[4][1]) && $relation[4][1] == 'Mintmesh'){
+                                    $a['referred_by_phone'] = 0 ;
                                 }else{
                                     $a['referred_by_phone'] = 0 ;
+                                    $is_non_mintmesh = 1 ;
+                                    if (!empty($relation[3]->emailid))
+                                    $nonMintmeshUserDetails = $this->contactsRepository->getImportRelationDetailsByEmail($loggedinUserDetails->emailid, $relation[3]->emailid);
                                 }
+                                //form user name details for non mintmesh contacts
+                            if (!empty($nonMintmeshUserDetails) || !empty($is_non_mintmesh)){
+                                $a['to_user_firstname'] = !empty($nonMintmeshUserDetails->firstname)?$nonMintmeshUserDetails->firstname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                                $a['to_user_lastname'] = !empty($nonMintmeshUserDetails->lastname)?$nonMintmeshUserDetails->lastname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                                $a['to_user_fullname'] = !empty($nonMintmeshUserDetails->fullname)?$nonMintmeshUserDetails->fullname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                            }
                                 $a['post_id'] = $postId ;
                                 $a['post_status'] = !empty($postDetails['status'])?strtolower($postDetails['status']):'' ;
                                 $a['referrals_count'] = $this->referralsRepository->getPostReferralsCount($postId);
                                 $a['other_status'] = !empty($relation[0]->one_way_status)?$relation[0]->one_way_status:Config::get('constants.REFERENCE_STATUS.PENDING');
+                                
                             }
                         }
                         if ($enterReferrals)

@@ -8,7 +8,7 @@ return [
     'GRANT_TYPE'=>"password",
     'MNT_LOGIN_SOURCE'=>1,
     'FB_LOGIN_SOURCE'=>2,
-    'MNT_USER_EXPIRY_HR'=>48,
+    'MNT_USER_EXPIRY_HR'=>24,
     'MNT_VERSION'=>"v1",
     'MNT_FROM_NAME'=>'Mintmesh',
     'MNT_DEEP_LINK_IOS'=>'mintmeshstg://',
@@ -18,7 +18,7 @@ return [
     'GOOGLE_CONTACTS_URL'=>'https://www.google.com/m8/feeds/contacts/default/full?alt=json&max-results=10000',
     'ANDROID'=>'android',
     'IOS'=>'ios',
-    'INVITE_SINGLE'=>TRUE,
+    'INVITE_SINGLE'=>false,
     'INVITE_EMAIL'=>'mintmeshapp@gmail.com',
     'PUSH_APP_ID' =>'MTPajI5Vj2EzNUvKnvvynrZHh320Nk2pu9iW3x60',// 'MTPajI5Vj2EzNUvKnvvynrZHh320Nk2pu9iW3x60',//'0YORwFGpy2BsSW4g6ify3FxeBraHHiMDuzFUTJX0',
     'PUSH_REST_KEY' =>'32zUISSPq5aAdkdWdrGYTQpad4JsRhoQsD4Exro8',// '32zUISSPq5aAdkdWdrGYTQpad4JsRhoQsD4Exro8',//'dVGfvLnENYwyTXVKoUPJKvOW4J9Ww9UoRbQQfJg7',
@@ -35,16 +35,18 @@ return [
         'SECRET_KEY'=>'cd9cbbaefab824e2f9672b998188b87468e5f9e6'
     ],
     'PAYPAL'=>[
-        'CLIENT_ID'=>'AQ6EVfzfI95uH_8JAyPCkpcBc4k_GDMU9W4KbI_sMsGIyLtkDDKX1CN24ojGsXrbtEhtvNCscxRlWgNZ',//'AQ6EVfzfI95uH_8JAyPCkpcBc4k_GDMU9W4KbI_sMsGIyLtkDDKX1CN24ojGsXrbtEhtvNCscxRlWgNZ',//'AYXtuYZ9GyPCT5IoBDoSRISgXtANxqoEmTNUiBZW27hDwVzAueeMtsXIqQcbJwRLoLlHzeVvYV7fOzDL',
-        'CLIENT_SECRET'=>'EDuYEHHqzWEX7Uisehy8GTROOAsYZfjswrBRY-xikFWt_BHUwxa_qr-_N16AsGxXplgDS_eFNOpLAj9J',//'EDuYEHHqzWEX7Uisehy8GTROOAsYZfjswrBRY-xikFWt_BHUwxa_qr-_N16AsGxXplgDS_eFNOpLAj9J'//'ELcx1IzIF_6cjCPAXQ15MEX5M9SsCQQfbNHvbk4pOIeZRhZxpfcAJ9g60Li8bagpDLRmA2REqfzXYQ6T'
+        'CLIENT_ID'=>'AYEcKQwz-8kQcg9Lu3ZwLHS_rYwyYRbwg8Zt4vBY29pPrPu_MYK3o9dEyoQB0OnoCxiioEQTplb_96Vw',//'AQ6EVfzfI95uH_8JAyPCkpcBc4k_GDMU9W4KbI_sMsGIyLtkDDKX1CN24ojGsXrbtEhtvNCscxRlWgNZ',//'AYXtuYZ9GyPCT5IoBDoSRISgXtANxqoEmTNUiBZW27hDwVzAueeMtsXIqQcbJwRLoLlHzeVvYV7fOzDL',
+        'CLIENT_SECRET'=>'EOI1RV1C5ZUoHaYs5UabDaqBYFjH_t00kgtdx3P_OThTF0Wthlpn9qvDrrz0SB5CijEW2wIYeYX4BV0P',//'EDuYEHHqzWEX7Uisehy8GTROOAsYZfjswrBRY-xikFWt_BHUwxa_qr-_N16AsGxXplgDS_eFNOpLAj9J'//'ELcx1IzIF_6cjCPAXQ15MEX5M9SsCQQfbNHvbk4pOIeZRhZxpfcAJ9g60Li8bagpDLRmA2REqfzXYQ6T'
         'STATUS'=>[
             'ERROR'=>'ERROR'
-        ]
+        ],
+        'MODE'=>'sandbox',
+        'VALIDATIONLEVEL'=>'strict'
     ],
     'MANUAL'=>[
         'STATUS'=>[
             'ERROR'=>'ERROR',
-            'SUCESS'=>'SUCESS'
+            'SUCESS'=>'SUCCESS'
         ]
     ],
     'REFERENCE_STATUS'=>[
@@ -68,7 +70,9 @@ return [
         'POSSES_JOB_FUNCTION'=>'POSSES_JOB_FUNCTION',
         'HOLDS_INDUSTRY_EXPERIENCE'=>'HOLDS_INDUSTRY_EXPERIENCE',
         'HAS_REFERRED'=>'HAS_REFERRED',
-        'DELETED_CONTACT'=>'DELETED_CONTACT'
+        'DELETED_CONTACT'=>'DELETED_CONTACT',
+        'PROVIDES'=>'PROVIDES',
+        'LOOKING_FOR'=>'LOOKING_FOR'
         
     ],
     'MAPPED_RELATION_TYPES'=>[
@@ -120,7 +124,8 @@ return [
         ]
     ],
     'MINTMESH_SUPPORT'=>[
-        'EMAILID'=>'pshweta24@gmail.com'
+//        'EMAILID'=>'support@mintmesh.com'
+        'EMAILID'=>'v.gopi314@gmail.com'
     ],
     'S3BUCKET' => 'mintmesh',
     'PROFILE_COMPLETION_VALUES'=>[

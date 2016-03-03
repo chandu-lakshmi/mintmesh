@@ -36,13 +36,15 @@
       <h3 style="color:#000000;font-family: 'Roboto', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello <?php echo ucfirst($name) ; ?>, </h3>
       <p>You have successfully created MintMesh account for <a href="mailto:<?php echo $email ; ?>" style="color:#000;text-decoration:none;"><?php echo $email ; ?></a>.</p>
 <p>To complete the process, activate your account using the below activation link.</p>
-<p style="text-align:center; margin-top:50px; margin-bottom:50px;" ><a class="activate_btn" style="color:#FFFFFF;text-decoration:none;font-family: 'Roboto', sans-serif;font-size:20px;padding:10px 15px; text-align: center;  background:#269b7b; width:auto; margin:0px auto; border-radius:5px; line-height:20px; " href="<?php echo $link ; ?>" target="_blank">Activate Account</a></p>
-<p class="fontsize">If this email is not set up on your mobile device, please use the link below to activate your MintMesh account using a browser.
+<!--<p style="text-align:center; margin-top:50px; margin-bottom:50px;" ><a class="activate_btn" style="color:#FFFFFF;text-decoration:none;font-family: 'Roboto', sans-serif;font-size:20px;padding:10px 15px; text-align: center;  background:#269b7b; width:auto; margin:0px auto; border-radius:5px; line-height:20px; " href="<?php //echo $link ; ?>" target="_blank">Activate Account</a></p>-->
+<p style="text-align:center; margin-top:50px; margin-bottom:50px;" >
+	<a class="activate_btn" style="color:#FFFFFF;text-decoration:none;font-family: 'Roboto', sans-serif;font-size:20px;padding:10px 15px; text-align: center;  background:#269b7b; width:auto; margin:0px auto; border-radius:5px; line-height:20px; " href="<?php echo $desktop_link ; ?>" target="_blank">Activate Account</a></p>
+<!--<p class="fontsize">If this email is not set up on your mobile device, please use the link below to activate your MintMesh account using a browser.
 </p>
 <p style="text-align:center;" >
-    <a style="font-family: 'Roboto', sans-serif;font-size:18px;padding-top:5px;padding-bottom:5px; color:#269b7b; " href="<?php echo $desktop_link ; ?>" target="_blank">Activate Account Using Browser</a>
+    <a style="font-family: 'Roboto', sans-serif;font-size:18px;padding-top:5px;padding-bottom:5px; color:#269b7b; " href="<?php //echo $desktop_link ; ?>" target="_blank">Activate Account Using Browser</a>
 
-                                </p></td>
+                                </p>--></td>
   </tr>
   <tr>
     <td valign="top" class="textContent" style="padding:30px 20px 10px;font-size:18px; font-weight:normal; color:#777777;  line-height:135%;"><p style="color:#333333; font-family: 'Roboto', sans-serif;font-size:18px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Sincerely, </p>

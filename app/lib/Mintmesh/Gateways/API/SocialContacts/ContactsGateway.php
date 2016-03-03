@@ -265,10 +265,10 @@ class ContactsGateway {
                 {
                     //create node in neo4j
                     $neoInput = array();
-                    $neoInput['firstname'] = isset($contact->firstName)?$contact->firstName:'';
-                    $neoInput['lastname'] = isset($contact->lastName)?$contact->lastName:'';
-                    $fullname = $neoInput['firstname']." ".$neoInput['lastname'];
-                    $neoInput['fullname'] = isset($contact->fullname)?$contact->fullname:$fullname;
+                    $neoInput['firstname'] = '';
+                    $neoInput['lastname'] = '';
+                    $fullname = '';
+                    $neoInput['fullname'] = '';
                     $neoInput['emailid'] = $email;
                     //$neoInput['secondary_emails'] = isset($emails)?$emails:array('0');
                     $neoInput['phone'] = isset($phones[0])?$phones[0]:'';
@@ -296,7 +296,10 @@ class ContactsGateway {
             
             $relationAttrs = array() ;
             $relationAttrs['from'] = 'phone' ;
-            $relationAttrs['display_name'] = isset($contact->fullname)?$contact->fullname:''; ;
+            $relationAttrs['firstname'] = isset($contact->firstName)?$contact->firstName:'';
+            $relationAttrs['lastname'] = isset($contact->lastName)?$contact->lastName:'';
+            $fullname = $relationAttrs['firstname']." ".$relationAttrs['lastname'];
+            $relationAttrs['fullname'] = isset($contact->fullname)?$contact->fullname:$fullname;
 
             if (!empty($contact->hasImage))
             {

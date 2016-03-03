@@ -28,7 +28,7 @@ return array(
 	|
 	*/
 
-	'host' => 'smtp.gmail.com',//'smtp.mailgun.org',
+	'host' => 'smtp.mandrillapp.com',//'smtp.mailgun.org',
 
 	/*
 	|--------------------------------------------------------------------------
@@ -54,8 +54,8 @@ return array(
 	|
 	*/
 
-	'from' => array('address' => 'no-reply@mintmesh.com', 'name' => 'mintmesh'),
-
+//	'from' => array('address' => 'no-reply@mintmesh.com', 'name' => 'mintmesh-admin'),
+        'from' => array('address' => 'no-reply@mintmesh.com', 'name' => 'MintMesh'),
 	/*
 	|--------------------------------------------------------------------------
 	| E-Mail Encryption Protocol
@@ -80,7 +80,7 @@ return array(
 	|
 	*/
 
-	'username' => 'mintmeshapp1@gmail.com',//'mintmesh@yahoo.com',//null,
+	'username' => 'mintmesh@yahoo.com',//null,
 
 	/*
 	|--------------------------------------------------------------------------
@@ -93,7 +93,7 @@ return array(
 	|
 	*/
 
-	'password' => 'Enterpi@123',//'j0L7nqRrZHLrQE5jy7y6cg',//null,
+	'password' => 'j0L7nqRrZHLrQE5jy7y6cg',//null,
 
 	/*
 	|--------------------------------------------------------------------------

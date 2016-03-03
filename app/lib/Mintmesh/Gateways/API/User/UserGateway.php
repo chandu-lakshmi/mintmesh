@@ -19,6 +19,7 @@ use Mintmesh\Services\ResponseFormatter\API\CommonFormatter ;
 use LucaDegasperi\OAuth2Server\Authorizer;
 use Mintmesh\Services\APPEncode\APPEncode ;
 use Mintmesh\Gateways\API\SocialContacts\ContactsGateway;
+use Mintmesh\Repositories\API\SocialContacts\ContactsRepository;
 use Illuminate\Support\Facades\Hash;
 
 use Lang;
@@ -33,12 +34,12 @@ class UserGateway {
     const SUCCESS_RESPONSE_MESSAGE = 'success';
     const ERROR_RESPONSE_CODE = 403;
     const ERROR_RESPONSE_MESSAGE = 'error';
-    protected $userRepository, $neoUserRepository,$paymentRepository;    
+    protected $userRepository, $neoUserRepository,$paymentRepository, $contactsRepository;    
     protected $authorizer, $appEncodeDecode;
     protected $userValidator,$contactsGateway, $referralsGateway;
     protected $userEmailManager;
     protected $userFileUploader,$declines, $refer_nots, $deleteUserTypes;
-    protected $commonFormatter, $postNotifications, $other_status_diferrent, $referralsRepository;
+    protected $commonFormatter, $postNotifications, $other_status_diferrent, $referralsRepository, $notificationFromP2, $notificationToP2;
     protected $loggedinUserDetails,$notificationsTypes,$extraTextsNotes,$directProfileRedirections,$infoTypes,$referFlowTypes ;
 	public function __construct(UserRepository $userRepository,
                                     NeoUserRepository $neoUserRepository,
@@ -50,7 +51,8 @@ class UserGateway {
                                     APPEncode $appEncodeDecode,
                                     ReferralsRepository $referralsRepository,
                                     PaymentRepository $paymentRepository,
-                                    ContactsGateway $contactsGateway) {
+                                    ContactsGateway $contactsGateway,
+                                    ContactsRepository $contactsRepository) {
 		$this->userRepository = $userRepository;
                 $this->neoUserRepository = $neoUserRepository;
                 $this->authorizer = $authorizer;
@@ -62,6 +64,7 @@ class UserGateway {
                 $this->referralsRepository = $referralsRepository ;
                 $this->userFileUploader = $userFileUploader ;
                 $this->contactsGateway = $contactsGateway ;
+                $this->contactsRepository = $contactsRepository ;
                 $this->notificationsTypes = array('3','4','5','6','9','10','11','12','13','14','15','17','18','19','20','22');
                 $this->extraTextsNotes = array('10','11','12','22') ;
                 $this->infoTypes = array('experience', 'education', 'certification');
@@ -74,6 +77,8 @@ class UserGateway {
                 $this->refer_nots = array(3,4,5,6,7,8,9);
                 $this->deleteUserTypes = array(1,2);
                 $this->you_are = array('recruiter'=>4, 'salaried_professional'=>1, 'self_employed'=>2, 'professional_service_provider'=>3, 'student'=>5, 'retired_professional'=>7, 'homemaker'=>6);
+                $this->notificationFromP2 = array(10,11,20);
+                $this->notificationToP2 = array(12,15);
         }
         // validation on user inputs for change password
         public function validateChangePassword($input) {            
@@ -1785,7 +1790,7 @@ class UserGateway {
                 $userConnections = $connections = array();
                 //check if these two users are connected
                 $isConnected = $this->neoUserRepository->checkConnection($loggedinUserDetails->emailid, $input['emailid']);
-                if (!empty($isConnected) && !empty($isConnected['connected'])){
+                if ((!empty($isConnected) && !empty($isConnected['connected'])) || $input['emailid'] ==  $loggedinUserDetails->emailid){
                 $connections = $this->neoUserRepository->getConnectedUsers($input['emailid']);
                 }
                 if (count($connections))
@@ -1842,13 +1847,14 @@ class UserGateway {
         {
             $returnArray = array();
             $connected = $this->neoUserRepository->checkConnection($loggedInUser,$currentUser);
-            if (!empty($connected))
+            if (!empty($connected) && !empty($connected['connected']))
             {
                 if (!empty($connected['connected'])){//connected
                     $returnArray['connected'] = 1 ;
                 }else{//deleted
                     $returnArray['connected'] = 0 ;
                 }
+                $returnArray['connected'] = 1 ;
                 $returnArray['request_sent_at'] = 0;
             }else
             {
@@ -2553,7 +2559,8 @@ class UserGateway {
                                  }else{
                                      $note = $this->formUserDetailsArray($neoUserDetails, 'attribute');
                                  }
-                                $thirdName = "";
+                                $thirdName = $thirdFirstName = "";
+                                $thirdLastName = "";
                                 if (!empty($notification->other_email) || !empty($notification->other_phone))//consider mintmesh and non mintmesh users
                                 {
                                     if ($notification->notifications_types_id == 20){//if payment done notification the change the from and other details
@@ -2572,9 +2579,15 @@ class UserGateway {
                                     if (in_array($notification->notifications_types_id, $this->notificationsTypes))
                                     {
                                         $thirdName = !empty($otherNoteUser->fullname)?$otherNoteUser->fullname:'' ;
+                                        if (empty($thirdName))//if name is empty try to get the name from the import relation
+                                        {
+                                            $thirdUserResult = $this->getNonMintmeshUserName($otherNoteUser, $notification);
+                                            $thirdName = !empty($thirdUserResult->fullname)?$thirdUserResult->fullname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                                            $thirdFirstName = !empty($thirdUserResult->firstname)?$thirdUserResult->firstname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                                            $thirdLastName = !empty($thirdUserResult->lastname)?$thirdUserResult->lastname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                                        }
                                     }
                                     if (empty($notification->for_mintmesh) && empty($normalFlow)){
-                                        //echo "here";exit;
                                         $otherUserDetails = $this->formUserDetailsArray($otherEmailDetails, 'property');
                                     }else{
                                         $otherUserDetails = $this->formUserDetailsArray($otherEmailDetails, 'attribute');
@@ -2583,6 +2596,11 @@ class UserGateway {
                                     foreach ($otherUserDetails as $k=>$v)
                                     {
                                         $note['other_user_'.$k] = $v ;
+                                    }
+                                    if (empty($note['other_user_fullname'])){
+                                        $note['other_user_fullname'] = $thirdName ;
+                                        $note['other_user_firstname'] = $thirdFirstName ;
+                                        $note['other_user_lastname'] = $thirdLastName ;
                                     }
 
                                 }
@@ -4060,6 +4078,23 @@ class UserGateway {
                 $data = array();
             }
             return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $data);
+        }
+        
+        public function getNonMintmeshUserName($neoUserDetails, $notification){
+            $relationDetailsResult = array();
+            if (in_array($notification->notifications_types_id, $this->notificationFromP2)){
+                $email1 = $notification->from_email ;
+            }else if (in_array($notification->notifications_types_id, $this->notificationToP2)){
+                $email1 = $notification->to_email ;
+            }
+            if (!empty($notification->other_email))//i.e non mintmesh with only emailid
+            {
+                $relationDetailsResult = $this->contactsRepository->getImportRelationDetailsByEmail($email1, $notification->other_email);
+            }else if (!empty($notification->other_phone)){
+                $relationDetailsResult = $this->contactsRepository->getImportRelationDetailsByPhone($email1, $notification->other_phone);
+            }
+            return $relationDetailsResult ;
+            
         }
 
         

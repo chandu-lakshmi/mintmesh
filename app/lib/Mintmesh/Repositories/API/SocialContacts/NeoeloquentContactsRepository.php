@@ -359,6 +359,40 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
                 }
             }
         }
+        
+        public function getImportRelationDetailsByEmail($email1='', $email2=''){
+            $email1 = $this->appEncodeDecode->filterString(strtolower($email1));
+            $email2 = $this->appEncodeDecode->filterString(strtolower($email2));
+            $queryString = "match (u:User:Mintmesh)-[r:IMPORTED]-(c:User) where u.emailid='".$email1."' and c.emailid='".$email2."' return r";
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if ($result->count())
+            {
+                return $result[0][0] ;
+            }
+            else
+            {
+                return 0 ;
+            }
+            
+        }
+        
+        public function getImportRelationDetailsByPhone($email1='', $phone=''){
+            $email1 = $this->appEncodeDecode->filterString(strtolower($email1));
+            $phone = $this->appEncodeDecode->filterString(strtolower($phone));
+            $queryString = "match (u:User:Mintmesh)-[r:IMPORTED]-(c:NonMintmesh) where u.emailid='".$email1."' and c.phone='".$phone."' return r";
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if ($result->count())
+            {
+                return $result[0][0] ;
+            }
+            else
+            {
+                return 0 ;
+            }
+            
+        }
        
         
 }

@@ -616,7 +616,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
             if (!empty($searchString)){
                 $sql.=" and lower(name) like '".$searchString."%'";
             }
-            $sql.=" order by name asc";
+            $sql.=" group by name asc";
             return $result = DB::select($sql);
             
         }
@@ -627,7 +627,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
             if (!empty($searchString)){
                 $sql.=" and lower(name) like '".$searchString."%'";
             }
-            $sql.=" order by name asc";
+            $sql.=" group by name asc";
             return $result = DB::select($sql);
         }
         public function getYouAreValues(){

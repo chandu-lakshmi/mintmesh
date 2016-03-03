@@ -55,7 +55,7 @@ return array(
             | Password for using sample DB "admin" 
 			| Password for using realtime DB "mintmesh"
             */
-            'password' => 'admin'//admin
+            'password' => 'm!ntm35h'//admin
         ),
 
 		'mysql' => array(

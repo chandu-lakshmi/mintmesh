@@ -34,8 +34,8 @@ return array(
                 "user_disconnect_success" => "Successfully Disconnected",
                 "user_disconnect_error" => "Users Not Connected",
                 "wrong_password"=>"Invalid password",
-                "correct_password"=>"Password successfully validated"
-            
+                "correct_password"=>"Password successfully validated",
+                "non_mintmesh_user_name"=>"the contact"
                 
             ),
          "referrals"=>array(
@@ -156,7 +156,7 @@ return array(
                                 '5'=>'has referred you to ', '6'=>'has accepted to be connected to', '7'=>'has accepted your connection','8'=>'has parked this request in the "No" Zone', '9'=>'has parked this request in the "No" Zone',
                                 '10'=>'has referred','11'=>'would like to refer you to','12'=>'accepted your referral of','13'=>'has accepted a service of you referred by','14'=>'has accepted a service of','15'=>'has turned down your referral of',
                                 '16'=>'has turned down your service request','17'=>'wants to introduce you to','18'=>'accepted your reference for','19'=>'accepted to connect with you, referred by','20'=>'has shared details of',
-                                '22'=>'does not want to be referred to','23'=>'self referred for your service','24'=>'accepted your self referrence', '25'=>'has turned down your self reference'),
+                                '22'=>'does not want to be referred to','23'=>'has referred ownself to your request','24'=>'accepted your self referrence', '25'=>'has turned down your self reference'),
              "extra_texts"=>array('10'=>'for your request','11'=>'for a service','12'=>'for this request','22'=>'for this service','23'=>'for your request')
          ),
          "get_requests"=>array(

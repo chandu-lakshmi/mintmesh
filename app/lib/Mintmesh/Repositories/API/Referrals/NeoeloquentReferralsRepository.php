@@ -289,8 +289,9 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
         {
             if (!empty($post_id))
             {
+                //p.status='".Config::get('constants.REFERRALS.STATUSES.ACTIVE')."'
                 $queryString = "match (p:Post) where ID(p)=".$post_id." 
-                    and p.status='".Config::get('constants.REFERRALS.STATUSES.ACTIVE')."' return p" ;
+                    return p" ;
                 $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();
             }
@@ -683,6 +684,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 {
                     $queryString.=" skip ".$skip." limit ".self::LIMIT ;
                 }
+                //echo $queryString ;exit;
                  $query = new CypherQuery($this->client, $queryString);
                  return $result = $query->getResultSet(); 
              }
