@@ -229,7 +229,9 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                             WHEN extra_info IS NULL THEN 1
                             ELSE extra_info END,
                             CASE WHEN other_email IS NULL THEN 1
-                            ELSE other_email END
+                            ELSE other_email END,
+                            CASE WHEN other_phone IS NULL THEN 1
+                            ELSE other_phone END
                          ) b ON nl.id = b.id  
                          left join notifications_types nt on nt.id = nl.notifications_types_id where nl.to_email = '".$user->emailid."'" ;
                 /*$sql = "select nl.*, nt.name as not_type from notifications_logs nl 

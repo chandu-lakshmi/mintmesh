@@ -456,16 +456,17 @@ class ReferralsGateway {
                    if (!empty($input['referring_phone_no'])){//create node for this and relate
                        //check if phone number contact exist
                        $nonMintmeshContactExist = $this->contactsRepository->getNonMintmeshContact($input['referring']);
-                        if (!empty($nonMintmeshContactExist)){
-                           //create import relation
-                           $relationCreated = $this->contactsRepository->relateContacts($this->neoLoggedInUserDetails , $nonMintmeshContactExist[0] , array(), 1);
-                       }else{
                        $phoneContactInput = $phoneContactRelationInput = array();
                        $phoneContactInput['firstname'] = $phoneContactInput['lastname'] = $phoneContactInput['fullname'] = "";
                        $phoneContactRelationInput['firstname'] = !empty($input['referring_user_firstname'])?$this->appEncodeDecode->filterString($input['referring_user_firstname']):'';
                        $phoneContactRelationInput['lastname'] = !empty($input['referring_user_lastname'])?$this->appEncodeDecode->filterString($input['referring_user_lastname']):'';
                        $phoneContactRelationInput['fullname'] = $phoneContactRelationInput['firstname']." ".$phoneContactRelationInput['lastname'];
                        $phoneContactInput['phone'] = !empty($input['referring'])?$this->appEncodeDecode->filterString($input['referring']):'';
+                        if (!empty($nonMintmeshContactExist)){
+                           //create import relation
+                           $relationCreated = $this->contactsRepository->relateContacts($this->neoLoggedInUserDetails , $nonMintmeshContactExist[0] , $phoneContactRelationInput, 1);
+                       }else{
+                       
                        $importedContact = $this->contactsRepository->createNodeAndRelationForPhoneContacts($userEmail, $phoneContactInput, $phoneContactRelationInput);
                        }
                        //send sms invitation to p3
