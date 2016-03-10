@@ -21,6 +21,7 @@ use Mintmesh\Services\APPEncode\APPEncode ;
 use Mintmesh\Gateways\API\SocialContacts\ContactsGateway;
 use Mintmesh\Repositories\API\SocialContacts\ContactsRepository;
 use Illuminate\Support\Facades\Hash;
+use GuzzleHttp\Client;
 
 use Lang;
 use Config;
@@ -306,33 +307,28 @@ class UserGateway {
         public function createUser($input) 
         {
             $userCount = 0;
-            if (!empty($input['phone']))
-            {
+            if (!empty($input['phone'])) {
                 $userCount = $this->neoUserRepository->getUserByPhone($input['phone']);
             }
-            if (empty($userCount))
-            {
+            if (empty($userCount)) {
                 $responseMessage =  $responseCode = $responseStatus = "";
                 $responseData = array();
                 $createdUser = $this->userRepository->createUser($input) ;
                 // create a node in neo
                 $neoInput = array();
-                $neoInput['firstname'] = $input['firstname'];
-                $neoInput['lastname'] = $input['lastname'];
-                $neoInput['fullname'] = $input['firstname']." ".$input['lastname'];
-                $neoInput['emailid'] = $input['emailid'];
-                $neoInput['phone'] = $input['phone'];
+                $neoInput['firstname']     = $input['firstname'];
+                $neoInput['lastname']      = $input['lastname'];
+                $neoInput['fullname']      = $input['firstname']." ".$input['lastname'];
+                $neoInput['emailid']       = $input['emailid'];
+                $neoInput['phone']         = $input['phone'];
                 $neoInput['phoneverified'] = !empty($input['phone_verified'])?1:0;
                 $neoInput['phone_country_name'] = $input['phone_country_name'];
                 $neoInput['login_source'] = $input['login_source'];
                 //check for existing node in neo4j
                 $neoUser =  $this->neoUserRepository->getNodeByEmailId($input['emailid']) ;
-                if (empty($neoUser))
-                {
+                if (empty($neoUser)) {
                     $createdNeoUser =  $this->neoUserRepository->createUser($neoInput) ;
-                }
-                else
-                {
+                } else {
                     //change user label
                     $changeLabelNeoUser =  $this->neoUserRepository->changeUserLabel($input['emailid']) ;
                     if (!empty($changeLabelNeoUser)){
@@ -344,7 +340,7 @@ class UserGateway {
 
                 if (!empty($createdUser)) {
                     //add battle card for phone verification
-                     $notificationLog = array(
+                    $notificationLogPhone = array(
                             'notifications_types_id' => 21,//21 is the id of notification
                             'from_user' => 0,
                             'from_email' => $this->appEncodeDecode->filterString(strtolower($input['emailid'])),
@@ -355,69 +351,180 @@ class UserGateway {
                             'other_status'=>0,
                             'created_at' => date('Y-m-d H:i:s')
                         ) ;
-                    $t = $this->userRepository->logNotification($notificationLog);
+                    $t = $this->userRepository->logNotification($notificationLogPhone);
+                    //add battle card for email verification
+                    $notificationLogEmail = array(
+                           'notifications_types_id' => 26,//21 is the id of notification
+                           'from_user' => 0,
+                           'from_email' => $this->appEncodeDecode->filterString(strtolower($input['emailid'])),
+                           'to_email' => $this->appEncodeDecode->filterString(strtolower($input['emailid'])),
+                           'other_email' => '',
+                           'message' => "",
+                           'ip_address' => $_SERVER['REMOTE_ADDR'],
+                           'other_status'=>0,
+                           'created_at' => date('Y-m-d H:i:s')
+                        ) ;
+                    $t = $this->userRepository->logNotification($notificationLogEmail);
                     //send email to user
                     $activationCode = $this->base_64_encode($createdUser->created_at,$createdUser->emailactivationcode);
                     // send welcome email to users
                     // set email required params
-                     $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.user_welcome');
-                     $this->userEmailManager->emailId = $input['emailid'];
-                     $dataSet = array();
-                     $dataSet['name'] = $input['firstname'];
-                     $deep_link_type = !empty($input['os_type'])?$input['os_type']:'';
-                     $deep_link = $this->getDeepLinkScheme($deep_link_type);
-                     $dataSet['desktop_link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/user/activate/".$activationCode ;
-                     $appLink = $deep_link.Config::get('constants.MNT_VERSION')."/user/activate/".$activationCode ;
-                     //$appLinkCoded = $this->base_64_encode("", $appLink) ; 
-                     $dataSet['link'] = $appLink ;
-                     $dataSet['email'] = $input['emailid'] ;
+                    $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.user_welcome');
+                    $this->userEmailManager->emailId = $input['emailid'];
+                    $dataSet = array();
+                    $dataSet['name'] = $input['firstname'];
+                    $deep_link_type = !empty($input['os_type'])?$input['os_type']:'';
+                    $deep_link = $this->getDeepLinkScheme($deep_link_type);
+                    $dataSet['desktop_link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/user/activate/".$activationCode ;
+                    $appLink = $deep_link.Config::get('constants.MNT_VERSION')."/user/activate/".$activationCode ;
+                    //$appLinkCoded = $this->base_64_encode("", $appLink) ; 
+                    $dataSet['link'] = $appLink ;
+                    $dataSet['email'] = $input['emailid'] ;
 
-                    // $dataSet['link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/redirect_to_app/".$appLinkCoded ;;
-                     $this->userEmailManager->dataSet = $dataSet;
-                     $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.welcome');
-                     $this->userEmailManager->name = $input['firstname']. " ".$input['lastname'];
-                     $email_sent = $this->userEmailManager->sendMail();
-                     //log email status
-                     $emailStatus = 0;
-                     if (!empty($email_sent))
-                     {
-                         $emailStatus = 1;
-                     }
-                     $emailLog = array(
-                            'emails_types_id' => 1,
-                            'from_user' => 0,
-                            'from_email' => '',
-                            'to_email' => $this->appEncodeDecode->filterString(strtolower($input['emailid'])),
-                            'related_code' => $activationCode,
-                            'sent' => $emailStatus,
-                            'ip_address' => $_SERVER['REMOTE_ADDR']
-                        ) ;
-                     $this->userRepository->logEmail($emailLog);
-
-                     $responseMessage = Lang::get('MINTMESH.user.create_success');
-                     $responseCode = self::SUCCESS_RESPONSE_CODE;
-                     $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
-                     $responseData = array();
-
-                     } else {
-                            $responseMessage = Lang::get('MINTMESH.user.create_failure');
-                            $responseCode = self::ERROR_RESPONSE_CODE;
-                            $responseStatus = self::ERROR_RESPONSE_MESSAGE;
-                            $responseData = array();
-
+                   // $dataSet['link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/redirect_to_app/".$appLinkCoded ;;
+                    $this->userEmailManager->dataSet = $dataSet;
+                    $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.welcome');
+                    $this->userEmailManager->name = $input['firstname']. " ".$input['lastname'];
+                    $email_sent = $this->userEmailManager->sendMail();
+                    //log email status
+                    $emailStatus = 0;
+                    if (!empty($email_sent)) {
+                        $emailStatus = 1;
+                    }
+                    $emailLog = array(
+                           'emails_types_id' => 1,
+                           'from_user' => 0,
+                           'from_email' => '',
+                           'to_email' => $this->appEncodeDecode->filterString(strtolower($input['emailid'])),
+                           'related_code' => $activationCode,
+                           'sent' => $emailStatus,
+                           'ip_address' => $_SERVER['REMOTE_ADDR']
+                       ) ;
+                    $this->userRepository->logEmail($emailLog);
+///////////////////////////////////////////////////////////////
+                    $input['grant_type'] = "password";
+//                    $input['client_id'] = "dA3UFisQBLX23jHW";
+//                    $input['client_secret'] = "3mjo0kDSgCbsdLG7ipnhWJxC1iY6RLcX";
+                    $input['username'] = $input['emailid'];
+                    $url = url('/')."/v1/user/login";
+                    $ch = curl_init();
+                    curl_setopt($ch, CURLOPT_URL, $url);
+                    curl_setopt($ch, CURLOPT_POST, 1);
+                    curl_setopt($ch, CURLOPT_POSTFIELDS,$input);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    $response  = curl_exec($ch);
+                    curl_close($ch);
+                    $userDetails = (array) json_decode($response, TRUE);
+                    if($userDetails['status'] == 'success') {
+                        $responseMessage = Lang::get('MINTMESH.user.create_success');
+                        $responseCode = self::SUCCESS_RESPONSE_CODE;
+                        $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
+                        $responseData = $userDetails['data'];
+                    } else {
+                        $responseMessage = Lang::get('MINTMESH.user.create_success_login_fail');
+                        $responseCode = self::SUCCESS_RESPONSE_CODE;
+                        $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
+                        $responseData = array();
+                    }
+///////////////////////////////////////////////////////////////                    
+                } else {
+                    $responseMessage = Lang::get('MINTMESH.user.create_failure');
+                    $responseCode    = self::ERROR_RESPONSE_CODE;
+                    $responseStatus  = self::ERROR_RESPONSE_MESSAGE;
+                    $responseData    = array();
                 }
                 $message = array('msg'=>array($responseMessage));
                 return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $responseData) ;
-            }
-            else
-            {
+            } else {
                 $message = array('msg'=>array(Lang::get('MINTMESH.sms.user_exist')));
                 return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
             }
-            
-            
 	}
         
+        public function resendActivationLink()
+        {
+            $loggedinUserDetails = $this->getLoggedInUser();
+            $neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($loggedinUserDetails->emailid) ;
+            if($loggedinUserDetails->status && $loggedinUserDetails->emailverified) {
+                $responseMessage = Lang::get('MINTMESH.resendActivationLink.already_activated');
+                $responseCode = self::SUCCESS_RESPONSE_CODE;
+                $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseData = array();
+            } else {
+                //add battle card for phone verification
+                $notificationLogPhone = array(
+                       'notifications_types_id' => 21,//21 is the id of notification
+                       'from_user' => 0,
+                       'from_email' => $this->appEncodeDecode->filterString(strtolower($loggedinUserDetails->emailid)),
+                       'to_email' => $this->appEncodeDecode->filterString(strtolower($loggedinUserDetails->emailid)),
+                       'other_email' => '',
+                       'message' => "",
+                       'ip_address' => $_SERVER['REMOTE_ADDR'],
+                       'other_status'=>0,
+                       'created_at' => date('Y-m-d H:i:s')
+                    ) ;
+                $t = $this->userRepository->logNotification($notificationLogPhone);
+                //add battle card for email verification
+                $notificationLogEmail = array(
+                       'notifications_types_id' => 26,//21 is the id of notification
+                       'from_user' => 0,
+                       'from_email' => $this->appEncodeDecode->filterString(strtolower($loggedinUserDetails->emailid)),
+                       'to_email' => $this->appEncodeDecode->filterString(strtolower($loggedinUserDetails->emailid)),
+                       'other_email' => '',
+                       'message' => "",
+                       'ip_address' => $_SERVER['REMOTE_ADDR'],
+                       'other_status'=>0,
+                       'created_at' => date('Y-m-d H:i:s')
+                    ) ;
+                $t = $this->userRepository->logNotification($notificationLogEmail);
+                //send email to user
+                $activationCode = $this->base_64_encode(date('Y-m-d H:i:s'),$loggedinUserDetails->emailactivationcode);
+                // send welcome email to users
+                // set email required params
+                $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.user_welcome');
+                $this->userEmailManager->emailId = $loggedinUserDetails->emailid;
+                $dataSet = array();
+                $dataSet['name'] = $neoLoggedInUserDetails->firstname;
+                $deep_link_type = '';
+                $deep_link = $this->getDeepLinkScheme($deep_link_type);
+                $dataSet['desktop_link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/user/activate/".$activationCode ;
+                $appLink = $deep_link.Config::get('constants.MNT_VERSION')."/user/activate/".$activationCode ;
+                //$appLinkCoded = $this->base_64_encode("", $appLink) ; 
+                $dataSet['link'] = $appLink ;
+                $dataSet['email'] = $loggedinUserDetails->emailid ;
+
+                // $dataSet['link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/redirect_to_app/".$appLinkCoded ;;
+                $this->userEmailManager->dataSet = $dataSet;
+                $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.welcome');
+                $this->userEmailManager->name = $neoLoggedInUserDetails->fullname;
+                $email_sent = $this->userEmailManager->sendMail();
+                //log email status
+                $emailStatus = 0;
+                if (!empty($email_sent))
+                {
+                    $emailStatus = 1;
+                }
+                $emailLog = array(
+                       'emails_types_id' => 1,
+                       'from_user' => 0,
+                       'from_email' => '',
+                       'to_email' => $this->appEncodeDecode->filterString(strtolower($loggedinUserDetails->emailid)),
+                       'related_code' => $activationCode,
+                       'sent' => $emailStatus,
+                       'ip_address' => $_SERVER['REMOTE_ADDR']
+                   ) ;
+                $this->userRepository->logEmail($emailLog);
+
+                $responseMessage = Lang::get('MINTMESH.resendActivationLink.success');
+                $responseCode = self::SUCCESS_RESPONSE_CODE;
+                $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseData = array();
+            }
+            $message = array('msg'=>array($responseMessage));
+            return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $responseData) ;
+
+        }
+
         public function getSkills($input)
         { 
             if(empty($input)) {
@@ -652,7 +759,7 @@ class UserGateway {
          */
         public function verifyLogin($inputUserData = array())
         {
-           $oauthResult = "";
+            $oauthResult = "";
             // actually authenticating user with oauth
             try {
                 $oauthResult = $this->authorizer->issueAccessToken();
@@ -663,26 +770,36 @@ class UserGateway {
             if (isset($oauthResult['access_token']))
             {
                 $neoUser =  $this->neoUserRepository->getNodeByEmailId($inputUserData['username']) ;
+                $loggedinUserDetails = $this->userRepository->getUserByEmail($inputUserData['username']);
+                $remaning_days = $this->userRepository->getRemaningDays($inputUserData['username']);
                 //print_r($oauthResult);exit
                 if (!empty($neoUser))
                 {
                     $userDetails = $this->formUserDetailsArray($neoUser) ;
-                    $loggedinUserDetails = $this->userRepository->getUserByEmail($inputUserData['username']);
+//                    $loggedinUserDetails = $this->userRepository->getUserByEmail($inputUserData['username']);
                     $userCountDetails = $this->getUserBadgeCounts($loggedinUserDetails);
                     foreach ($userCountDetails as $k=>$v){
                         $userDetails[$k]=$v ;
                     }
                     $oauthResult['user'] = $userDetails ;
-                    
+                    $oauthResult['user']['remaning_days'] = $remaning_days;//$this->userRepository->getRemaningDays($userDetails['emailid']);
                 }
                 //create a relation for device token
                 $deviceToken = $inputUserData['deviceToken'] ;
                 $this->neoUserRepository->mapToDevice($deviceToken, $inputUserData['username']) ;
-                // returning success message
-                $message = array('msg'=>array(Lang::get('MINTMESH.login.login_success')));
-                $responseCode = self::SUCCESS_RESPONSE_CODE;
-                $responseMsg = self::SUCCESS_RESPONSE_MESSAGE;
-                $data = $oauthResult;
+                if($remaning_days->days != 0 || ($remaning_days->status && $remaning_days->emailverified)) {
+                    // returning success message
+                    $message = array('msg'=>array(Lang::get('MINTMESH.login.login_success')));
+                    $responseCode = self::SUCCESS_RESPONSE_CODE;
+                    $responseMsg = self::SUCCESS_RESPONSE_MESSAGE;
+                    $data = $oauthResult;
+                } else {
+                    // returning failure message                      
+                    $responseCode = self::SUCCESS_RESPONSE_CODE;
+                    $responseMsg = self::SUCCESS_RESPONSE_MESSAGE;
+                    $message = array('msg'=>array(Lang::get('MINTMESH.login.email_inactive')));
+                    $data = $oauthResult;
+                }
             }
             else
             {
@@ -784,32 +901,35 @@ class UserGateway {
             $emailActCode = $decodedString['string2'];
             if (!empty($emailActCode))
             {
-                //set timezone of mysql if different servers are being used
-                //date_default_timezone_set('America/Los_Angeles');
-                $expiryTime =  date('Y-m-d H:i:s', strtotime($createdTime . " +".Config::get('constants.MNT_USER_EXPIRY_HR')." hours"));
+                //get user details
+                $userDetails = $this->userRepository->getUserByCode($emailActCode);
+                if(strtotime($userDetails->created_at) == strtotime($createdTime)) {
+                    //set timezone of mysql if different servers are being used
+                    //date_default_timezone_set('America/Los_Angeles');
+                    $expiryTime =  date('Y-m-d H:i:s', strtotime($createdTime . " +".Config::get('constants.MNT_USER_EXPIRY_HR')." hours"));
+                } else {
+                    $expiryTime =  date('Y-m-d H:i:s', strtotime($createdTime . " +".Config::get('constants.MNT_USER_EXPIRY_HR_FOR_RESEND_ACTIVATION')." hours"));
+                }
                 //check if expiry time is valid
-               
                 if (strtotime($expiryTime) > strtotime(date('Y-m-d H:i:s')))
                 {
                     $userDetails = $this->userRepository->getUserByCode($emailActCode);
-                    if (!empty($userDetails)) {
-                        if (empty($userDetails->status))
-                        {
+                    if (!empty($userDetails) && empty($userDetails->status)) {
+//                        if (empty($userDetails->status))
+//                        {
                             // update status of the user to active
-                            $this->userRepository->setActive($userDetails->id);
+                            $this->userRepository->setActive($userDetails->id,$userDetails->emailid);
                             $message = array('msg'=>array(Lang::get('MINTMESH.activate_user.success')));
                             $data = array('emailid'=>$userDetails->emailid);
                             //remove activation code
                            // $this->userRepository->removeActiveCode($userDetails->id);
                             return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
-                        }
-                        else
-                        {
-                            $message = array('msg'=>array(Lang::get('MINTMESH.activate_user.already_activated')));
-                            return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
-                        }
-                        
-                        
+//                        }
+//                        else
+//                        {
+//                            $message = array('msg'=>array(Lang::get('MINTMESH.activate_user.already_activated')));
+//                            return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
+//                        }
                     }
                     else
                     {
@@ -1393,6 +1513,7 @@ class UserGateway {
                     }
                     $r['position'] = empty($r['position'])?$r['you_are_name']:$r['position'];
                     //$r['company'] = empty($r['company'])?'Company not yet added':$r['company'];
+                    $r['remaning_days'] = $this->userRepository->getRemaningDays($r['emailid']);
                     $data = array("user"=>$r);
                     $responseCode = self::SUCCESS_RESPONSE_CODE;
                     $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
@@ -2514,6 +2635,7 @@ class UserGateway {
                         $loggeduserDetails[$k]=$v ;
                     }
                 }
+                $loggeduserDetails['remaning_days'] = $this->userRepository->getRemaningDays($loggeduserDetails['emailid']);
                 if (count($neoLoggedInUserDetails))
                 {
                     $page = !empty($input['page'])?$input['page']:0;
@@ -2947,49 +3069,51 @@ class UserGateway {
                 {
                    foreach ($users as $user)
                     {
-                        $uId = $user[0]->getID();
-                        $u[$uId] = $this->formUserDetailsArray($user[0],'property');
-                        $connected = $this->neoUserRepository->checkConnection($emailid,$user[0]->emailid);
-                        if (!empty($input['emailid']))
-                        {
-                            //check if connected to me
-                            $connectedToMe = $this->neoUserRepository->checkConnection($loggedinUserDetails->emailid,$user[0]->emailid);
-                            if (!empty($connectedToMe) && !empty($connectedToMe['connected']))//checking for deletion is not required for normal refer and one to one connection
+                       if (!empty($user[0]->emailid) && $user[0]->emailid != $emailid){//do not display my own contact
+                            $uId = $user[0]->getID();
+                            $u[$uId] = $this->formUserDetailsArray($user[0],'property');
+                            $connected = $this->neoUserRepository->checkConnection($emailid,$user[0]->emailid);
+                            if (!empty($input['emailid']))
                             {
-                                $u[$uId]['connected_to_me'] = 1 ;
-                            }{
-                                //check if in pending state
-                                $pending_with_me = $this->neoUserRepository->checkPendingConnection($loggedinUserDetails->emailid,$user[0]->emailid);
-                                if (!empty($pending_with_me))// if pending
+                                //check if connected to me
+                                $connectedToMe = $this->neoUserRepository->checkConnection($loggedinUserDetails->emailid,$user[0]->emailid);
+                                if (!empty($connectedToMe) && !empty($connectedToMe['connected']))//checking for deletion is not required for normal refer and one to one connection
                                 {
-                                    $u[$uId]['connected_to_me'] = 2 ;
-                                }else
-                                {
-                                    $u[$uId]['connected_to_me'] = 0 ;
-                                }
+                                    $u[$uId]['connected_to_me'] = 1 ;
+                                }{
+                                    //check if in pending state
+                                    $pending_with_me = $this->neoUserRepository->checkPendingConnection($loggedinUserDetails->emailid,$user[0]->emailid);
+                                    if (!empty($pending_with_me))// if pending
+                                    {
+                                        $u[$uId]['connected_to_me'] = 2 ;
+                                    }else
+                                    {
+                                        $u[$uId]['connected_to_me'] = 0 ;
+                                    }
 
+
+                                }
 
                             }
 
-                        }
-
-                        if (!empty($connected) && !empty($connected['connected']))//checking for deletion is not required for normal refer and one to one connection
-                        {
-                            $u[$uId]['connected'] = 1 ;
-                            $u[$uId]['request_sent_at'] = 0;
-                        }else
-                        {
-                            //check if in pending state
-                            $pending = $this->neoUserRepository->checkPendingConnection($emailid,$user[0]->emailid);
-                            //$u[$uId] = $this->formBasicProfileArray($u[$uId]);
-                            if (!empty($pending))// if pending
+                            if (!empty($connected) && !empty($connected['connected']))//checking for deletion is not required for normal refer and one to one connection
                             {
-                                $u[$uId]['request_sent_at'] = $pending ;
-                                $u[$uId]['connected'] = 2 ;
+                                $u[$uId]['connected'] = 1 ;
+                                $u[$uId]['request_sent_at'] = 0;
                             }else
                             {
-                                $u[$uId]['connected'] = 0 ;
-                                $u[$uId]['request_sent_at'] = 0;
+                                //check if in pending state
+                                $pending = $this->neoUserRepository->checkPendingConnection($emailid,$user[0]->emailid);
+                                //$u[$uId] = $this->formBasicProfileArray($u[$uId]);
+                                if (!empty($pending))// if pending
+                                {
+                                    $u[$uId]['request_sent_at'] = $pending ;
+                                    $u[$uId]['connected'] = 2 ;
+                                }else
+                                {
+                                    $u[$uId]['connected'] = 0 ;
+                                    $u[$uId]['request_sent_at'] = 0;
+                                }
                             }
                         }
                    }

@@ -93,8 +93,8 @@ return [
                 $credentials = [
                     'emailid'    => $emailid,
                     'password' => $password,
-                    'emailverified' => 1,
-                    'status'=>1
+//                    'emailverified' => 1,
+//                    'status'=>1
                 ];
     
                 if (Auth::once($credentials)) {
@@ -156,13 +156,14 @@ return [
 
                 $credentials = [
                     'emailid'    => $emailid,                
-                    'emailverified' => 1,
-                    'status'=>1
+//                    'emailverified' => 1,
+//                    'status'=>1
                 ];
                 
                 // checking the user details only with emailid
-                $user = User::where(array('emailid' => $credentials['emailid'], 'emailverified' => $credentials['emailverified'], 'status' => $credentials['status']))->first();
-                
+//                $user = User::where(array('emailid' => $credentials['emailid'], 'emailverified' => $credentials['emailverified'], 'status' => $credentials['status']))->first();
+                $user = User::where(array('emailid' => $credentials['emailid']))->first();
+
                 if(!empty($user) && $user->id) {
                     return $user->id;
                 } else {

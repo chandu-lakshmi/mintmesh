@@ -959,7 +959,11 @@ class ReferralsGateway {
                         }
                         else if (!empty($result[0][0]) && !empty($result[0][0]->free_service))//free service
                         {
-                            $postUpdateStatus = $this->referralsRepository->updatePostPaymentStatus(!empty($result[0][1])?$result[0][1]->getID():0,'');
+                            $is_self_referred = 0;
+                            if ($input['referred_by'] == $referral){
+                                $is_self_referred = 1 ;
+                            }
+                            $postUpdateStatus = $this->referralsRepository->updatePostPaymentStatus(!empty($result[0][1])?$result[0][1]->getID():0,'', $is_self_referred);
                             //send notifications
                             //send notification to the person who referred to the post
                             $sqlUser = $this->userRepository->getUserByEmail($input['referred_by']);
@@ -982,7 +986,7 @@ class ReferralsGateway {
                     }
                     else
                     {
-                        if($input['from_user'] == $input['referred_by']) {
+                        if($input['from_user'] == $input['referred_by']) {//indicates self referral
                             $this->userGateway->sendNotification($this->loggedinUserDetails, $this->neoLoggedInUserDetails, $input['referred_by'], 25, array('extra_info'=>$input['post_id']), array('other_user'=>$referral),$parse) ;
                         } else {
                             $this->userGateway->sendNotification($this->loggedinUserDetails, $this->neoLoggedInUserDetails, $input['referred_by'], 15, array('extra_info'=>$input['post_id']), array('other_user'=>$referral),$parse) ;

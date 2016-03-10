@@ -645,7 +645,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
              }
          }
          
-         public function updatePostPaymentStatus($relation=0,$status='')
+         public function updatePostPaymentStatus($relation=0,$status='', $is_self_referred=0)
          {
              if (!empty($relation))
              {
@@ -655,7 +655,9 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                  {
                      $queryString.= "r.payment_status='".$status."'," ;
                  }
-                 
+                 if (!empty($is_self_referred)){
+                     $queryString.= "r.completed_status='".Config::get('constants.REFERRALS.STATUSES.ACCEPTED')."'," ;
+                 }
                  $queryString.= " r.one_way_status='".Config::get('constants.REFERRALS.STATUSES.ACCEPTED')."', r.p1_updated_at='".date("Y-m-d H:i:s")."'" ; 
                  $query = new CypherQuery($this->client, $queryString);
                  return $result = $query->getResultSet(); 

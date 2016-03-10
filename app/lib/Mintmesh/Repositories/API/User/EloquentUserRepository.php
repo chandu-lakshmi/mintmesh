@@ -63,6 +63,21 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
             return $this->user->find($id);
         }
         
+        public function getRemaningDays($emailid){
+            $currentDate = date("Y-m-d h:m:s");
+            $sql = "select DATEDIFF('$currentDate',created_at)AS days, status, emailverified from users where emailid='".$emailid."'";
+            $result = DB::select($sql);
+            if (!empty($result))
+            {
+                $result[0]->days = ($result[0]->days <= 14?(14-$result[0]->days):0);
+                return $result[0] ;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+                
         public function getUserByCode($code) {
             return User::where('emailactivationcode', '=', $code)->first();
             
@@ -70,7 +85,8 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
         
         
         public function getUserByEmail($email) {
-            return User::whereRaw('emailid = ? and status = 1', array($this->appEncodeDecode->filterString(strtolower($email))))->first();
+            return User::whereRaw('emailid = ?', array($this->appEncodeDecode->filterString(strtolower($email))))->first();
+//            return User::whereRaw('emailid = ? and status = 1', array($this->appEncodeDecode->filterString(strtolower($email))))->first();
             //return User::whereRaw('emailid', '=', $this->appEncodeDecode->filterString(strtolower($email)))->first();
             
         }
@@ -79,20 +95,21 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
             return User::whereRaw('username = ? and password = ?', array($username,$password))->get('id');
         }
         
-        public function setActive($id) {
-           $user = User::find($id);
-           $user->status = 1;
-           $user->emailverified = 1;
-           //$user->emailactivationcode = '';
-           $user->save();
-           return true ;
+        public function setActive($id,$emailid) {
+            $user = User::find($id);
+            $user->status = 1;
+            $user->emailverified = 1;
+            //$user->emailactivationcode = '';
+            $user->save();
+            DB::update("update notifications_logs set other_status = '1',status = '0', updated_at='".date('Y-m-d H:i:s')."' where from_email = '".$emailid."' and notifications_types_id = 26 and to_email = '".$emailid."'");
+            return true ;
         }
         public function removeActiveCode($id)
         {
-             $user = User::find($id);
-               $user->emailactivationcode = '';
-               $user->save();
-               return true ;
+            $user = User::find($id);
+            $user->emailactivationcode = '';
+            $user->save();
+            return true ;
         }
         
         public function resetPassword($input)
@@ -204,12 +221,12 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                switch ($notification_type)
                 {
                     case 'request_connect':
-                            $types= array(1,3,4,7,10,11,20,17,21,23);
+                            $types= array(1,3,4,7,10,11,20,17,21,23,26);
                             $type = implode(",",$types);
                             break;
                     default:
                         $type = 0;
-                        $excludeTypes=array(21);
+                        $excludeTypes=array(21,26);
                         $excludeType=implode(",",$excludeTypes);
 
                 } 
@@ -286,7 +303,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                     $type = 0;
                     $excludeType = 0;
                     $type = 0;
-                            $excludeTypes=array(21);
+                            $excludeTypes=array(21,26);
                             $excludeType=implode(",",$excludeTypes);
                     $sql = "select count(id) as count from notifications_logs nl 
                             where nl.to_email = '".$user->emailid."'";
@@ -653,7 +670,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
         }
 
      public function getPofessions(){
-            $sql = "select id,name from professions where status=1" ;
+            $sql = "select id,name from professions where status=1 order by name asc" ;
             return $result = DB::select($sql);
         }
         

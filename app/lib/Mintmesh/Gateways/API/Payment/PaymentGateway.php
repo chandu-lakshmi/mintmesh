@@ -278,6 +278,7 @@ class PaymentGateway {
         }
         public function processBTTransaction($input=array())
         {
+            $is_self_referred = 0;
             $loggedinUserDetails = $this->getLoggedInUser();
             $amount = $input['amount'];
             $nonce = $input['nonce'] ;
@@ -333,8 +334,12 @@ class PaymentGateway {
 
 //                        $successSupportTemplateServiceFee = Lang::get('MINTMESH.email_template_paths.payment_servicfee_success_user');
 //                        $emailiSent = $this->sendPaymentSuccessEmailToUser($successSupportTemplateServiceFee, $receipientEmail, $emailData);
+                       if ($transactionDetails->to_user == $transactionDetails->for_user)
+                       {
+                           $is_self_referred = 1 ;
+                       }
 
-                        $postUpdateStatus = $this->referralsRepository->updatePostPaymentStatus($transactionDetails->relation_id,Config::get('constants.PAYMENTS.STATUSES.SUCCESS'));
+                        $postUpdateStatus = $this->referralsRepository->updatePostPaymentStatus($transactionDetails->relation_id, Config::get('constants.PAYMENTS.STATUSES.SUCCESS'), $is_self_referred);
                         //send notifications to the respective people
                         $sendNotes = $this->processPostPaymentCompletion($transactionDetails);
 
@@ -451,6 +456,7 @@ class PaymentGateway {
         
         public function processCitrusTransaction($input)
         {
+            $is_self_referred = 0;
             $secret_key = Config::get('constants.CITRUS.SECRET_KEY');     
             $input['mm_transaction_id'] = $txID = !empty($input['TxId'])?$input['TxId']:'';
             $TxStatus = !empty($input['TxStatus'])?$input['TxStatus']:'';
@@ -521,12 +527,15 @@ class PaymentGateway {
                                             'location'=>$loggedinUserDetails->location,
                                             'phone_country_name'=>$loggedinUserDetails->phone_country_name);
                         $emailiSent = $this->sendPaymentSuccessEmailToUser($successSupportTemplate, $receipientEmail, $emailData);
-
+                        if ($transactionDetails->to_user == $transactionDetails->for_user)
+                       {
+                           $is_self_referred = 1 ;
+                       }
 
                         $successSupportTemplateServiceFee = Lang::get('MINTMESH.email_template_paths.payment_servicfee_success_user');
                         $emailiSent = $this->sendPaymentSuccessEmailToUser($successSupportTemplateServiceFee, $receipientEmail, $emailData);
                         
-                        $postUpdateStatus = $this->referralsRepository->updatePostPaymentStatus($transactionDetails->relation_id,Config::get('constants.PAYMENTS.STATUSES.SUCCESS'));
+                        $postUpdateStatus = $this->referralsRepository->updatePostPaymentStatus($transactionDetails->relation_id,Config::get('constants.PAYMENTS.STATUSES.SUCCESS'), $is_self_referred);
 
                         $sendNotes = $this->processPostPaymentCompletion($transactionDetails);
                   }

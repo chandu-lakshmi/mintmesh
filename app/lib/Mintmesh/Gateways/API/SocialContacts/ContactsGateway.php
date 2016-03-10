@@ -106,21 +106,7 @@ class ContactsGateway {
                                             if (!empty($res[0]->login_source) && !in_array($res[0]->emailid,$mintmeshEmails))//says that it is mintmesh user
                                             {
                                                 $r = $res[0]->getProperties();
-                                                if (!empty($res[0]->location))//user has completed profile
-                                                {
-                                                    if (!empty($res[0]->from_linkedin))//if  linked in
-                                                    {
-                                                        $r['dp_path'] = $res[0]->linkedinImage ;
-                                                    }
-                                                    else if (!empty($res[0]->dp_renamed_name))
-                                                    {
-                                                        $r['dp_path'] = $res[0]->dp_path."/".$res[0]->dp_renamed_name ;
-                                                    }
-                                                    else
-                                                    {
-                                                        $r['dp_path'] = "";
-                                                    }
-                                                }
+                                                $r['dp_path'] = !empty($r['dp_renamed_name'])?$r['dp_renamed_name']:'';
                                                 if (isset($r['id']))
                                                     unset($r['id']);
                                                 $connected = $this->neoUserRepository->checkConnection($fromUser->emailid,$res[0]->emailid);

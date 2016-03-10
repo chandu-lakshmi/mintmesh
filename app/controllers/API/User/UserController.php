@@ -88,6 +88,24 @@ class UserController extends \BaseController {
 	}
         
         /**
+	 * Resend Activation link for user who is not activated
+         * 
+         * POST/user
+         * 
+	 * @param string $access_token The Access token of a user
+         * 
+	 * @return Response
+	 */
+	public function resendActivationLink()
+	{
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // creating entry in mysql DB
+            return \Response::json($this->userGateway->resendActivationLink($inputUserData));
+            
+	}
+        
+        /**
 	 * update an existing resource version1
          * 
          * POST/user
