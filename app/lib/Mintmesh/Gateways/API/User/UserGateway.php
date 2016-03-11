@@ -2698,21 +2698,22 @@ class UserGateway {
                                              $normalFlow = 1 ;
                                         }
                                     }
-                                    if (in_array($notification->notifications_types_id, $this->notificationsTypes))
-                                    {
-                                        $thirdName = !empty($otherNoteUser->fullname)?$otherNoteUser->fullname:'' ;
-                                        if (empty(trim($thirdName)))//if name is empty try to get the name from the import relation
-                                        {
-                                            $thirdUserResult = $this->getNonMintmeshUserName($otherNoteUser, $notification);
-                                            $thirdName = !empty($thirdUserResult->fullname)?$thirdUserResult->fullname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
-                                            $thirdFirstName = !empty($thirdUserResult->firstname)?$thirdUserResult->firstname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
-                                            $thirdLastName = !empty($thirdUserResult->lastname)?$thirdUserResult->lastname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
-                                        }
-                                    }
+                                    
                                     if (empty($notification->for_mintmesh) && empty($normalFlow)){
                                         $otherUserDetails = $this->formUserDetailsArray($otherEmailDetails, 'property');
                                     }else{
                                         $otherUserDetails = $this->formUserDetailsArray($otherEmailDetails, 'attribute');
+                                    }
+                                    if (in_array($notification->notifications_types_id, $this->notificationsTypes))
+                                    {
+                                        $thirdName = !empty($otherUserDetails->fullname)?$otherUserDetails->fullname:'' ;
+                                        if (empty(trim($thirdName)))//if name is empty try to get the name from the import relation
+                                        {
+                                            $thirdUserResult = $this->getNonMintmeshUserName($otherUserDetails, $notification);
+                                            $thirdName = !empty($thirdUserResult->fullname)?$thirdUserResult->fullname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                                            $thirdFirstName = !empty($thirdUserResult->firstname)?$thirdUserResult->firstname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                                            $thirdLastName = !empty($thirdUserResult->lastname)?$thirdUserResult->lastname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                                        }
                                     }
                                     
                                     foreach ($otherUserDetails as $k=>$v)
