@@ -284,7 +284,12 @@ class ContactsGateway {
             $relationAttrs['from'] = 'phone' ;
             $relationAttrs['firstname'] = isset($contact->firstName)?$contact->firstName:'';
             $relationAttrs['lastname'] = isset($contact->lastName)?$contact->lastName:'';
-            $fullname = $relationAttrs['firstname']." ".$relationAttrs['lastname'];
+            if (!empty($relationAttrs['firstname']) && !empty($relationAttrs['lastname'])){
+                $fullname = $relationAttrs['firstname']." ".$relationAttrs['lastname'];
+            }else{
+                $fullname = '';
+            }
+            
             $relationAttrs['fullname'] = isset($contact->fullname)?$contact->fullname:$fullname;
 
             if (!empty($contact->hasImage))
