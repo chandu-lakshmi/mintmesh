@@ -33,7 +33,7 @@
       <p>This is a free app that solves your problems while you earn goodwill and money.</p>
       <p style="padding-top:20px;" >I invite you to join my referral network.</p>
       <p>Download MintMesh from:</p>
-      <p style="text-align:center; margin-top:50px;" ><a href="#" style="margin-right:20px; " ><img src="https://staging.mintmesh.com/public/images/app_store.png" style="width:45%" /></a><a href="#"><img src="https://staging.mintmesh.com/public/images/google_play.png" style="width:45%" /></a> </p></td>
+      <p style="text-align:center; margin-top:50px;" ><a href="https://appsto.re/in/0jF98.i" style="margin-right:20px; " ><img src="https://staging.mintmesh.com/public/images/app_store.png" style="width:45%" /></a><a href="https://play.google.com/store/apps/details?id=com.mintmesh.mintmesh"><img src="https://staging.mintmesh.com/public/images/google_play.png" style="width:45%" /></a> </p></td>
   </tr>
   <tr>
     <td valign="top" class="textContent" style="padding:30px 20px 10px;font-size:18px; font-weight:normal; color:#777777;  line-height:135%;"><p style="color:#333333; font-family: 'Roboto', sans-serif;font-size:18px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Sincerely, </p>
