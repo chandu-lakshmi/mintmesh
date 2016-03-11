@@ -2719,7 +2719,7 @@ class UserGateway {
                                     {
                                         $note['other_user_'.$k] = $v ;
                                     }
-                                    if (empty($note['other_user_fullname'])){
+                                    if (empty(trim($note['other_user_fullname']))){
                                         $note['other_user_fullname'] = $thirdName ;
                                         $note['other_user_firstname'] = $thirdFirstName ;
                                         $note['other_user_lastname'] = $thirdLastName ;
