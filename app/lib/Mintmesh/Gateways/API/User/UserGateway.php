@@ -2701,7 +2701,7 @@ class UserGateway {
                                     if (in_array($notification->notifications_types_id, $this->notificationsTypes))
                                     {
                                         $thirdName = !empty($otherNoteUser->fullname)?$otherNoteUser->fullname:'' ;
-                                        if (empty($thirdName))//if name is empty try to get the name from the import relation
+                                        if (empty(trim($thirdName)))//if name is empty try to get the name from the import relation
                                         {
                                             $thirdUserResult = $this->getNonMintmeshUserName($otherNoteUser, $notification);
                                             $thirdName = !empty($thirdUserResult->fullname)?$thirdUserResult->fullname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
