@@ -649,6 +649,9 @@ class ReferralsGateway {
                             }
                             //form user name details for non mintmesh contacts
                             if (!empty($nonMintmeshUserDetails) || !empty($isNonMintmesh)){
+                                if (!empty($nonMintmeshUserDetails->fullname)){
+                                    $nonMintmeshUserDetails->fullname = trim($nonMintmeshUserDetails->fullname);
+                                }
                                 $postDetails['to_user_firstname'] = !empty($nonMintmeshUserDetails->firstname)?$nonMintmeshUserDetails->firstname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
                                 $postDetails['to_user_lastname'] = !empty($nonMintmeshUserDetails->lastname)?$nonMintmeshUserDetails->lastname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
                                 $postDetails['to_user_fullname'] = !empty($nonMintmeshUserDetails->fullname)?$nonMintmeshUserDetails->fullname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
@@ -776,6 +779,9 @@ class ReferralsGateway {
                     }
                     //form user name details for non mintmesh contacts
                     if (!empty($nonMintmeshUserDetails) || !empty($isNonMintmesh)){
+                        if (!empty($nonMintmeshUserDetails->fullname)){
+                            $nonMintmeshUserDetails->fullname = trim($nonMintmeshUserDetails->fullname);
+                        }
                         $u['firstname'] = !empty($nonMintmeshUserDetails->firstname)?$nonMintmeshUserDetails->firstname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
                         $u['lastname'] = !empty($nonMintmeshUserDetails->lastname)?$nonMintmeshUserDetails->lastname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
                         $u['fullname'] = !empty($nonMintmeshUserDetails->fullname)?$nonMintmeshUserDetails->fullname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
@@ -1101,6 +1107,9 @@ class ReferralsGateway {
                         }
                         //form user name details for non mintmesh contacts
                         if (!empty($nonMintmeshUserDetails) || !empty($isNonMintmesh)){
+                            if (!empty($nonMintmeshUserDetails->fullname)){
+                                $nonMintmeshUserDetails->fullname = trim($nonMintmeshUserDetails->fullname);
+                            }
                             $returnArray['to_firstname'] = !empty($nonMintmeshUserDetails->firstname)?$nonMintmeshUserDetails->firstname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
                             $returnArray['to_lastname'] = !empty($nonMintmeshUserDetails->lastname)?$nonMintmeshUserDetails->lastname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
                             $returnArray['to_fullname'] = !empty($nonMintmeshUserDetails->fullname)?$nonMintmeshUserDetails->fullname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
@@ -1489,6 +1498,9 @@ class ReferralsGateway {
                                 }
                                 //form user name details for non mintmesh contacts
                             if (!empty($nonMintmeshUserDetails) || !empty($is_non_mintmesh)){
+                                if (!empty($nonMintmeshUserDetails->fullname)){
+                                    $nonMintmeshUserDetails->fullname = trim($nonMintmeshUserDetails->fullname);
+                                }
                                 $a['to_user_firstname'] = !empty($nonMintmeshUserDetails->firstname)?$nonMintmeshUserDetails->firstname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
                                 $a['to_user_lastname'] = !empty($nonMintmeshUserDetails->lastname)?$nonMintmeshUserDetails->lastname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
                                 $a['to_user_fullname'] = !empty($nonMintmeshUserDetails->fullname)?$nonMintmeshUserDetails->fullname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
