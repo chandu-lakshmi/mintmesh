@@ -638,9 +638,11 @@ class UserGateway {
          */
         public function completeUserProfile_v2($input)
         {
-            $inputStr = implode(" , ", $input);
             \Log::info("-----in complete profile ------");
-            \Log::info("-----in complete profile input------".$inputStr);
+            foreach ($input as $k=>$v){
+                $str.= $k."=>".$v ;
+            }
+            \Log::info("-----in complete profile input------".$str);
             $originalFileName = $renamedFileName = $linkedinFileName = "";
             $from_linkedin =  0;
             if (!empty($input['dpImage']))
@@ -740,7 +742,7 @@ class UserGateway {
                         $userDetails[$k]=$v ;
                     }
                     $data['user']=$userDetails;
-                    $dataStr = implode(" , ",$data);
+                    $dataStr = implode(" , ",$userDetails);
                     \Log::info("-----in complete profile success response------".$dataStr);
                     return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
                 }
