@@ -743,16 +743,8 @@ class UserGateway {
                         $userDetails[$k]=$v ;
                     }
                     $data['user']=$userDetails;
-                    $resstr = "";
-                    foreach ($userDetails as $k=>$v){
-                        if (is_array($v)){
-                            $resstr.= $k."=>".implode(",",$v) ;
-                        }else{
-                            $resstr.= $k."=>".$v ;
-                        }
-                        
-                    }
-                    \Log::info("-----in complete profile success response------".$resstr);
+                    
+                    \Log::info("-----in complete profile success response------".print_r($data, true));
                     return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
                 }
                 else {
