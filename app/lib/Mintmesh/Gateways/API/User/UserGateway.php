@@ -638,6 +638,9 @@ class UserGateway {
          */
         public function completeUserProfile_v2($input)
         {
+            $inputStr = implode(" , ", $input);
+            \Log::info("-----in complete profile ------");
+            \Log::info("-----in complete profile input------".$inputStr);
             $originalFileName = $renamedFileName = $linkedinFileName = "";
             $from_linkedin =  0;
             if (!empty($input['dpImage']))
@@ -737,9 +740,12 @@ class UserGateway {
                         $userDetails[$k]=$v ;
                     }
                     $data['user']=$userDetails;
+                    $dataStr = implode(" , ",$data);
+                    \Log::info("-----in complete profile success response------".$dataStr);
                     return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
                 }
                 else {
+                    \Log::info("-----in complete profile failure ------");
                     $message = array('msg'=>array(Lang::get('MINTMESH.user.create_failure')));
                     return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
                 }
@@ -747,6 +753,7 @@ class UserGateway {
             }
             else
             {
+                \Log::info("-----in complete profile user not found------");
                 $message = array('msg'=>array(Lang::get('MINTMESH.user.user_not_found')));
                 return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
             }
