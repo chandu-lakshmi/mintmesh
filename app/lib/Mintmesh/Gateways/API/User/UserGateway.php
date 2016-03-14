@@ -639,6 +639,7 @@ class UserGateway {
         public function completeUserProfile_v2($input)
         {
             \Log::info("-----in complete profile ------");
+            $str = "";
             foreach ($input as $k=>$v){
                 $str.= $k."=>".$v ;
             }
