@@ -336,7 +336,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
         }
         public function getCountryCodes()
         {
-            $sql = "select id, name, country_code from country where status = 1";
+            $sql = "select id, name, country_code from country where status = 1 order by name";
             $result = DB::select($sql);
             return $result ;
         }
