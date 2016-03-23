@@ -4219,6 +4219,7 @@ class UserGateway {
         
         public function getNonMintmeshUserName($neoUserDetails, $notification){
             $relationDetailsResult = array();
+	    $email1 = '';
             if (in_array($notification->notifications_types_id, $this->notificationFromP2)){
                 $email1 = $notification->from_email ;
             }else if (in_array($notification->notifications_types_id, $this->notificationToP2)){
