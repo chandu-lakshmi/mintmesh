@@ -92,11 +92,18 @@ class SMSGateway {
         {
             $numbers = json_decode($input['numbers']);
             $sms_type= $input['sms_type'] ;
+            $userPhone = !empty($this->neoLoggedInUserDetails->phone)?$this->neoLoggedInUserDetails->phone:'';
+            $countryCodeArray = explode("-",$userPhone);
+            $countryCode = !empty($countryCodeArray[0])?$countryCodeArray[0]:'';
             if (!empty($numbers) && is_array($numbers))
             {
                 $successList = array();
                 foreach ($numbers as $number)
                 {
+                    //check if the number contains country code assigned
+                    if (strpos($number, "+") === false){
+                        $number = $countryCode.$number ;
+                    }
                     $firstName = !empty($this->loggedinUserDetails->firstname)?$this->loggedinUserDetails->firstname:'';
                     $lastName = !empty($this->loggedinUserDetails->lastname)?$this->loggedinUserDetails->lastname:'';
                     $senderName = $firstName." ".$lastName ;
@@ -280,11 +287,18 @@ class SMSGateway {
             $numbers = json_decode($input['numbers']);
             $sms_type= $input['sms_type'] ;
             $other_name = !empty($input['other_name'])?$input['other_name']:"" ;
+            $userPhone = !empty($this->neoLoggedInUserDetails->phone)?$this->neoLoggedInUserDetails->phone:'';
+            $countryCodeArray = explode("-",$userPhone);
+            $countryCode = !empty($countryCodeArray[0])?$countryCodeArray[0]:'';
             if (!empty($numbers) && is_array($numbers))
             {
                 $successList = array();
                 foreach ($numbers as $number)
                 {
+                    //check if the number contains country code assigned
+                    if (strpos($number, "+") === false){
+                        $number = $countryCode.$number ;
+                    }
                     $firstName = !empty($this->loggedinUserDetails->firstname)?$this->loggedinUserDetails->firstname:'';
                     $lastName = !empty($this->loggedinUserDetails->lastname)?$this->loggedinUserDetails->lastname:'';
                     $senderName = $firstName." ".$lastName ;
