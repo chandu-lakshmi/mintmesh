@@ -288,5 +288,6 @@ Route::group(array('prefix' => 'v2'), function() {
 
     //get skills,v2 should be used
     Route::post("get_skills", "API\User\UserController@getSkills_v2"); 
-       
+    // Mintmesh user creation,v2 only should be used
+    Route::post("user/create", "API\User\UserController@create_v2");   
 });

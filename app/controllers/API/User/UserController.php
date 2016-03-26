@@ -88,6 +88,40 @@ class UserController extends \BaseController {
 	}
         
         /**
+	 * Create new user entry
+         * 
+         * POST/user
+         * 
+	 * @param string $firstname The firstname of a user
+         * @param string $lastname The last_name of a user
+         * @param string $emailid The email id of a user
+         * @param string $phone The phone number of a user
+         * @param string $phone_country_name user's phone location
+         * @param string $location user's location
+         * @param string $password The password of a user profile
+         * @param string $password_confirmation The password of a user profile
+         * @param string $deviceToken The device token of the user device
+         * 
+	 * @return Response
+	 */
+	public function create_v2()
+	{
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->userGateway->validateCreateUserInput_v2($inputUserData);
+            if($validation['status'] == 'success') 
+            {
+                $inputUserData['login_source'] = Config::get('constants.MNT_LOGIN_SOURCE') ;
+                // creating entry in mysql DB
+                return \Response::json($this->userGateway->createUser($inputUserData));
+            } else {
+                // returning validation failure
+                return \Response::json($validation);
+            }
+	}
+        
+        /**
 	 * Resend Activation link for user who is not activated
          * 
          * POST/user

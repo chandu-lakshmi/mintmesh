@@ -103,10 +103,11 @@ return [
     ],
     'POINTS'=>[
         'REFER_REQUEST' => 50,
-        'COMPLETE_PROFILE' => 50,
+        'COMPLETE_PROFILE' => 100,
         'SEEK_REFERRAL' => 50,
         'ACCEPT_REFERRAL' => 50,
-        'ACCEPT_CONNECTION_REFERRAL' => 50
+        'ACCEPT_CONNECTION_REFERRAL' => 50,
+        'SIGNUP' => 50
     ],
     'PAYMENTS'=>[
         'STATUSES'=>[

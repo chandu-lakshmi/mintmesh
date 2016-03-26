@@ -12,6 +12,16 @@ class UserValidator extends Validator {
                 'deviceToken' => 'required',
                 'password' => 'required|min:6|confirmed',
                 'password_confirmation' => 'required|min:6'),
+        'create_v2' => array(
+                'emailid'               => 'required|unique:users|email',
+                'firstname'             => 'required',
+                'lastname'              => 'required',
+                'phone'                 => 'required',
+                'phone_country_name'    => 'required',
+                'location'              => 'required',
+                'deviceToken'           => 'required',
+                'password'              => 'required|min:6|confirmed',
+                'password_confirmation' => 'required|min:6'),
         'login' => array(
             'username'      => 'required',
             'password' => 'required',

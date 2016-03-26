@@ -90,6 +90,10 @@ class UserGateway {
         public function validateCreateUserInput($input) {            
             return $this->doValidation('create','MINTMESH.user.valid');
         }
+        // validation on user inputs for creating a user
+        public function validateCreateUserInput_v2($input) {            
+            return $this->doValidation('create_v2','MINTMESH.user.valid');
+        }
         
         // validation logout
         public function validateUserLogOut($input) {
@@ -316,14 +320,17 @@ class UserGateway {
                 $createdUser = $this->userRepository->createUser($input) ;
                 // create a node in neo
                 $neoInput = array();
-                $neoInput['firstname']     = $input['firstname'];
-                $neoInput['lastname']      = $input['lastname'];
-                $neoInput['fullname']      = $input['firstname']." ".$input['lastname'];
-                $neoInput['emailid']       = $input['emailid'];
-                $neoInput['phone']         = $input['phone'];
-                $neoInput['phoneverified'] = !empty($input['phone_verified'])?1:0;
+                $neoInput['firstname']          = $input['firstname'];
+                $neoInput['lastname']           = $input['lastname'];
+                $neoInput['fullname']           = $input['firstname']." ".$input['lastname'];
+                $neoInput['emailid']            = $input['emailid'];
+                $neoInput['phone']              = $input['phone'];
+                $neoInput['phoneverified']      = !empty($input['phone_verified'])?1:0;
                 $neoInput['phone_country_name'] = $input['phone_country_name'];
-                $neoInput['login_source'] = $input['login_source'];
+                if (!empty($input['location'])){
+                    $neoInput['location'] = $input['location'];
+                }
+                $neoInput['login_source']       = $input['login_source'];
                 //check for existing node in neo4j
                 $neoUser =  $this->neoUserRepository->getNodeByEmailId($input['emailid']) ;
                 if (empty($neoUser)) {
@@ -401,19 +408,15 @@ class UserGateway {
                            'ip_address' => $_SERVER['REMOTE_ADDR']
                        ) ;
                     $this->userRepository->logEmail($emailLog);
-///////////////////////////////////////////////////////////////
+                    //log points if location is filled..i.e if it v2 version api
+                    if (!empty($input['location'])){
+                        $this->userRepository->logLevel(6, $this->appEncodeDecode->filterString(strtolower($input['emailid'])), "", "",Config::get('constants.POINTS.SIGNUP'));
+                    }
                     $input['grant_type'] = "password";
 //                    $input['client_id'] = "dA3UFisQBLX23jHW";
 //                    $input['client_secret'] = "3mjo0kDSgCbsdLG7ipnhWJxC1iY6RLcX";
                     $input['username'] = $input['emailid'];
-                    $url = url('/')."/v1/user/login";
-                    $ch = curl_init();
-                    curl_setopt($ch, CURLOPT_URL, $url);
-                    curl_setopt($ch, CURLOPT_POST, 1);
-                    curl_setopt($ch, CURLOPT_POSTFIELDS,$input);
-                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                    $response  = curl_exec($ch);
-                    curl_close($ch);
+                    $response = $this->loginCall($input);
                     $userDetails = (array) json_decode($response, TRUE);
                     if($userDetails['status'] == 'success') {
                         $responseMessage = Lang::get('MINTMESH.user.create_success');
@@ -426,7 +429,7 @@ class UserGateway {
                         $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
                         $responseData = array();
                     }
-///////////////////////////////////////////////////////////////                    
+               
                 } else {
                     $responseMessage = Lang::get('MINTMESH.user.create_failure');
                     $responseCode    = self::ERROR_RESPONSE_CODE;
@@ -1289,7 +1292,13 @@ class UserGateway {
                     $neoInput[$key] = $val ;
                 }
                 if (!empty($input['you_are'])){
-                $neoInput['you_are'] = !empty($this->you_are[$input['you_are']])?$this->you_are[$input['you_are']]:$input['you_are'];
+                    $neoInput['you_are'] = !empty($this->you_are[$input['you_are']])?$this->you_are[$input['you_are']]:$input['you_are'];
+                    // log the points for complete profile
+                    $countLevel = $this->userRepository->checkCompleteProfileExistance($input['emailid']);
+                    if (empty($countLevel))
+                    {
+                        $this->userRepository->logLevel(2, $input['emailid'], "", "",Config::get('constants.POINTS.COMPLETE_PROFILE'));
+                    }
                 }
                 if (!empty($input['firstname']) && !empty($input['lastname']))
                 {
@@ -4233,6 +4242,35 @@ class UserGateway {
             }
             return $relationDetailsResult ;
             
+        }
+        public function getNonMintmeshReferralDetails($referredBy='', $referral='', $referredUsing=''){
+            $relationDetailsResult = array();
+            if (!empty($referredBy) && !empty($referral) && !empty($referredUsing)){
+                if ($referredUsing == 'phone'){
+                    $relationDetailsResult = $this->contactsRepository->getImportRelationDetailsByPhone($referredBy, $referral);
+                }else{
+                    $relationDetailsResult = $this->contactsRepository->getImportRelationDetailsByEmail($referredBy, $referral);
+                }
+                return $relationDetailsResult ;
+                
+            }else{
+                return $relationDetailsResult;
+            }
+        }
+
+	 public function loginCall($input=array()){
+            $response = array();
+            if (!empty($input)){
+                $url = url('/')."/v1/user/login";
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_POST, 1);
+                curl_setopt($ch, CURLOPT_POSTFIELDS,$input);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                $response  = curl_exec($ch);
+                curl_close($ch);
+            }
+            return $response ;
         }
 
         
