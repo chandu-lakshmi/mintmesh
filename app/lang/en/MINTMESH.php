@@ -36,7 +36,7 @@ return array(
                 "wrong_password"=>"Invalid password",
                 "correct_password"=>"Password successfully validated",
 		"non_mintmesh_user_name"=>"the contact",
-                "create_success_login_fail"=>"User Created Sucessfully but Login Fail Please login manually"
+                "create_success_login_fail"=>"User Created Successfully but Login Fail Please login manually"
                 
             ),
          "referrals"=>array(
@@ -63,8 +63,8 @@ return array(
                 "email_inactive" => "You are inactive please activate via email"
          ),
          "resendActivationLink" => array(
-                "success" => "Mail Sent Sucessfully",
-                "already_activated" => "You are already activated mail cant be sent again"
+                "success" => "Mail Sent Successfully",
+                "already_activated" => "You are already activated"
         ),
          "fb_login"=>array(
              "valid" => "Successfully validated",
@@ -208,32 +208,32 @@ return array(
             "not_found"=>"No Recruiter Found"
         ),
         "change_password"=>array(
-            "success"=>"Sucessfully password changed",
-            "failed"=>"Some Error Occured",
-            "confirmPasswordMismatch"=>"Conform password mismatch",
+            "success"=>"Password changed successfully",
+            "failed"=>"Some error occured",
+            "confirmPasswordMismatch"=>"Confirm password mismatch",
             "oldPasswordMismatch"=>"Old password mismatch",
-            "user_not_found"=>"User Not Found"
+            "user_not_found"=>"User not found"
         ),
         "save_user_bank"=>array(
-            "success"=>"Sucessfully bank details saved",
-            "failed"=>"Some Error Occured",
-            "user_not_found"=>"User Not Found",
-            "details_already_exist"=>"Same bank details already exist for same user"
+            "success"=>"Bank details added successfully",
+            "failed"=>"Some error occured",
+            "user_not_found"=>"User not Found",
+            "details_already_exist"=>"Bank details already exist"
         ),
         "edit_user_bank"=>array(
-            "success"=>"Sucessfully bank details edited",
-            "failed"=>"Some Error Occured",
-            "user_not_found"=>"User Not Found",
-            "details_already_exist"=>"Same bank details already exist for same user"
+            "success"=>"Bank details edited successfully",
+            "failed"=>"Some error occured",
+            "user_not_found"=>"User not found",
+            "details_already_exist"=>"Bank details already exist"
         ),
         "delete_user_bank"=>array(
-            "success"=>"Sucessfully bank deleted",
-            "failed"=>"Some Error Occured",
-            "user_not_found"=>"User Not Found"
+            "success"=>"Bank details removed successfully",
+            "failed"=>"Some error occured",
+            "user_not_found"=>"User not found"
         ),
         "payout"=>array(
             "success"=>"Payout done successfully",
-            "failed"=>"payout failed",
+            "failed"=>"Payout failed",
             "error"=>"Some error occured",
             "email_subject"=>"You have a Payout!",
             "email_note"=>"Thanks for your patronage!",
@@ -243,16 +243,16 @@ return array(
             "no_result"=>"No payout done"
         ),
         "list_user_banks"=>array(
-            "success"=>"Sucessfully banks of user listed",
-            "failed"=>"Some Error Occured",
+            "success"=>"Banks listed successfully",
+            "failed"=>"Some error occured",
             "nobanksadded"=>"User has no banks added",
-            "user_not_found"=>"User Not Found"
+            "user_not_found"=>"User not found"
         ),
         "manualpayout"=>array(
-            "success"=>"Sucessfully manual payment done",
-            "error"=>"Some Error Occured",
-            "invalid_amount"=>"You cash limit excised",
-            "wrong_password"=>"User Password Mismatch"
+            "success"=>"Payout done successfully",
+            "error"=>"Some error occured",
+            "invalid_amount"=>"Your cash limit excised",
+            "wrong_password"=>"User password mismatch"
         ),
         "bad_words"=>array(
             "success"=>"Successfully cached"
@@ -272,7 +272,10 @@ return array(
         "clear_memcache"=>array(
             'success'=>'Memcache Cleared successfully',
             'dont_exist'=>'Cache for perticular key does not exist'
-        )
+        ),
+        'user_profiles_abstractions'=>array('basic'=>array('firstname','lastname','fullname','company','position','dp_path','emailid','phone','location'),
+            'medium'=>array('job_function','position','phone','location','lastname','emailid','industry','fullname','firstname','dp_path','company',
+                    'phoneverified','you_are','job_function_name','industry_name','you_are_name','profession_name'))
 
 
 );

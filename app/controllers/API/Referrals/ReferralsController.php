@@ -148,7 +148,7 @@ class ReferralsController extends \BaseController {
          * POST/get_posts
          * 
 	 * @param string $access_token The Access token of a user
-         * @param string $request_type get_service|provide_service
+         * @param string $request_type get_service|provide_service|find_candidate|find_job|free|paid|all
          * @param string $page_no
          * 
 	 * @return Response
@@ -158,14 +158,14 @@ class ReferralsController extends \BaseController {
             // Receiving user input data
             $inputUserData = \Input::all();
             // Validating user input data
-            $validation = $this->referralsGateway->validateGetPostsInput($inputUserData);
-            if($validation['status'] == 'success') 
-            {
+//            $validation = $this->referralsGateway->validateGetPostsInput($inputUserData);
+//            if($validation['status'] == 'success') 
+//            {
                 return \Response::json($this->referralsGateway->getPosts($inputUserData));
-            } else {
-                    // returning validation failure
-                return \Response::json($validation);
-            }
+//            } else {
+//                    // returning validation failure
+//                return \Response::json($validation);
+//            }
 	}
         
         /**
@@ -460,6 +460,32 @@ class ReferralsController extends \BaseController {
                 }
             }
         }
+        
+        /**
+	 * Get Posts
+         * 
+         * POST/get_posts
+         * 
+	 * @param string $access_token The Access token of a user
+         * @param string $request_type get_service|provide_service
+         * @param string $page_no
+         * 
+	 * @return Response
+	 */
+	public function getPostsV3()
+	{
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->referralsGateway->validateGetPostsInput($inputUserData);
+            if($validation['status'] == 'success') 
+            {
+                return \Response::json($this->referralsGateway->getPostsV3($inputUserData));
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+	}
         
         
         

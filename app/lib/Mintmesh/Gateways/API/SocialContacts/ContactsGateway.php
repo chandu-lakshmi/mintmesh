@@ -487,7 +487,12 @@ class ContactsGateway {
                         }
                         $this->userEmailManager->emailId = $email;
                         $dataSet = array();
-                        $dataSet['name'] =!empty($userDetails['firstname'])?$userDetails['firstname']:'';
+                        $firstname = '';
+                        //set name empty for non mintmesh email
+                        if (!empty($userDetails['login_source'])){//is a mintmesh user
+                            $firstname = !empty($userDetails['firstname'])?$userDetails['firstname']:'';
+                        }
+                        $dataSet['name'] = $firstname;
                         $dataSet['sender_name'] =!empty($loginUserDetails->firstname)?$loginUserDetails->firstname:'';
                         $dataSet['sender_email'] =!empty($loginUserDetails->emailid)?$loginUserDetails->emailid:'';
                         $this->userEmailManager->dataSet = $dataSet;

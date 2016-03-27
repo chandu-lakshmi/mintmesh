@@ -12,7 +12,7 @@ class CommonFormatter extends Formatter {
         $this->appEncodeDecode = $appEncodeDecode ;
     }
             
-    public function formatResponse($responseCode="",$status="success", $messages=array(),$data=array())
+    public function formatResponse($responseCode="",$status="success", $messages=array(),$data=array(),$checkBadWords=true)
     {
         if (!empty($responseCode))
         {
@@ -40,7 +40,10 @@ class CommonFormatter extends Formatter {
                                 {
                                    // echo $val2; exit;
                                     $val1[$key2] = $this->appEncodeDecode->filterStringDecode($val2);
-                                    $val1[$key2] = $this->appEncodeDecode->cleanBadWords($val2);
+                                    if($checkBadWords)
+                                    {
+                                        $val1[$key2] = $this->appEncodeDecode->cleanBadWords($val2);
+                                    }
                                 }
                                 else if (is_array($val2))
                                 {

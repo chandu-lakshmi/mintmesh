@@ -241,6 +241,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                          (
                             SELECT  MAX(id) id
                             FROM    notifications_logs
+                            WHERE   to_email = '".$user->emailid."'
                             GROUP   BY from_email,notifications_types_id,message,to_email,
                             CASE WHEN notifications_types_id=17 THEN 1
                             WHEN extra_info IS NULL THEN 1
@@ -250,7 +251,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                             CASE WHEN other_phone IS NULL THEN 1
                             ELSE other_phone END
                          ) b ON nl.id = b.id  
-                         left join notifications_types nt on nt.id = nl.notifications_types_id where nl.to_email = '".$user->emailid."'" ;
+                         left join notifications_types nt on nt.id = nl.notifications_types_id where 1" ;
                 /*$sql = "select nl.*, nt.name as not_type from notifications_logs nl 
                         left join notifications_types nt on nt.id = nl.notifications_types_id 
                         where nl.to_email = '".$user->emailid."'";*/
@@ -267,12 +268,12 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                 }
                 
                $sql.=" order by nl.id desc" ;
+               //echo $sql ; exit;
                if (!empty($page))
                 {
                     $sql.=" limit ".$start.",10" ;
                 }
-                //echo $sql ; exit;
-               return $result = DB::select($sql);
+                return $result = DB::select($sql);
             }
         }
         

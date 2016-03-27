@@ -18,6 +18,8 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
                 $this->neoUser = $neoUser;
                 $this->db_user=Config::get('database.connections.neo4j.username') ;
                 $this->db_pwd=Config::get('database.connections.neo4j.password') ;
+                $this->db_host=Config::get('database.connections.neo4j.host') ;
+                $this->db_port=Config::get('database.connections.neo4j.port') ;
                 //\Log::info("db password used".$this->db_pwd);
                  //\Log::info("db username used".$this->db_user);
                 //$this->db_pwd = "m!ntm35h";
@@ -124,17 +126,16 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
         public function relateContacts($fromUser , $toUser , $relationAttrs = array(),$nonMintmesh=0)
         {
             $toUserId = $toUser['id']->getId() ;
-            if (empty($fromUser->id)){
-                $fromUser->id = $fromUser['id']->getId();
-            }
-            if (!empty($fromUser) && !empty($toUser) && $toUserId != $fromUser->id )//ignore if same user
+            $toUserEmailId =  !empty($toUser->emailid)?$toUser->emailid:'';
+            $fromUserEmailId =  !empty($fromUser->emailid)?$fromUser->emailid:'';
+            if (!empty($fromUser) && !empty($toUser) && $toUserEmailId != $fromUserEmailId )//ignore if same user
             {
                 $label = "User";
                 if (!empty($nonMintmesh)){
                     $label = "NonMintmesh";
                 }
                 $queryString = "Match (m:".$label."), (n:User:Mintmesh)
-                                where ID(m)=".$toUserId."  and ID(n)=".$fromUser->id."
+                                where ID(m)=".$toUserId."  and n.emailid='".$fromUserEmailId."'
                                 create unique (n)-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED');
 
                 $queryString.="]->(m)  set r.created_at='".date("m-d-Y H:i:s A")."'";

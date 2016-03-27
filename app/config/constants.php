@@ -89,6 +89,7 @@ return [
     'REFERRALS'=>[
         'POSTED'=>'POSTED',
         'EXCLUDED'=>'EXCLUDED',
+        'INCLUDED'=>'INCLUDED',
         'READ'=>'READ',
         'GOT_REFERRED'=>'GOT_REFERRED',
         'MAX_REFERRALS'=>3,
@@ -143,6 +144,11 @@ return [
         'SKILLS'=>'skills',
         'EDUCATION'=>'education',
         'EXPERIENCE'=>'experience'
+    ],
+    'USER_ABSTRACTION_LEVELS'=>[
+        'BASIC'=>'basic',
+        'MEDIUM'=>'medium',
+        'FULL'=>'full'
     ]
         
 ];

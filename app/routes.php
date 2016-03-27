@@ -253,25 +253,6 @@ Route::group(array("prefix" => "admin"), function() {
 
 });
 
-Route::post('setMailQueue', function()
-{
-	$input = [
-    'name' => 'shweta',
-    'email' => 'akiraa31@yahoo.com',
-    'comment' =>  'Testing queues for mintmesh',
-    'subject' =>  'Testing email queues for mintmesh'
-	];
-
-	Mail::queue('hello', $input, function($message) use ($input)  
-	{
-	$message->to($input['email'], $input['name']);
-	$message->subject($input['subject']);
-	});
-});
-Route::post('setSmsQueue', function()
-{
-    Queue::push('Mintmesh\Services\Queues\SMSQueue', "test");
-});
 
 ////////////////////////////******V2 apis*******///////////////////////////////////
 Route::group(array('prefix' => 'v2', 'before' => 'oauth'), function() {
@@ -289,5 +270,17 @@ Route::group(array('prefix' => 'v2'), function() {
     //get skills,v2 should be used
     Route::post("get_skills", "API\User\UserController@getSkills_v2"); 
     // Mintmesh user creation,v2 only should be used
-    Route::post("user/create", "API\User\UserController@create_v2");   
+    Route::post("user/create", "API\User\UserController@create_v2");
+
+});
+
+Route::group(array('prefix' => 'v3', 'before' => 'oauth'), function() {
+    //get notifications
+    Route::post("user/get_notifications", "API\User\UserController@getAllNotifications");
+    // get connected users
+       Route::post("user/get_connected_users", "API\User\UserController@getConnectedAndMMUsers");
+       //refers screen
+       Route::post("referral/get_posts_new", "API\Referrals\ReferralsController@getPosts");
+    //refers screen
+       Route::post("referral/get_posts", "API\Referrals\ReferralsController@getPostsV3");
 });

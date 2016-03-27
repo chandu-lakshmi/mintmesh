@@ -16,7 +16,7 @@ class ReferralsValidator extends Validator {
                 'post_id'      => 'required'
              ),
         'get_posts' => array(
-                'request_type'      => 'required'
+//                'request_type'      => 'required'
                 //'page_no'          =>'required'
              ),
         'get_post_details' => array(

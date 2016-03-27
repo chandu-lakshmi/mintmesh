@@ -90,11 +90,10 @@ class UserGateway {
         public function validateCreateUserInput($input) {            
             return $this->doValidation('create','MINTMESH.user.valid');
         }
-        // validation on user inputs for creating a user
+	// validation on user inputs for creating a user
         public function validateCreateUserInput_v2($input) {            
             return $this->doValidation('create_v2','MINTMESH.user.valid');
         }
-        
         // validation logout
         public function validateUserLogOut($input) {
             return $this->doValidation('logout','MINTMESH.user.valid');     
@@ -649,7 +648,7 @@ class UserGateway {
             \Log::info("-----in complete profile input------".$str);
             $originalFileName = $renamedFileName = $linkedinFileName = "";
             $from_linkedin =  0;
-            if (!empty($input['dpImage']))
+            if (!empty($input['dpImage']) && is_file ($input['dpImage']) && is_array(getimagesize($input['dpImage'])))//check if image
             {
                 $originalFileName = $input['dpImage']->getClientOriginalName();
                 //upload the file
@@ -2301,8 +2300,11 @@ class UserGateway {
             }
             
         }
-        public function formUserDetailsArray($neoLoggedInUserDetails, $type = '')
+        public function formUserDetailsArray($neoLoggedInUserDetails, $type = '',$userAbstractionLevel='full')
         {
+            if (strpos(\Request::url(), 'v3') !== false){
+                return $this->formUserDetailsArrayV3($neoLoggedInUserDetails, $type,$userAbstractionLevel) ;
+            }
             $r = array();
             if (!empty($neoLoggedInUserDetails))
             {
@@ -2315,12 +2317,35 @@ class UserGateway {
                 {
                     $r = $neoLoggedInUserDetails->getAttributes();
                 }
+                if (!empty($neoLoggedInUserDetails->dp_renamed_name))//user has completed profile
+                {
+                    if (!empty($neoLoggedInUserDetails->from_linkedin))//if  linked in
+                    {
+                        $r['dp_path'] = $neoLoggedInUserDetails->linkedinImage ;
+                    }
+                    else if (!empty($neoLoggedInUserDetails->dp_renamed_name))
+                    {
+                        $r['dp_path'] = $neoLoggedInUserDetails->dp_renamed_name ;
+                    }
+                    else
+                    {
+                        $r['dp_path'] = "";
+                    }
+                }
+                else
+                {
+                    $r['dp_path']="";
+                }
+                if (isset($r['id']))
+                    unset($r['id']);
+               
+                unset($r['services']);
                 $job_function_name = $industry_name = "";
                 if (isset($r['job_function']))//get job function name
                 {
                     $job_function_result = $this->neoUserRepository->getUserJobFunction($neoLoggedInUserDetails->emailid) ;
                     $job_function_name = !empty($job_function_result[0])?$job_function_result[0][0]->name:"";
-                   
+
                 }
                 if (isset($r['industry']))//get job function name
                 {
@@ -2341,8 +2366,47 @@ class UserGateway {
                 $r['industry_name'] = $industry_name ;
                 $r['you_are_name'] = $you_are_name ;
                 $r['profession_name'] = $profession_name ;
-                if (isset($r['id']))
-                    unset($r['id']);
+                //change response for services
+                $services = $this->neoUserRepository->getUserServices($neoLoggedInUserDetails->emailid);
+                if (!empty($services))
+                {
+                    $servicesArray = array();
+                    foreach ($services as $service)
+                    {
+                        $servicesArray[] = $service[0]->getProperties();
+                        //$servicesArray[] = array('service_name'=>$servD['name'],'service_id'=>$servD['mysql_id']);
+                    }
+                    $r['services'] = $servicesArray ;
+                }
+                //get profile completion percentage
+                $r['profile_completion_percentage'] = $this->calculateProfilePercentageCompletion($neoLoggedInUserDetails);
+            }
+           return $r ; 
+        }
+        public function formUserDetailsArrayV3($neoLoggedInUserDetails, $type = '',$userAbstractionLevel='full')
+        {
+            $r = array();
+            if (!empty($neoLoggedInUserDetails))
+            {
+                $r = $properties = array();
+                if ($type == 'property')
+                {
+                    $properties = $neoLoggedInUserDetails->getProperties();
+                }
+                else
+                {
+                    $properties = $neoLoggedInUserDetails->getAttributes();
+                }
+                if ($userAbstractionLevel == Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC')){
+                    foreach (Lang::get('MINTMESH.user_profiles_abstractions.basic') as $key){
+                        $r[$key] = !empty($properties[$key])?$properties[$key]:'';
+                    }
+                }else {
+                    foreach (Lang::get('MINTMESH.user_profiles_abstractions.medium') as $key){
+                        $r[$key] = !empty($properties[$key])?$properties[$key]:'';
+                    }
+                }
+                //image remains same for all abstractions
                 if (!empty($neoLoggedInUserDetails->dp_renamed_name))//user has completed profile
                 {
                     if (!empty($neoLoggedInUserDetails->from_linkedin))//if  linked in
@@ -2362,19 +2426,49 @@ class UserGateway {
                 {
                     $r['dp_path']="";
                 }
-                unset($r['services']);
-                //change response for services
-                $services = $this->neoUserRepository->getUserServices($neoLoggedInUserDetails->emailid);
-                if (!empty($services))
-                {
-                    $servicesArray = array();
-                    foreach ($services as $service)
+                if ($userAbstractionLevel == Config::get('constants.USER_ABSTRACTION_LEVELS.MEDIUM') || $userAbstractionLevel == Config::get('constants.USER_ABSTRACTION_LEVELS.FULL')){
+                    
+                    $job_function_name = $industry_name = "";
+                    if (isset($r['job_function']))//get job function name
                     {
-                        $servicesArray[] = $service[0]->getProperties();
-                        //$servicesArray[] = array('service_name'=>$servD['name'],'service_id'=>$servD['mysql_id']);
+                        $job_function_result = $this->neoUserRepository->getUserJobFunction($neoLoggedInUserDetails->emailid) ;
+                        $job_function_name = !empty($job_function_result[0])?$job_function_result[0][0]->name:"";
                     }
-                    $r['services'] = $servicesArray ;
+                    if (isset($r['industry']))//get job function name
+                    {
+                        $industry_name_result = $this->neoUserRepository->getUserIndustry($neoLoggedInUserDetails->emailid) ;
+                        $industry_name = !empty($industry_name_result[0])?$industry_name_result[0][0]->name:"";
+                    }
+                    $you_are_name = "";
+                    if (isset($r['you_are']))//get job function name
+                    {
+                        $you_are_name = $this->userRepository->getYouAreName($r['you_are']);
+                    }
+                    $profession_name = "";
+                    if (isset($r['profession']))//get profession name
+                    {
+                        $profession_name = $this->userRepository->getProfessionName($r['profession']);
+                    }
+                    $r['job_function_name'] = $job_function_name;
+                    $r['industry_name'] = $industry_name ;
+                    $r['you_are_name'] = $you_are_name ;
+                    $r['profession_name'] = $profession_name ;
                 }
+                if ($userAbstractionLevel == Config::get('constants.USER_ABSTRACTION_LEVELS.FULL')){
+                    //change response for services
+                    $services = $this->neoUserRepository->getUserServices($neoLoggedInUserDetails->emailid);
+                    if (!empty($services))
+                    {
+                        $servicesArray = array();
+                        foreach ($services as $service)
+                        {
+                            $servicesArray[] = $service[0]->getProperties();
+                            //$servicesArray[] = array('service_name'=>$servD['name'],'service_id'=>$servD['mysql_id']);
+                        }
+                        $r['services'] = $servicesArray ;
+                    }
+                }
+                
                 //get profile completion percentage
                 $r['profile_completion_percentage'] = $this->calculateProfilePercentageCompletion($neoLoggedInUserDetails);
             }
@@ -2866,6 +2960,7 @@ class UserGateway {
                                     }
                                 }
                                 $note['is_deleted'] = $is_deleted ;
+                                $note['request_closed_at'] = $notification->updated_at ;
                                 if (!$noReferralsPost)//for post battle cards for which no referrals found
                                 $notes[] = $note ;
                             }
@@ -2900,6 +2995,7 @@ class UserGateway {
         
         public function classifyReferrals($referrals = array())
         {
+            $referredBy = '';
             $returnArray = array();
             $returnArray['accepted'] = array();
             $returnArray['pending'] = array();
@@ -2907,7 +3003,7 @@ class UserGateway {
             {
                 foreach ($referrals as $referral)
                 {
-                    if ($referral[1]->one_way_status != Config::get('constants.REFERRALS.STATUSES.DECLINED'))
+                    if ($referral[1]->one_way_status != Config::get('constants.REFERRALS.STATUSES.DECLINED'))//skip the declined one
                     {
                         $userDetails = $this->formUserDetailsArray($referral[0],'property');
                         $relationDetails = $referral[1]->getProperties();
@@ -2916,6 +3012,7 @@ class UserGateway {
                             $fromUseremail = $referral[1]->referred_by ;
                             $fromUserResult = $this->neoUserRepository->getNodeByEmailId($fromUseremail) ;
                             $fromUserDetails = $this->formUserDetailsArray($fromUserResult);
+                            $referredBy = $referral[1]->referred_by ;
                         }
                         $referDetails = array();
                         foreach ($userDetails as $k_r=>$v_r)
@@ -2941,6 +3038,28 @@ class UserGateway {
                         if (!empty($referral[2][0]) && $referral[2][0] == 'NonMintmesh')//i.e non mintmesh phone contact
                         {
                             $referDetails['referred_by_phone'] = 1 ;
+                            //get non mintmesh user name details
+                            $referralPhone = !empty($referDetails['to_user_phone'])?$referDetails['to_user_phone']:'';
+                            $thirdUserResult = $this->getNonMintmeshReferralDetails($referredBy, $referralPhone, 'phone');
+                            if (!empty($thirdUserResult->fullname)){
+                                $thirdUserResult->fullname = trim($thirdUserResult->fullname);
+                            }
+                            $referDetails['to_user_fullname'] = !empty($thirdUserResult->fullname)?$thirdUserResult->fullname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                            $referDetails['to_user_firstname'] = !empty($thirdUserResult->firstname)?$thirdUserResult->firstname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                            $referDetails['to_user_lastname'] = !empty($thirdUserResult->lastname)?$thirdUserResult->lastname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                            
+                        }
+                        else if (empty($referral[2][1])){//non mintmesh email
+                        //echo "in this";exit;
+                            //get non mintmesh user name details
+                            $referralEmail = !empty($referDetails['to_user_emailid'])?$referDetails['to_user_emailid']:'';
+                            $thirdUserResult = $this->getNonMintmeshReferralDetails($referredBy, $referralEmail, 'email');
+                            if (!empty($thirdUserResult->fullname)){
+                                $thirdUserResult->fullname = trim($thirdUserResult->fullname);
+                            }
+                            $referDetails['to_user_fullname'] = !empty($thirdUserResult->fullname)?$thirdUserResult->fullname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                            $referDetails['to_user_firstname'] = !empty($thirdUserResult->firstname)?$thirdUserResult->firstname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                            $referDetails['to_user_lastname'] = !empty($thirdUserResult->lastname)?$thirdUserResult->lastname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
                         }
                         if ($referral[1]->one_way_status == Config::get('constants.REFERRALS.STATUSES.ACCEPTED'))
                         {
@@ -3095,7 +3214,7 @@ class UserGateway {
                             $uId = $user[0]->getID();
                             $u[$uId] = $this->formUserDetailsArray($user[0],'property');
                             $connected = $this->neoUserRepository->checkConnection($emailid,$user[0]->emailid);
-                            if (!empty($input['emailid']))
+                            /*if (!empty($input['emailid']))//not required for now
                             {
                                 //check if connected to me
                                 $connectedToMe = $this->neoUserRepository->checkConnection($loggedinUserDetails->emailid,$user[0]->emailid);
@@ -3117,7 +3236,7 @@ class UserGateway {
                                 }
 
                             }
-
+                            */
                             if (!empty($connected) && !empty($connected['connected']))//checking for deletion is not required for normal refer and one to one connection
                             {
                                 $u[$uId]['connected'] = 1 ;
@@ -4037,7 +4156,7 @@ class UserGateway {
                     $responseStatus = self::ERROR_RESPONSE_MESSAGE;                    
                 }
             }
-            return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $data);
+            return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $data, $checkBadWords=false);
         }
         
         public function getFilterSkills($input) {
@@ -4061,7 +4180,7 @@ class UserGateway {
                 $responseCode = self::ERROR_RESPONSE_CODE;
                 $responseStatus = self::ERROR_RESPONSE_MESSAGE;                    
             }            
-            return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $data);
+            return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $data, $checkBadWords=false);
         }
         
         /*
@@ -4103,7 +4222,7 @@ class UserGateway {
                 $responseStatus = self::ERROR_RESPONSE_MESSAGE;
                 $data = array();
             }
-            return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $data);
+            return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $data, $checkBadWords=false);
         }
         
         /*
@@ -4257,8 +4376,7 @@ class UserGateway {
                 return $relationDetailsResult;
             }
         }
-
-	 public function loginCall($input=array()){
+	public function loginCall($input=array()){
             $response = array();
             if (!empty($input)){
                 $url = url('/')."/v1/user/login";
@@ -4272,7 +4390,7 @@ class UserGateway {
             }
             return $response ;
         }
+      
 
-        
 }
 ?>

@@ -8,7 +8,8 @@ return [
     'GRANT_TYPE'=>"password",
     'MNT_LOGIN_SOURCE'=>1,
     'FB_LOGIN_SOURCE'=>2,
-    'MNT_USER_EXPIRY_HR'=>24,
+    'MNT_USER_EXPIRY_HR'=>336,
+    'MNT_USER_EXPIRY_HR_FOR_RESEND_ACTIVATION'=>120,
     'MNT_VERSION'=>"v1",
     'MNT_FROM_NAME'=>'Mintmesh',
     'MNT_DEEP_LINK_IOS'=>'mintmeshstg://',
@@ -88,6 +89,7 @@ return [
     'REFERRALS'=>[
         'POSTED'=>'POSTED',
         'EXCLUDED'=>'EXCLUDED',
+        'INCLUDED'=>'INCLUDED',
         'READ'=>'READ',
         'GOT_REFERRED'=>'GOT_REFERRED',
         'MAX_REFERRALS'=>3,
@@ -102,10 +104,11 @@ return [
     ],
     'POINTS'=>[
         'REFER_REQUEST' => 50,
-        'COMPLETE_PROFILE' => 50,
+        'COMPLETE_PROFILE' => 100,
         'SEEK_REFERRAL' => 50,
         'ACCEPT_REFERRAL' => 50,
-        'ACCEPT_CONNECTION_REFERRAL' => 50
+        'ACCEPT_CONNECTION_REFERRAL' => 50,
+        'SIGNUP' => 50
     ],
     'PAYMENTS'=>[
         'STATUSES'=>[
@@ -141,6 +144,11 @@ return [
         'SKILLS'=>'skills',
         'EDUCATION'=>'education',
         'EXPERIENCE'=>'experience'
+    ],
+    'USER_ABSTRACTION_LEVELS'=>[
+        'BASIC'=>'basic',
+        'MEDIUM'=>'medium',
+        'FULL'=>'full'
     ]
         
 ];

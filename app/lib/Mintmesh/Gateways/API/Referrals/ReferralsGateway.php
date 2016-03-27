@@ -228,6 +228,7 @@ class ReferralsGateway {
                 $neoInput['service_currency'] = !empty($input['service_currency'])?$input['service_currency']:"" ;
                 $neoInput['service_cost'] = !empty($input['service_cost'])?$input['service_cost']:'';
                 $neoInput['service_code'] = uniqid();
+                $neoInput['included_set'] = isset($input['included_list'])?1:0;
                 if (!empty($input['web_link']))
                 {
                     $neoInput['web_link'] = $input['web_link'] ;
@@ -279,11 +280,24 @@ class ReferralsGateway {
                     {
                         foreach($excludedList as $user)
                         {
-                            $excluded = $this->referralsRepository->excludeContact($serviceId, $user, $relationAttrs) ;
+                            $excluded = $this->referralsRepository->excludeOrIncludeContact($serviceId, $user, $relationAttrs, 'exclude') ;
                         }
                     }
                 }
-                
+                //include contacts
+                if (!empty($input['included_list']))
+                {
+                    $relationAttrs = array();
+                    $relationAttrs['service_scope'] = $input['service_scope'] ;
+                    $includedList = json_decode($input['included_list']) ;
+                    if(is_array($includedList) && !empty($serviceId))
+                    {
+                        foreach($includedList as $user)
+                        {
+                            $included = $this->referralsRepository->excludeOrIncludeContact($serviceId, $user, $relationAttrs, 'include') ;
+                        }
+                    }
+                }
                 
                 //send email to user after post done successfully
                 $successSupportTemplate = Lang::get('MINTMESH.email_template_paths.post_success');
@@ -402,7 +416,8 @@ class ReferralsGateway {
             $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
             $userEmail = $this->neoLoggedInUserDetails->emailid ;
             $page = !empty($input['page_no'])?$input['page_no']:0;
-            $posts = $this->referralsRepository->getAllPosts($userEmail, $input['request_type'],$page);
+            $request_type = isset($input['request_type'])?$input['request_type']:'';
+            $posts = $this->referralsRepository->getAllPosts($userEmail, $request_type,$page);
             if (!empty(count($posts)))
             {
                 $returnPosts = array();
@@ -411,7 +426,7 @@ class ReferralsGateway {
                     $postDetails = $this->formPostDetailsArray($post[0]) ;
                     $postDetails['no_of_referrals'] = !empty($post[1])?$post[1]:0 ;
                     $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($postDetails['created_by']) ;
-                    $postDetails['UserDetails'] = $this->userGateway->formUserDetailsArray($neoUserDetails, 'attribute');
+                    $postDetails['UserDetails'] = $this->userGateway->formUserDetailsArray($neoUserDetails, 'attribute',Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC'));
                     $returnPosts[] = $postDetails ;
                 }
                 $data = array("posts"=>$returnPosts);
@@ -1645,6 +1660,91 @@ class ReferralsGateway {
                 }
             }
             return $returnArray ;
+        }
+        
+        //get all posts of a type
+        public function getPostsV3($input)
+        {
+            $this->loggedinUserDetails = $this->getLoggedInUser();
+            $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
+            $userEmail = $this->neoLoggedInUserDetails->emailid ;
+            $page = !empty($input['page_no'])?$input['page_no']:0;
+            $posts = $this->referralsRepository->getAllPostsV3($userEmail, $input['request_type'],$page);
+            $postIds = $excludedPostsList = array();
+            if (!empty(count($posts)))
+            {
+                $returnPosts = array();
+                foreach ($posts as $post)
+                {
+                    $postDetails = $this->formPostDetailsArray($post[0]) ;
+                    $postDetails['no_of_referrals'] = !empty($post[1])?$post[1]:0 ;
+                    $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($postDetails['created_by']) ;
+                    $postDetails['UserDetails'] = $this->userGateway->formUserDetailsArray($neoUserDetails, 'attribute', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC'));
+                    $returnPosts[$postDetails['post_id']] = $postDetails ;
+                    $postIds[] = $postDetails['post_id'];
+                }
+                /*if (!empty($postIds)){
+                   // print_r($postIds);exit;
+                    //get all my excluded list 
+                    $excludedPostsList = $this->getExcludedPostsList($this->loggedinUserDetails->emailid, $postIds);
+                }
+                //subtract and unset the posts which are excluded from the return list
+                if (!empty($excludedPostsList)){
+                   $returnPosts = $this->subtractExlucedPosts($returnPosts, $excludedPostsList); 
+                   //get referrals count for each post
+                   $returnPosts = $this->getReferralsListCounts($this->loggedinUserDetails->emailid, $returnPosts);
+                }*/
+                //get referrals count for each post
+                $returnPosts = $this->getReferralsListCounts($this->loggedinUserDetails->emailid, $returnPosts);
+                $data = array("posts"=>  array_values($returnPosts));
+                $message = array('msg'=>array(Lang::get('MINTMESH.referrals.success')));
+                return $this->commonFormatter->formatResponse(200, "success", $message, $data) ;
+            }
+            else
+            {
+                $message = array('msg'=>array(Lang::get('MINTMESH.referrals.no_posts')));
+                return $this->commonFormatter->formatResponse(200, "success", $message, array()) ;
+                //echo round(microtime(true) * 1000);exit;
+            }
+        }
+        
+        
+        public function getExcludedPostsList($userEmail='', $postIds=array()){
+            $returnPostIds = array();
+            if (!empty($userEmail)){
+                $postIds = $this->referralsRepository->getExcludedPostsList($userEmail, $postIds);
+                foreach ($postIds as $val){
+                    $returnPostIds[] = $val['post_id'] ;
+                }
+                return $returnPostIds ;
+            }
+        }
+        
+        public function subtractExlucedPosts($totalPosts=array(), $excludedPosts = array()){
+            foreach ($excludedPosts as $postId){
+                if (isset($totalPosts[$postId])){
+                    unset($totalPosts[$postId]) ;//remove the excluded list
+                }
+            }
+            return $totalPosts ;
+        }
+        
+        public function getReferralsListCounts($userEmail='', $totalPosts = array()){
+            $returnPostIds = array();
+            if (!empty($userEmail)){
+                $postIds = array_keys($totalPosts);
+                $postReferralsCounts= $this->referralsRepository->getReferralsListCounts($userEmail, $postIds);
+                foreach ($postReferralsCounts as $val){
+                    if (!empty($totalPosts[$val[0]])){
+                        $temp = $totalPosts[$val[0]] ;
+                        $temp['no_of_referrals'] = $val[1] ;
+                        $totalPosts[$val[0]]=$temp;
+                       //echo $val[0] ;
+                       //print_r($totalPosts[$val[0]]);exit;
+                    } 
+                }
+            }
+            return $totalPosts ;
         }
     
 }

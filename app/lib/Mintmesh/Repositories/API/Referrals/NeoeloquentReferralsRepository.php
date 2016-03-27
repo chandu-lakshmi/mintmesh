@@ -21,6 +21,8 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 $this->neoUser = $neoUser;
                 $this->db_user=Config::get('database.connections.neo4j.username') ;
                 $this->db_pwd=Config::get('database.connections.neo4j.password') ;
+                $this->db_host=Config::get('database.connections.neo4j.host') ;
+                $this->db_port=Config::get('database.connections.neo4j.port') ;
                 $this->client = new NeoClient($this->db_host, $this->db_port);
                 $this->appEncodeDecode = $appEncodeDecode ;
                 $this->client->getTransport()->setAuth($this->db_user, $this->db_pwd);
@@ -74,12 +76,12 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             }
         }
         
-        public function excludeContact($serviceId=0, $userEmail="", $relationAttrs=array())
+        public function excludeOrIncludeContact($serviceId=0, $userEmail="", $relationAttrs=array(), $state)
         {
             $userEmail = $this->appEncodeDecode->filterString(strtolower($userEmail));
             $queryString = "Match (u:User:Mintmesh) , (p:Post)
                             where ID(p)=".$serviceId."  and u.emailid='".$userEmail."'
-                            create unique (p)-[r:".Config::get('constants.REFERRALS.EXCLUDED');
+                            create unique (p)-[r:".(($state=='exclude')?Config::get('constants.REFERRALS.EXCLUDED'):Config::get('constants.REFERRALS.EXCLUDED'));
                         if (!empty($relationAttrs))
                         {
                             $queryString.="{";
@@ -176,7 +178,9 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
         
         public function getAllPosts($email="", $type="", $page=0)
         {
-            if (!empty($email) && !empty($type))
+            $type_array = json_decode($type);
+//            if (!empty($email) && !empty($type))
+            if (!empty($email))
             {
                 $skip = $limit = 0;
                 if (!empty($page))
@@ -184,20 +188,40 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                     $limit = $page*10 ;
                     $skip = $limit - 10 ;
                 }
+                $filter_query = "";
+                if($type_array) {
+                    if(!(in_array('all', $type_array))) {
+                        if((in_array('free', $type_array) || in_array('paid', $type_array)) && !(in_array('free', $type_array) && in_array('paid', $type_array)) ) {
+                            $filter_query .= (in_array('free', $type_array))?' and p.free_service = "1" ':' and p.free_service = "0" ';
+                        }
+                    }
+                    $type_array = array_flip($type_array);
+                    unset($type_array['free']);
+                    unset($type_array['paid']);
+                    unset($type_array['all']);
+                    $type_array = array_flip($type_array);
+                    if(count($type_array) > 0) {
+                        $filter_query .= " and p.service_scope IN ['".implode("','",$type_array)."'] ";
+                    }                
+                }
                 //and p.service_scope='".$type."'
                 $email = $this->appEncodeDecode->filterString(strtolower($email));
-                $queryString = "match (n:User:Mintmesh), (m:User:Mintmesh), (p:Post)
+                $queryString = "match (n:User:Mintmesh)-[r1:ACCEPTED_CONNECTION]-(m:User:Mintmesh)-[r2:POSTED]->(p:Post)
                                 where n.emailid='".$email."' and m.emailid=p.created_by
-                                and (n-[:ACCEPTED_CONNECTION]-m)
+                                and case p.included_set when '1' then  (n-[:INCLUDED]-p) else 1=1 end
                                 and not(n-[:EXCLUDED]-p) 
-                                and  case p.service_type when 'in_location' then  lower(n.location) =~ ('.*' + lower(p.service_location)) else 1=1 end
+                                ".$filter_query."
+                                and  case p.service_type 
+                                when 'in_location' then  lower(n.location) =~ ('.*' + lower(p.service_location)) else 1=1 end
                                 and p.status='".Config::get('constants.REFERRALS.STATUSES.ACTIVE')."' 
+                                and r1.created_at <= p.created_at
                                 OPTIONAL MATCH (p)-[r:GOT_REFERRED]-(u)
                                 return p, count(distinct(u)) ORDER BY p.created_at DESC " ;
                 if (!empty($limit) && !($limit < 0))
                 {
                     $queryString.=" skip ".$skip." limit ".self::LIMIT ;
                 }
+                //echo $queryString ; exit;
                 $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();
             }
@@ -812,6 +836,73 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
              else
              {
                  return 0 ;
+             }
+         }
+         
+         public function getExcludedPostsList($userEmail='', $postsIds = array()){
+             $userEmail = $this->appEncodeDecode->filterString(strtolower($userEmail));
+             if (!empty($userEmail)){
+                 $postsIds = implode(",",$postsIds);
+                 $queryString = "match (u:User:Mintmesh)-[r:EXCLUDED]-(p:Post) where u.emailid='".$userEmail."' and ID(p) IN [".$postsIds."] return ID(p) as post_id";
+                 $query = new CypherQuery($this->client, $queryString);
+                return $result = $query->getResultSet();
+             }else{
+                 return 0;
+             }
+         }
+         
+        public function getAllPostsV3($email="", $type="", $page=0)
+        {
+            if (!empty($email) && !empty($type))
+            {
+                $skip = $limit = 0;
+                if (!empty($page))
+                {
+                    $limit = $page*10 ;
+                    $skip = $limit - 10 ;
+                }
+                //and p.service_scope='".$type."'
+                $email = $this->appEncodeDecode->filterString(strtolower($email));
+                $queryString = "match (n:User:Mintmesh)-[r1:ACCEPTED_CONNECTION]-(m:User:Mintmesh)-[r2:POSTED]->(p:Post)
+                                where n.emailid='".$email."' and m.emailid=p.created_by
+                                and not(n-[:EXCLUDED]-p)
+                                and  case p.service_type when 'in_location' then  lower(n.location) =~ ('.*' + lower(p.service_location)) else 1=1 end
+                                and p.status='".Config::get('constants.REFERRALS.STATUSES.ACTIVE')."' 
+                                and r1.created_at <= p.created_at
+                                return p ORDER BY p.created_at DESC " ;
+                //OPTIONAL MATCH (p)-[r:GOT_REFERRED]-(u)
+                //echo $queryString ; exit;
+                /*$queryString = "match (n:User:Mintmesh), (m:User:Mintmesh), (p:Post)
+                                where n.emailid='".$email."' and m.emailid=p.created_by
+                                and (n-[:ACCEPTED_CONNECTION]-m)
+                                and not(n-[:EXCLUDED]-p) 
+                                and  case p.service_type when 'in_location' then  lower(n.location) =~ ('.*' + lower(p.service_location)) else 1=1 end
+                                and p.status='".Config::get('constants.REFERRALS.STATUSES.ACTIVE')."' 
+                                OPTIONAL MATCH (p)-[r:GOT_REFERRED]-(u)
+                                return p, count(distinct(u)) ORDER BY p.created_at DESC " ;*/
+                if (!empty($limit) && !($limit < 0))
+                {
+                    $queryString.=" skip ".$skip." limit ".self::LIMIT ;
+                }
+                //echo $queryString ; exit;
+                $query = new CypherQuery($this->client, $queryString);
+                return $result = $query->getResultSet();
+            }
+            else
+            {
+                return false ;
+            }
+        }
+        
+        public function getReferralsListCounts($userEmail='', $postsIds = array()){
+             $userEmail = $this->appEncodeDecode->filterString(strtolower($userEmail));
+             if (!empty($userEmail)){
+                 $postsIds = implode(",",$postsIds);
+                 $queryString = "MATCH (p:Post)-[r:GOT_REFERRED]-(u) where  ID(p) IN [".$postsIds."] return ID(p) as post_id,count(distinct(u)) ";
+                 $query = new CypherQuery($this->client, $queryString);
+                return $result = $query->getResultSet();
+             }else{
+                 return 0;
              }
          }
 

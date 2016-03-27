@@ -286,7 +286,10 @@ class PaymentGateway {
             {
                 $result = Braintree_Transaction::sale([
                 'amount' => $amount,
-                'paymentMethodNonce' => $nonce
+                'paymentMethodNonce' => $nonce,
+                'options' => [
+                    'submitForSettlement' => True
+                  ]
                 ]);
                 if (!empty($result->success))
                 {
