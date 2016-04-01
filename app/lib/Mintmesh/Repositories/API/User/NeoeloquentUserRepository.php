@@ -218,13 +218,12 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             if (!empty($emailId))
             {
                 $emailId = $this->appEncodeDecode->filterString(strtolower($emailId));
-                $queryString = "MATCH (n:User:Mintmesh {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."]->(m:User:Mintmesh) where HAS (m.login_source) RETURN DISTINCT m order by m.firstname
+                $queryString = "MATCH (n:User:Mintmesh {emailid: '".$emailId."'})-[r:IMPORTED|ACCEPTED_CONNECTION]->(m:User:Mintmesh)  RETURN DISTINCT m order by m.firstname";
+                /*$queryString = "MATCH (n:User:Mintmesh {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."]->(m:User:Mintmesh) where HAS (m.login_source) RETURN DISTINCT m order by m.firstname
                                 UNION
                                 MATCH (n:User:Mintmesh {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-(m:User:Mintmesh) where has(m.login_source) RETURN DISTINCT m order by m.firstname asc" ;
                 
-                /*$queryString = "MATCH (n:User {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."|".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."|".Config::get('constants.RELATIONS_TYPES.REQUESTED_CONNECTION')."]-(m:User) where has(m.login_source) RETURN m order by m.firstname asc" ;
-                */
-                //echo $queryString ; exit;
+                */ 
                 $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();
             }

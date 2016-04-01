@@ -81,7 +81,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             $userEmail = $this->appEncodeDecode->filterString(strtolower($userEmail));
             $queryString = "Match (u:User:Mintmesh) , (p:Post)
                             where ID(p)=".$serviceId."  and u.emailid='".$userEmail."'
-                            create unique (p)-[r:".(($state=='exclude')?Config::get('constants.REFERRALS.EXCLUDED'):Config::get('constants.REFERRALS.EXCLUDED'));
+                            create unique (p)-[r:".(($state=='exclude')?Config::get('constants.REFERRALS.EXCLUDED'):Config::get('constants.REFERRALS.INCLUDED'));
                         if (!empty($relationAttrs))
                         {
                             $queryString.="{";
@@ -493,12 +493,17 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                  
                  if (!empty($input['suggestion']))
                  {
+                     $queryString = "Match (m:User:Mintmesh {emailid:'".$input['email']."'})-[:ACCEPTED_CONNECTION]-(o:User:Mintmesh), (n:User:Mintmesh {emailid:'".$input['other_email']."'}),(p:Post)
+                                    where   not (n-[:ACCEPTED_CONNECTION]-o)
+                                    and lower(o.location) =~ ('.*' + lower(p.service_location)) and ID(p)=".$input['post_id']."
+                                    RETURN DISTINCT o order by o.firstname asc";
+                     /*
                      $queryString = "Match (m:User:Mintmesh), (n:User:Mintmesh), (o:User:Mintmesh),(p:Post)
                                     where m.emailid='".$input['email']."' and n.emailid='".$input['other_email']."'
                                      and (m)-[:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-(o)    
                                     and not (n-[:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-o)
                                     and lower(o.location) =~ ('.*' + lower(p.service_location)) and ID(p)=".$input['post_id']."
-                                    RETURN DISTINCT o order by o.firstname asc " ;
+                                    RETURN DISTINCT o order by o.firstname asc " ;*/
                  }
                  if (!empty($limit) && !($limit < 0))
                  {

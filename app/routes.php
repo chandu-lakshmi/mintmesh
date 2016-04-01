@@ -269,18 +269,28 @@ Route::group(array('prefix' => 'v2'), function() {
 
     //get skills,v2 should be used
     Route::post("get_skills", "API\User\UserController@getSkills_v2"); 
-    // Mintmesh user creation,v2 only should be used
+	// Mintmesh user creation,v2 only should be used
     Route::post("user/create", "API\User\UserController@create_v2");
-
 });
 
 Route::group(array('prefix' => 'v3', 'before' => 'oauth'), function() {
     //get notifications
     Route::post("user/get_notifications", "API\User\UserController@getAllNotifications");
     // get connected users
-       Route::post("user/get_connected_users", "API\User\UserController@getConnectedAndMMUsers");
-       //refers screen
-       Route::post("referral/get_posts_new", "API\Referrals\ReferralsController@getPosts");
+    Route::post("user/get_connected_users", "API\User\UserController@getConnectedAndMMUsers");
     //refers screen
-       Route::post("referral/get_posts", "API\Referrals\ReferralsController@getPostsV3");
+    Route::post("referral/get_posts_new", "API\Referrals\ReferralsController@getPosts");
+    //refers screen
+    Route::post("referral/get_posts", "API\Referrals\ReferralsController@getPostsV3");
+    //get post references
+    Route::post("referral/get_post_references", "API\Referrals\ReferralsController@getPostReferences");
+    //get my referrals for a post
+    Route::post("referral/get_my_referrals", "API\Referrals\ReferralsController@getMyReferrals");
+    //get referral contacts for a post
+    Route::post("referral/get_my_referral_contacts", "API\Referrals\ReferralsController@getMyReferralContacts");
+    //get all referrals done by me
+    Route::post("referral/get_all_referrals", "API\Referrals\ReferralsController@getAllReferrals");
+    // get my requests
+       Route::post("user/get_my_requests", "API\User\UserController@getMyRequests");
+       
 });
