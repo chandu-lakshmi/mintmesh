@@ -2293,84 +2293,85 @@ class UserGateway {
         }
         public function formUserDetailsArray($neoLoggedInUserDetails, $type = '',$userAbstractionLevel='full')
         {
-            if (strpos(\Request::url(), 'v3') !== false){
-                return $this->formUserDetailsArrayV3($neoLoggedInUserDetails, $type,$userAbstractionLevel) ;
-            }
             $r = array();
-            if (!empty($neoLoggedInUserDetails))
-            {
-                $r = array();
-                if ($type == 'property')
+            if (strpos(\Request::url(), 'v3') !== false){
+                $r = $this->formUserDetailsArrayV3($neoLoggedInUserDetails, $type,$userAbstractionLevel) ;
+            }else{
+                if (!empty($neoLoggedInUserDetails))
                 {
-                    $r = $neoLoggedInUserDetails->getProperties();
-                }
-                else
-                {
-                    $r = $neoLoggedInUserDetails->getAttributes();
-                }
-                if (!empty($neoLoggedInUserDetails->dp_renamed_name))//user has completed profile
-                {
-                    if (!empty($neoLoggedInUserDetails->from_linkedin))//if  linked in
+                    $r = array();
+                    if ($type == 'property')
                     {
-                        $r['dp_path'] = $neoLoggedInUserDetails->linkedinImage ;
-                    }
-                    else if (!empty($neoLoggedInUserDetails->dp_renamed_name))
-                    {
-                        $r['dp_path'] = $neoLoggedInUserDetails->dp_renamed_name ;
+                        $r = $neoLoggedInUserDetails->getProperties();
                     }
                     else
                     {
-                        $r['dp_path'] = "";
+                        $r = $neoLoggedInUserDetails->getAttributes();
                     }
-                }
-                else
-                {
-                    $r['dp_path']="";
-                }
-                if (isset($r['id']))
-                    unset($r['id']);
-               
-                unset($r['services']);
-                $job_function_name = $industry_name = "";
-                if (isset($r['job_function']))//get job function name
-                {
-                    $job_function_result = $this->neoUserRepository->getUserJobFunction($neoLoggedInUserDetails->emailid) ;
-                    $job_function_name = !empty($job_function_result[0])?$job_function_result[0][0]->name:"";
-
-                }
-                if (isset($r['industry']))//get job function name
-                {
-                    $industry_name_result = $this->neoUserRepository->getUserIndustry($neoLoggedInUserDetails->emailid) ;
-                    $industry_name = !empty($industry_name_result[0])?$industry_name_result[0][0]->name:"";
-                }
-                $you_are_name = "";
-                if (isset($r['you_are']))//get job function name
-                {
-                    $you_are_name = $this->userRepository->getYouAreName($r['you_are']);
-                }
-                $profession_name = "";
-                if (isset($r['profession']))//get profession name
-                {
-                    $profession_name = $this->userRepository->getProfessionName($r['profession']);
-                }
-                $r['job_function_name'] = $job_function_name;
-                $r['industry_name'] = $industry_name ;
-                $r['you_are_name'] = $you_are_name ;
-                $r['profession_name'] = $profession_name ;
-                //change response for services
-                $services = $this->neoUserRepository->getUserServices($neoLoggedInUserDetails->emailid);
-                if (!empty($services))
-                {
-                    $servicesArray = array();
-                    foreach ($services as $service)
+                    if (!empty($neoLoggedInUserDetails->dp_renamed_name))//user has completed profile
                     {
-                        $servicesArray[] = $service[0]->getProperties();
-                        //$servicesArray[] = array('service_name'=>$servD['name'],'service_id'=>$servD['mysql_id']);
+                        if (!empty($neoLoggedInUserDetails->from_linkedin))//if  linked in
+                        {
+                            $r['dp_path'] = $neoLoggedInUserDetails->linkedinImage ;
+                        }
+                        else if (!empty($neoLoggedInUserDetails->dp_renamed_name))
+                        {
+                            $r['dp_path'] = $neoLoggedInUserDetails->dp_renamed_name ;
+                        }
+                        else
+                        {
+                            $r['dp_path'] = "";
+                        }
                     }
-                    $r['services'] = $servicesArray ;
+                    else
+                    {
+                        $r['dp_path']="";
+                    }
+                    if (isset($r['id']))
+                        unset($r['id']);
+
+                    unset($r['services']);
+                    $job_function_name = $industry_name = "";
+                    if (isset($r['job_function']))//get job function name
+                    {
+                        $job_function_result = $this->neoUserRepository->getUserJobFunction($neoLoggedInUserDetails->emailid) ;
+                        $job_function_name = !empty($job_function_result[0])?$job_function_result[0][0]->name:"";
+
+                    }
+                    if (isset($r['industry']))//get job function name
+                    {
+                        $industry_name_result = $this->neoUserRepository->getUserIndustry($neoLoggedInUserDetails->emailid) ;
+                        $industry_name = !empty($industry_name_result[0])?$industry_name_result[0][0]->name:"";
+                    }
+                    $you_are_name = "";
+                    if (isset($r['you_are']))//get job function name
+                    {
+                        $you_are_name = $this->userRepository->getYouAreName($r['you_are']);
+                    }
+                    $profession_name = "";
+                    if (isset($r['profession']))//get profession name
+                    {
+                        $profession_name = $this->userRepository->getProfessionName($r['profession']);
+                    }
+                    $r['job_function_name'] = $job_function_name;
+                    $r['industry_name'] = $industry_name ;
+                    $r['you_are_name'] = $you_are_name ;
+                    $r['profession_name'] = $profession_name ;
+                    //change response for services
+                    $services = $this->neoUserRepository->getUserServices($neoLoggedInUserDetails->emailid);
+                    if (!empty($services))
+                    {
+                        $servicesArray = array();
+                        foreach ($services as $service)
+                        {
+                            $servicesArray[] = $service[0]->getProperties();
+                            //$servicesArray[] = array('service_name'=>$servD['name'],'service_id'=>$servD['mysql_id']);
+                        }
+                        $r['services'] = $servicesArray ;
+                    }
+                    //get profile completion percentage
+                    $r['profile_completion_percentage'] = $this->calculateProfilePercentageCompletion($neoLoggedInUserDetails);
                 }
-                //get profile completion percentage
-                $r['profile_completion_percentage'] = $this->calculateProfilePercentageCompletion($neoLoggedInUserDetails);
             }
            return $r ; 
         }
