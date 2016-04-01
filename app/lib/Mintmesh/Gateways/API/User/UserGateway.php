@@ -1300,6 +1300,7 @@ class UserGateway {
                     {
                         $this->userRepository->logLevel(2, $input['emailid'], "", "",Config::get('constants.POINTS.COMPLETE_PROFILE'));
                     }
+                    $neoInput['completed_contact'] = 1 ;
                 }
                 if (!empty($input['firstname']) && !empty($input['lastname']))
                 {
@@ -1330,7 +1331,6 @@ class UserGateway {
                     ) ;
                     $t = $this->userRepository->logNotification($notificationLog);
                 }
-                $neoInput['completed_contact'] = 1 ;
                 $updatedNeoUser =  $this->neoUserRepository->updateUser($neoInput) ;
                 if (!empty($input['job_function']))
                 {
