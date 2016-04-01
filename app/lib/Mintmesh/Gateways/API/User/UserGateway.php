@@ -740,7 +740,7 @@ class UserGateway {
                     $neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
                     $userDetails = $this->formUserDetailsArray($neoLoggedInUserDetails);
                     $loggedinUserDetails = $this->userRepository->getUserByEmail($this->loggedinUserDetails->emailid);
-                    $userCountDetails = $this->getUserBadgeCounts($loggedinUserDetails);
+                    $userCountDetails = $this->getUserBadgeCounts($loggedinUserDetails,$userDetails['profile_completion_percentage']);
                     foreach ($userCountDetails as $k=>$v){
                         $userDetails[$k]=$v ;
                     }
@@ -789,7 +789,7 @@ class UserGateway {
                 {
                     $userDetails = $this->formUserDetailsArray($neoUser) ;
 //                    $loggedinUserDetails = $this->userRepository->getUserByEmail($inputUserData['username']);
-                    $userCountDetails = $this->getUserBadgeCounts($loggedinUserDetails);
+                    $userCountDetails = $this->getUserBadgeCounts($loggedinUserDetails,$userDetails['profile_completion_percentage']);
                     foreach ($userCountDetails as $k=>$v){
                         $userDetails[$k]=$v ;
                     }
@@ -859,7 +859,7 @@ class UserGateway {
                             {
                                 $userDetailsArray = $this->formUserDetailsArray($neoUser) ;
                                 $loggedinUserDetails = $this->userRepository->getUserByEmail($userDetails->emailid);
-                                $userCountDetails = $this->getUserBadgeCounts($loggedinUserDetails);
+                                $userCountDetails = $this->getUserBadgeCounts($loggedinUserDetails,$userDetailsArray['profile_completion_percentage']);
                                 foreach ($userCountDetails as $k=>$v){
                                     $userDetailsArray[$k]=$v ;
                                 }
@@ -1521,7 +1521,7 @@ class UserGateway {
                             $r[$k] = $v ;
                         }
                     }
-                    $countDetails = $this->getUserBadgeCounts($loggedinUserDetails);
+                    $countDetails = $this->getUserBadgeCounts($loggedinUserDetails,$r['profile_completion_percentage']);
                     if (!empty($countDetails))
                     {
                         foreach ($countDetails as $key=>$val)
@@ -1558,11 +1558,11 @@ class UserGateway {
             
         }
         
-        public function getUserBadgeCounts($loggedinUserDetails)
+        public function getUserBadgeCounts($loggedinUserDetails,$profilePercentage)
         {
             $returnArray =  array();
             $battle_cards_count = $this->userRepository->getNotificationsCount($loggedinUserDetails, 'request_connect');
-            $returnArray['battle_cards_count']= !(empty($battle_cards_count))?$battle_cards_count:0;
+            $returnArray['battle_cards_count']= !(empty($battle_cards_count))?(($profilePercentage < 100)?$battle_cards_count+1:$battle_cards_count):0;
             $badgeResult = $this->userRepository->getNotificationsCount($loggedinUserDetails, 'all');
             $returnArray['notifications_count']= !(empty($badgeResult))?$badgeResult:0;
             $requestsCount = $this->neoUserRepository->getMyRequestsCount($loggedinUserDetails->emailid);
@@ -1800,7 +1800,7 @@ class UserGateway {
             if ($loggedinUserDetails)
             {
                 $neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($loggedinUserDetails->emailid) ;
-                $return['userDetails'] = $this->formUserDetailsArray($neoLoggedInUserDetails, 'attribute') ;
+                $return['userDetails'] = $this->formUserDetailsArray($neoLoggedInUserDetails, 'attribute', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC')) ;
                 $page = !empty($input['page'])?$input['page']:0;
                 $relationDetails = $this->neoUserRepository->getMyRequests($loggedinUserDetails->emailid, $page); 
                 $return['requests'] = array();
@@ -1819,7 +1819,7 @@ class UserGateway {
                         {
                             if ($relation[1] == Config::get('constants.RELATIONS_TYPES.REQUEST_REFERENCE'))
                             {
-                                $toUserDetails = $this->formUserDetailsArray($relation[2], 'property') ;
+                                $toUserDetails = $this->formUserDetailsArray($relation[2], 'property', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC')) ;
                                 foreach ($toUserDetails as $k=>$v)
                                 {
                                     $a['to_user_'.$k] = $v ;
@@ -1880,7 +1880,7 @@ class UserGateway {
                             }
                             //get third user details
                             $neoOtherUserDetails = $this->neoUserRepository->getNodeByEmailId($a['request_for_emailid']) ;
-                            $otherUserDetails = $this->formUserDetailsArray($neoOtherUserDetails, 'attribute') ;
+                            $otherUserDetails = $this->formUserDetailsArray($neoOtherUserDetails, 'attribute', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC')) ;
                             foreach ($otherUserDetails as $k=>$v)
                             {
                                 $a['other_user_'.$k] = $v ;
@@ -1894,7 +1894,7 @@ class UserGateway {
                             {
                                 //get third user details
                                 $neoOtherUserDetails = $this->neoUserRepository->getNodeByEmailId($a['request_for_emailid']) ;
-                                $otherUserDetails = $this->formUserDetailsArray($neoOtherUserDetails, 'attribute') ;
+                                $otherUserDetails = $this->formUserDetailsArray($neoOtherUserDetails, 'attribute', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC')) ;
                                 foreach ($otherUserDetails as $k=>$v)
                                 {
                                     $a['other_user_'.$k] = $v ;
@@ -2249,39 +2249,30 @@ class UserGateway {
                 $neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($loggedinUserDetails->emailid) ;
                 if (!empty($neoUserDetails) && !empty($neoLoggedInUserDetails))
                 {
-                    //check if both are connected
-                    $connected = $this->neoUserRepository->checkConnection($neoLoggedInUserDetails->emailid,$neoUserDetails->emailid);
-                    if (!empty($connected) && !empty($connected['connected']))// if connected
+                    $r = $this->formUserDetailsArray($neoUserDetails, 'attribute', Config::get('constants.USER_ABSTRACTION_LEVELS.FULL')) ;
+                    $moreDetails = $this->neoUserRepository->getMoreDetails($input['emailid']);
+                    if (!empty($moreDetails))
                     {
-                        $moreDetails = $this->neoUserRepository->getMoreDetails($input['emailid']);
-                        if (!empty($moreDetails))
-                        {
-                            $extraDetails = $this->formUserMoreDetailsArray($moreDetails);
-                        }
-                        $skills = $this->neoUserRepository->getUserSkills($input['emailid']);
-                        if (!empty($skills))
-                        {
-                            $skillsArray = array();
-                            foreach ($skills as $skill)
-                            {
-                                $skillsArray[] = $skill[0]->getProperties();
-                            }
-                            $extraDetails['skills'] = $skillsArray ;
-                        }
-                        $connectionsCount = $this->neoUserRepository->getConnectedUsersCount($input['emailid']);
-                        $requestsCount = $this->neoUserRepository->getMutualRequestsCount($input['emailid'], $neoLoggedInUserDetails->emailid);
+                        $extraDetails = $this->formUserMoreDetailsArray($moreDetails);
                     }
-                    $r = $this->formUserDetailsArray($neoUserDetails, 'attribute') ;
+                    $skills = $this->neoUserRepository->getUserSkills($input['emailid']);
+                    if (!empty($skills))
+                    {
+                        $skillsArray = array();
+                        foreach ($skills as $skill)
+                        {
+                            $skillsArray[] = $skill[0]->getProperties();
+                        }
+                        $extraDetails['skills'] = $skillsArray ;
+                    }
+                    $connectionsCount = $this->neoUserRepository->getConnectedUsersCount($input['emailid']);
+                    $requestsCount = $this->neoUserRepository->getMutualRequestsCount($input['emailid'], $neoLoggedInUserDetails->emailid);
                     if (!empty($extraDetails))
                     {
                         foreach ($extraDetails as $k=>$v)
                         {
                             $r[$k] = $v ;
                         }
-                    }
-                    if (!empty($connected))// if connected
-                    {
-                        $r['connected']=1;
                     }
                     $data = array("user"=>$r,"connections_count"=>$connectionsCount,"requests_count"=>$requestsCount);
                     $message = array('msg'=>array(Lang::get('MINTMESH.user.profile_success')));
@@ -2471,6 +2462,7 @@ class UserGateway {
                 
                 //get profile completion percentage
                 $r['profile_completion_percentage'] = $this->calculateProfilePercentageCompletion($neoLoggedInUserDetails);
+                }
             }
            return $r ; 
         }
@@ -2528,7 +2520,7 @@ class UserGateway {
                 }
             }
             
-            return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $message, $data) ;
+            return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $message, $data, $checkBadWords=false) ;
             
             /*
             if (Cache::has('countryCodes')) { 
@@ -2585,7 +2577,7 @@ class UserGateway {
                 }
                 $data = array("industries"=>$industries) ;
                 $message = array('msg'=>array(Lang::get('MINTMESH.industries.success')));
-                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
+                return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data, $checkBadWords=false) ;
             }
             else
             {
@@ -2615,7 +2607,7 @@ class UserGateway {
 	            }
 	            $data = array("job_functions"=>$jobFunctions) ;
 	            $message = array('msg'=>array(Lang::get('MINTMESH.job_functions.success')));
-	            return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
+	            return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data, $checkBadWords=false) ;
 	        }
 	        else
 	        {
@@ -2739,8 +2731,8 @@ class UserGateway {
             if ($loggedinUserDetails)
             {
                 $neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($loggedinUserDetails->emailid) ;
-                $userBadgeCounts = $this->getUserBadgeCounts($loggedinUserDetails);
-                $loggeduserDetails = $this->formUserDetailsArray($neoLoggedInUserDetails,'attribute');
+                $loggeduserDetails = $this->formUserDetailsArray($neoLoggedInUserDetails,'attribute', Config::get('constants.USER_ABSTRACTION_LEVELS.FULL'));
+                $userBadgeCounts = $this->getUserBadgeCounts($loggedinUserDetails,$loggeduserDetails['profile_completion_percentage']);
                if (!empty($userBadgeCounts))
                 {
                     foreach ($userBadgeCounts as $k=>$v)
@@ -2748,9 +2740,13 @@ class UserGateway {
                         $loggeduserDetails[$k]=$v ;
                     }
                 }
-                $loggeduserDetails['remaning_days'] = $this->userRepository->getRemaningDays($loggeduserDetails['emailid']);
+                $loggeduserDetails['remaning_days'] = array("days"=>0,"status"=>1,"emailverified"=>1);
                 if (count($neoLoggedInUserDetails))
                 {
+                    //get remaining days only when emailverified is 0
+                    if (empty($loggedinUserDetails->emailverified)){
+                        $loggeduserDetails['remaning_days'] = $this->userRepository->getRemaningDays($loggeduserDetails['emailid']);
+                    }
                     $page = !empty($input['page'])?$input['page']:0;
                     $notifications = $this->userRepository->getNotifications($loggedinUserDetails, $input['notification_type'], $page);
 
@@ -2789,10 +2785,10 @@ class UserGateway {
                                 $noReferralsPost = false ;
                                 $note = array();
                                  if (empty($notification->for_mintmesh) && empty($normalFlow)){
-                                    $note = $this->formUserDetailsArray($neoUserDetails, 'property');
+                                    $note = $this->formUserDetailsArray($neoUserDetails, 'property', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC'));
                                     //print_r($note);exit;
                                  }else{
-                                     $note = $this->formUserDetailsArray($neoUserDetails, 'attribute');
+                                     $note = $this->formUserDetailsArray($neoUserDetails, 'attribute', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC'));
                                  }
                                 $thirdName = $thirdFirstName = "";
                                 $thirdLastName = "";
@@ -2826,16 +2822,16 @@ class UserGateway {
                                         }
                                     }
                                     if (empty($notification->for_mintmesh) && empty($normalFlow)){
-                                        $otherUserDetails = $this->formUserDetailsArray($otherEmailDetails, 'property');
+                                        $otherUserDetails = $this->formUserDetailsArray($otherEmailDetails, 'property', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC'));
                                     }else{
-                                        $otherUserDetails = $this->formUserDetailsArray($otherEmailDetails, 'attribute');
+                                        $otherUserDetails = $this->formUserDetailsArray($otherEmailDetails, 'attribute', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC'));
                                     }
                                     
                                     foreach ($otherUserDetails as $k=>$v)
                                     {
                                         $note['other_user_'.$k] = $v ;
                                     }
-                                    if (empty(trim($note['other_user_fullname']))){
+                                    if (empty($note['other_user_fullname']) || (!empty($note['other_user_fullname']) && empty(trim($note['other_user_fullname'])))){
                                         $note['other_user_fullname'] = $thirdName ;
                                         $note['other_user_firstname'] = $thirdFirstName ;
                                         $note['other_user_lastname'] = $thirdLastName ;
@@ -3005,13 +3001,14 @@ class UserGateway {
                 {
                     if ($referral[1]->one_way_status != Config::get('constants.REFERRALS.STATUSES.DECLINED'))//skip the declined one
                     {
-                        $userDetails = $this->formUserDetailsArray($referral[0],'property');
+                        $userDetails = $this->formUserDetailsArray($referral[0],'property', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC'));
                         $relationDetails = $referral[1]->getProperties();
                         if (!empty($referral[1]->referred_by))
                         {
                             $fromUseremail = $referral[1]->referred_by ;
                             $fromUserResult = $this->neoUserRepository->getNodeByEmailId($fromUseremail) ;
-                            $fromUserDetails = $this->formUserDetailsArray($fromUserResult);
+                            $fromUserDetails = $this->formUserDetailsArray($fromUserResult,'', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC'));
+                            $referredBy = $referral[1]->referred_by ;
                             $referredBy = $referral[1]->referred_by ;
                         }
                         $referDetails = array();
@@ -3212,7 +3209,7 @@ class UserGateway {
                     {
                        if (!empty($user[0]->emailid) && $user[0]->emailid != $emailid){//do not display my own contact
                             $uId = $user[0]->getID();
-                            $u[$uId] = $this->formUserDetailsArray($user[0],'property');
+                            $u[$uId] = $this->formUserDetailsArray($user[0],'property', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC'));
                             $connected = $this->neoUserRepository->checkConnection($emailid,$user[0]->emailid);
                             /*if (!empty($input['emailid']))//not required for now
                             {
@@ -4362,6 +4359,7 @@ class UserGateway {
             return $relationDetailsResult ;
             
         }
+
         public function getNonMintmeshReferralDetails($referredBy='', $referral='', $referredUsing=''){
             $relationDetailsResult = array();
             if (!empty($referredBy) && !empty($referral) && !empty($referredUsing)){

@@ -255,7 +255,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
         {
             if (!empty($userEmail))
             {
-                $queryString = "match (u:User:Mintmesh)-[r:IMPORTED]->(n:User) where u.emailid='".$userEmail."' and not (u)-[:ACCEPTED_CONNECTION]-(n) and not (u)-[:REQUESTED_CONNECTION]-(n) delete r";
+                $queryString = "match (u:User:Mintmesh)-[r:IMPORTED]->(n:User) where u.emailid='".$userEmail."' and not (u)-[:ACCEPTED_CONNECTION]-(n)  delete r";
                  $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();
             }

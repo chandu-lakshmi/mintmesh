@@ -67,6 +67,10 @@ class UserController extends \BaseController {
          * @param string $password The password of a user profile
          * @param string $password_confirmation The password of a user profile
          * @param string $deviceToken The device token of the user device
+         * @param string $phone_verified
+         * @param string $location
+         * @param string $login_source
+         * @param string $os_type
          * 
 	 * @return Response
 	 */
@@ -101,8 +105,12 @@ class UserController extends \BaseController {
          * @param string $password The password of a user profile
          * @param string $password_confirmation The password of a user profile
          * @param string $deviceToken The device token of the user device
+         * @param string $phone_verified
+         * @param string $location
+         * @param string $login_source
+         * @param string $os_type
          * 
-	 * @return Response
+      	 * @return Response
 	 */
 	public function create_v2()
 	{
@@ -247,6 +255,8 @@ class UserController extends \BaseController {
          * 
 	 * @param string $code The activation code of a user
          * @param string $emailid The email id of a user
+         * @param string $deviceToken The device token of the user device
+         * 
 	 * @return Response
 	 */
 	public function special_login()
@@ -376,7 +386,9 @@ class UserController extends \BaseController {
          * 
          * POST/forgot_password
          * 
-         * @param emailid
+         * @param $emailid
+         * @param $os_type
+         * 
 	 * @return Response
 	 */
         public function forgotPassword()
@@ -687,6 +699,7 @@ class UserController extends \BaseController {
          * 
          * @param string $access_token The Access token of a user
          * @param string $notification_type
+         * @param string $page
 	 * @return Response
 	 */
         public function getAllNotifications()
@@ -714,6 +727,8 @@ class UserController extends \BaseController {
          * @param string $refered_by
          * @param string $self_reference used in self reference flow
          * @param string $relation_id used in self reference flow
+         * @param string $base_rel_id
+         * 
 	 * @return Response
 	 */
         public function acceptConnection()
@@ -847,8 +862,8 @@ class UserController extends \BaseController {
                 // returning validation failure
                 return \Response::json($validation);
             }
-            $response = $this->userGateway->getConnectedAndMMUsers();
-            return \Response::json($response);
+//            $response = $this->userGateway->getConnectedAndMMUsers();
+//            return \Response::json($response);
         }
         
         
@@ -952,6 +967,8 @@ class UserController extends \BaseController {
          * POST/get_my_requests
          * 
          * @param string $access_token The Access token of a user
+         * @param string $page
+         * 
 	 * @return Response
 	 */
         public function getMyRequests()

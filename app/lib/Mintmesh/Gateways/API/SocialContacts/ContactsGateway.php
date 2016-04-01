@@ -159,6 +159,10 @@ class ContactsGateway {
                                             }
                                             catch(\RuntimeException $e)
                                             {
+                                                $tmp = Array(); 
+                                                foreach($returnArray as &$ma) 
+                                                    $tmp[] = &$ma["fullname"]; 
+                                                array_multisort($tmp, $returnArray); 
                                                 $message = array('msg'=>array(Lang::get('MINTMESH.import_contacts.error')));
                                                 return $this->commonFormatter->formatResponse(406, "error", $message, array('mintmesh_users'=>$returnArray)) ;
                                             }
@@ -177,6 +181,15 @@ class ContactsGateway {
                                     
                                 }    
                             }
+                            $tmp = Array(); 
+                            foreach($returnArray as &$ma) 
+                                $tmp[] = &$ma["fullname"]; 
+                            array_multisort($tmp, $returnArray); 
+                            
+                            $tmp = Array(); 
+                            foreach($autoconnectedUsers as &$ma) 
+                                $tmp[] = &$ma["fullname"]; 
+                            array_multisort($tmp, $autoconnectedUsers); 
                             $message = array('msg'=>array(Lang::get('MINTMESH.import_contacts.success')));
                             return $this->commonFormatter->formatResponse(200, "success", $message, array('mintmesh_users'=>$returnArray,'autoconnected_users'=>$autoconnectedUsers)) ;
                         }

@@ -24,7 +24,7 @@ use Mintmesh\Repositories\API\SocialContacts\ContactsRepository;
 use Mintmesh\Gateways\API\SMS\SMSGateway;
 use Lang;
 use Config;
-use Log;
+use Log, Queue;
 class ReferralsGateway {
     const SUCCESS_RESPONSE_CODE = 200;
     const SUCCESS_RESPONSE_MESSAGE = 'success';
@@ -259,7 +259,7 @@ class ReferralsGateway {
                         $serviceResult = $this->neoUserRepository->mapJobs(array($input['looking_for']), $this->loggedinUserDetails->emailid, Config::get('constants.RELATIONS_TYPES.LOOKING_FOR'));
                         $neoInput['service_name'] = !empty($serviceResult[0][0]->name)?$serviceResult[0][0]->name:'' ;
                     }
-
+                    
                 }
                 $createdService = $this->referralsRepository->createPostAndRelation($fromId, $neoInput, $relationAttrs);
                 if (isset($createdService[0]) && isset($createdService[0][0]))
@@ -270,7 +270,37 @@ class ReferralsGateway {
                 {
                     $serviceId = 0;
                 }
-                //exclude contacts
+                $allConnectedUsers = $this->neoUserRepository->getConnectedUsers($this->loggedinUserDetails->emailid);
+                $connectedUsers = array();
+                foreach($allConnectedUsers as $allUsers)
+                {
+                    $connectedUsers[] = $allUsers[0]->emailid;
+                }
+                //exclude or include contacts
+                if (!empty($input['excluded_list']) || !empty($input['included_list']) )
+                {
+                    $relationAttrs = array();
+                    $relationAttrs['service_scope'] = $input['service_scope'] ;
+                    $list = json_decode(!empty($input['excluded_list'])?$input['excluded_list']:$input['included_list']) ;
+                    $remaningList = array_diff($connectedUsers, $list);
+                    if(!empty($serviceId)) {
+                        //create relation to the list sent by front end
+                        if(is_array($list)) {
+                            foreach($list as $user) {
+                                $excludedOrIncluded = $this->formQueueArrayForExcludeOrEnclude($serviceId, $user, $relationAttrs, !empty($input['excluded_list'])?'exclude':'include');
+                                //$excludedOrIncluded = $this->referralsRepository->excludeOrIncludeContact($serviceId, $user, $relationAttrs, !empty($input['excluded_list'])?'exclude':'include') ;
+                            }
+                        }
+                        //create relation to the remaning list 
+                        if(is_array($remaningList)) {
+                            foreach($remaningList as $user) {
+                                $excludedOrIncluded = $this->formQueueArrayForExcludeOrEnclude($serviceId, $user, $relationAttrs, !empty($input['excluded_list'])?'include':'exclude');
+                                //$excludedOrIncluded = $this->referralsRepository->excludeOrIncludeContact($serviceId, $user, $relationAttrs, !empty($input['excluded_list'])?'include':'exclude') ;
+                            }
+                        }
+                    }
+                }
+                /*//exclude contacts
                 if (!empty($input['excluded_list']))
                 {
                     $relationAttrs = array();
@@ -316,6 +346,18 @@ class ReferralsGateway {
                 return $this->commonFormatter->formatResponse(406, "error", $message, array()) ;
             }
             
+        }
+        
+        public function formQueueArrayForExcludeOrEnclude($serviceId=0, $user='', $relationAttrs=array(), $relationName=''){
+            if (!empty($serviceId)){
+                $pushData = array();
+                $pushData['serviceId']=$serviceId;
+                $pushData['user']=$user;
+                $pushData['relationAttrs']=$relationAttrs;
+                $pushData['relationName']=$relationName;
+                Queue::push('Mintmesh\Services\Queues\PostsQueue', $pushData);
+            }
+            return true;
         }
         
         public function sendEmailToUser($templatePath, $emailid, $data)
@@ -467,7 +509,7 @@ class ReferralsGateway {
                    $relationCount = 1 ;
                }
                if (!empty($input['refer_non_mm_email']) && !empty($input['referring'])){//non mintmesh and refer by email
-                   
+
                    if (!empty($input['referring_phone_no'])){//create node for this and relate
                        //check if phone number contact exist
                        $nonMintmeshContactExist = $this->contactsRepository->getNonMintmeshContact($input['referring']);
@@ -616,7 +658,7 @@ class ReferralsGateway {
                         if (!empty($postDetails['created_by']))
                         {
                             $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($postDetails['created_by']) ;
-                            $returnArray['userDetails'] = $this->userGateway->formUserDetailsArray($neoUserDetails, 'attribute') ;
+                            $returnArray['userDetails'] = $this->userGateway->formUserDetailsArray($neoUserDetails, 'attribute', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC')) ;
                         }
                     }
                     else //else return 
@@ -633,7 +675,7 @@ class ReferralsGateway {
                         {
                             $postDetails = array();
                             $p1Status = '';
-                            $reference_details = $this->userGateway->formUserDetailsArray($v[0], 'property') ;
+                            $reference_details = $this->userGateway->formUserDetailsArray($v[0], 'property', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC')) ;
                             foreach ($reference_details as $k1=>$v1)
                             {
                                 $postDetails['to_user_'.$k1] = $v1 ;
@@ -657,7 +699,7 @@ class ReferralsGateway {
                             }
                             
                             $viaUserDetails = $this->neoUserRepository->getNodeByEmailId($v[1]->referred_by) ;
-                            $referred_by_details = $this->userGateway->formUserDetailsArray($viaUserDetails, 'attribute');
+                            $referred_by_details = $this->userGateway->formUserDetailsArray($viaUserDetails, 'attribute', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC'));
                             foreach ($referred_by_details as $k2=>$v2)
                             {
                                 $postDetails['from_user_'.$k2] = $v2 ;
@@ -755,7 +797,7 @@ class ReferralsGateway {
                 {
                     $isNonMintmesh = 0 ;
                     $nonMintmeshUserDetails = array();
-                    $u = $this->userGateway->formUserDetailsArray($v[0], 'property') ;
+                    $u = $this->userGateway->formUserDetailsArray($v[0], 'property', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC')) ;
                     $u['relation_id']=$v[1]->getId();
                     $relation_details = $v[1]->getProperties();
                     if (!empty($relation_details['one_way_status']))
@@ -1254,7 +1296,7 @@ class ReferralsGateway {
                     {
                         if ($v1[0]->emailid != $input['other_email'])
                         {
-                            $users[]=$this->userGateway->formUserDetailsArray($v1[0],'property') ;
+                            $users[]=$this->userGateway->formUserDetailsArray($v1[0],'property', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC')) ;
                         }
                         
                     }
@@ -1267,7 +1309,7 @@ class ReferralsGateway {
                         {
                             
                             if (empty($v[1][1]))//this skips the mintmesh users, i.e label with user:Mintmesh
-                                $nonMintmeshReferrals[]=$this->userGateway->formUserDetailsArray($v[0],'property') ;
+                                $nonMintmeshReferrals[]=$this->userGateway->formUserDetailsArray($v[0],'property', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC')) ;
                         }
 
                 }
@@ -1413,7 +1455,7 @@ class ReferralsGateway {
             if ($loggedinUserDetails)
             {
                 $neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($loggedinUserDetails->emailid) ;
-                $return['userDetails'] = $this->userGateway->formUserDetailsArray($neoLoggedInUserDetails, 'attribute') ;
+                $return['userDetails'] = $this->userGateway->formUserDetailsArray($neoLoggedInUserDetails, 'attribute', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC')) ;
                 $userEmail = !empty($loggedinUserDetails->emailid)?$loggedinUserDetails->emailid:'';
                 $page = !empty($input['page'])?$input['page']:0;
                 $relationDetails = $this->referralsRepository->getAllReferrals($userEmail,$page);
@@ -1436,7 +1478,7 @@ class ReferralsGateway {
                         {
                             if ($relation[1] == Config::get('constants.RELATIONS_TYPES.INTRODUCE_CONNECTION'))
                             {
-                                $toUserDetails = $this->userGateway->formUserDetailsArray($relation[2], 'property') ;
+                                $toUserDetails = $this->userGateway->formUserDetailsArray($relation[2], 'property', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC')) ;
                                 //details of third user
                                 foreach ($toUserDetails as $k=>$v)
                                 {
@@ -1455,7 +1497,7 @@ class ReferralsGateway {
                                         $a['referral_relation'] = !empty($requestR[0][0])?$requestR[0][0]:0;
                                     }
                                     $otherUserResult = $this->neoUserRepository->getNodeByEmailId($a['request_for_emailid']) ;
-                                    $otherUserDetails = $this->userGateway->formUserDetailsArray($otherUserResult, 'attribute') ;
+                                    $otherUserDetails = $this->userGateway->formUserDetailsArray($otherUserResult, 'attribute', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC')) ;
                                     foreach ($otherUserDetails as $k=>$v)
                                     {
                                         $a['to_user_'.$k] = $v ;
@@ -1465,7 +1507,7 @@ class ReferralsGateway {
                             else if ($relation[1] == Config::get('constants.REFERRALS.GOT_REFERRED'))
                             {
                                 //get details of the person who got referred(p3)
-                                $toUserDetails = $this->userGateway->formUserDetailsArray($relation[3], 'property') ;
+                                $toUserDetails = $this->userGateway->formUserDetailsArray($relation[3], 'property', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC')) ;
                                 //if (!empty($toUserDetails['emailid']) && $toUserDetails['emailid'] == 'ugh@gmail.com'){
                                 //echo "Fds";exit;}
                                 foreach ($toUserDetails as $k=>$v)
@@ -1491,7 +1533,7 @@ class ReferralsGateway {
                                 if (!empty($a['post_details_created_by']))
                                 {
                                     $otherUserResult = $this->neoUserRepository->getNodeByEmailId($a['post_details_created_by']) ;
-                                    $otherUserDetails = $this->userGateway->formUserDetailsArray($otherUserResult, 'attribute') ;
+                                    $otherUserDetails = $this->userGateway->formUserDetailsArray($otherUserResult, 'attribute', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC')) ;
                                     foreach ($otherUserDetails as $k=>$v)
                                     {
                                         $a['other_user_'.$k] = $v ;
