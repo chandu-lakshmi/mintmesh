@@ -99,11 +99,6 @@ class PaymentController extends \BaseController {
          *  
          * @param string $access_token
          * @param string $bank_id
-         * @param string $bank_name
-         * @param string $account_name
-         * @param string $account_number
-         * @param string $ifsc_code
-         * @param string $address 
          * 
 	 * @return Response
 	 */
@@ -195,17 +190,10 @@ class PaymentController extends \BaseController {
          * POST/citrus_transaction
          * 
          * @param string $access_token
-         * @param string $TxId
-         * @param string $pgTxnNo
-         * @param string $amount
-         * @param string $TxStatus
-         * @param string $issuerRefNo
-         * @param string $authIdCode
-         * @param string $firstName
-         * @param string $lastName
-         * @param string $pgRespCode
-         * @param string $addressZip
-         * 
+         * @param string $mm_transaction_id
+         * @param string $post_id
+         * @param string $relation_id
+         * @param string $status
 	 * @return Response
 	 */
         public function citrusTransaction()
@@ -260,7 +248,7 @@ class PaymentController extends \BaseController {
          * @param string $access_token
          * @param string $bank_id
          * @param string $amount
-         * 
+         * @param string $password user password
 	 * @return Response
 	 */
         public function manualPayout()

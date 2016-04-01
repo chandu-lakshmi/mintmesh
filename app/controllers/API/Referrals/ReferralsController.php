@@ -28,11 +28,9 @@ class ReferralsController extends \BaseController {
          * @param string $looking_for id of the service/job text in case of new one
          * @param string $service_location Service location
          * @param string $service_period Service Period
-         * @param string $service_currency Service curreny         
-         * @param string $web_link Service curreny
+         * @param string $service_currency Service curreny
          * @param string $service_type Service Type global|in_location|change_location
          * @param string $excluded_list Users that are to be excluded
-         * @param string $included_list Users that are to be included
          * 
 	 * @return Response
 	 */
@@ -109,7 +107,6 @@ class ReferralsController extends \BaseController {
          * 
          * @param string $access_token The Access token of a user
 	 * @param string $post_id Id of the post
-	 * @param string $free_service
          * 
 	 * @return Response
 	 */
@@ -182,11 +179,6 @@ class ReferralsController extends \BaseController {
          * @param string $post_id
          * @param string $message
          * @param string $bestfit_message
-         * @param string $refer_non_mm_email
-         * @param string $referring_phone_no
-         * @param string $referring_user_firstname
-         * @param string $referring_user_lastname
-         * 
 	 * @return Response
 	 */
         public function referContact()
@@ -290,7 +282,6 @@ class ReferralsController extends \BaseController {
          * @param string $status accepted|declined 
          * @param string $post_id
          * @param string $relation_count
-         * @param string $referred_by_phone
 	 * @return Response
 	 */
         public function processPost()
