@@ -66,7 +66,7 @@ class UserGateway {
                 $this->userFileUploader = $userFileUploader ;
                 $this->contactsGateway = $contactsGateway ;
                 $this->contactsRepository = $contactsRepository ;
-                $this->notificationsTypes = array('3','4','5','6','9','10','11','12','13','14','15','17','18','19','20','22');
+                $this->notificationsTypes = array('3','4','5','6','10','11','12','13','14','15','17','18','19','20','22');
                 $this->extraTextsNotes = array('10','11','12','22') ;
                 $this->infoTypes = array('experience', 'education', 'certification');
                 $this->directProfileRedirections = array('2','12','14');
@@ -2630,7 +2630,7 @@ class UserGateway {
                     if (!empty($userDeviceResults))
                     foreach ($userDeviceResults as $userDeviceResult)
                     {
-                        $other_email = $other_phone = "" ;
+                        $other_email = $other_phone = $otherUserDetails = "" ;
                         $userDetails = isset($userDeviceResult[0])?$userDeviceResult[0]->getProperties():array() ;
                         $deviceDetails = isset($userDeviceResult[1])?$userDeviceResult[1]->getProperties():array() ;
                         if (!empty($userDetails))
@@ -2647,25 +2647,7 @@ class UserGateway {
                                         $other_phone = $otherUserDetails->phone ;
                                     }
                                 
-                                if (count($otherUserDetails))
-                                {
-                                    if (in_array($notificationType, $this->notificationsTypes))
-                                    {
-                                        //check if user has name
-                                        if (!empty($otherUserDetails->fullname)){
-                                           $thirdFullName = $otherUserDetails->fullname ;
-                                        }else if(!empty($otherUserDetails->emailid)){
-                                            $thirdFullName = $otherUserDetails->emailid ;
-                                        }else{
-                                            $thirdFullName = !empty($otherUserDetails->phone)?$otherUserDetails->phone:"";
-                                        }
-                                        //$thirdFullName = !empty($otherUserDetails->fullname)?$otherUserDetails->fullname:"";
-                                        $msg = $msg." ".$thirdFullName ;
-                                    }
-                                    if (in_array($notificationType,$this->extraTextsNotes))//for posts
-                                    {
-                                        $msg = $msg." ".Lang::get('MINTMESH.notifications.extra_texts.'.$notificationType) ;
-                                    }
+                                if (count($otherUserDetails)){
                                     $other_email = !empty($otherUserDetails->emailid)?$otherUserDetails->emailid:"" ;//for non mintmesh users
                                 }
                                 }
@@ -2705,6 +2687,32 @@ class UserGateway {
 
                             }
                             $t = $this->userRepository->logNotification($notificationLog);
+                            //add non mintmesh user names if empty
+                            if (count($otherUserDetails)){
+                                $notificationRow = (object) $notificationLog;
+                                if (in_array($notificationType, $this->notificationsTypes))
+                                {
+                                    //check if user has name
+                                    if (!empty($otherUserDetails->fullname) && !empty(trim($otherUserDetails->fullname))){
+                                       $thirdFullName = $otherUserDetails->fullname ;
+                                    }else{
+                                        $thirdUserResult = $this->getNonMintmeshUserName($notificationRow);//$otherNoteUser
+                                        if (!empty($thirdUserResult->fullname)){
+                                            $thirdUserResult->fullname = trim($thirdUserResult->fullname);
+                                        }
+                                        $fName = str_replace("-","",$notification->other_phone);
+                                        $checkFName = $fName." ".$fName;
+                                        //$thirdFullName = (!empty($thirdUserResult->fullname) && $thirdUserResult->fullname != $notificationLog['other_phone']." ".$notificationLog['other_phone'])?$thirdUserResult->fullname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                                        $thirdFullName = (empty($thirdUserResult->fullname)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):($thirdUserResult->fullname == $checkFName || $thirdUserResult->fullname == $fName)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$thirdUserResult->fullname);
+                                        
+                                    }
+                                    $msg = $msg." ".$thirdFullName ;
+                                }
+                                if (in_array($notificationType,$this->extraTextsNotes))//for posts
+                                {
+                                    $msg = $msg." ".Lang::get('MINTMESH.notifications.extra_texts.'.$notificationType) ;
+                                }
+                            }
                             $badgeResult = $this->userRepository->getNotificationsCount($userDeviceResult[0], 'all');
                             $badge = !empty($badgeResult)?$badgeResult:0;
                             $data = array("alert" => $msg,"emailid"=>$fromUser->emailid, "push_id"=>$t->id, "push_type"=>$notificationType, "badge"=>$badge);
@@ -2811,15 +2819,17 @@ class UserGateway {
                                     if (in_array($notification->notifications_types_id, $this->notificationsTypes))
                                     {
                                         $thirdName = !empty($otherNoteUser->fullname)?$otherNoteUser->fullname:'' ;
-                                        if (empty(trim($thirdName)))//if name is empty try to get the name from the import relation
+                                        $fName = str_replace("-","",$notification->other_phone);
+                                        $checkFName = $fName." ".$fName;
+                                        if (empty(trim($thirdName)) || $thirdName == $checkFName)//if name is empty try to get the name from the import relation
                                         {
-                                            $thirdUserResult = $this->getNonMintmeshUserName($otherNoteUser, $notification);
+                                            $thirdUserResult = $this->getNonMintmeshUserName($notification);//$otherNoteUser
                                             if (!empty($thirdUserResult->fullname)){
                                                 $thirdUserResult->fullname = trim($thirdUserResult->fullname);
                                             }
-                                            $thirdName = !empty($thirdUserResult->fullname)?$thirdUserResult->fullname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
-                                            $thirdFirstName = !empty($thirdUserResult->firstname)?$thirdUserResult->firstname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
-                                            $thirdLastName = !empty($thirdUserResult->lastname)?$thirdUserResult->lastname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                                            $thirdName = (empty($thirdUserResult->fullname)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):($thirdUserResult->fullname == $checkFName || $thirdUserResult->fullname == $fName)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$thirdUserResult->fullname);
+                                            $thirdFirstName = (empty($thirdUserResult->firstname)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):($thirdUserResult->firstname == $fName)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$thirdUserResult->firstname);
+                                            $thirdLastName = (empty($thirdUserResult->lastname)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):($thirdUserResult->lastname == $fName)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$thirdUserResult->lastname);
                                         }
                                     }
                                     if (empty($notification->for_mintmesh) && empty($normalFlow)){
@@ -3041,9 +3051,14 @@ class UserGateway {
                             if (!empty($thirdUserResult->fullname)){
                                 $thirdUserResult->fullname = trim($thirdUserResult->fullname);
                             }
-                            $referDetails['to_user_fullname'] = !empty($thirdUserResult->fullname)?$thirdUserResult->fullname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
-                            $referDetails['to_user_firstname'] = !empty($thirdUserResult->firstname)?$thirdUserResult->firstname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
-                            $referDetails['to_user_lastname'] = !empty($thirdUserResult->lastname)?$thirdUserResult->lastname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                            $fName = str_replace("-","",$referral[0]->phone);
+                            $checkFName = $fName." ".$fName;
+                            $referDetails['to_user_fullname'] = (empty($thirdUserResult->fullname)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):($thirdUserResult->fullname == $checkFName || $thirdUserResult->fullname == $fName)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$thirdUserResult->fullname);
+                            $referDetails['to_user_firstname'] = (empty($thirdUserResult->firstname)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):($thirdUserResult->firstname == $fName)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$thirdUserResult->firstname);
+                            $referDetails['to_user_lastname'] = (empty($thirdUserResult->lastname)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):($thirdUserResult->lastname == $fName)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$thirdUserResult->lastname);
+//                            $referDetails['to_user_fullname'] = (!empty($thirdUserResult->fullname) && $thirdUserResult->fullname != $referral[0]->phone." ".$referral[0]->phone)?$thirdUserResult->fullname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+//                            $referDetails['to_user_firstname'] = (!empty($thirdUserResult->firstname) && $thirdUserResult->firstname != $referral[0]->phone)?$thirdUserResult->firstname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+//                            $referDetails['to_user_lastname'] = (!empty($thirdUserResult->lastname) && $thirdUserResult->lastname != $referral[0]->phone)?$thirdUserResult->lastname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
                             
                         }
                         else if (empty($referral[2][1])){//non mintmesh email
@@ -4342,7 +4357,7 @@ class UserGateway {
             return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $data);
         }
         
-        public function getNonMintmeshUserName($neoUserDetails, $notification){
+        public function getNonMintmeshUserName($notification){//$neoUserDetails
             $relationDetailsResult = array();
 	    $email1 = '';
             if (in_array($notification->notifications_types_id, $this->notificationFromP2)){

@@ -809,7 +809,7 @@ class PaymentGateway {
                         $bankDetails->amount = $input['amount'];
                         $bankDetails->remaningAmount = $balanceCashInfo->balance_cash-$payoutAmount;
                         $bankDetails->name = $neoLoggedInUserDetails->firstname;
-                        $bankDetails->email = $neoLoggedInUserDetails->emailid;
+                        $bankDetails->userEmail = $neoLoggedInUserDetails->emailid;
                         $emailSentAdmin = $this->sendManualEmailToMintMesh($successSupportTemplateAdmin, $receipientEmailAdmin, $bankDetails);
                         $emailSentUser = $this->sendManualEmailToUser($successSupportTemplateUser, $receipientEmailUser, $bankDetails);
                         //log payout

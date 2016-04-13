@@ -101,6 +101,7 @@ class SMSGateway {
                 foreach ($numbers as $number)
                 {
                     //check if the number contains country code assigned
+                    $number = $this->appEncodeDecode->formatphoneNumbers($number);
                     if (strpos($number, "+") === false){
                         $number = $countryCode.$number ;
                     }
@@ -296,6 +297,7 @@ class SMSGateway {
                 foreach ($numbers as $number)
                 {
                     //check if the number contains country code assigned
+                    $number = $this->appEncodeDecode->formatphoneNumbers($number);
                     if (strpos($number, "+") === false){
                         $number = $countryCode.$number ;
                     }

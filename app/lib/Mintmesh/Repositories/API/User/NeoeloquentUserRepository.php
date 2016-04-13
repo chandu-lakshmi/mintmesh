@@ -219,11 +219,9 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             {
                 $emailId = $this->appEncodeDecode->filterString(strtolower($emailId));
                 $queryString = "MATCH (n:User:Mintmesh {emailid: '".$emailId."'})-[r:IMPORTED|ACCEPTED_CONNECTION]->(m:User:Mintmesh)  RETURN DISTINCT m order by m.firstname";
-                /*$queryString = "MATCH (n:User:Mintmesh {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."]->(m:User:Mintmesh) where HAS (m.login_source) RETURN DISTINCT m order by m.firstname
-                                UNION
-                                MATCH (n:User:Mintmesh {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-(m:User:Mintmesh) where has(m.login_source) RETURN DISTINCT m order by m.firstname asc" ;
-                
-                */ 
+                $queryString = "MATCH (n:User:Mintmesh {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."]->(m:User:Mintmesh) where HAS (m.login_source) RETURN DISTINCT m order by m.firstname
+                                    UNION
+                                MATCH (n:User:Mintmesh {emailid: '".$emailId."'})-[r:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-(m:User:Mintmesh) RETURN DISTINCT m order by m.firstname asc" ;
                 $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();
             }
@@ -1130,24 +1128,25 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             }
         }
         
-        public function getAutoconnectUsers($userEmail='', $email='', $phones=array())
+        public function getAutoconnectUsers($userEmail='', $emails=array(), $phones=array())
         {
-            if (!empty($email))
+            if (!empty($emails) || !empty($phones))
             {
-                $email = $this->appEncodeDecode->filterString(strtolower($email)) ;
                 $userEmail = $this->appEncodeDecode->filterString(strtolower($userEmail)) ;
-                if (!empty($phones))
+                if (!empty($emails))
                 {
-                    foreach ($phones as $k=>$v)
+                    foreach ($emails as $k=>$v)
                     {
-                        $temp = preg_replace('/[^0-9.]+/', '', $v);
-                        $phones[$k] = "+".$temp ;
+                        $temp = $this->appEncodeDecode->filterString(strtolower($v)) ;
+                        $emails[$k] = $temp ;
                     }
                 }
                 $phoneString = !empty($phones)?implode("','", $phones):'';
                 $phoneString = "'".$phoneString."'" ;
+                $emailString = !empty($emails)?implode("','", $emails):'';
+                $emailString = "'".$emailString."'" ;
                 $queryString = "match (v:User:Mintmesh{emailid:'".$userEmail."'}),(u:User:Mintmesh)"
-                                . " where (u.emailid='".$email."' and (u)-[:IMPORTED]->(v) and not (u)-[:DELETED_CONTACT]-(v) and not (u)-[:ACCEPTED_CONNECTION]-(v)) or (replace(u.phone, '-', '') IN[".$phoneString."] and u.phoneverified='1' and (u)-[:IMPORTED]->(v) and not (u)-[:DELETED_CONTACT]-(v) and not (u)-[:ACCEPTED_CONNECTION]-(v)) return u" ;
+                                . " where (u.emailid  IN[".$emailString."] and (u)-[:IMPORTED]->(v) and not (u)-[:DELETED_CONTACT]-(v) and not (u)-[:ACCEPTED_CONNECTION]-(v)) or (replace(u.phone, '-', '') IN[".$phoneString."] and (u)-[:IMPORTED]->(v) and not (u)-[:DELETED_CONTACT]-(v) and not (u)-[:ACCEPTED_CONNECTION]-(v)) return u" ;
                 $query = new CypherQuery($this->client, $queryString);
                 $result = $query->getResultSet();
                 if ($result->count())

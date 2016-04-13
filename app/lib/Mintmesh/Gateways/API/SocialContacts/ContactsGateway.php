@@ -70,32 +70,38 @@ class ContactsGateway {
                         {
                             //delete all imported contacts
                             $deletedResult = $this->contactsRepository->deleteImportedContacts($this->loggedinUserDetails->emailid);
-                            $mintmeshEmails = array();
+                            $mintmeshEmails = $processedEmails = array();
                             foreach($contacts as $contact)
                             {
                                 $connectResult = array();
                                 //process only when only email exists
-                                if (!empty($contact->emails) && is_array($contact->emails) && !in_array($fromUser->emailid,$contact->emails))
-                                {
+                                //if (!empty($contact->emails) && is_array($contact->emails) && !in_array($fromUser->emailid,$contact->emails))
+                                //{
                                     $relationAttrs = array();
                                     $emails = !empty($contact->emails)?$contact->emails:array();
                                     $phones = !empty($contact->phones)?$contact->phones:array();
+                                    //format the phone numbers
+                                    $userPhone = !empty($fromUser->phone)?$fromUser->phone:'';
+                                    $phones = $this->formatPhoneNumbers($phones, $userPhone);
                                     //autoconnect people
                                     if (!empty($input['autoconnect']))
                                     $connectResult = $this->checkAutoconnect($this->loggedinUserDetails->emailid, $emails, $phones);
-                                     //\Log::info("<<<<<<<<<<<<<<<<<<<<<<  In getExisting contacts before >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
+                                    // \Log::info("<<<<<<<<<<<<<<<<<<<<<<  In getExisting contacts before >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
                                     $result = $this->contactsRepository->getExistingContacts($emails, $phones);
-                                    //\Log::info("<<<<<<<<<<<<<<<<<<<<<<  In getExisting contacts after >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
+                                   // \Log::info("<<<<<<<<<<<<<<<<<<<<<<  In getExisting contacts after >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
                                     if (empty($result))
                                     {
-                                        //create nodes for each email id
-                                       // \Log::info("<<<<<<<<<<<<<<<<<<<<<<  In create contacts before >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
-                                        $createResult = $this->createNonMembersNodes($emails, $contact);
-                                        //\Log::info("<<<<<<<<<<<<<<<<<<<<<<  In create contacts after >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
-                                        if (!$createResult)//return if some error occurs
+                                        if (!empty($contact->emails) && is_array($contact->emails) && !in_array($fromUser->emailid,$contact->emails))
                                         {
-                                            $message = array('msg'=>array(Lang::get('MINTMESH.import_contacts.error')));
-                                            return $this->commonFormatter->formatResponse(406, "error", $message, array('mintmesh_users'=>$returnArray)) ;
+                                            //create nodes for each email id
+                                            // \Log::info("<<<<<<<<<<<<<<<<<<<<<<  In create contacts before >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
+                                             $createResult = $this->createNonMembersNodes($emails, $contact);
+                                             //\Log::info("<<<<<<<<<<<<<<<<<<<<<<  In create contacts after >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
+                                             if (!$createResult)//return if some error occurs
+                                             {
+                                                 $message = array('msg'=>array(Lang::get('MINTMESH.import_contacts.error')));
+                                                 return $this->commonFormatter->formatResponse(406, "error", $message, array('mintmesh_users'=>$returnArray)) ;
+                                             }
                                         }
                                     }
                                     else
@@ -103,6 +109,7 @@ class ContactsGateway {
                                         $existingEmails = array();
                                         foreach ($result as $res)//process each contacts 
                                         {
+                                            if (!in_array($res[0]->emailid,$processedEmails)){
                                             if (!empty($res[0]->login_source) && !in_array($res[0]->emailid,$mintmeshEmails))//says that it is mintmesh user
                                             {
                                                 $r = $res[0]->getProperties();
@@ -155,7 +162,7 @@ class ContactsGateway {
                                             try{
                                                 //\Log::info("<<<<<<<<<<<<<<<<<<<<<<  In relate contacts before >>>>>>>>>>>>>>>>>>>>> ".$r1['emailid'].date('H:i:s'));
                                                 $relation = $this->contactsRepository->relateContacts($fromUser, $toUser, $relationAttrs);   
-                                               // \Log::info("<<<<<<<<<<<<<<<<<<<<<<  In relate contacts after >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
+                                                //\Log::info("<<<<<<<<<<<<<<<<<<<<<<  In relate contacts after >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
                                             }
                                             catch(\RuntimeException $e)
                                             {
@@ -167,7 +174,10 @@ class ContactsGateway {
                                                 return $this->commonFormatter->formatResponse(406, "error", $message, array('mintmesh_users'=>$returnArray)) ;
                                             }
                                             $existingEmails[] = $res[0]->emailid ;
-                                            $mintmeshEmails[] = $res[0]->emailid ;
+                                            $processedEmails[] = $res[0]->emailid ;
+                                            if (!empty($res[0]->login_source)){
+                                            $mintmeshEmails[] = $res[0]->emailid ;}
+                                            }
                                         }
                                         //create nodes for remaining users
                                         $stringedEmails = array();
@@ -179,7 +189,7 @@ class ContactsGateway {
                                         $createResult = $this->createNonMembersNodes($remainingContacts, $contact);
                                     }
                                     
-                                }    
+                                //}    
                             }
                             $tmp = Array(); 
                             foreach($returnArray as &$ma) 
@@ -223,11 +233,11 @@ class ContactsGateway {
         public function checkAutoconnect($userEmail='', $emails=array(),$phones=array())
         {
             $autoConnectedUsers = array();
-            if (!empty($emails) && !empty($userEmail))
+            if ((!empty($emails) || !empty($phones)) && !empty($userEmail))
             {
-                foreach ($emails as $email)
-                {
-                    $autoConnectPeople = $this->neoUserRepository->getAutoconnectUsers($userEmail, $email, $phones);
+                //foreach ($emails as $email)
+                //{
+                    $autoConnectPeople = $this->neoUserRepository->getAutoconnectUsers($userEmail, $emails, $phones);
                     if (!empty($autoConnectPeople))
                     {
                         foreach ($autoConnectPeople as $person)
@@ -245,7 +255,7 @@ class ContactsGateway {
                             }
                         }
                     }
-                }
+                //}
             }
             return $autoConnectedUsers ;
             
@@ -543,6 +553,22 @@ class ContactsGateway {
                 $message = array('msg'=>array(Lang::get('MINTMESH.join_invitation.invalid')));
                 return $this->commonFormatter->formatResponse(201, "error", $message, array()) ;
             }
+        }
+        
+        public function formatPhoneNumbers($phones=array(), $userPhone=''){
+            $returnPhoneArray = array();
+            $countryCodeArray = explode("-",$userPhone);
+            $countryCode = !empty($countryCodeArray[0])?$countryCodeArray[0]:'';
+            foreach ($phones as $phone){
+                $phone = $this->appEncodeDecode->formatphoneNumbers($phone);
+                //check if the number contains country code assigned
+                    if (strpos($phone, "+") === false){
+                        $returnPhoneArray[] = $countryCode.$phone ;
+                    }else{
+                        $returnPhoneArray[] = $phone ;
+                    }
+            }
+            return $returnPhoneArray ;
         }
         
         

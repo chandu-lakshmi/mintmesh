@@ -6,16 +6,16 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 <meta name="format-detection" content="telephone=no" /> <!-- disable auto telephone linking in iOS -->
 <title>Mint Mesh</title>
-<link href='https://fonts.googleapis.com/css?family=Roboto:300,400,500,700' rel='stylesheet' type='text/css'>
+<link href='https://fonts.googleapis.com/css?family=arial:300,400,500,700' rel='stylesheet' type='text/css'>
 <style type="text/css">
 /* RESET STYLES */
 html { background-color:#E1E1E1; margin:0; padding:0; }
-body, #bodyTable, #bodyCell, #bodyCell{height:100% !important; margin:0; padding:0; width:100% !important;font-family: 'Roboto', sans-serif;}
+body, #bodyTable, #bodyCell, #bodyCell{height:100% !important; margin:0; padding:0; width:100% !important;font-family: 'arial', sans-serif;}
 table{border-collapse:collapse;}
 table[id=bodyTable] {width:100%!important;margin:auto;max-width:500px!important;color:#7A7A7A;font-weight:normal;}
 img, a img{border:0; outline:none; text-decoration:none;height:auto; line-height:100%;}
 a {text-decoration:none !important;}
-h1, h2, h3, h4, h5, h6{color:#5F5F5F; font-weight:normal; font-family: 'Roboto', sans-serif; font-size:20px; line-height:125%; text-align:Left; letter-spacing:normal;margin-top:0;margin-right:0;margin-bottom:10px;margin-left:0;padding-top:0;padding-bottom:0;padding-left:0;padding-right:0;}
+h1, h2, h3, h4, h5, h6{color:#5F5F5F; font-weight:normal; font-family: 'arial', sans-serif; font-size:20px; line-height:125%; text-align:Left; letter-spacing:normal;margin-top:0;margin-right:0;margin-bottom:10px;margin-left:0;padding-top:0;padding-bottom:0;padding-left:0;padding-right:0;}
 
 /* CLIENT-SPECIFIC STYLES */
 .ReadMsgBody{width:100%;} .ExternalClass{width:100%;} /* Force Hotmail/Outlook.com to display emails at full width. */
@@ -43,7 +43,7 @@ body, #bodyTable{background-color:#E1E1E1;}
 #emailFooter{background-color:#E1E1E1;}
 .nestedContainer{background-color:#F8F8F8; border:1px solid #CCCCCC;}
 .emailButton{background-color:#205478; border-collapse:separate;}
-.buttonContent{color:#FFFFFF; font-family: 'Roboto', sans-serif; font-size:18px; font-weight:bold; line-height:100%;text-align:center;}
+.buttonContent{color:#FFFFFF; font-family: 'arial', sans-serif; font-size:18px; font-weight:bold; line-height:100%;text-align:center;}
 .buttonContent a{color:#FFFFFF; display:block; text-decoration:none!important; border:0!important;}
 .emailCalendar{background-color:#FFFFFF; border:1px solid #CCCCCC;}
 .emailCalendarMonth{background-color:#205478; color:#FFFFFF; font-family:Helvetica, Arial, sans-serif; font-size:16px; font-weight:bold; padding-top:10px; padding-bottom:10px; text-align:center;}
@@ -145,7 +145,7 @@ p{font-size:18px !important;}
 <body bgcolor="#E1E1E1" leftmargin="0" marginwidth="0" topmargin="0" marginheight="0" offset="0">
 
 <center style="background-color:#E1E1E1;">
-<table border="0" cellpadding="0" cellspacing="0" height="100%" width="100%" id="bodyTable" style="table-layout: fixed;max-width:100% !important;width: 100% !important;min-width: 100% !important;">
+<table border="0" cellpadding="0" cellspacing="0" height="100%" width="100%" id="bodyTable" style="table-layout: fixed; max-width:100% !important; width: 100% !important; min-width: 100% !important;">
 <tr>
 <td align="center" valign="top" id="bodyCell">
 <!-- // EMAIL HEADER -->
@@ -168,8 +168,8 @@ p{font-size:18px !important;}
                                 <table border="0"  cellspacing="0" width="100%">
                                     <tr>
 <td align="center" valign="top" class="textContent" style="padding:20px 30px 10px;">
-<img src="https://staging.mintmesh.com/public/images/mintmesh-logo.png"   align="center" style="max-width:100%;text-align:center;" alt="logo" title="Text">
-<h2 style="text-align:center;font-weight:normal;font-family: 'Roboto', sans-serif;font-weight:300;font-size:28px;margin-bottom:10px;margin-top:20px;color:#000000;" class="main_heading">Payout Successful</h2>
+<img src="<?php echo $public_url; ?>images/mintmesh-logo.png"   align="center" style="max-width:100%;text-align:center;" alt="logo" title="Text">
+<h2 style="text-align:center;font-weight:normal;font-family: 'arial', sans-serif;font-weight:300;font-size:28px;margin-bottom:10px;margin-top:20px;color:#000000;" class="main_heading">Payout Successful</h2>
 
 <hr style="border-top:1px solid #c8c8c8;margin-top:20px;">
 
@@ -208,10 +208,10 @@ p{font-size:18px !important;}
                                             <table border="0" cellpadding="0" cellspacing="0" width="100%">
                                                 <tr>
                                                     <td valign="top" class="textContent" style="padding:10px 30px 10px;">
-                                                    <h2 style="text-align:left;font-weight:normal;font-family: 'Roboto', sans-serif;font-size:30px;margin-bottom:35px;margin-top:0px; color:#cc6e35;line-height:135%;letter-spacing:0.4px;font-weight:300;" class="wish_txt">Thank you for using MintMesh.</h2>
-                                                        <h3 style="color:#000000;line-height:125%;font-family: 'Roboto', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello <?php echo ucfirst($name) ; ?>, </h3>
+                                                    <h2 style="text-align:left;font-weight:normal;font-family: 'arial', sans-serif;font-size:30px;margin-bottom:35px;margin-top:0px; color:#cc6e35;line-height:135%;letter-spacing:0.4px;font-weight:300;" class="wish_txt">Thank you for using MintMesh.</h2>
+                                                        <h3 style="color:#000000;line-height:125%;font-family: 'arial', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello <?php echo ucfirst($name) ; ?>, </h3>
                                                         
-                                                        <div style="text-align:left;font-family: 'Roboto', sans-serif;font-size:20px;margin-bottom:0;color:#777777;line-height:135%;letter-spacing:0.2px;">
+                                                        <div style="text-align:left;font-family: 'arial', sans-serif;font-size:20px;margin-bottom:0;color:#777777;line-height:135%;letter-spacing:0.2px;">
 <p>You have requested for a payout of $<?php echo $amount;?> amount.</p>
 <p>It will be credited to your PayPal account provided during Payout.</p>
 </div>
@@ -282,7 +282,7 @@ p{font-size:18px !important;}
                                                                     <table border="0" cellpadding="0" cellspacing="0" width="100%">
                                                                         <tbody><tr>
 <td valign="top" class="textContent" style="padding:50px 30px 10px;">
-                                                                                <p style="color:#333333;line-height:15%;font-family: 'Roboto', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Sincerely,
+                                                                                <p style="color:#333333;line-height:15%;font-family: 'arial', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Sincerely,
 </p>
 <p style="color:#777777;font-size:18px;">(MintMesh Team)</p>
                                                                             </td>
@@ -326,8 +326,8 @@ p{font-size:18px !important;}
                                                 <tr>
                                                     <td valign="top" class="textContent" style="padding:10px 30px 20px;">
                                                     <hr style="border-top:1px solid #c8c8c8;margin-top:5px;margin-bottom:20px;">
-                                                        <div style="text-align:center;font-family: 'Roboto', sans-serif;font-size:20px;margin-bottom:0;margin-top:3px;color:#828282;line-height:135%;padding:0px 15px;" class="footer_txt">If you need assistance, please contact
-MintMesh Support <a style="color:#333333;text-decoration:none;" href="mailto:support@mintmesh.com">(support@mintmesh.com)</a></div>
+                                                        <div style="text-align:center;font-family: 'arial', sans-serif;font-size:20px;margin-bottom:0;margin-top:3px;color:#999999;line-height:135%;padding:0px 15px;" class="footer_txt">If you need assistance, please contact
+MintMesh Support <a style="color:#1b8c6e;text-decoration:none;" href="mailto:support@mintmesh.com">(support@mintmesh.com)</a></div>
                                                     </td>
                                                 </tr>
                                             </table>

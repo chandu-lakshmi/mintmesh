@@ -16,6 +16,7 @@ use Cache;
     //put your code here
 
     protected $profanity_list = array('word');
+    protected $stdCodes = array(0,1);
     public function filterString($str) {
         if (isset($str) && $str != '' && $str != '0' && !is_array($str)) {
             //$str = stripslashes($str) ;
@@ -225,6 +226,15 @@ use Cache;
             return strcmp(strtolower(trim($a["firstname"])), strtolower(trim($b["firstname"])));
         }
         
+        function formatphoneNumbers($number=''){
+            $number = preg_replace('/[^0-9+]/', '', $number);
+            //remove front 0 or 1..which implies india and us country codes
+            $firstCharacter =  substr($number,0, 1);
+            if (in_array($firstCharacter, $this->stdCodes)){
+                $number = substr($number,1);
+            }
+            return $number;
+        }
 
 
 }

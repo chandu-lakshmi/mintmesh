@@ -24,6 +24,7 @@ abstract class EmailManager {
                 try{
                     $this->dataSet['email'] = $this->emailId ;
                     $this->dataSet['subject'] = $this->subject ;
+                    $this->dataSet['public_url'] = Config::get('constants.MNT_PUBLIC_URL');
                     $emailInput = $this->dataSet ;
                     Mail::queue($this->templatePath, $emailInput, function($message) use ($emailInput)  
                     {

@@ -78,7 +78,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
          */
         public function getExistingContacts($emails = array(), $phones = array())
         {
-            if (!empty($emails))
+            if (!empty($emails) || !empty($phones))
             {
                 $emailids = array();
                 foreach ($emails as $e)
@@ -86,12 +86,15 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
                     $emailids[] = $this->appEncodeDecode->filterString(strtolower($e));
                 }
                 $emailsIds = implode("','", $emailids);
-                $emailsIds = "'".$emailsIds."'" ;
+                $emailsIds = !empty($emailsIds)?"'".$emailsIds."'":'' ;
+                $phoneString = !empty($phones)?implode("','", $phones):'';
+                $phoneString = !empty($phoneString)?"'".$phoneString."'":'' ;
                 //\Log::info("<<<<<<<<<<<<<<<<<<<<<<  In getExisting contacts before >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
                 /*$queryString = "START node=node:node_auto_index('emailid:*') 
                                 where node.emailid in[".$emailsIds."]
                                 RETURN node" ;  */          
-                $queryString = "Match (u:User) where u.emailid IN [".$emailsIds."] return u" ;
+                $queryString = "Match (u:User) where u.emailid IN [".$emailsIds."] or replace(u.phone, '-', '') IN[".$phoneString."] return distinct(u)" ;
+                //echo $queryString ;exit;
                 $query = new CypherQuery($this->client, $queryString);
                 $result = $query->getResultSet();
                // \Log::info("<<<<<<<<<<<<<<<<<<<<<<  In getExisting contacts before >>>>>>>>>>>>>>>>>>>>> ".$queryString.date('H:i:s'));

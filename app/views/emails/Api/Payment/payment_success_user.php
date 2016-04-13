@@ -1,30 +1,16 @@
-<!--<html>
-    <body>
-        <h1>Payment success</h1>
-        <h3>Name : </h3><?php // echo $name; ?>
-        <h3>Transaction Id : </h3><?php // echo $transaction_id; ?>
-        <h3>Date Of Payment : </h3><?php // echo $date_of_payment;?>
-        <h3>Cost : </h3><?php // echo $cost;?>
-        <h3>Tax(20% on Cost Price) : </h3><?php // echo $tax; ?>
-        <h3>Total : </h3><?php // $total; ?>
-
-    </body>
-</html>-->
-
-
 <!DOCTYPE html>
 <html>
 <head>
 	<title>MintMesh</title>
 </head>
 <body style='margin:0px; font-family:arial; font-size:13px; color:#929395;'>
-	<table style="max-width:630px;width:95%;margin:0px auto">
+	<table width="500" style="max-width:500px;width:100%;margin:0px auto;">
 		<tr>
 			<td style="padding:20px;">
-				<table  style="border-collapse:collapse;max-width:960px;width:95%;margin:0px auto; ">
+				<table  style="border-collapse:collapse;max-width:600px;width:100%;margin:0px auto; ">
 					<tr style="width:75%;">
 						<td style="width:50%;padding-bottom:20px;border-bottom:1px solid #C9C9C9">
-							<img src="https://staging.mintmesh.com/public/images/mintmesh-logo.png" style="width:70px;" /></td>
+							<img src="<?php echo $public_url; ?>images/mintmesh-logo.png" style="width:70px;" /></td>
 						<td style="width:50%;"align="right">
 							<p style="font-size:16px; margin:0px; line-height:20px; padding-bottom:5px;"><?php echo $name; ?></p>
                                                         <?php if(!empty($is_doller)){ ?>
@@ -64,9 +50,9 @@
 		<tr style="border-bottom:1px solid #C9C9C9">
 			<td colspan="2" style="font-size:18px;padding:90px 20px 70px;line-height:30px;">
 					<p style="padding-bottom:50px;margin:0px">Sincerely, <br>
-					<span style="color:#C9C9C9;margin:0px">(MintMesh team)</span></p>
+					<span style="color:#C9C9C9;margin:0px">(MintMesh Team)</span></p>
 				
-                                        <p align="center" style="padding-top:20px;border-top:1px solid #C9C9C9;color:#C9C9C9;margin:0px">If you need assistance, please contact <br>MintMesh Support<span style="color:black;margin:0px"><a style="color:#333333;text-decoration:none;" href="mailto:support@mintmesh.com" >(support@mintmesh.com)</a></span></p>
+                                        <p align="center" style="padding-top:20px;border-top:1px solid #C9C9C9;color:#999999;margin:0px">If you need assistance, please contact <br>MintMesh Support <span style="color:black;margin:0px"><a style="color:#1b8c6e;text-decoration:none;" href="mailto:support@mintmesh.com" >(support@mintmesh.com)</a></span></p>
 				</td>
 		</tr>
 	</table>
