@@ -6,7 +6,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <meta name="viewport" content="width=device-width">
 </head>
-<body style="min-width: 100%; -webkit-text-size-adjust: auto; -ms-text-size-adjust: auto; text-size-adjust: auto; color: #000000; font-family: 'arial', 'Arial','sans-serif'; font-weight: 200; text-align: left; line-height: 18px; font-size: 20px; width: 100% !important; margin: 0; padding: 0;">
+<body width="500" style="background:#E1E1E1;min-width: 100%; -webkit-text-size-adjust: auto; -ms-text-size-adjust: auto; text-size-adjust: auto; color: #000000; font-family: 'arial', 'Arial','sans-serif'; font-weight: 200; text-align: left; line-height: 18px; font-size: 20px;margin: 0; padding: 0;">
 <style type="text/css">
 @font-face {
 font-family: 'arial'; font-style: normal; font-weight: 300; src: local('arial Light'), local('arial-Light'), url('https://fonts.gstatic.com/s/roboto/v15/Hgo13k-tfSpn0qi1SFdUfaCWcynf_cDxXwCLxiixG1c.ttf') format('truetype');
@@ -24,10 +24,10 @@ font-family: 'arial'; font-style: normal; font-weight: 700; src: local('arial Bo
 font-family: 'arial'; font-style: italic; font-weight: 400; src: local('arial Italic'), local('arial-Italic'), url('https://fonts.gstatic.com/s/roboto/v15/W4wDsBUluyw0tK3tykhXEfesZW2xOQ-xsNqO47m55DA.ttf') format('truetype');
 }
 </style>
-<!-- Email Header --><table style="width: 100%; margin: 0 auto;">
+<!-- Email Header --><table width="500" style="margin: 0 auto;">
 <tr>
 <td>
-<table width="500" class="header-wrap" style="font-size: 28px; text-align: center; width: 100%; border-bottom-color: #cccccc; border-bottom-width: 1px; border-bottom-style: solid; background: #f5f8f7; padding: 10px;">
+<table width="500" class="header-wrap" style="font-size: 28px; text-align: center; border-bottom-color: #cccccc; border-bottom-width: 1px; border-bottom-style: solid; background:#f5f8f7; padding: 10px;margin:20px auto 0px;">
 <tr><td class="logo" style="display: block; line-height: 22px; margin-bottom: 0;"><img src="<?php echo $public_url; ?>images/mintmesh-logo.png" alt="MintMesh"></td></tr>
 <tr><td class="template-title" style="display: block; line-height: 22px; font-weight: 500; font-size: 22px; margin: 10px 0 5px;">MintMesh India Pvt. Ltd</td></tr>
 <tr><td class="address-title" style="display: block; line-height: 22px; font-size: 16px;">8-2-269/S/33/A, Sagar Co-op Society Road no. 2,</td></tr>
@@ -37,7 +37,7 @@ font-family: 'arial'; font-style: italic; font-weight: 400; src: local('arial It
 </tr>
 <tr>
 <td>
-<table class="content-wrap" style="width: 100%;">
+<table class="content-wrap" style="width: 100%;background:#f5f8f7;">
 <tr>
 <td>
 <table style="margin-bottom: 20px; margin-top: 10px; padding: 10px 5px;">

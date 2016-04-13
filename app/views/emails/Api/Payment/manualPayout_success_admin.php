@@ -8,7 +8,7 @@
 	
 </head>
 <body bgcolor="#E1E1E1" style="font-family: 'arial', sans-serif">
-	<table id="tab" bgcolor="#FFFFFF" style="max-width:500px;width:95%;margin:0px auto;padding:10px 30px;">
+	<table id="tab" bgcolor="#ffffff" style="max-width:500px;width:95%;margin:20px auto 0px;padding:10px 30px;">
 		<tr>
 			<td align="center" valign="top" class="textContent" style="padding:20px 30px 10px;">
 <img src="<?php echo $public_url; ?>images/mintmesh-logo.png"   align="center" style="max-width:100%;text-align:center;" alt="logo" title="Text">

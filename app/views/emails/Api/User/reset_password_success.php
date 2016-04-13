@@ -19,8 +19,8 @@
 </style>
 </head>
 
-<body style="background:#E1E1E1; padding:0px; margin:0px; font-family: 'arial', sans-serif;font-weight:300;font-size:18px;" >
-<table bgcolor="#FFFFFF"  border="0" width="500" cellpadding="0" cellspacing="0" class="main_table" style="background:#fff;  margin:0px auto;" >
+<body style="background:#E1E1E1; padding:0px; margin:0px; font-family: 'arial', sans-serif;font-weight:300;font-size:18px;">
+<table bgcolor="#FFFFFF"  border="0" width="500" cellpadding="0" cellspacing="0" class="main_table" style="background:#fff;  margin:20px auto 0px;" >
   <tr>
     <td align="center" valign="top"  style="padding:20px 20px 10px;"><img src="<?php echo $public_url ; ?>images/mintmesh-logo.png"   align="center" style="max-width:100%;text-align:center;" alt="logo" title="Text">
       <h2 style="text-align:center;font-weight:normal;font-family: 'arial', sans-serif;font-weight:300;font-size:24px;margin-bottom:10px;margin-top:20px;color:#000000;">Password Change Confirmation</h2>
@@ -29,7 +29,7 @@
   <tr>
     <td valign="top" class="textContent" style="padding:20px 20px 10px;line-height:135%;letter-spacing:0.2px;font-size:18px; font-weight:normal; color:#777777;">
       <h3 style="color:#000000;line-height:125%;font-family: 'arial', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello <?php echo ucfirst($name);?>, </h3>
-      <p>The password for the MintMesh account <a href="mailto:<?php echo $email;?>" target="_blank"><?php echo $email;?></a> was recently changed.</p>
+      <p>The password for the MintMesh account: <a href="mailto:<?php echo $email;?>" target="_blank"><?php echo $email;?></a> was recently changed.</p>
       <p>If you requested this change then you can ignore this email.</p>
       <p>If this wasn't you, your account may have been compromised. Please reset your password immediately from MintMesh app.</p>
        </td>
