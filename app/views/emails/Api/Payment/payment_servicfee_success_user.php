@@ -68,7 +68,7 @@ font-family: 'arial'; font-style: italic; font-weight: 400; src: local('arial It
 <tr>
 <td style="font-weight: 400; color: #666666;">Platform Fee</td>
 <td align="right" style="font-weight: 500;">
-<span class="WebRupee">₹</span> <?php echo $tax;?></td>
+<span class="WebRupee">₹</span><?php echo $tax;?></td>
 </tr>
 <tr><td style="font-weight: 400; color: #999999; font-size: 14px; display: block; margin: 3px 0;">(MintMesh platform fee 20%)</td></tr>
 </table>
@@ -78,7 +78,7 @@ font-family: 'arial'; font-style: italic; font-weight: 400; src: local('arial It
 <table style="width: 100%; font-size: 22px; padding: 10px 5px;"><tr>
 <td style="font-weight: 400; color: #555555;">Total</td>
 <td align="right" style="color: #555555; font-weight: 500;">
-<span class="WebRupee">₹</span> <?php echo $tax;?></td>
+<span class="WebRupee">₹</span><?php echo $tax;?></td>
 </tr></table>
 </td></tr>
 </table>

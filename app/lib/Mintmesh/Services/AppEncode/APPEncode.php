@@ -16,7 +16,7 @@ use Cache;
     //put your code here
 
     protected $profanity_list = array('word');
-    protected $stdCodes = array(0,1);
+    protected $stdCodes = array('0','1');
     public function filterString($str) {
         if (isset($str) && $str != '' && $str != '0' && !is_array($str)) {
             //$str = stripslashes($str) ;

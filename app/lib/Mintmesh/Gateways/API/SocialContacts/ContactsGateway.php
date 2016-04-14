@@ -560,6 +560,7 @@ class ContactsGateway {
             $countryCodeArray = explode("-",$userPhone);
             $countryCode = !empty($countryCodeArray[0])?$countryCodeArray[0]:'';
             foreach ($phones as $phone){
+                
                 $phone = $this->appEncodeDecode->formatphoneNumbers($phone);
                 //check if the number contains country code assigned
                     if (strpos($phone, "+") === false){

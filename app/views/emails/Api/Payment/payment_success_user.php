@@ -33,15 +33,15 @@
 				<table  style="border-collapse:collapse;width:100%;margin:0px auto;font-size:20px;line-height:55px; " >
 					<tr style="border-bottom:1px solid #C9C9C9">
 						<td style="padding:8px;margin:0px">Referral Reward</td>
-						<td align="right" style="padding:8px 20px;margin:0px"><?php if($is_doller){ ?>$ <?php } else { ?> &#x20B9; <?php } ?><?php echo $cost;?></td>
+						<td align="right" style="padding:8px 20px;margin:0px"><?php if($is_doller){ ?>$<?php } else { ?> &#x20B9;<?php } ?><?php echo $cost;?></td>
 					</tr>
 					<tr style="border-bottom:1px solid #C9C9C9">
 						<td style="padding:8px;margin:0px;line-height:20px;">Platform Fee<br><span style="font-size:15px;">(MintMesh platform fee 20%)</span></td>
-						<td align="right" style="padding:8px 20px;margin:0px"><?php if($is_doller){ ?>$ <?php } else { ?> &#x20B9; <?php } ?><?php echo $tax; ?></td>
+						<td align="right" style="padding:8px 20px;margin:0px"><?php if($is_doller){ ?>$<?php } else { ?> &#x20B9;<?php } ?><?php echo $tax; ?></td>
 					</tr>
 					<tr style="color:#00B593;">
 						<td style="padding:8px;margin:0px"> Total</td>
-                                                <td align="right" style="padding:8px 20px;margin:0px"><?php if($is_doller){ ?>$ <?php } else { ?> &#x20B9; <?php } ?><?php echo $total; ?></td>
+                                                <td align="right" style="padding:8px 20px;margin:0px"><?php if($is_doller){ ?>$<?php } else { ?> &#x20B9;<?php } ?><?php echo $total; ?></td>
 					</tr>
 				</table>
 			</td>
@@ -50,9 +50,9 @@
 		<tr style="border-bottom:1px solid #C9C9C9">
 			<td colspan="2" style="font-size:18px;padding:90px 20px 70px;line-height:30px;">
 					<p style="padding-bottom:50px;margin:0px">Sincerely, <br>
-					<span style="color:#C9C9C9;margin:0px">(MintMesh team)</span></p>
+					<span style="color:#C9C9C9;margin:0px">(MintMesh Team)</span></p>
 				
-                                        <p align="center" style="padding-top:20px;border-top:1px solid #C9C9C9;color:#999999;margin:0px">If you need assistance, please contact <br>MintMesh Support<span style="color:black;margin:0px"><a style="color:#1b8c6e;text-decoration:none;" href="mailto:support@mintmesh.com" >(support@mintmesh.com)</a></span></p>
+                                        <p align="center" style="padding-top:20px;border-top:1px solid #C9C9C9;color:#999999;margin:0px">If you need assistance, please contact <br>MintMesh Support <span style="color:black;margin:0px"><a style="color:#1b8c6e;text-decoration:none;" href="mailto:support@mintmesh.com" >(support@mintmesh.com)</a></span></p>
 				</td>
 		</tr>
 	</table>

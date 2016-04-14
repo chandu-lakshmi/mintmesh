@@ -867,13 +867,13 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                     $skip = $limit - 10 ;
                 }
                 //and p.service_scope='".$type."'
+                //and r1.created_at <= p.created_at
                 $email = $this->appEncodeDecode->filterString(strtolower($email));
                 $queryString = "match (n:User:Mintmesh)-[r1:ACCEPTED_CONNECTION]-(m:User:Mintmesh)-[r2:POSTED]->(p:Post)
                                 where n.emailid='".$email."' and m.emailid=p.created_by
                                 and not(n-[:EXCLUDED]-p)
                                 and  case p.service_type when 'in_location' then  lower(n.location) =~ ('.*' + lower(p.service_location)) else 1=1 end
                                 and p.status='".Config::get('constants.REFERRALS.STATUSES.ACTIVE')."' 
-                                and r1.created_at <= p.created_at
                                 return p ORDER BY p.created_at DESC " ;
                 //OPTIONAL MATCH (p)-[r:GOT_REFERRED]-(u)
                 //echo $queryString ; exit;

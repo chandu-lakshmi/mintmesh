@@ -709,9 +709,14 @@ class ReferralsGateway {
                                 if (!empty($nonMintmeshUserDetails->fullname)){
                                     $nonMintmeshUserDetails->fullname = trim($nonMintmeshUserDetails->fullname);
                                 }
-                                $postDetails['to_user_firstname'] = !empty($nonMintmeshUserDetails->firstname)?$nonMintmeshUserDetails->firstname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
-                                $postDetails['to_user_lastname'] = !empty($nonMintmeshUserDetails->lastname)?$nonMintmeshUserDetails->lastname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
-                                $postDetails['to_user_fullname'] = !empty($nonMintmeshUserDetails->fullname)?$nonMintmeshUserDetails->fullname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                                $fName = str_replace("-","",$postDetails['to_user_phone']);
+                                $checkFName = $fName." ".$fName;
+                                $postDetails['to_user_fullname'] = (empty($nonMintmeshUserDetails->fullname)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):($nonMintmeshUserDetails->fullname == $checkFName || $nonMintmeshUserDetails->fullname == $fName)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$nonMintmeshUserDetails->fullname);
+                                $postDetails['to_user_firstname'] = (empty($nonMintmeshUserDetails->firstname)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):($nonMintmeshUserDetails->firstname == $fName)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$nonMintmeshUserDetails->firstname);
+                                $postDetails['to_user_lastname'] = (empty($nonMintmeshUserDetails->lastname)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):($nonMintmeshUserDetails->lastname == $fName)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$nonMintmeshUserDetails->lastname);
+//                                $postDetails['to_user_firstname'] = !empty($nonMintmeshUserDetails->firstname)?$nonMintmeshUserDetails->firstname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+//                                $postDetails['to_user_lastname'] = !empty($nonMintmeshUserDetails->lastname)?$nonMintmeshUserDetails->lastname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+//                                $postDetails['to_user_fullname'] = !empty($nonMintmeshUserDetails->fullname)?$nonMintmeshUserDetails->fullname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
                             }
                             //check if self referred
                             if (!empty($postDetails['to_user_emailid']) && $postDetails['to_user_emailid'] == $postDetails['from_user_emailid']){

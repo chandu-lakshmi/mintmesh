@@ -52,7 +52,7 @@
 									Amount requested for Payout: 
 								</td>
 								<td>
-									&#x20B9; <?php echo $amount; ?>
+									&#x20B9;<?php echo $amount; ?>
 								</td>
 							</tr>
 							<tr>
@@ -60,7 +60,7 @@
 									Amount remaining after Payout:
 								</td>
 								<td>
-									&#x20B9; <?php echo $remaningAmount; ?>
+									&#x20B9;<?php echo $remaningAmount; ?>
 								</td>
 							</tr>
 						</table>
