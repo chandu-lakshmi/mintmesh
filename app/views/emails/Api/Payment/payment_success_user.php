@@ -3,7 +3,7 @@
 <head>
 	<title>MintMesh</title>
 </head>
-<body bgcolor="#E1E1E1" style='margin:0px; font-family:arial; font-size:13px; color:#929395;'>
+<body style='margin:0px; font-family:arial; background:#E1E1E1; font-size:13px; color:#929395;'>
 	<table width="500" style="background:#ffffff;max-width:500px;width:100%;margin:20px auto 0px;">
 		<tr>
 			<td style="padding:20px;">
@@ -48,7 +48,7 @@
 
 		</tr>
 		<tr style="border-bottom:1px solid #C9C9C9">
-			<td colspan="2" style="font-size:18px;padding:90px 20px 70px;line-height:30px;">
+			<td colspan="2" style="font-size:18px;padding:90px 20px 20px;line-height:30px;">
 					<p style="padding-bottom:50px;margin:0px">Sincerely, <br>
 					<span style="color:#C9C9C9;margin:0px">(MintMesh Team)</span></p>
 				

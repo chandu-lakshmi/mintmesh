@@ -1926,19 +1926,26 @@ class UserGateway {
         public function getUserConnections($input)
         {
             $loggedinUserDetails = $this->getLoggedInUser();
+            $isConnected = $connections = array();
             if ($loggedinUserDetails)
             {
                 $userConnections = $connections = array();
                 //check if these two users are connected
+                if ($input['emailid'] !=  $loggedinUserDetails->emailid){
                 $isConnected = $this->neoUserRepository->checkConnection($loggedinUserDetails->emailid, $input['emailid']);
+                }
                 if ((!empty($isConnected) && !empty($isConnected['connected'])) || $input['emailid'] ==  $loggedinUserDetails->emailid){
-                $connections = $this->neoUserRepository->getConnectedUsers($input['emailid']);
+                    if (!empty($input['location'])){//get users by location
+                        $connections = $this->neoUserRepository->getConnectionsByLocation($input['emailid'], $input['location']);
+                    }else{
+                        $connections = $this->neoUserRepository->getConnectedUsers($input['emailid']);
+                    }
                 }
                 if (count($connections))
                 {
                     foreach ($connections as $connection)
                     {
-                        $details = $this->formUserDetailsArray($connection[0],'property');;
+                        $details = $this->formUserDetailsArray($connection[0],'property', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC'));;
                         if ($details['emailid'] != $loggedinUserDetails->emailid)//if not me
                         {
                             $connectionsR = $this->checkConnections($loggedinUserDetails->emailid, $input['emailid'], $details['emailid']);

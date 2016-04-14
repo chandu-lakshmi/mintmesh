@@ -7,8 +7,8 @@
 
 	
 </head>
-<body bgcolor="#E1E1E1" style="font-family: 'arial', sans-serif">
-	<table id="tab" bgcolor="#ffffff" style="max-width:500px;width:95%;margin:20px auto 0px;padding:10px 30px;">
+<body width="500" style="font-family: 'arial', sans-serif;background:#E1E1E1;">
+	<table id="tab" bgcolor="#ffffff" style="max-width:500px;width:95%;margin:0px auto 0px;padding:10px 30px;">
 		<tr>
 			<td align="center" valign="top" class="textContent" style="padding:20px 30px 10px;">
 <img src="<?php echo $public_url; ?>images/mintmesh-logo.png"   align="center" style="max-width:100%;text-align:center;" alt="logo" title="Text">
@@ -118,6 +118,11 @@
 			</td>
 		</tr>
 		<tr>
+        <table style="width: 100%; margin: 0 auto; padding: 10px 0 0;">
+            <tr>
+                <td colspan="2" style="text-align: center;font-size:18px; font-weight:normal; color:#999999; text-align:center;line-height:135%;" align="center">If you need assistance,<br> please contact MintMesh Support <a style="color: #1b8c6e; text-decoration: none;" href="mailto:support@mintmesh.com">(support@mintmesh.com)</a></td>
+            </tr>
+        </table>            
         </tr>
 		
 		

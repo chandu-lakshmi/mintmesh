@@ -292,5 +292,6 @@ Route::group(array('prefix' => 'v3', 'before' => 'oauth'), function() {
     Route::post("referral/get_all_referrals", "API\Referrals\ReferralsController@getAllReferrals");
     // get my requests
        Route::post("user/get_my_requests", "API\User\UserController@getMyRequests");
-       
+     // get user connections
+       Route::post("user/get_user_connections", "API\User\UserController@getUserConnections");  
 });

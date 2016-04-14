@@ -245,7 +245,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             {
                 $emailId = $this->appEncodeDecode->filterString(strtolower($emailId));
                 $queryString = "Match (m:User:Mintmesh)-[r:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-(n:User:Mintmesh)
-                                where m.emailid='".$emailId."' and n.location =~ '.*".$location.".*' 
+                                where m.emailid='".$emailId."' and lower(n.location) =~ '.*".strtolower($location).".*' 
                                 RETURN DISTINCT n" ;
                 $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();

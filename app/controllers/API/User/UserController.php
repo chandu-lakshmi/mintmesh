@@ -944,6 +944,7 @@ class UserController extends \BaseController {
          * 
          * @param string $access_token The Access token of a user
          * @param string $emailid
+         * @param string $location To filter via location
 	 * @return Response
 	 */
         public function getUserConnections()
