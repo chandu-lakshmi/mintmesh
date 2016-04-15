@@ -1128,11 +1128,12 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             }
         }
         
-        public function getAutoconnectUsers($userEmail='', $emails=array(), $phones=array())
+        public function getAutoconnectUsers($userEmail='', $emails=array(), $phones=array(), $userPhone='')
         {
             if (!empty($emails) || !empty($phones))
             {
                 $userEmail = $this->appEncodeDecode->filterString(strtolower($userEmail)) ;
+                $userPhone = $this->appEncodeDecode->formatphoneNumbers($userPhone) ;
                 if (!empty($emails))
                 {
                     foreach ($emails as $k=>$v)
@@ -1147,6 +1148,9 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                 $emailString = "'".$emailString."'" ;
                 $queryString = "match (v:User:Mintmesh{emailid:'".$userEmail."'}),(u:User:Mintmesh)"
                                 . " where (u.emailid  IN[".$emailString."] and (u)-[:IMPORTED]->(v) and not (u)-[:DELETED_CONTACT]-(v) and not (u)-[:ACCEPTED_CONNECTION]-(v)) or (replace(u.phone, '-', '') IN[".$phoneString."] and (u)-[:IMPORTED]->(v) and not (u)-[:DELETED_CONTACT]-(v) and not (u)-[:ACCEPTED_CONNECTION]-(v)) return u" ;
+                /*$queryString = "match (v),(u:User:Mintmesh)"
+                                . " where  ((v.emailid='".$userEmail."' or replace(v.phone, '-', '')='".$userPhone."') and ('Mintmesh' IN labels(v) OR  'Imported' IN labels(v) OR 'User' IN labels(v))) and ((u.emailid  IN[".$emailString."] and (u)-[:IMPORTED]->(v) and not (u)-[:DELETED_CONTACT]-(v) and not (u)-[:ACCEPTED_CONNECTION]-(v)) or (replace(u.phone, '-', '') IN[".$phoneString."] and (u)-[:IMPORTED]->(v) and not (u)-[:DELETED_CONTACT]-(v) and not (u)-[:ACCEPTED_CONNECTION]-(v))) return u" ;
+                *///echo $queryString ; exit;
                 $query = new CypherQuery($this->client, $queryString);
                 $result = $query->getResultSet();
                 if ($result->count())

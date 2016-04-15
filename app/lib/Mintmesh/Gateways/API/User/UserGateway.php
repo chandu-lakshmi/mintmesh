@@ -420,6 +420,8 @@ class UserGateway {
                     $response = $this->loginCall($input);
                     $userDetails = (array) json_decode($response, TRUE);
                     if($userDetails['status'] == 'success') {
+                        //check with phone number in non mintmesh users
+                        $nonMintmeshUserResult = $this->checkForNonMintmeshPhoneNumber($input['phone'], $input['emailid']);
                         $responseMessage = Lang::get('MINTMESH.user.create_success');
                         $responseCode = self::SUCCESS_RESPONSE_CODE;
                         $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
@@ -2317,6 +2319,7 @@ class UserGateway {
                     {
                         $r = $neoLoggedInUserDetails->getAttributes();
                     }
+                    $r['fullname'] = (empty($r['fullname'])?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$r['fullname']);
                     if (!empty($neoLoggedInUserDetails->dp_renamed_name))//user has completed profile
                     {
                         if (!empty($neoLoggedInUserDetails->from_linkedin))//if  linked in
@@ -2707,7 +2710,7 @@ class UserGateway {
                                         if (!empty($thirdUserResult->fullname)){
                                             $thirdUserResult->fullname = trim($thirdUserResult->fullname);
                                         }
-                                        $fName = str_replace("-","",$notification->other_phone);
+                                        $fName = str_replace("-","",$notificationLog['other_phone']);
                                         $checkFName = $fName." ".$fName;
                                         //$thirdFullName = (!empty($thirdUserResult->fullname) && $thirdUserResult->fullname != $notificationLog['other_phone']." ".$notificationLog['other_phone'])?$thirdUserResult->fullname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
                                         $thirdFullName = (empty($thirdUserResult->fullname)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):($thirdUserResult->fullname == $checkFName || $thirdUserResult->fullname == $fName)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$thirdUserResult->fullname);
@@ -3910,8 +3913,16 @@ class UserGateway {
                         }
                         if (!empty($row->other_email))
                         {
-                            $otherUserDetails = $this->neoUserRepository->getNodeByEmailId($row->other_email) ;
-                            $details = $this->formUserDetailsArray($otherUserDetails,'attribute');
+                            if(filter_var($row->other_email, FILTER_VALIDATE_EMAIL)) {
+                                $otherUserDetails = $this->neoUserRepository->getNodeByEmailId($row->other_email) ;
+                                $type = 'attribute';
+                            } else {
+                                $otherUserDetailsResult = $this->contactsRepository->getNonMintmeshContact($row->other_email) ;
+                                $otherUserDetails = $otherUserDetailsResult[0][0];
+                                $type = 'property';
+                            }
+//                            $otherUserDetails = $this->neoUserRepository->getNodeByEmailId($row->other_email) ;
+                            $details = $this->formUserDetailsArray($otherUserDetails,$type);
                             $arr['other_details'] = $details ;
                         }
                         $returnResult[] = $arr ;
@@ -4410,6 +4421,23 @@ class UserGateway {
                 curl_close($ch);
             }
             return $response ;
+        }
+        
+        public function checkForNonMintmeshPhoneNumber($phone='',$emailid=''){
+            if (!empty($phone) && !empty($emailid)){
+                try{
+                $pushData = array();
+                $pushData['user_phone']=$this->appEncodeDecode->formatphoneNumbers($phone);
+                $pushData['user_email']=$this->appEncodeDecode->filterString(strtolower($emailid));
+                Queue::push('Mintmesh\Services\Queues\NonMintmeshPhoneCheckQueue', $pushData,'IMPORT');
+                }
+                catch(\RuntimeException $e)
+                {
+
+                }
+            }
+            return true;
+            
         }
 
 }

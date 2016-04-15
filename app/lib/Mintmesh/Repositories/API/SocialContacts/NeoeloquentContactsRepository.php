@@ -93,7 +93,8 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
                 /*$queryString = "START node=node:node_auto_index('emailid:*') 
                                 where node.emailid in[".$emailsIds."]
                                 RETURN node" ;  */          
-                $queryString = "Match (u:User) where u.emailid IN [".$emailsIds."] or replace(u.phone, '-', '') IN[".$phoneString."] return distinct(u)" ;
+                $queryString = "Match (u) where u.emailid IN [".$emailsIds."] or replace(u.phone, '-', '') IN[".$phoneString."] "
+                        . "and ('Mintmesh' IN labels(u) OR  'Imported' IN labels(u) OR 'User' IN labels(u)) return distinct(u)" ;
                 //echo $queryString ;exit;
                 $query = new CypherQuery($this->client, $queryString);
                 $result = $query->getResultSet();
@@ -298,13 +299,16 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
             }
         }
         
-        public function createNodeAndRelationForPhoneContacts($from, $neoInput=array(),$relationAttrs = array())
+        public function createNodeAndRelationForPhoneContacts($from, $neoInput=array(),$relationAttrs = array(),$isImported=0)
         {
             $from = $this->appEncodeDecode->filterString(strtolower($from));
             try{
                 $queryString = "MATCH (u:User:Mintmesh)
                             WHERE u.emailid = '".$from."'
-                            CREATE (m:NonMintmesh ";
+                            CREATE (m:NonMintmesh";
+                if (!empty($isImported)){//add imported label if created from import contacts
+                    $queryString.=":Imported";
+                }
                 if (!empty($neoInput))
                 {
                     $queryString.="{";
@@ -396,6 +400,34 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
                 return 0 ;
             }
             
+        }
+        
+        public function getNonMintmeshImportedContact($phone=''){
+            if (!empty($phone)){
+                $phone = $this->appEncodeDecode->formatphoneNumbers($phone);
+                $queryString = "match (u:NonMintmesh:Imported) where replace(u.phone, '-', '') ='".$phone."' return u limit 1";
+                $query = new CypherQuery($this->client, $queryString);
+                $result = $query->getResultSet();
+                if ($result->count())
+                {
+                    return $result ;
+                }
+                else
+                {
+                    return 0 ;
+                }
+            }
+        }
+        
+        public function copyImportRelationsToMintmeshLabel($emailid='', $phone=''){
+            $queryString = "MATCH (n1:User:Mintmesh)-[r:IMPORTED]->(n2:NonMintmesh:Imported)
+                            where replace(n2.phone, '-', '') = '".$phone."' with r,n1
+                            MATCH (n3:User:Mintmesh{emailid:'".$emailid."'})
+                            CREATE unique (n1)-[r1:IMPORTED]->(n3) set r1.firstname=r.firstname,r1.lastname=r.lastname,r1.fullname=r.fullname,r1.phone='phone'
+                            ";
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            return true;
         }
        
         
