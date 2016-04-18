@@ -274,61 +274,34 @@ class ReferralsGateway {
                 $connectedUsers = array();
                 foreach($allConnectedUsers as $allUsers)
                 {
-                    $connectedUsers[] = $allUsers[0]->emailid;
+                    if($allUsers[0]->emailid != $this->loggedinUserDetails->emailid)
+                        $connectedUsers[] = $allUsers[0]->emailid;
                 }
                 //exclude or include contacts
-                if (!empty($input['excluded_list']) || !empty($input['included_list']) )
-                {
-                    $relationAttrs = array();
-                    $relationAttrs['service_scope'] = $input['service_scope'] ;
+                if(isset($input['excluded_list']) || isset($input['included_list'])) {
                     $list = json_decode(!empty($input['excluded_list'])?$input['excluded_list']:$input['included_list']) ;
-                    $remaningList = array_diff($connectedUsers, $list);
-                    if(!empty($serviceId)) {
-                        //create relation to the list sent by front end
-                        if(is_array($list)) {
-                            foreach($list as $user) {
-                                $excludedOrIncluded = $this->formQueueArrayForExcludeOrEnclude($serviceId, $user, $relationAttrs, !empty($input['excluded_list'])?'exclude':'include');
-                                //$excludedOrIncluded = $this->referralsRepository->excludeOrIncludeContact($serviceId, $user, $relationAttrs, !empty($input['excluded_list'])?'exclude':'include') ;
+                    if(!empty($list)) {
+                        $relationAttrs = array();
+                        $relationAttrs['service_scope'] = $input['service_scope'] ;
+                        $remaningList = array_diff($connectedUsers, $list);
+                        if(!empty($serviceId)) {
+                            //create relation to the list sent by front end
+                            if(is_array($list)) {
+                                foreach($list as $user) {
+                                    $excludedOrIncluded = $this->formQueueArrayForExcludeOrEnclude($serviceId, $user, $relationAttrs, !empty($input['excluded_list'])?'exclude':'include');
+                                    //$excludedOrIncluded = $this->referralsRepository->excludeOrIncludeContact($serviceId, $user, $relationAttrs, !empty($input['excluded_list'])?'exclude':'include') ;
+                                }
                             }
-                        }
-                        //create relation to the remaning list 
-                        if(is_array($remaningList)) {
-                            foreach($remaningList as $user) {
-                                $excludedOrIncluded = $this->formQueueArrayForExcludeOrEnclude($serviceId, $user, $relationAttrs, !empty($input['excluded_list'])?'include':'exclude');
-                                //$excludedOrIncluded = $this->referralsRepository->excludeOrIncludeContact($serviceId, $user, $relationAttrs, !empty($input['excluded_list'])?'include':'exclude') ;
+                            //create relation to the remaning list 
+                            if(is_array($remaningList)) {
+                                foreach($remaningList as $user) {
+                                    $excludedOrIncluded = $this->formQueueArrayForExcludeOrEnclude($serviceId, $user, $relationAttrs, !empty($input['excluded_list'])?'include':'exclude');
+                                    //$excludedOrIncluded = $this->referralsRepository->excludeOrIncludeContact($serviceId, $user, $relationAttrs, !empty($input['excluded_list'])?'include':'exclude') ;
+                                }
                             }
                         }
                     }
                 }
-                /*//exclude contacts
-                if (!empty($input['excluded_list']))
-                {
-                    $relationAttrs = array();
-                    $relationAttrs['service_scope'] = $input['service_scope'] ;
-                    $excludedList = json_decode($input['excluded_list']) ;
-                    if(is_array($excludedList) && !empty($serviceId))
-                    {
-                        foreach($excludedList as $user)
-                        {
-                            $excluded = $this->referralsRepository->excludeOrIncludeContact($serviceId, $user, $relationAttrs, 'exclude') ;
-                        }
-                    }
-                }
-                //include contacts
-                if (!empty($input['included_list']))
-                {
-                    $relationAttrs = array();
-                    $relationAttrs['service_scope'] = $input['service_scope'] ;
-                    $includedList = json_decode($input['included_list']) ;
-                    if(is_array($includedList) && !empty($serviceId))
-                    {
-                        foreach($includedList as $user)
-                        {
-                            $included = $this->referralsRepository->excludeOrIncludeContact($serviceId, $user, $relationAttrs, 'include') ;
-                        }
-                    }
-                }*/
-                
                 //send email to user after post done successfully
                 $successSupportTemplate = Lang::get('MINTMESH.email_template_paths.post_success');
                 $receipientEmail = $this->loggedinUserDetails->emailid;
@@ -464,12 +437,14 @@ class ReferralsGateway {
             {
                 $returnPosts = array();
                 foreach ($posts as $post)
-                {
-                    $postDetails = $this->formPostDetailsArray($post[0]) ;
-                    $postDetails['no_of_referrals'] = !empty($post[1])?$post[1]:0 ;
-                    $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($postDetails['created_by']) ;
-                    $postDetails['UserDetails'] = $this->userGateway->formUserDetailsArray($neoUserDetails, 'attribute',Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC'));
-                    $returnPosts[] = $postDetails ;
+                {   
+                    if($post[0]->created_by != $this->loggedinUserDetails->emailid) {
+                        $postDetails = $this->formPostDetailsArray($post[0]) ;
+                        $postDetails['no_of_referrals'] = !empty($post[1])?$post[1]:0 ;
+                        $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($postDetails['created_by']) ;
+                        $postDetails['UserDetails'] = $this->userGateway->formUserDetailsArray($neoUserDetails, 'attribute',Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC'));
+                        $returnPosts[] = $postDetails ;
+                    }
                 }
                 $data = array("posts"=>$returnPosts);
                 $message = array('msg'=>array(Lang::get('MINTMESH.referrals.success')));

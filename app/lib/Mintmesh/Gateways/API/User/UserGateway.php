@@ -1947,6 +1947,7 @@ class UserGateway {
                 {
                     foreach ($connections as $connection)
                     {
+                        if($connection[0]->emailid != $loggedinUserDetails->emailid) {
                         $details = $this->formUserDetailsArray($connection[0],'property', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC'));;
                         if ($details['emailid'] != $loggedinUserDetails->emailid)//if not me
                         {
@@ -1979,6 +1980,7 @@ class UserGateway {
                             }
                         }
                         $userConnections[] = $details ;
+                        }
                     }
                 }
                 $data = array("connections"=>$userConnections) ;
