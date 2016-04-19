@@ -858,7 +858,48 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
          
         public function getAllPostsV3($email="", $type="", $page=0)
         {
-            if (!empty($email) && !empty($type))
+//            if (!empty($email) && !empty($type))
+//            {
+//                $skip = $limit = 0;
+//                if (!empty($page))
+//                {
+//                    $limit = $page*10 ;
+//                    $skip = $limit - 10 ;
+//                }
+//                //and p.service_scope='".$type."'
+//                //and r1.created_at <= p.created_at
+//                $email = $this->appEncodeDecode->filterString(strtolower($email));
+//                $queryString = "match (n:User:Mintmesh)-[r1:ACCEPTED_CONNECTION]-(m:User:Mintmesh)-[r2:POSTED]->(p:Post)
+//                                where n.emailid='".$email."' and m.emailid=p.created_by
+//                                and not(n-[:EXCLUDED]-p)
+//                                and  case p.service_type when 'in_location' then  lower(n.location) =~ ('.*' + lower(p.service_location)) else 1=1 end
+//                                and p.status='".Config::get('constants.REFERRALS.STATUSES.ACTIVE')."' 
+//                                return p ORDER BY p.created_at DESC " ;
+//                //OPTIONAL MATCH (p)-[r:GOT_REFERRED]-(u)
+//                //echo $queryString ; exit;
+//                /*$queryString = "match (n:User:Mintmesh), (m:User:Mintmesh), (p:Post)
+//                                where n.emailid='".$email."' and m.emailid=p.created_by
+//                                and (n-[:ACCEPTED_CONNECTION]-m)
+//                                and not(n-[:EXCLUDED]-p) 
+//                                and  case p.service_type when 'in_location' then  lower(n.location) =~ ('.*' + lower(p.service_location)) else 1=1 end
+//                                and p.status='".Config::get('constants.REFERRALS.STATUSES.ACTIVE')."' 
+//                                OPTIONAL MATCH (p)-[r:GOT_REFERRED]-(u)
+//                                return p, count(distinct(u)) ORDER BY p.created_at DESC " ;*/
+//                if (!empty($limit) && !($limit < 0))
+//                {
+//                    $queryString.=" skip ".$skip." limit ".self::LIMIT ;
+//                }
+//                //echo $queryString ; exit;
+//                $query = new CypherQuery($this->client, $queryString);
+//                return $result = $query->getResultSet();
+//            }
+//            else
+//            {
+//                return false ;
+//            }
+            $type_array = json_decode($type);
+//            if (!empty($email) && !empty($type))
+            if (!empty($email))
             {
                 $skip = $limit = 0;
                 if (!empty($page))
@@ -866,25 +907,35 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                     $limit = $page*10 ;
                     $skip = $limit - 10 ;
                 }
+                $filter_query = "";
+                if($type_array) {
+                    if(!(in_array('all', $type_array))) {
+                        if((in_array('free', $type_array) || in_array('paid', $type_array)) && !(in_array('free', $type_array) && in_array('paid', $type_array)) ) {
+                            $filter_query .= (in_array('free', $type_array))?' and p.free_service = "1" ':' and p.free_service = "0" ';
+                        }
+                    }
+                    $type_array = array_flip($type_array);
+                    unset($type_array['free']);
+                    unset($type_array['paid']);
+                    unset($type_array['all']);
+                    $type_array = array_flip($type_array);
+                    if(count($type_array) > 0) {
+                        $filter_query .= " and p.service_scope IN ['".implode("','",$type_array)."'] ";
+                    }                
+                }
                 //and p.service_scope='".$type."'
                 //and r1.created_at <= p.created_at
                 $email = $this->appEncodeDecode->filterString(strtolower($email));
                 $queryString = "match (n:User:Mintmesh)-[r1:ACCEPTED_CONNECTION]-(m:User:Mintmesh)-[r2:POSTED]->(p:Post)
                                 where n.emailid='".$email."' and m.emailid=p.created_by
-                                and not(n-[:EXCLUDED]-p)
-                                and  case p.service_type when 'in_location' then  lower(n.location) =~ ('.*' + lower(p.service_location)) else 1=1 end
-                                and p.status='".Config::get('constants.REFERRALS.STATUSES.ACTIVE')."' 
-                                return p ORDER BY p.created_at DESC " ;
-                //OPTIONAL MATCH (p)-[r:GOT_REFERRED]-(u)
-                //echo $queryString ; exit;
-                /*$queryString = "match (n:User:Mintmesh), (m:User:Mintmesh), (p:Post)
-                                where n.emailid='".$email."' and m.emailid=p.created_by
-                                and (n-[:ACCEPTED_CONNECTION]-m)
+                                and case p.included_set when '1' then  (n-[:INCLUDED]-p) else 1=1 end
                                 and not(n-[:EXCLUDED]-p) 
-                                and  case p.service_type when 'in_location' then  lower(n.location) =~ ('.*' + lower(p.service_location)) else 1=1 end
+                                ".$filter_query."
+                                and  case p.service_type 
+                                when 'in_location' then  lower(n.location) =~ ('.*' + lower(p.service_location)) else 1=1 end
                                 and p.status='".Config::get('constants.REFERRALS.STATUSES.ACTIVE')."' 
                                 OPTIONAL MATCH (p)-[r:GOT_REFERRED]-(u)
-                                return p, count(distinct(u)) ORDER BY p.created_at DESC " ;*/
+                                return p, count(distinct(u)) ORDER BY p.created_at DESC " ;
                 if (!empty($limit) && !($limit < 0))
                 {
                     $queryString.=" skip ".$skip." limit ".self::LIMIT ;

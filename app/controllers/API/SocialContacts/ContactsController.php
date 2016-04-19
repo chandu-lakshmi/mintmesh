@@ -29,7 +29,7 @@ class ContactsController extends \BaseController {
             $input = \Input::all();
             if (!empty($input))
             {
-                return $this->contactsGateway->processContacts($input);
+                return $this->contactsGateway->processContactsImport($input);
             }
         }
         

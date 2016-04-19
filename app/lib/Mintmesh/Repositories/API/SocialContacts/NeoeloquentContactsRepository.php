@@ -32,7 +32,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
             try{
                 $queryString = "MATCH (u:User:Mintmesh)
                             WHERE ID(u) = ".$fromId."
-                            CREATE (m:User ";
+                            CREATE UNIQUE (m:User ";
                 if (!empty($neoInput))
                 {
                     $queryString.="{";
@@ -57,6 +57,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
                     $queryString.="}";
                 }
                 $queryString.="]-(u)" ;
+                //echo $queryString ; exit;
                 $query = new CypherQuery($this->client, $queryString);
                 $result = $query->getResultSet();
                 //$result = NeoUser::whereIn('emailid', $emails)->get();
@@ -92,9 +93,9 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
                 //\Log::info("<<<<<<<<<<<<<<<<<<<<<<  In getExisting contacts before >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
                 /*$queryString = "START node=node:node_auto_index('emailid:*') 
                                 where node.emailid in[".$emailsIds."]
-                                RETURN node" ;  */          
-                $queryString = "Match (u) where u.emailid IN [".$emailsIds."] or replace(u.phone, '-', '') IN[".$phoneString."] "
-                        . "and ('Mintmesh' IN labels(u) OR  'Imported' IN labels(u) OR 'User' IN labels(u)) return distinct(u)" ;
+                                RETURN node" ;  */  
+                //and ('Mintmesh' IN labels(u) OR  'Imported' IN labels(u) OR 'User' IN labels(u))
+                $queryString = "Match (u:User:Mintmesh) where u.emailid IN [".$emailsIds."] or replace(u.phone, '-', '') IN[".$phoneString."]  return distinct(u)" ;
                 //echo $queryString ;exit;
                 $query = new CypherQuery($this->client, $queryString);
                 $result = $query->getResultSet();
@@ -153,7 +154,8 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
                     }
                     $queryString = rtrim($queryString,',');
                 }
-                //echo $queryString ; exit;
+                //\Log::info("--relate query-----".$queryString);
+                //echo $queryString ; 
                 $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();
 
@@ -428,6 +430,50 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             return true;
+        }
+        
+         /*
+         * get existing non mintmeshcontacts 
+         */
+        public function getExistingNonMintmeshContacts($emails = array(), $phones = array())
+        {
+            if (!empty($emails) || !empty($phones))
+            {
+                $emailids = array();
+                foreach ($emails as $e)
+                {
+                    $emailids[] = $this->appEncodeDecode->filterString(strtolower($e));
+                }
+                $emailsIds = implode("','", $emailids);
+                $emailsIds = !empty($emailsIds)?"'".$emailsIds."'":'' ;
+                $phoneString = !empty($phones)?implode("','", $phones):'';
+                $phoneString = !empty($phoneString)?"'".$phoneString."'":'' ;
+                //\Log::info("<<<<<<<<<<<<<<<<<<<<<<  In getExisting contacts before >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
+                /*$queryString = "START node=node:node_auto_index('emailid:*') 
+                                where node.emailid in[".$emailsIds."]
+                                RETURN node" ;  */  
+                //and ('Mintmesh' IN labels(u) OR  'Imported' IN labels(u) OR 'User' IN labels(u))
+                $queryString = "Match (u) where u.emailid IN [".$emailsIds."] or replace(u.phone, '-', '') IN[".$phoneString."]  "
+                        . " and ('Imported' IN labels(u) OR 'User' IN labels(u)) return distinct(u)" ;
+                //echo $queryString ;exit;
+                $query = new CypherQuery($this->client, $queryString);
+                $result = $query->getResultSet();
+               // \Log::info("<<<<<<<<<<<<<<<<<<<<<<  In getExisting contacts before >>>>>>>>>>>>>>>>>>>>> ".$queryString.date('H:i:s'));
+                 
+                //$result = NeoUser::whereIn('emailid', $emails)->get();
+                if ($result->count())
+                {
+                    return $result ;
+                }
+                else
+                {
+                    return false ;
+                }
+            }
+            else
+            {
+                return false ;
+            }
         }
        
         
