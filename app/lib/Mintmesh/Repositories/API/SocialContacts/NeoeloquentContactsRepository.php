@@ -122,7 +122,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
                                 RETURN node" ;  */  
                 //and ('Mintmesh' IN labels(u) OR  'Imported' IN labels(u) OR 'User' IN labels(u))
                 $queryString = "Match (u:User:Mintmesh) where u.emailid IN [".$emailsIds."] or replace(u.phone, '-', '') IN[".$phoneString."]  return distinct(u) order by lower(u.firstname) " ;
-                \Log::info("<<<<<<<<<<<<<<<<<<<<<<  get existing users query >>>>>>>>>>>>>>>>>>>>> ".$queryString);
+                //\Log::info("<<<<<<<<<<<<<<<<<<<<<<  get existing users query >>>>>>>>>>>>>>>>>>>>> ".$queryString);
                 $query = new CypherQuery($this->client, $queryString);
                 $result = $query->getResultSet();
                // \Log::info("<<<<<<<<<<<<<<<<<<<<<<  In getExisting contacts before >>>>>>>>>>>>>>>>>>>>> ".$queryString.date('H:i:s'));
