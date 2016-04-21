@@ -1155,7 +1155,7 @@ class UserGateway {
                 if ($this->loggedinUserDetails)
                 {
                     if (!empty($input['info_type']) && $input['info_type'] == 'contact')
-                    {echo "1";
+                    {
                         $contactInput = $input;
                         $contactInput['emailid'] = $userEmailId = !empty($this->loggedinUserDetails->emailid)?$this->loggedinUserDetails->emailid:'' ;
                         if (!empty($input['phone']))
@@ -1176,8 +1176,7 @@ class UserGateway {
                         }
                     }
                     else if (!empty($input['info_type']) && in_array($input['info_type'], $this->infoTypes))
-                    {echo "2";
-                        
+                    {
                         $sectionInput = $input;
                         $sectionInput['emailid'] = $this->loggedinUserDetails->emailid ;
                         $sectionInfoSuccess = $this->editSectionInfo($sectionInput, $input['info_type']);
@@ -1193,7 +1192,7 @@ class UserGateway {
                         }
                     }
                     else if (!empty($input['info_type']) && $input['info_type'] == 'skills')
-                    {echo "3";
+                    {
                         //update profile completion percentage
                         if (!empty($input['skills']))
                         {
@@ -1209,18 +1208,17 @@ class UserGateway {
                         $skillsInfoSuccess = $this->editSkillsInfo($skillsInput);
                     }
                     if (!empty($input['info_type']) && $input['info_type'] == 'resume')
-                    {echo "4";
+                    {
                         $resumeInput = $input;
                         $resumeInput['emailid'] = $this->loggedinUserDetails->emailid ;
                         $resumeInfoSuccess = $this->editResumeInfo($resumeInput);
                     }
                     //update user node to update proflie completion percentage
                     if (!empty($userInput))
-                    {echo "5";
+                    {
                         $userInput['emailid'] = $this->loggedinUserDetails->emailid ;
                         $this->neoUserRepository->updateUser($userInput);
                     }
-                    exit;
                     $message = array('msg'=>array(Lang::get('MINTMESH.user.edit_success')));
                     return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
                 }
