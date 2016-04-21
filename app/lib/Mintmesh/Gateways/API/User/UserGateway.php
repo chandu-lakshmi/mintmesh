@@ -1155,7 +1155,7 @@ class UserGateway {
                 if ($this->loggedinUserDetails)
                 {
                     if (!empty($input['info_type']) && $input['info_type'] == 'contact')
-                    {
+                    {echo "1";
                         $contactInput = $input;
                         $contactInput['emailid'] = $userEmailId = !empty($this->loggedinUserDetails->emailid)?$this->loggedinUserDetails->emailid:'' ;
                         if (!empty($input['phone']))
@@ -1176,7 +1176,7 @@ class UserGateway {
                         }
                     }
                     else if (!empty($input['info_type']) && in_array($input['info_type'], $this->infoTypes))
-                    {
+                    {echo "2";
                         
                         $sectionInput = $input;
                         $sectionInput['emailid'] = $this->loggedinUserDetails->emailid ;
@@ -1193,7 +1193,7 @@ class UserGateway {
                         }
                     }
                     else if (!empty($input['info_type']) && $input['info_type'] == 'skills')
-                    {
+                    {echo "3";
                         //update profile completion percentage
                         if (!empty($input['skills']))
                         {
@@ -1209,17 +1209,18 @@ class UserGateway {
                         $skillsInfoSuccess = $this->editSkillsInfo($skillsInput);
                     }
                     if (!empty($input['info_type']) && $input['info_type'] == 'resume')
-                    {
+                    {echo "4";
                         $resumeInput = $input;
                         $resumeInput['emailid'] = $this->loggedinUserDetails->emailid ;
                         $resumeInfoSuccess = $this->editResumeInfo($resumeInput);
                     }
                     //update user node to update proflie completion percentage
                     if (!empty($userInput))
-                    {
+                    {echo "5";
                         $userInput['emailid'] = $this->loggedinUserDetails->emailid ;
                         $this->neoUserRepository->updateUser($userInput);
                     }
+                    exit;
                     $message = array('msg'=>array(Lang::get('MINTMESH.user.edit_success')));
                     return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
                 }
@@ -1303,6 +1304,17 @@ class UserGateway {
                         $this->userRepository->logLevel(2, $input['emailid'], "", "",Config::get('constants.POINTS.COMPLETE_PROFILE'));
                     }
                     $neoInput['completed_contact'] = 1 ;
+                    $job_industry_set = array('7','3','6','5');
+                    $company_set = array('5','6');
+                    if(in_array($neoInput['you_are'], $job_industry_set)) {
+                        //remove the job function associated
+                        $this->neoUserRepository->unMapJobFunction($this->loggedinUserDetails->emailid);
+                        //remove the job function associated
+                        $this->neoUserRepository->unMapIndustry($this->loggedinUserDetails->emailid);
+                    }
+                    if(in_array($neoInput['you_are'], $company_set)) {
+                        $neoInput['company'] = "";
+                    }
                 }
                 if (!empty($input['firstname']) && !empty($input['lastname']))
                 {
@@ -2360,7 +2372,10 @@ class UserGateway {
                     $you_are_name = "";
                     if (isset($r['you_are']))//get job function name
                     {
-                        $you_are_name = $this->userRepository->getYouAreName($r['you_are']);
+                        $you_are_name = $this->userRepository->getYouAreName($r['you_are'],"name");
+                    }
+                    if(isset($r['you_are']) && !is_numeric($r['you_are'])){
+                        $r['you_are'] = $this->userRepository->getYouAreName($r['you_are'],"id");
                     }
                     $profession_name = "";
                     if (isset($r['profession']))//get profession name
@@ -2448,7 +2463,10 @@ class UserGateway {
                     $you_are_name = "";
                     if (isset($r['you_are']))//get job function name
                     {
-                        $you_are_name = $this->userRepository->getYouAreName($r['you_are']);
+                        $you_are_name = $this->userRepository->getYouAreName($r['you_are'],"name");
+                    }
+                    if(isset($r['you_are']) && !is_numeric($r['you_are'])){
+                        $r['you_are'] = $this->userRepository->getYouAreName($r['you_are'],"id");
                     }
                     $profession_name = "";
                     if (isset($r['profession']))//get profession name
@@ -4340,7 +4358,7 @@ class UserGateway {
 	/*
          * get professions list for you are field
          */
-        public function getPofessions(){
+        public function getProfessions(){
             $loggedinUserDetails = $this->getLoggedInUser();
             if ($loggedinUserDetails) {
                 if (Cache::has('allProfessions')) {                 
@@ -4349,7 +4367,7 @@ class UserGateway {
                     $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
                     $message = array('msg'=>array(Lang::get('MINTMESH.professions.success')));
                 } else {                
-                    $professionsR = $this->userRepository->getPofessions();
+                    $professionsR = $this->userRepository->getProfessions();
                     if (!empty($professionsR))
                     {
                        // print_r($professionsR);exit;

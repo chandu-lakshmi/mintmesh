@@ -403,9 +403,11 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
         
         public function checkConnection($email1='', $email2='')
         {
-              $queryString = "Match (m:User:Mintmesh)-[r:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-(n:User:Mintmesh)
+              /*$queryString = "Match (m:User:Mintmesh)-[r:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-(n:User:Mintmesh)
                                 where m.emailid='".$email1."' and n.emailid='".$email2."' 
-                                RETURN SIGN(COUNT(r)) as con_count" ;
+                                RETURN SIGN(COUNT(r)) as con_count" ;*/
+              $queryString = "start LHS = node:node_auto_index('emailid:\"".$email1."\"'),
+                                RHS = node:node_auto_index('emailid:\"".$email2."\"') MATCH (LHS)-[r:ACCEPTED_CONNECTION]-(RHS) RETURN SIGN(COUNT(r)) as con_count";
               $query = new CypherQuery($this->client, $queryString);
               $count = $query->getResultSet();  
               if (!empty($count[0]) && !empty($count[0][0]))

@@ -30,7 +30,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
         public function createContactAndRelation($fromId, $neoInput=array(),$relationAttrs = array())
         {
             try{
-                $queryString = "MATCH (u:User:Mintmesh)
+                /*$queryString = "MATCH (u:User:Mintmesh)
                             WHERE ID(u) = ".$fromId."
                             CREATE UNIQUE (m:User ";
                 if (!empty($neoInput))
@@ -56,8 +56,34 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
                     $queryString = rtrim($queryString, ",") ;
                     $queryString.="}";
                 }
+                $queryString.="]-(u)" ;*/
+                $nodeEmailId = (!empty($neoInput['emailid']))?$this->appEncodeDecode->filterString(strtolower($neoInput['emailid'])):'';
+                $queryString = "MATCH (u:User:Mintmesh) WHERE ID(u) = ".$fromId." "
+                                . "MERGE (m:User { emailid: '".$nodeEmailId."'}) "
+                                . "ON CREATE SET ";
+                if (!empty($neoInput))
+                {
+                    foreach ($neoInput as $k=>$v)
+                    {
+                        if ($k == 'emailid')
+                            $v= strtolower ($v);
+                        $queryString.="m.".$k."='".$this->appEncodeDecode->filterString($v)."'," ;
+                    }
+                    $queryString = rtrim($queryString, ",") ;
+                }
+                $queryString.="merge (m)<-[:".Config::get('constants.RELATIONS_TYPES.IMPORTED');
+                if (!empty($relationAttrs))
+                {
+                    $queryString.="{";
+                    foreach ($relationAttrs as $k=>$v)
+                    {
+                        $queryString.=$k.":'".$this->appEncodeDecode->filterString($v)."'," ;
+                    }
+                    $queryString = rtrim($queryString, ",") ;
+                    $queryString.="}";
+                }
                 $queryString.="]-(u)" ;
-                //echo $queryString ; exit;
+                //echo $queryString ;
                 $query = new CypherQuery($this->client, $queryString);
                 $result = $query->getResultSet();
                 //$result = NeoUser::whereIn('emailid', $emails)->get();
@@ -95,7 +121,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
                                 where node.emailid in[".$emailsIds."]
                                 RETURN node" ;  */  
                 //and ('Mintmesh' IN labels(u) OR  'Imported' IN labels(u) OR 'User' IN labels(u))
-                $queryString = "Match (u:User:Mintmesh) where u.emailid IN [".$emailsIds."] or replace(u.phone, '-', '') IN[".$phoneString."]  return distinct(u)" ;
+                $queryString = "Match (u:User:Mintmesh) where u.emailid IN [".$emailsIds."] or replace(u.phone, '-', '') IN[".$phoneString."]  return distinct(u) order by lower(u.firstname) " ;
                 //echo $queryString ;exit;
                 $query = new CypherQuery($this->client, $queryString);
                 $result = $query->getResultSet();
@@ -141,7 +167,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
                 }
                 $queryString = "Match (m:".$label."), (n:User:Mintmesh)
                                 where ID(m)=".$toUserId."  and n.emailid='".$fromUserEmailId."'
-                                create unique (n)-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED');
+                                merge (n)-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED');
 
                 $queryString.="]->(m)  set r.created_at='".date("m-d-Y H:i:s A")."'";
                 //set other relations
@@ -305,7 +331,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
         {
             $from = $this->appEncodeDecode->filterString(strtolower($from));
             try{
-                $queryString = "MATCH (u:User:Mintmesh)
+                /*$queryString = "MATCH (u:User:Mintmesh)
                             WHERE u.emailid = '".$from."'
                             CREATE (m:NonMintmesh";
                 if (!empty($isImported)){//add imported label if created from import contacts
@@ -324,6 +350,36 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
                     $queryString.="}";
                 }
                 $queryString.=")<-[:".Config::get('constants.RELATIONS_TYPES.IMPORTED');
+                if (!empty($relationAttrs))
+                {
+                    $queryString.="{";
+                    foreach ($relationAttrs as $k=>$v)
+                    {
+                        $queryString.=$k.":'".$this->appEncodeDecode->filterString($v)."'," ;
+                    }
+                    $queryString = rtrim($queryString, ",") ;
+                    $queryString.="}";
+                }
+                $queryString.="]-(u)" ;*/
+                $nodePhoneNumber = (!empty($neoInput['phone']))?$this->appEncodeDecode->filterString(strtolower($neoInput['phone'])):'';
+                $queryString = "MATCH (u:User:Mintmesh) WHERE u.emailid = '".$from."' "
+                                . "MERGE (m:NonMintmesh";
+                if (!empty($isImported)){//add imported label if created from import contacts
+                    $queryString.=":Imported";
+                }
+                $queryString.="{ phone: '".$nodePhoneNumber."'}) "
+                                . "ON CREATE SET ";
+                if (!empty($neoInput))
+                {
+                    foreach ($neoInput as $k=>$v)
+                    {
+                        if ($k == 'emailid')
+                            $v= strtolower ($v);
+                        $queryString.="m.".$k."='".$this->appEncodeDecode->filterString($v)."'," ;
+                    }
+                    $queryString = rtrim($queryString, ",") ;
+                }
+                $queryString.=" merge (m)<-[:".Config::get('constants.RELATIONS_TYPES.IMPORTED');
                 if (!empty($relationAttrs))
                 {
                     $queryString.="{";
@@ -378,6 +434,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
             $result = $query->getResultSet();
             if ($result->count())
             {
+                $result[0][0]->fullname = (empty($result[0][0]->fullname)?$result[0][0]->firstname." ".$result[0][0]->lastname:$result[0][0]->fullname);
                 return $result[0][0] ;
             }
             else
@@ -395,6 +452,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
             $result = $query->getResultSet();
             if ($result->count())
             {
+                $result[0][0]->fullname = (empty($result[0][0]->fullname)?$result[0][0]->firstname." ".$result[0][0]->lastname:$result[0][0]->fullname);
                 return $result[0][0] ;
             }
             else

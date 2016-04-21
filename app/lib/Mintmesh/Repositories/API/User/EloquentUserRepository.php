@@ -656,12 +656,16 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
             
         }
         
-        public function getYouAreName($id=0){
-            if (!empty($id) && is_numeric($id)){
-            $sql = "select name from you_are_values where id=".$id ;
+        public function getYouAreName($id=0,$value){
+//            if (!empty($id) && is_numeric($id)){
+            if (!empty($id)){
+            $sql = "select name,id from you_are_values where ".(is_numeric($id)?"id='".$id."'":"name='".$id."'") ;
             $result = DB::select($sql);
                 if (!empty($result)) {
-                    return $result[0]->name ;
+                    if($value == "name")
+                        return $result[0]->name ;
+                    else
+                       return $result[0]->id ; 
                 } else {
                     return "";
                 }
@@ -670,13 +674,13 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
             }
         }
 
-     public function getPofessions(){
+     public function getProfessions(){
             $sql = "select id,name from professions where status=1 order by name asc" ;
             return $result = DB::select($sql);
         }
         
         public function getProfessionName($id=0){
-            if (!empty($id)){
+            if (!empty($id) && is_numeric($id)){
                 $sql = "select name from professions where id=".$id ;
                 $result = DB::select($sql);
                 if (!empty($result)) {

@@ -204,7 +204,7 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
        Route::post("get_you_are_values", "API\User\UserController@getYouAreValues");
        
        //get professions for provider service provider
-       Route::post("get_professions", "API\User\UserController@getPofessions");
+       Route::post("get_professions", "API\User\UserController@getProfessions");
         
        //resend activation link
        Route::post("resend_activation_link", "API\User\UserController@resendActivationLink");

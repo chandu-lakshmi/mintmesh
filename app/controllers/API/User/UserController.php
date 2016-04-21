@@ -1219,8 +1219,8 @@ class UserController extends \BaseController {
          * @param string $access_token
 	 * @return Response
 	 */
-        public function getPofessions(){
-            $response = $this->userGateway->getPofessions();
+        public function getProfessions(){
+            $response = $this->userGateway->getProfessions();
             return \Response::json($response);
             
         }		
