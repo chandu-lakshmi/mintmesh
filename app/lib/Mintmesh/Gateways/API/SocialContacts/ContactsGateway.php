@@ -111,7 +111,7 @@ class ContactsGateway {
                     }
 
                     #3 Checking for existing user nodes with email or with phone
-                    $result = $this->contactsRepository->getExistingContacts($emailId, $phonenumber);
+                    $result = $this->contactsRepository->getExistingContacts(array_unique($emailId), array_unique($phonenumber));
                     if(!empty($result)) {
                         #some nodes already present for the imported contacts
                         #4 foreach loop to traverse each node and its properties in $result
