@@ -788,7 +788,6 @@ class UserGateway {
                 $neoUser =  $this->neoUserRepository->getNodeByEmailId($inputUserData['username']) ;
                 $loggedinUserDetails = $this->userRepository->getUserByEmail($inputUserData['username']);
                 $remaning_days = $this->userRepository->getRemaningDays($inputUserData['username']);
-                //print_r($oauthResult);exit
                 if (!empty($neoUser))
                 {
                     $userDetails = $this->formUserDetailsArray($neoUser) ;
@@ -2297,6 +2296,7 @@ class UserGateway {
                             $r[$k] = $v ;
                         }
                     }
+                    $r['user_description'] = (isset($r['user_description'])?$r['user_description']:"");
                     $data = array("user"=>$r,"connections_count"=>$connectionsCount,"requests_count"=>$requestsCount);
                     $message = array('msg'=>array(Lang::get('MINTMESH.user.profile_success')));
                     return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
@@ -2895,6 +2895,10 @@ class UserGateway {
                                 {
                                     $note['referred_by_phone'] = 1;
                                 }
+                                $note['firstname'] = (empty($note['firstname'])?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$note['firstname']);
+                                $note['fullname'] = (empty($note['fullname'])?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$note['fullname']);
+                                $note['other_user_firstname'] = (empty($note['other_user_firstname'])?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$note['other_user_firstname']);
+                                $note['other_user_fullname'] = (empty($note['other_user_fullname'])?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$note['other_user_fullname']);
                                 //get post details if post type
                                 if (in_array($notification->notifications_types_id,$this->postNotifications))
                                 {
