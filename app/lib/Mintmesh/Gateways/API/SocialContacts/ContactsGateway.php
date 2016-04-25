@@ -88,7 +88,7 @@ class ContactsGateway {
                         foreach($contact->emails as $emailidValue) {
                             #emailid array
                             $emailId[] = $emailidValue;
-                            $emailMasterArray[$emailidValue] = $contact->recordID;
+                            $emailMasterArray[$emailidValue] = !empty($contact->recordID)?$contact->recordID:'';
                         }
                         # one contact can have multiple phone numbers
                         $phonesFormated = $this->formatPhoneNumbers($contact->phones,$fromUser_phone);
@@ -96,7 +96,7 @@ class ContactsGateway {
                             foreach ($phonesFormated as $phoneValue) {
                                 #phonenumber array
                                 $phonenumber[] = $phoneValue;
-                                $phonenumerMasterArray[$phoneValue] = $contact->recordID;
+                                $phonenumerMasterArray[$phoneValue] = !empty($contact->recordID)?$contact->recordID:'';
                             }
                         }
                         /*

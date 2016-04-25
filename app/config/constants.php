@@ -8,7 +8,7 @@ return [
     'GRANT_TYPE'=>"password",
     'MNT_LOGIN_SOURCE'=>1,
     'FB_LOGIN_SOURCE'=>2,
-    'MNT_USER_EXPIRY_HR'=>336,
+    'MNT_USER_EXPIRY_HR'=>1440,//336,
     'MNT_USER_EXPIRY_HR_FOR_RESEND_ACTIVATION'=>120,
     'MNT_VERSION'=>"v1",
     'MNT_FROM_NAME'=>'Mintmesh',

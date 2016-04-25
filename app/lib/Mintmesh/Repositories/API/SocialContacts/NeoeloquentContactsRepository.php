@@ -74,6 +74,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
                 $queryString.="merge (m)<-[:".Config::get('constants.RELATIONS_TYPES.IMPORTED');
                 if (!empty($relationAttrs))
                 {
+                    $relationAttrs['created_at']=date("m-d-Y H:i:s A");
                     $queryString.="{";
                     foreach ($relationAttrs as $k=>$v)
                     {
@@ -181,7 +182,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
                     $queryString = rtrim($queryString,',');
                 }
                 //\Log::info("--relate query-----".$queryString);
-                //echo $queryString ; 
+                //echo $queryString ; exit;
                 $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();
 
@@ -361,7 +362,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
                     $queryString.="}";
                 }
                 $queryString.="]-(u)" ;*/
-                $nodePhoneNumber = (!empty($neoInput['phone']))?$this->appEncodeDecode->filterString(strtolower($neoInput['phone'])):'';
+                $nodePhoneNumber = $neoInput['phone'];//(!empty($neoInput['phone']))?$this->appEncodeDecode->filterString(strtolower($neoInput['phone'])):'';
                 $queryString = "MATCH (u:User:Mintmesh) WHERE u.emailid = '".$from."' "
                                 . "MERGE (m:NonMintmesh";
                 if (!empty($isImported)){//add imported label if created from import contacts
@@ -382,6 +383,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
                 $queryString.=" merge (m)<-[:".Config::get('constants.RELATIONS_TYPES.IMPORTED');
                 if (!empty($relationAttrs))
                 {
+                    $relationAttrs['created_at']=date("m-d-Y H:i:s A");
                     $queryString.="{";
                     foreach ($relationAttrs as $k=>$v)
                     {
@@ -429,7 +431,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
         public function getImportRelationDetailsByEmail($email1='', $email2=''){
             $email1 = $this->appEncodeDecode->filterString(strtolower($email1));
             $email2 = $this->appEncodeDecode->filterString(strtolower($email2));
-            $queryString = "match (u:User:Mintmesh)-[r:IMPORTED]-(c:User) where u.emailid='".$email1."' and c.emailid='".$email2."' return r";
+            $queryString = "match (u:User:Mintmesh)-[r:IMPORTED]-(c:User) where u.emailid='".$email1."' and c.emailid='".$email2."' return r order by r.created_at desc limit 1";
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             if ($result->count())
@@ -447,7 +449,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
         public function getImportRelationDetailsByPhone($email1='', $phone=''){
             $email1 = $this->appEncodeDecode->filterString(strtolower($email1));
             $phone = $this->appEncodeDecode->filterString(strtolower($phone));
-            $queryString = "match (u:User:Mintmesh)-[r:IMPORTED]-(c:NonMintmesh) where u.emailid='".$email1."' and c.phone='".$phone."' return r";
+            $queryString = "match (u:User:Mintmesh)-[r:IMPORTED]-(c:NonMintmesh) where u.emailid='".$email1."' and c.phone='".$phone."' return r order by r.created_at desc limit 1";
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             if ($result->count())

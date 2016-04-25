@@ -2331,7 +2331,7 @@ class UserGateway {
                     {
                         $r = $neoLoggedInUserDetails->getAttributes();
                     }
-                    $r['fullname'] = (empty($r['fullname'])?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$r['fullname']);
+                    $r['fullname'] = (empty(trim($r['fullname']))?"":$r['fullname']);
                     if (!empty($neoLoggedInUserDetails->dp_renamed_name))//user has completed profile
                     {
                         if (!empty($neoLoggedInUserDetails->from_linkedin))//if  linked in
@@ -2865,7 +2865,6 @@ class UserGateway {
                                     }else{
                                         $otherUserDetails = $this->formUserDetailsArray($otherEmailDetails, 'attribute', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC'));
                                     }
-                                    
                                     foreach ($otherUserDetails as $k=>$v)
                                     {
                                         $note['other_user_'.$k] = $v ;

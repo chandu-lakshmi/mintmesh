@@ -69,7 +69,8 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
             $result = DB::select($sql);
             if (!empty($result))
             {
-                $result[0]->days = ($result[0]->days <= 14?(14-$result[0]->days):0);
+//                $result[0]->days = ($result[0]->days <= 14?(14-$result[0]->days):0);
+                $result[0]->days = ($result[0]->days <= 60?(60-$result[0]->days):0);
                 return $result[0] ;
             }
             else
