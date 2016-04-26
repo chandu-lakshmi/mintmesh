@@ -2317,6 +2317,7 @@ class UserGateway {
         public function formUserDetailsArray($neoLoggedInUserDetails, $type = '',$userAbstractionLevel='full')
         {
             $r = array();
+            $r['fullname'] = "";
             if (strpos(\Request::url(), 'v3') !== false){
                 $r = $this->formUserDetailsArrayV3($neoLoggedInUserDetails, $type,$userAbstractionLevel) ;
             }else{
@@ -2331,7 +2332,9 @@ class UserGateway {
                     {
                         $r = $neoLoggedInUserDetails->getAttributes();
                     }
-                    $r['fullname'] = (empty(trim($r['fullname']))?"":$r['fullname']);
+                    if (!empty($r['fullname'])){
+                        $r['fullname'] = empty(trim($r['fullname']))?"":$r['fullname'];
+                    }
                     if (!empty($neoLoggedInUserDetails->dp_renamed_name))//user has completed profile
                     {
                         if (!empty($neoLoggedInUserDetails->from_linkedin))//if  linked in
