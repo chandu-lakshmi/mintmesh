@@ -8,7 +8,7 @@ return [
     'GRANT_TYPE'=>"password",
     'MNT_LOGIN_SOURCE'=>1,
     'FB_LOGIN_SOURCE'=>2,
-    'MNT_USER_EXPIRY_HR'=>336,
+    'MNT_USER_EXPIRY_HR'=>1440,//336,
     'MNT_USER_EXPIRY_HR_FOR_RESEND_ACTIVATION'=>120,
     'MNT_VERSION'=>"v1",
     'MNT_FROM_NAME'=>'Mintmesh',
@@ -21,9 +21,10 @@ return [
     'IOS'=>'ios',
     'INVITE_SINGLE'=>false,
     'INVITE_EMAIL'=>'mintmeshapp@gmail.com',
-    'PUSH_APP_ID' =>'MTPajI5Vj2EzNUvKnvvynrZHh320Nk2pu9iW3x60',// 'MTPajI5Vj2EzNUvKnvvynrZHh320Nk2pu9iW3x60',//'0YORwFGpy2BsSW4g6ify3FxeBraHHiMDuzFUTJX0',
-    'PUSH_REST_KEY' =>'32zUISSPq5aAdkdWdrGYTQpad4JsRhoQsD4Exro8',// '32zUISSPq5aAdkdWdrGYTQpad4JsRhoQsD4Exro8',//'dVGfvLnENYwyTXVKoUPJKvOW4J9Ww9UoRbQQfJg7',
-    'PUSH_MASTER_KEY' =>'LJIrWD0drrfZC55wvKwpWpnSyeq9UhMl5Ybuern6',// 'LJIrWD0drrfZC55wvKwpWpnSyeq9UhMl5Ybuern6',//'noK7rjixKT90K6GICpVwzgoMIb8v8JOhq2U1Z6BA'
+    'MNT_PUBLIC_URL'=>'https://staging.mintmesh.com/public/',//mintmesh public folder url
+    'PUSH_APP_ID' =>'MTPajI5Vj2EzNUvKnvvynrZHh320Nk2pu9iW3x60',//'0YORwFGpy2BsSW4g6ify3FxeBraHHiMDuzFUTJX0',// 'MTPajI5Vj2EzNUvKnvvynrZHh320Nk2pu9iW3x60',//'0YORwFGpy2BsSW4g6ify3FxeBraHHiMDuzFUTJX0',
+    'PUSH_REST_KEY' =>'32zUISSPq5aAdkdWdrGYTQpad4JsRhoQsD4Exro8',//'dVGfvLnENYwyTXVKoUPJKvOW4J9Ww9UoRbQQfJg7',// '32zUISSPq5aAdkdWdrGYTQpad4JsRhoQsD4Exro8',//'dVGfvLnENYwyTXVKoUPJKvOW4J9Ww9UoRbQQfJg7',
+    'PUSH_MASTER_KEY' =>'LJIrWD0drrfZC55wvKwpWpnSyeq9UhMl5Ybuern6',//'noK7rjixKT90K6GICpVwzgoMIb8v8JOhq2U1Z6BA',// 'LJIrWD0drrfZC55wvKwpWpnSyeq9UhMl5Ybuern6',//'noK7rjixKT90K6GICpVwzgoMIb8v8JOhq2U1Z6BA'
     'TWILIO'=>[
         'SID'=>'AC968eede40c3bdcc35a2a5d5012521f41',
         'AUTH_TOKEN'=>'897a3b5034602f5a20a242d4bf0045e7',
@@ -130,7 +131,8 @@ return [
 //        'EMAILID'=>'support@mintmesh.com'
         'EMAILID'=>'v.gopi314@gmail.com'
     ],
-    'S3BUCKET' => 'mintmesh',
+    'S3BUCKET' => 'mintmesh/dev/profilepic',
+    'S3BUCKET_RESUME' => 'mintmesh/dev/resume',
     'PROFILE_COMPLETION_VALUES'=>[
         'CERTIFICATION'=>10,
         'CONTACT'=>30,

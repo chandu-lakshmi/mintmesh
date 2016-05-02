@@ -644,6 +644,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                                     and r1.referred_by='".$referred_by."'
                                     and r1.relation_count='".$max_count."'  
                                     return r1,p" ;
+                //echo $queryString ; exit;
                 $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();    
              }
@@ -961,6 +962,49 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                  return 0;
              }
          }
+         /*
+          * get post name for the new post posted to send notification
+          */
+         public function getPostName($postId=0){
+             $postName = '';
+             if (!empty($postId)){
+                 $queryString = "match  (p:Post) where ID(p)=".$postId." return p.service_name";
+                 $query = new CypherQuery($this->client, $queryString);
+                 $result = $query->getResultSet();
+                 if (!empty($result)){
+                     $postName = $result[0][0];
+                 }
+             }
+             return $postName ;
+         }
+         /*
+          * get connected users to send push notifications when a new post is created
+          */
+         public function getMyConnectionForNewPostPush($fromUserEmailid='', $serviceType='', $serviceLocation='', $excludedList=array()){
+             if (!empty($fromUserEmailid) && !empty($serviceType)){
+                 $queryString = "match (n:User:Mintmesh {emailid:'".$fromUserEmailid."'})-[r1:ACCEPTED_CONNECTION]-(m:User:Mintmesh)" ;
+                 if ($serviceType == 'in_location' || !empty($excludedList)){
+                     $queryString.=" where ";
+                     if ($serviceType == 'in_location'){
+                         $queryString.="lower(m.location) =~ ('.*' + lower('".$serviceLocation."'))" ;
+                     }
+                     if ($serviceType == 'in_location' && !empty($excludedList)){
+                         
+                         $queryString.=" and ";
+                     }
+                     if (!empty($excludedList)){
+                         $queryString.= "NOT m.emailid IN['".implode("','",$excludedList)."']";
+                     }
+                }
+                $queryString.=" return m.emailid";
+                //echo $queryString ; exit;
+                $query = new CypherQuery($this->client, $queryString);
+                return $result = $query->getResultSet();
+                 
+             }
+         }
+         
+         
 
 }
 ?>

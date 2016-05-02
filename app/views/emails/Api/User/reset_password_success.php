@@ -41,7 +41,7 @@
   <tr>
     <td valign="top" class="textContent" style="padding:10px 20px 20px;font-size:18px; font-weight:normal; color:#999999; text-align:center;line-height:135%;"><hr style="border-top:1px solid #c8c8c8;margin-top:5px;margin-bottom:20px;">
       If you need assistance, please contact
-        MintMesh Support <a style="color:#1b8c6e;text-decoration:none;" href="mailto:support@mintmesh.com">(support@mintmesh.com)</a></td>
+        MintMesh Support. <a style="color:#1b8c6e;text-decoration:none;" href="mailto:support@mintmesh.com">(support@mintmesh.com)</a></td>
   </tr>
 </table>
 </body>

@@ -42,8 +42,6 @@ class SMSGateway {
                 $this->authorizer = $authorizer;
                 $this->commonFormatter = $commonFormatter ;
                 $this->appEncodeDecode = $appEncodeDecode ;
-                $this->loggedinUserDetails = $this->getLoggedInUser();
-                $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
         }
         
         public function validateSMSInput($input)
@@ -90,6 +88,8 @@ class SMSGateway {
         
         public function sendSMS($input)
         {
+            $this->loggedinUserDetails = $this->getLoggedInUser();
+            $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
             $numbers = json_decode($input['numbers']);
             $sms_type= $input['sms_type'] ;
             $userPhone = !empty($this->neoLoggedInUserDetails->phone)?$this->neoLoggedInUserDetails->phone:'';
@@ -109,7 +109,7 @@ class SMSGateway {
                     $lastName = !empty($this->loggedinUserDetails->lastname)?$this->loggedinUserDetails->lastname:'';
                     $senderName = $firstName." ".$lastName ;
                     $pushData = array() ;
-                    $pushData['message'] = $senderName." discovered a great way to refer people and ask for referrals, using MintMesh.Download app from www.mintmesh.com";
+                    $pushData['message'] = $senderName." discovered a great way to refer people and ask for referrals, using MintMesh. Download app from www.mintmesh.com";
                     $pushData['number'] = $number ;
                     $pushData['from'] = $this->loggedinUserDetails->emailid ;
                     $pushData['type_sms'] = $input['sms_type'];
@@ -129,6 +129,8 @@ class SMSGateway {
         
         public function sendOTP($input)
         {
+            $this->loggedinUserDetails = $this->getLoggedInUser();
+            $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
             $authy_api = new AuthyApi(Config::get('constants.TWILIO.AUTHY_API_KEY'), Config::get('constants.TWILIO.AUTHY_URL'));
             $sms_type= $input['sms_type'] ;
             
@@ -209,6 +211,8 @@ class SMSGateway {
         
         public function verifyOTP($input)
         {
+            $this->loggedinUserDetails = $this->getLoggedInUser();
+            $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
             $email = $this->loggedinUserDetails->emailid ;
             $phone = $this->neoLoggedInUserDetails->phone ;
             //check if phone number is already existing
@@ -260,6 +264,8 @@ class SMSGateway {
         
         public function addSmsToQueue()
         {
+            $this->loggedinUserDetails = $this->getLoggedInUser();
+            //    $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
             $message = "test message from mintmesh";
                     $smsInput=array();
                     try{
@@ -285,6 +291,8 @@ class SMSGateway {
         
         public function sendSMSForReferring($input)
         {
+            $this->loggedinUserDetails = $this->getLoggedInUser();
+            $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
             $numbers = json_decode($input['numbers']);
             $sms_type= $input['sms_type'] ;
             $other_name = !empty($input['other_name'])?$input['other_name']:"" ;

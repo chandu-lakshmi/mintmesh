@@ -40,7 +40,7 @@ class UserGateway {
     protected $userValidator,$contactsGateway, $referralsGateway;
     protected $userEmailManager;
     protected $userFileUploader,$declines, $refer_nots, $deleteUserTypes;
-    protected $commonFormatter, $postNotifications, $other_status_diferrent, $referralsRepository, $notificationFromP2, $notificationToP2;
+    protected $commonFormatter, $postNotifications, $other_status_diferrent, $referralsRepository, $notificationFromP2, $notificationToP2,$newServiceNotifications;
     protected $loggedinUserDetails,$notificationsTypes,$extraTextsNotes,$directProfileRedirections,$infoTypes,$referFlowTypes ;
 	public function __construct(UserRepository $userRepository,
                                     NeoUserRepository $neoUserRepository,
@@ -67,7 +67,7 @@ class UserGateway {
                 $this->contactsGateway = $contactsGateway ;
                 $this->contactsRepository = $contactsRepository ;
                 $this->notificationsTypes = array('3','4','5','6','10','11','12','13','14','15','17','18','19','20','22');
-                $this->extraTextsNotes = array('10','11','12','22') ;
+                $this->extraTextsNotes = array('10','11','12','22','27') ;
                 $this->infoTypes = array('experience', 'education', 'certification');
                 $this->directProfileRedirections = array('2','12','14');
                 $this->declines = array('15','16');
@@ -80,6 +80,7 @@ class UserGateway {
                 $this->you_are = array('recruiter'=>4, 'salaried_professional'=>1, 'self_employed'=>2, 'professional_service_provider'=>3, 'student'=>5, 'retired_professional'=>7, 'homemaker'=>6);
                 $this->notificationFromP2 = array(10,11,20);
                 $this->notificationToP2 = array(12,15);
+                $this->newServiceNotifications = array(27);
         }
         // validation on user inputs for change password
         public function validateChangePassword($input) {            
@@ -409,13 +410,36 @@ class UserGateway {
                            'ip_address' => $_SERVER['REMOTE_ADDR']
                        ) ;
                     $this->userRepository->logEmail($emailLog);
+                    
+                    //send second email
+                    $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.user_introduction');
+                    $this->userEmailManager->emailId = $input['emailid'];
+                    $dataSet = array();
+                    $dataSet['name'] = $input['firstname'];
+                    $this->userEmailManager->dataSet = $dataSet;
+                    $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.introduction');
+                    $this->userEmailManager->name = $input['firstname']. " ".$input['lastname'];
+                    $email_sent = $this->userEmailManager->sendMail();
+                    //log email status
+                    $emailStatus = 0;
+                    if (!empty($email_sent)) {
+                        $emailStatus = 1;
+                    }
+                    $emailLog = array(
+                           'emails_types_id' => 1,
+                           'from_user' => 0,
+                           'from_email' => '',
+                           'to_email' => $this->appEncodeDecode->filterString(strtolower($input['emailid'])),
+//                           'related_code' => $activationCode,
+                           'sent' => $emailStatus,
+                           'ip_address' => $_SERVER['REMOTE_ADDR']
+                       ) ;
+                    $this->userRepository->logEmail($emailLog);
                     //log points if location is filled..i.e if it v2 version api
                     if (!empty($input['location'])){
                         $this->userRepository->logLevel(6, $this->appEncodeDecode->filterString(strtolower($input['emailid'])), "", "",Config::get('constants.POINTS.SIGNUP'));
                     }
                     $input['grant_type'] = "password";
-//                    $input['client_id'] = "dA3UFisQBLX23jHW";
-//                    $input['client_secret'] = "3mjo0kDSgCbsdLG7ipnhWJxC1iY6RLcX";
                     $input['username'] = $input['emailid'];
                     $response = $this->loginCall($input);
                     $userDetails = (array) json_decode($response, TRUE);
@@ -1211,6 +1235,16 @@ class UserGateway {
                         $resumeInput = $input;
                         $resumeInput['emailid'] = $this->loggedinUserDetails->emailid ;
                         $resumeInfoSuccess = $this->editResumeInfo($resumeInput);
+                        if($resumeInfoSuccess=='uploaded_large_file'||$resumeInfoSuccess=='invalid_file_format'){
+                            $message = array('msg'=>array(Lang::get('MINTMESH.user.'.$resumeInfoSuccess)));
+                            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array()) ;
+                        }
+                        else if(!empty($resumeInfoSuccess['originalFileName']))
+                        {
+                            $data['cv_original_name'] = $resumeInfoSuccess['originalFileName'];
+                            $data['cv_path']          = $resumeInfoSuccess['renamedFileName'];
+                        }
+                     
                     }
                     //update user node to update proflie completion percentage
                     if (!empty($userInput))
@@ -1410,27 +1444,60 @@ class UserGateway {
         
         public function editResumeInfo($input)
         {
+            $response = array('FALSE');
             if (!empty($input))
             {
-                $originalFileName = $renamedFileName = $linkedinFileName = "";
-                $from_linkedin =  0;
+                $originalFileName = $renamedFileName = "";
+                $originalFileExtension = $originalFileSize = "";
                 $neoInput = array();
                 $neoInput['emailid'] = $input['emailid'] ;
+                $fileMaxSize = 307200;//file size max 300kb
+                $allowedExtension = array(
+                                'doc',
+                                'docx',
+                                'pdf',  
+                                'rtf',
+                                'msword'
+                                );
+                  //delete resume
+                if(!isset($input['resume'])){
+                        $neoInput['cv_original_name'] = '';
+                        $neoInput['cv_renamed_name'] = '' ;    
+                        $updatedNeoUser =  $this->neoUserRepository->updateUser($neoInput) ;
+                }      
+                
                 if (!empty($input['resume']))
                 {
-                    $originalFileName = $input['resume']->getClientOriginalName();
-                    //upload the file
-                    $this->userFileUploader->source = $input['resume'] ;
-                    $this->userFileUploader->destination = public_path().Config::get('constants.CV_PATH') ;
-                    $renamedFileName = $this->userFileUploader->moveFile();
-                    $neoInput['cv_path'] = url('/').Config::get('constants.CV_PATH') ;
-                    $neoInput['cv_original_name'] = $originalFileName ;
-                    $neoInput['cv_renamed_name'] = $renamedFileName ;
-                    unset($input['resume']);
-                    $updatedNeoUser =  $this->neoUserRepository->updateUser($neoInput) ;
-                    return true;
+                    $originalFileName      =  $input['resume']->getClientOriginalName();
+                    $originalFileExtension =  $input['resume']->getClientOriginalExtension();
+                    $originalFileSize      =  $input['resume']->getClientSize();
+                     //cheking file format              
+                   if(in_array($originalFileExtension, $allowedExtension)){
+                       //cheking file size
+                       if($originalFileSize <= $fileMaxSize ){
+                            //upload the file
+                            $this->userFileUploader->source = $input['resume'] ;
+                            $this->userFileUploader->destination = Config::get('constants.S3BUCKET_RESUME') ;
+                            $renamedFileName = $this->userFileUploader->uploadToS3();
+                            $neoInput['cv_original_name'] = $originalFileName ;
+                            $neoInput['cv_renamed_name'] = $renamedFileName ;
+                            unset($input['resume']);
+                            $updatedNeoUser =  $this->neoUserRepository->updateUser($neoInput) ;
+                            $response['originalFileName'] = $originalFileName;
+                            $response['renamedFileName']  = $renamedFileName;
+                       }
+                       else
+                       {
+                          $response = "uploaded_large_file";   
+                       }        
+                   }
+                   else
+                   {
+                      $response = "invalid_file_format";
+                   }
                 }
             }
+            return $response;
         }
         public function processConnectionRequest($input)
         {
@@ -1525,7 +1592,7 @@ class UserGateway {
                     $r = $this->formUserDetailsArray($neoLoggedInUserDetails);
                     if (!empty($neoLoggedInUserDetails->cv_path) && !empty($neoLoggedInUserDetails->cv_renamed_name))
                     {
-                        $r['cv_path'] = $neoLoggedInUserDetails->cv_path."/".$neoLoggedInUserDetails->cv_renamed_name ;
+                        $r['cv_path'] = $neoLoggedInUserDetails->cv_renamed_name ;
                     }
                     if (!empty($extraDetails))
                     {
@@ -2354,6 +2421,15 @@ class UserGateway {
                     {
                         $r['dp_path']="";
                     }
+                    if (!empty($neoLoggedInUserDetails->cv_path) && !empty($neoLoggedInUserDetails->cv_renamed_name))
+                    {
+                        $r['cv_path'] = $neoLoggedInUserDetails->cv_renamed_name ;
+                    }
+                    else
+                    {
+                        $r['cv_path']="";
+                    }
+                    
                     if (isset($r['id']))
                         unset($r['id']);
 
@@ -2693,7 +2769,7 @@ class UserGateway {
                                     'other_phone'=>$other_phone,
                                     'for_mintmesh' => $is_mintmesh,
                                     'message' => Lang::get('MINTMESH.notifications.messages.'.$notificationType),
-                                    'ip_address' => $_SERVER['REMOTE_ADDR'],
+                                    'ip_address' => !empty($_SERVER['REMOTE_ADDR'])?$_SERVER['REMOTE_ADDR']:'',
                                     'created_at' => date('Y-m-d H:i:s')
                                 ) ;
                             //add other status 1 to redirect to profile
@@ -2739,9 +2815,20 @@ class UserGateway {
                                     }
                                     $msg = $msg." ".$thirdFullName ;
                                 }
-                                if (in_array($notificationType,$this->extraTextsNotes))//for posts
+                                if (in_array($notificationType,$this->extraTextsNotes) && !in_array($notificationType,$this->newServiceNotifications))//for posts
                                 {
                                     $msg = $msg." ".Lang::get('MINTMESH.notifications.extra_texts.'.$notificationType) ;
+                                }
+                            }
+                            //for new service push notification
+                            if (in_array($notificationType,$this->newServiceNotifications)){
+                                # get service name for the request
+                                $serviceId = !empty($extraInserts['extra_info'])?$extraInserts['extra_info']:0;
+                                $serviceName = $this->referralsRepository->getPostName($serviceId);
+                                $msg=$msg." ".trim($serviceName) ;
+                                if (in_array($notificationType,$this->extraTextsNotes))//for posts
+                                {
+                                    $msg = $msg.Lang::get('MINTMESH.notifications.extra_texts.'.$notificationType) ;
                                 }
                             }
                             $badgeResult = $this->userRepository->getNotificationsCount($userDeviceResult[0], 'all');
@@ -2860,7 +2947,7 @@ class UserGateway {
                                             }
                                             $thirdName = (empty($thirdUserResult->fullname)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):($thirdUserResult->fullname == $checkFName || $thirdUserResult->fullname == $fName)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$thirdUserResult->fullname);
                                             $thirdFirstName = (empty($thirdUserResult->firstname)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):($thirdUserResult->firstname == $fName)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$thirdUserResult->firstname);
-                                            $thirdLastName = (empty($thirdUserResult->lastname)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):($thirdUserResult->lastname == $fName)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$thirdUserResult->lastname);
+                                            $thirdLastName = !empty($thirdUserResult->lastname)?$thirdUserResult->lastname:"";
                                         }
                                     }
                                     if (empty($notification->for_mintmesh) && empty($normalFlow)){
@@ -2876,6 +2963,19 @@ class UserGateway {
                                         $note['other_user_fullname'] = $thirdName ;
                                         $note['other_user_firstname'] = $thirdFirstName ;
                                         $note['other_user_lastname'] = $thirdLastName ;
+                                    }
+                                    # for shared details battle card, the from user can be a non mintmesh user
+                                    if ($notification->notifications_types_id == 20){
+                                        #check if it is a non mintmesh contact
+                                        if (empty($neoUserDetails->login_source)){
+                                            $note['is_non_mintmesh'] = 1;
+                                        }
+                                        #check if the fullname are empty
+                                        if(empty($neoUserDetails->fullname) || (!empty($neoUserDetails->fullname) && empty(trim($neoUserDetails->fullname)))){
+                                            $note['fullname'] = $thirdName ;
+                                            $note['firstname'] = $thirdFirstName ;
+                                            $note['lastname'] = $thirdLastName ;
+                                        }
                                     }
 
                                 }

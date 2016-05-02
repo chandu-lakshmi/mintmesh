@@ -209,7 +209,7 @@ class ReferralsGateway {
         
         public function seekServiceReferral($input)
         {
-           
+            $excludedList = $includedList = array();
             $this->loggedinUserDetails = $this->getLoggedInUser();
             $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;      
             $fromId = $this->neoLoggedInUserDetails->id ;
@@ -279,6 +279,8 @@ class ReferralsGateway {
                 }
                 //exclude or include contacts
                 if(isset($input['excluded_list']) || isset($input['included_list'])) {
+                    $excludedList = !empty($input['excluded_list'])?json_decode($input['excluded_list']):array();
+                    $includedList = !empty($input['included_list'])?json_decode($input['included_list']):array();
                     $list = json_decode(!empty($input['excluded_list'])?$input['excluded_list']:$input['included_list']) ;
                     if(!empty($list)) {
                         $relationAttrs = array();
@@ -309,6 +311,17 @@ class ReferralsGateway {
                                     'email'=>$this->neoLoggedInUserDetails->emailid);
                 $emailiSent = $this->sendEmailToUser($successSupportTemplate, $receipientEmail, $emailData);
                 
+                #send push notifications to all the contacts
+                $pushData = array();
+                $pushData['serviceId'] = $serviceId;
+                $pushData['loggedinUserDetails'] = $this->loggedinUserDetails;
+                $pushData['neoLoggedInUserDetails'] = $this->neoLoggedInUserDetails;
+                $pushData['includedList'] = $includedList;
+                $pushData['excludedList'] = $excludedList;
+                $pushData['service_type'] = $input['service_type'];
+                $pushData['service_location'] = $neoInput['service_location'];
+                Queue::push('Mintmesh\Services\Queues\NewPostReferralQueue', $pushData, 'Notification');
+                //$this->sendPushNotificationsForPosts($serviceId, $this->loggedinUserDetails,$this->neoLoggedInUserDetails, $includedList, $excludedList, $input['service_type'], $neoInput['service_location']);
                 
                 $message = array('msg'=>array(Lang::get('MINTMESH.referrals.success')));
                 return $this->commonFormatter->formatResponse(200, "success", $message, array()) ;
@@ -483,7 +496,7 @@ class ReferralsGateway {
                {
                    $relationCount = 1 ;
                }
-               if (!empty($input['refer_non_mm_email']) && !empty($input['referring'])){//non mintmesh and refer by email
+               if (!empty($input['refer_non_mm_email']) && !empty($input['referring'])){//non mintmesh and refer 
 
                    if (!empty($input['referring_phone_no'])){//create node for this and relate
                        //check if phone number contact exist
@@ -1769,6 +1782,30 @@ class ReferralsGateway {
                 }
             }
             return $totalPosts ;
+        }
+        /*
+         * send push notifications to the contacts when ever a new request is posted
+         */
+        public function sendPushNotificationsForPosts($serviceId=0, $fromUser=array(), $neofromUser=array(), $includedList=array(), $excludedList=array(), $serviceType='global', $serviceLocation=''){
+            if (!empty($fromUser) && !empty($serviceId)){
+                $fromUser = (object) $fromUser;
+                $neofromUser = (object) $neofromUser;
+                #check if included list is set or not so that the notification will be sent to only included list
+                if (!empty($includedList)){
+                    foreach ($includedList as $receiverEmailId){
+                        $this->userGateway->sendNotification($fromUser, $neofromUser, $receiverEmailId, 27, array('extra_info'=>$serviceId), array(),1, 0);
+                    }
+                }else{
+                    $contactsListResult = $this->referralsRepository->getMyConnectionForNewPostPush($fromUser->emailid, $serviceType, $serviceLocation, $excludedList);
+                    if (!empty($contactsListResult)){
+                        foreach ($contactsListResult as $contact){
+                            if ($contact[0] != $fromUser->emailid){//if not me
+                                $this->userGateway->sendNotification($fromUser, $neofromUser, $contact[0], 27, array('extra_info'=>$serviceId), array(),1, 0);
+                            }
+                        }
+                    }
+                }
+            }
         }
     
 }

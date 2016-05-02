@@ -52,7 +52,7 @@
 					<p style="padding-bottom:20px;margin:0px">Sincerely, <br>
 					<span style="color:#C9C9C9;margin:0px">(MintMesh Team)</span></p>
 				
-                                        <p align="center" style="padding-top:20px;border-top:1px solid #C9C9C9;color:#999999;margin:0px">If you need assistance, please contact <br>MintMesh Support <span style="color:black;margin:0px"><a style="color:#1b8c6e;text-decoration:none;" href="mailto:support@mintmesh.com" >(support@mintmesh.com)</a></span></p>
+                                        <p align="center" style="padding-top:20px;border-top:1px solid #C9C9C9;color:#999999;margin:0px">If you need assistance, please contact <br>MintMesh Support. <span style="color:black;margin:0px"><a style="color:#1b8c6e;text-decoration:none;" href="mailto:support@mintmesh.com" >(support@mintmesh.com)</a></span></p>
 				</td>
 		</tr>
 	</table>

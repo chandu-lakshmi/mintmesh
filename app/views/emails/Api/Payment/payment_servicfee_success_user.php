@@ -103,7 +103,7 @@ font-family: 'arial'; font-style: italic; font-weight: 400; src: local('arial It
 <tr>
 <td>
 <table style="width: 100%; margin: 0 auto; padding: 10px 0 0;"><tr>
-        <td colspan="2" style="font-size:18px; font-weight:normal; color:#999999; text-align:center;line-height:135%;" align="center">If you need assistance, please contact <br> MintMesh Support <a style="color: #1b8c6e; text-decoration: none;" href="mailto:support@mintmesh.com">(support@mintmesh.com)</a>
+        <td colspan="2" style="font-size:18px; font-weight:normal; color:#999999; text-align:center;line-height:135%;" align="center">If you need assistance, please contact <br> MintMesh Support. <a style="color: #1b8c6e; text-decoration: none;" href="mailto:support@mintmesh.com">(support@mintmesh.com)</a>
 </td>
 </tr></table>
 </td>

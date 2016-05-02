@@ -66,7 +66,7 @@ class ContactsGateway {
                 $emailMasterArray = array();
                 $phonenumerMasterArray = array();
                 $pushData = array();
-
+                $mintUsers = array();
                 // getting the loggedin user details
                 $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid);
                 // logged in user/from user data
@@ -88,7 +88,7 @@ class ContactsGateway {
                         foreach($contact->emails as $emailidValue) {
                             #emailid array
                             $emailId[] = $emailidValue;
-                            $emailMasterArray[$emailidValue] = !empty($contact->recordID)?$contact->recordID:'';
+                            $emailMasterArray[$this->appEncodeDecode->filterString(strtolower($emailidValue))] = !empty($contact->recordID)?$contact->recordID:'';
                         }
                         # one contact can have multiple phone numbers
                         $phonesFormated = $this->formatPhoneNumbers($contact->phones,$fromUser_phone);
@@ -178,13 +178,16 @@ class ContactsGateway {
                                             $mintmeshUserArray[$autoConnectEmailId]['connected']=1;
                                             $autoconnectedUsers[$autoConnectEmailId] = $mintmeshUserArray[$autoConnectEmailId] ;
                                             unset($mintmeshUserArray[$autoConnectEmailId]);
-                                        }
+                                        } 
                                      }
 
                                 }
 
                             }
-
+                        foreach ($mintmeshUserArray as $mintUser) {
+                            $mintUser['position'] = (isset($mintUser['position']) && !empty($mintUser['position'])?$mintUser['position']:(isset($mintUser['you_are']) && !empty($mintUser['you_are'])?$this->userRepository->getYouAreName($mintUser['you_are'],"name"):''));
+                            $mintUsers[]=$mintUser;
+                        }
                          #7 pushing the data to queue
                           //  Log::info("push data".print_r($pushData, true));
                          //Queue::push('Mintmesh\Services\Queues\CreateOrRelateContactsQueue', $pushData, 'IMPORT');
@@ -192,7 +195,8 @@ class ContactsGateway {
                         $responseMessage = Lang::get('MINTMESH.import_contacts.success');                    
                         $responseCode    = self::SUCCESS_RESPONSE_CODE;
                         $responseStatus  = self::SUCCESS_RESPONSE_MESSAGE;
-                        $responseData    = array('mintmesh_users'=>array_values($mintmeshUserArray),'autoconnected_users'=>array_values($autoconnectedUsers));
+//                        $responseData    = array('mintmesh_users'=>array_values($mintmeshUserArray),'autoconnected_users'=>array_values($autoconnectedUsers));
+                        $responseData    = array('mintmesh_users'=>$mintUsers,'autoconnected_users'=>array_values($autoconnectedUsers));
 
                         
                     } else { #empty contact ends here 

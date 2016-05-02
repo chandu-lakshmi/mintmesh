@@ -120,7 +120,7 @@
 		<tr>
         <table style="width: 100%; margin: 0 auto; padding: 10px 0 0;">
             <tr>
-                <td colspan="2" style="text-align: center;font-size:18px; font-weight:normal; color:#999999; text-align:center;line-height:135%;" align="center">If you need assistance,<br> please contact MintMesh Support <a style="color: #1b8c6e; text-decoration: none;" href="mailto:support@mintmesh.com">(support@mintmesh.com)</a></td>
+                <td colspan="2" style="text-align: center;font-size:18px; font-weight:normal; color:#999999; text-align:center;line-height:135%;" align="center">If you need assistance,<br> please contact MintMesh Support. <a style="color: #1b8c6e; text-decoration: none;" href="mailto:support@mintmesh.com">(support@mintmesh.com)</a></td>
             </tr>
         </table>            
         </tr>
