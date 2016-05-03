@@ -697,7 +697,7 @@ class ReferralsGateway {
                                 if (!empty($nonMintmeshUserDetails->fullname)){
                                     $nonMintmeshUserDetails->fullname = trim($nonMintmeshUserDetails->fullname);
                                 }
-                                $fName = str_replace("-","",$postDetails['to_user_phone']);
+                                $fName = !empty($postDetails['to_user_emailid'])?$postDetails['to_user_emailid']:str_replace("-","",$postDetails['to_user_phone']);
                                 $checkFName = $fName." ".$fName;
                                 $postDetails['to_user_fullname'] = (empty($nonMintmeshUserDetails->fullname)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):($nonMintmeshUserDetails->fullname == $checkFName || $nonMintmeshUserDetails->fullname == $fName)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$nonMintmeshUserDetails->fullname);
                                 $postDetails['to_user_firstname'] = (empty($nonMintmeshUserDetails->firstname)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):($nonMintmeshUserDetails->firstname == $fName)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$nonMintmeshUserDetails->firstname);
@@ -1160,9 +1160,24 @@ class ReferralsGateway {
                             if (!empty($nonMintmeshUserDetails->fullname)){
                                 $nonMintmeshUserDetails->fullname = trim($nonMintmeshUserDetails->fullname);
                             }
-                            $returnArray['to_firstname'] = !empty($nonMintmeshUserDetails->firstname)?$nonMintmeshUserDetails->firstname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
-                            $returnArray['to_lastname'] = !empty($nonMintmeshUserDetails->lastname)?$nonMintmeshUserDetails->lastname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
-                            $returnArray['to_fullname'] = !empty($nonMintmeshUserDetails->fullname)?$nonMintmeshUserDetails->fullname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                            $fName='';
+                            if(!empty($result[0][1]->phone)) {
+                                $fName = str_replace("-","",$result[0][1]->phone);
+                                //$checkFName = $fName." ".$fName;
+                                //$returnArray['to_fullname'] = (empty($nonMintmeshUserDetails->fullname)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):($nonMintmeshUserDetails->fullname == $checkFName || $nonMintmeshUserDetails->fullname == $fName)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$nonMintmeshUserDetails->fullname);
+                                //$returnArray['to_firstname'] = (empty($nonMintmeshUserDetails->firstname)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):($nonMintmeshUserDetails->firstname == $fName)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$nonMintmeshUserDetails->firstname);
+                                //$returnArray['to_lastname'] = (empty($nonMintmeshUserDetails->lastname)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):($nonMintmeshUserDetails->lastname == $fName)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$nonMintmeshUserDetails->lastname);
+                            }  else {
+                                $fName = $result[0][1]->emailid;
+                                //$checkFName = $fName." ".$fName;
+                                //$returnArray['to_firstname'] = !empty($nonMintmeshUserDetails->firstname)?$nonMintmeshUserDetails->firstname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                                //$returnArray['to_lastname'] = !empty($nonMintmeshUserDetails->lastname)?$nonMintmeshUserDetails->lastname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                                //$returnArray['to_fullname'] = !empty($nonMintmeshUserDetails->fullname)?$nonMintmeshUserDetails->fullname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                            }
+                            $checkFName = $fName." ".$fName;
+                            $returnArray['to_fullname'] = (empty($nonMintmeshUserDetails->fullname)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):($nonMintmeshUserDetails->fullname == $checkFName || $nonMintmeshUserDetails->fullname == $fName)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$nonMintmeshUserDetails->fullname);
+                            $returnArray['to_firstname'] = (empty($nonMintmeshUserDetails->firstname)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):($nonMintmeshUserDetails->firstname == $fName)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$nonMintmeshUserDetails->firstname);
+                            $returnArray['to_lastname'] = (empty($nonMintmeshUserDetails->lastname)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):($nonMintmeshUserDetails->lastname == $fName)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$nonMintmeshUserDetails->lastname);
                         }
                         //check if phone is verified if p3 is loggedin
                         $this->loggedinUserDetails = $this->getLoggedInUser();
@@ -1280,7 +1295,7 @@ class ReferralsGateway {
                 }
                 
             }
-            $result = $this->referralsRepository->getMyReferralContacts($input);
+            $result = $this->referralsRepository->getMyReferralContacts($input);    
             if (count($result))
             {
                 foreach ($result as $k1=>$v1)

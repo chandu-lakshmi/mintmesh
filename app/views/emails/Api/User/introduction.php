@@ -29,6 +29,7 @@ first step, here are a few cool things that you can do with the app.</p>
   </tr>
   <tr>
     <td valign="top" class="textContent" style="padding:20px 20px 10px;line-height:135%;letter-spacing:0.2px;font-weight:normal; color:#777777;">
+      <h3 style="color:#000000;font-family: 'arial', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello <?php echo ucfirst($name) ; ?>, </h3>  
       <p style="text-align:center" ><img src="<?php echo $public_url ; ?>images/01.png"   align="center" style="max-width:100%;text-align:center;padding:20px 30px 10px;" alt="logo" title="Text"></p>
             <p style="font-size:18px;text-align:center;color:#000000;font-weight:700;">1. ASK for referrals</p>
             <p style="font-size:16px;text-align:center;color:#000000;font-weight:600;">Try out your first referral request and share it on your social network.</p>

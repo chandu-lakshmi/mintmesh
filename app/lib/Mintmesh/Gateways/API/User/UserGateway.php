@@ -1463,6 +1463,7 @@ class UserGateway {
                 if(!isset($input['resume'])){
                         $neoInput['cv_original_name'] = '';
                         $neoInput['cv_renamed_name'] = '' ;    
+                        $neoInput['cv_path'] = '' ;    
                         $updatedNeoUser =  $this->neoUserRepository->updateUser($neoInput) ;
                 }      
                 
@@ -1481,6 +1482,7 @@ class UserGateway {
                             $renamedFileName = $this->userFileUploader->uploadToS3();
                             $neoInput['cv_original_name'] = $originalFileName ;
                             $neoInput['cv_renamed_name'] = $renamedFileName ;
+                            $neoInput['cv_path'] = $renamedFileName ;
                             unset($input['resume']);
                             $updatedNeoUser =  $this->neoUserRepository->updateUser($neoInput) ;
                             $response['originalFileName'] = $originalFileName;
@@ -2524,6 +2526,16 @@ class UserGateway {
                 {
                     $r['dp_path']="";
                 }
+                
+                if (!empty($neoLoggedInUserDetails->cv_path) && !empty($neoLoggedInUserDetails->cv_renamed_name))
+                {
+                    $r['cv_path'] = $neoLoggedInUserDetails->cv_renamed_name ;
+                }
+                else
+                {
+                    $r['cv_path']="";
+                }
+                    
                 if ($userAbstractionLevel == Config::get('constants.USER_ABSTRACTION_LEVELS.MEDIUM') || $userAbstractionLevel == Config::get('constants.USER_ABSTRACTION_LEVELS.FULL')){
                     
                     $job_function_name = $industry_name = "";
@@ -2937,7 +2949,7 @@ class UserGateway {
                                     if (in_array($notification->notifications_types_id, $this->notificationsTypes))
                                     {
                                         $thirdName = !empty($otherNoteUser->fullname)?$otherNoteUser->fullname:'' ;
-                                        $fName = str_replace("-","",$notification->other_phone);
+                                        $fName = !empty($notification->other_phone)?str_replace("-","",$notification->other_phone):$notification->other_email;
                                         $checkFName = $fName." ".$fName;
                                         if (empty(trim($thirdName)) || $thirdName == $checkFName)//if name is empty try to get the name from the import relation
                                         {
@@ -3203,9 +3215,14 @@ class UserGateway {
                             if (!empty($thirdUserResult->fullname)){
                                 $thirdUserResult->fullname = trim($thirdUserResult->fullname);
                             }
-                            $referDetails['to_user_fullname'] = !empty($thirdUserResult->fullname)?$thirdUserResult->fullname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
-                            $referDetails['to_user_firstname'] = !empty($thirdUserResult->firstname)?$thirdUserResult->firstname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
-                            $referDetails['to_user_lastname'] = !empty($thirdUserResult->lastname)?$thirdUserResult->lastname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                            $fName = $referral[0]->emailid;
+                            $checkFName = $fName." ".$fName;
+                            $referDetails['to_user_fullname'] = (empty($thirdUserResult->fullname)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):($thirdUserResult->fullname == $checkFName || $thirdUserResult->fullname == $fName)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$thirdUserResult->fullname);
+                            $referDetails['to_user_firstname'] = (empty($thirdUserResult->firstname)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):($thirdUserResult->firstname == $fName)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$thirdUserResult->firstname);
+                            $referDetails['to_user_lastname'] = (empty($thirdUserResult->lastname)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):($thirdUserResult->lastname == $fName)?Lang::get('MINTMESH.user.non_mintmesh_user_name'):$thirdUserResult->lastname);
+                            //$referDetails['to_user_fullname'] = !empty($thirdUserResult->fullname)?$thirdUserResult->fullname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                            //$referDetails['to_user_firstname'] = !empty($thirdUserResult->firstname)?$thirdUserResult->firstname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
+                            //$referDetails['to_user_lastname'] = !empty($thirdUserResult->lastname)?$thirdUserResult->lastname:Lang::get('MINTMESH.user.non_mintmesh_user_name');
                         }
                         if ($referral[1]->one_way_status == Config::get('constants.REFERRALS.STATUSES.ACCEPTED'))
                         {
