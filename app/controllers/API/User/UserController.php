@@ -1230,8 +1230,8 @@ class UserController extends \BaseController {
          * GET/get_experience_ranges
 	 * @return Response
          */
-        public function getExperienceRanges(){
-            $response = $this->userGateway->getExperienceRanges();
+        public function getExperiences(){
+            $response = $this->userGateway->getExperiences();
             return \Response::json($response);
         }
         

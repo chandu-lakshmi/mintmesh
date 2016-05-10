@@ -4596,14 +4596,14 @@ class UserGateway {
             return true;
             
         }
-	public function getExperienceRanges() {
+	public function getExperiences() {
             if (Cache::has('experiences')) {                 
                 $data = Cache::get('experiences');
                 $responseCode = self::SUCCESS_RESPONSE_CODE;
                 $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
                 $message = Lang::get('MINTMESH.experience.success');
             } else {
-                $experienceDetails = $this->userRepository->getExperienceRanges(); 
+                $experienceDetails = $this->userRepository->getExperiences(); 
                 if (!empty($experienceDetails)) {
                     $experiences = array();
                     foreach ($experienceDetails as $experience){

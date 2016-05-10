@@ -83,7 +83,7 @@ Route::group(array('prefix' => 'v1'), function() {
     Route::post("cache_badwords", "API\User\UserController@cacheBadWords");
     
     //experience_ranges
-       Route::get("get_experience_ranges", "API\User\UserController@getExperienceRanges");
+       Route::get("get_experiences", "API\User\UserController@getExperiences");
     //employment_types
        Route::get("get_employment_types", "API\User\UserController@getEmploymentTypes");
     

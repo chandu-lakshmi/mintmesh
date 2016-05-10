@@ -701,7 +701,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
             
         }
         
-    public function getExperienceRanges(){
+    public function getExperiences(){
         $sql = "select id,name from experience_ranges where status=1" ;
         return $result = DB::select($sql);
     }
