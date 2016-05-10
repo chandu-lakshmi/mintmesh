@@ -4597,6 +4597,7 @@ class UserGateway {
             
         }
 	public function getExperiences() {
+            $data = array();
             if (Cache::has('experiences')) {                 
                 $data = Cache::get('experiences');
                 $responseCode = self::SUCCESS_RESPONSE_CODE;
@@ -4625,6 +4626,7 @@ class UserGateway {
         }
         
         public function getEmploymentTypes() {
+            $data = array();
             if (Cache::has('employmenttypes')) {                 
                 $data = Cache::get('employmenttypes');
                 $responseCode = self::SUCCESS_RESPONSE_CODE;
