@@ -719,7 +719,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 {
                     $queryString.=" skip ".$skip." limit ".self::LIMIT ;
                 }
-                echo $queryString ;exit;
+                //echo $queryString ;exit;
                  $query = new CypherQuery($this->client, $queryString);
                  return $result = $query->getResultSet(); 
              }
