@@ -4610,7 +4610,7 @@ class UserGateway {
                     foreach ($experienceDetails as $experience){
                         $experiences[] = array("experience_name"=>trim($experience->name), "experience_id"=>$experience->id) ;
                     }
-                    $data = array("experience_ranges"=>$experiences);
+                    $data = array("experiences"=>$experiences);
                     // adding to memcache for employment types
                     Cache::forever('experiences', $data);
                     $responseCode = self::SUCCESS_RESPONSE_CODE;
