@@ -54,5 +54,11 @@ class ReferralsValidator extends Validator {
             'payment_reason'=>'required'
         )
         );
+    
+    //conditional checks for you_are field in referrals
+        public static $conditional_rules = array('c_rule1');
+        public static $conditional_rules_keys = array('c_rule1'=>'service_scope');
+        public static $conditional_rules_values = array('c_rule1'=>'find_candidate');
+        public static $c_rule1 = array('industry','job_function','experience_range','company','employment_type');
 }
 ?>

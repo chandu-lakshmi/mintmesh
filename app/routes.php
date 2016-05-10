@@ -82,6 +82,11 @@ Route::group(array('prefix' => 'v1'), function() {
     //cache badwords
     Route::post("cache_badwords", "API\User\UserController@cacheBadWords");
     
+    //experience_ranges
+       Route::get("get_experience_ranges", "API\User\UserController@getExperienceRanges");
+    //employment_types
+       Route::get("get_employment_types", "API\User\UserController@getEmploymentTypes");
+    
 });
 
 //Route::group(array('prefix' => 'v1'), function() {
@@ -154,7 +159,7 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
        Route::post("user/check_user_password", "API\User\UserController@checkUserPassword");
        // logout
        Route::post("user/logout", "API\User\UserController@logout");
-       
+   
        //seeks
         // seek a referral
        Route::post("referral/seek_service_referral", "API\Referrals\ReferralsController@seekServiceReferral");
@@ -262,6 +267,8 @@ Route::group(array('prefix' => 'v2', 'before' => 'oauth'), function() {
 
     //you are values, changed for edit profile..v1 should be used
     Route::post("get_you_are_values", "API\User\UserController@getYouAreValues_v2");
+    
+    Route::post("referral/refer_contact", "API\Referrals\ReferralsController@referContactV2");
 
 });
 

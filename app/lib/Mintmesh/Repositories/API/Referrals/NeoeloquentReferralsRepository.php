@@ -1004,6 +1004,138 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
              }
          }
          
+         /*
+          * map industry for find a candidate
+          */
+         public function mapIndustryToPost($industryId='', $postId='', $relationType=''){
+            $queryString = "Match (p:Post),(i:Industries)
+                                    where ID(p)=".$postId." and i.mysql_id=".$industryId."
+                                    create unique (p)-[r:".$relationType."";
+
+            $queryString.="]->(i)  set r.created_at='".date("Y-m-d H:i:s")."' return i";
+            //echo $queryString;exit;
+            $query = new CypherQuery($this->client, $queryString);
+            return $result = $query->getResultSet();
+         }
+         
+         /*
+          * map job function for find a candidate
+          */
+         public function mapJobFunctionToPost($jobFunctionId='', $postId='', $relationType=''){
+            $queryString = "Match (p:Post),(j:Job_Functions)
+                                    where ID(p)=".$postId." and j.mysql_id=".$jobFunctionId."
+                                    create unique (p)-[r:".$relationType."";
+
+            $queryString.="]->(j)  set r.created_at='".date("Y-m-d H:i:s")."' return j";
+
+            $query = new CypherQuery($this->client, $queryString);
+            return $result = $query->getResultSet();
+         }
+         /*
+          * map experience range for find a candidate
+          */
+         public function mapExperienceRangeToPost($experienceRangeId='', $postId='', $relationType=''){
+            $queryString = "Match (p:Post),(er:ExperienceRange)
+                                    where ID(p)=".$postId." and er.mysql_id='".$experienceRangeId."'
+                                    create unique (p)-[r:".$relationType."";
+
+            $queryString.="]->(er)  set r.created_at='".date("Y-m-d H:i:s")."' return er";
+
+            $query = new CypherQuery($this->client, $queryString);
+            return $result = $query->getResultSet();
+         }
+         /*
+          * map employment type for find a candidate
+          */
+         public function mapEmploymentTypeToPost($employmentTypeId='', $postId='', $relationType=''){
+            $queryString = "Match (p:Post),(et:EmploymentType)
+                                    where ID(p)=".$postId." and et.mysql_id='".$employmentTypeId."'
+                                    create unique (p)-[r:".$relationType."";
+
+            $queryString.="]->(et)  set r.created_at='".date("Y-m-d H:i:s")."' return et";
+
+            $query = new CypherQuery($this->client, $queryString);
+            return $result = $query->getResultSet();
+         }
+         
+         /*
+          * get industry name for post
+          */
+          public function getIndustryNameForPost($postId=0){
+              $industryName='';
+              if (!empty($postId)){
+                  $queryString = "match (p:Post)-[r:ASSIGNED_INDUSTRY]->(i:Industries) where ID(p)=".$postId." return i.name limit 1";
+                  $query = new CypherQuery($this->client, $queryString);
+                  $result = $query->getResultSet();
+                  if (!empty($result[0])){
+                      $industryName = $result[0][0];
+                  }
+                }
+                return $industryName ;
+          }
+          
+          /*
+          * get jo function name for post
+          */
+          public function getJobFunctionNameForPost($postId=0){
+              $jobFunctionName='';
+              if (!empty($postId)){
+                  $queryString = "match (p:Post)-[r:ASSIGNED_JOB_FUNCTION]->(i:Job_Functions) where ID(p)=".$postId." return i.name limit 1";
+                  $query = new CypherQuery($this->client, $queryString);
+                  $result = $query->getResultSet();
+                  if (!empty($result[0])){
+                      $jobFunctionName = $result[0][0];
+                  }
+                }
+                return $jobFunctionName ;
+          }
+          /*
+          * get experience range name for post
+          */
+          public function getExperienceRangeNameForPost($postId=0){
+              $experienceRangeName='';
+              if (!empty($postId)){
+                  $queryString = "match (p:Post)-[r:ASSIGNED_EXPERIENCE_RANGE]->(i:ExperienceRange) where ID(p)=".$postId." return i.name limit 1";
+                  $query = new CypherQuery($this->client, $queryString);
+                  $result = $query->getResultSet();
+                  if (!empty($result[0])){
+                      $experienceRangeName = $result[0][0];
+                  }
+                }
+                return $experienceRangeName ;
+          }
+          /*
+          * get employment type name for post
+          */
+          public function getEmploymentTypeNameForPost($postId=0){
+              $employmentTypeName='';
+              if (!empty($postId)){
+                  $queryString = "match (p:Post)-[r:ASSIGNED_EMPLOYMENT_TYPE]->(i:EmploymentType) where ID(p)=".$postId." return i.name limit 1";
+                  $query = new CypherQuery($this->client, $queryString);
+                  $result = $query->getResultSet();
+                  if (!empty($result[0])){
+                      $employmentTypeName = $result[0][0];
+                  }
+                }
+                return $employmentTypeName ;
+          }
+          
+          /* 
+           * get mintmesh resume
+           */
+           public function getMintmeshUserResume($userEmail = ''){
+              $userEmail = $this->appEncodeDecode->filterString(strtolower($userEmail));
+              if (!empty($userEmail)){
+                  $queryString = "match (u:User:Mintmesh) where u.emailid='".$userEmail."' return u.cv_renamed_name limit 1";
+                  $query = new CypherQuery($this->client, $queryString);
+                  $result = $query->getResultSet();
+                  if (!empty($result[0])){
+                      $employmentTypeName = $result[0][0];
+                  }
+                }
+                return $employmentTypeName ;
+          }
+         
          
 
 }

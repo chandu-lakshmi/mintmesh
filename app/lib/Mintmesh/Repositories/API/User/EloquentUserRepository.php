@@ -366,7 +366,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
         public function getresetcodeNpassword($emailid) 
         {
             $email = $this->appEncodeDecode->filterString(strtolower($emailid));
-            $sql = "select password, resetactivationcode, emailid from users where status = '1' and md5(emailid)='".$email."'";
+            $sql = "select password, resetactivationcode, emailid from users where md5(emailid)='".$email."'";//status = '1' and
             $result = DB::select($sql);
             if (!empty($result))
             {
@@ -701,4 +701,13 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
             
         }
         
+    public function getExperienceRanges(){
+        $sql = "select id,name from experience_ranges where status=1" ;
+        return $result = DB::select($sql);
+    }
+    
+    public function getEmploymentTypes(){
+        $sql = "select id,name from employment_type where status=1" ;
+        return $result = DB::select($sql);
+    }
 }

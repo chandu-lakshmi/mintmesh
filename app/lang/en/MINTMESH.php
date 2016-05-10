@@ -38,7 +38,8 @@ return array(
 		"non_mintmesh_user_name"=>"the contact",
                 "create_success_login_fail"=>"User Created Successfully but Login Fail Please login manually",
                 "uploaded_large_file"=>"Uploaded file size is too large",
-                "invalid_file_format"=>"Uploaded file format not allowed"
+                "invalid_file_format"=>"Uploaded file format not allowed",
+                "no_resume"=>"Please upload a resume"
                 
             ),
          "referrals"=>array(
@@ -276,6 +277,14 @@ return array(
         "clear_memcache"=>array(
             'success'=>'Memcache Cleared successfully',
             'dont_exist'=>'Cache for perticular key does not exist'
+        ),
+        "experience"=>array(
+            'success'=>'Successfully retrieved',
+            'failure'=>'Failed to retrieved'
+        ),
+        "employment_types"=>array(
+            'success'=>'Successfully retrieved',
+            'failure'=>'Failed to retrieved'
         ),
         'user_profiles_abstractions'=>array('basic'=>array('firstname','lastname','fullname','company','position','dp_path','emailid','phone','location'),
             'medium'=>array('job_function','position','phone','location','lastname','emailid','industry','fullname','firstname','dp_path','company',

@@ -1223,7 +1223,28 @@ class UserController extends \BaseController {
             $response = $this->userGateway->getProfessions();
             return \Response::json($response);
             
-        }		
+        }
+        
+        /**
+         * get years of experience 
+         * GET/get_experience_ranges
+	 * @return Response
+         */
+        public function getExperienceRanges(){
+            $response = $this->userGateway->getExperienceRanges();
+            return \Response::json($response);
+        }
+        
+        /**
+         * get employment type
+         * GET/get_employment_type
+	 * @return Response
+         */
+        public function getEmploymentTypes(){
+            $response = $this->userGateway->getEmploymentTypes();
+            return \Response::json($response);
+
+        }
         
 }
 ?>

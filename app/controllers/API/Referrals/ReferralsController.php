@@ -33,6 +33,12 @@ class ReferralsController extends \BaseController {
          * @param string $service_type Service Type global|in_location|change_location
          * @param string $excluded_list Users that are to be excluded
          * @param string $included_list Users that are to be included
+         * @param string $industry included when service_scope is find_candidate
+         * @param string $company included when service_scope is find_candidate
+         * @param string $job_function included when service_scope is find_candidate
+         * @param string $experience_range included when service_scope is find_candidate
+         * @param string $employee_type included when service_scope is find_candidate
+
          * 
 	 * @return Response
 	 */
@@ -495,6 +501,42 @@ class ReferralsController extends \BaseController {
                 return \Response::json($validation);
             }
 	}
+        
+        
+        /**
+	 * refer a person for a post
+         * 
+         * POST/refer_contact
+         * 
+         * @param string $access_token The Access token of a user
+         * @param string $referring
+         * @param string $refer_to
+         * @param string $post_id
+         * @param string $message
+         * @param string $bestfit_message
+         * @param string $refer_non_mm_email
+         * @param string $referring_phone_no
+         * @param string $referring_user_firstname
+         * @param string $referring_user_lastname
+         * @param string $is_hire_candidate 1 if it is find job service scope
+         * @param string $resume resume of p3 if it is hire a candidate service
+         * 
+	 * @return Response
+	 */
+        public function referContactV2()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->referralsGateway->validatereferContact($inputUserData);
+            if($validation['status'] == 'success') {
+                $response = $this->referralsGateway->referContactV2($inputUserData);
+                return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+        }
         
         
         

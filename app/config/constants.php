@@ -16,6 +16,7 @@ return [
     'MNT_DEEP_LINK_ANDROID'=>'http://mintmeshstg/',
     'DP_PATH' => '/uploads/ProfilePics',
     'CV_PATH' => '/uploads/Resumes',
+    'ADD_BATTLE_CARDS_COUNT' => 0,
     'GOOGLE_CONTACTS_URL'=>'https://www.google.com/m8/feeds/contacts/default/full?alt=json&max-results=10000',
     'ANDROID'=>'android',
     'IOS'=>'ios',
@@ -75,7 +76,6 @@ return [
         'DELETED_CONTACT'=>'DELETED_CONTACT',
         'PROVIDES'=>'PROVIDES',
         'LOOKING_FOR'=>'LOOKING_FOR'
-        
     ],
     'MAPPED_RELATION_TYPES'=>[
         '3'=>'REQUEST_REFERENCE',
@@ -101,7 +101,11 @@ return [
                 'ACTIVE'=>'ACTIVE',
                 'CLOSED'=>'CLOSED',
                 'COMPLETED'=>'COMPLETED'
-        ]
+        ],
+        'ASSIGNED_INDUSTRY'=>'ASSIGNED_INDUSTRY',
+        'ASSIGNED_JOB_FUNCTION'=>'ASSIGNED_JOB_FUNCTION',
+        'ASSIGNED_EMPLOYMENT_TYPE'=>'ASSIGNED_EMPLOYMENT_TYPE',
+        'ASSIGNED_EXPERIENCE_RANGE'=>'ASSIGNED_EXPERIENCE_RANGE'
     ],
     'POINTS'=>[
         'REFER_REQUEST' => 50,
@@ -132,7 +136,7 @@ return [
         'EMAILID'=>'v.gopi314@gmail.com'
     ],
     'S3BUCKET' => 'mintmesh/dev/profilepic',
-    'S3BUCKET_RESUME' => 'mintmesh/dev/resume',
+    'S3BUCKET_RESUME' => 'mintmesh/dev/resume/',
     'PROFILE_COMPLETION_VALUES'=>[
         'CERTIFICATION'=>10,
         'CONTACT'=>30,
@@ -151,6 +155,8 @@ return [
         'BASIC'=>'basic',
         'MEDIUM'=>'medium',
         'FULL'=>'full'
-    ]
+    ],
+    'S3BUCKET_MM_REFER_RESUME' => 'mintmesh/dev/MintmeshReferredResumes',
+    'S3BUCKET_NON_MM_REFER_RESUME' => 'mintmesh/dev/NonMintmeshReferredResumes'
         
 ];

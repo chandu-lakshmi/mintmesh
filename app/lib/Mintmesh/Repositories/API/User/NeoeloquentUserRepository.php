@@ -1444,6 +1444,24 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             }
         }
         
+        public function getMintmeshUserResume($emailid="")
+        {
+            if (!empty($emailid))
+            {
+                $val = $this->appEncodeDecode->filterString(strtolower($val));
+                $queryString = "MATCH (n:User:Mintmesh {n.emailid='".$emailid."'}) RETURN n.cv_path" ;
+                $query = new CypherQuery($this->client, $queryString);
+                $result = $query->getResultSet();
+                 if (count($result) && count($result[0]))
+                {
+                    return $result[0][0] ;
+                }
+            }
+            else{
+                return 0;
+            }
+        }
+        
         
 		 
 }

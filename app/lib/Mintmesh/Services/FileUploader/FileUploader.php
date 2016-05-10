@@ -35,7 +35,7 @@ abstract class FileUploader {
                 $ext = $this->source->getClientOriginalExtension();
                 $fileName = time().".".$ext;
 
-                $s3 = \AWS::get('s3');
+                $s3 = \AWS::get('s3');                        
                 try {
                         // Upload data.
                         $result = $s3->putObject(array(
@@ -54,6 +54,5 @@ abstract class FileUploader {
                 return false;
             }
             
-        }
-
+        }       
 }

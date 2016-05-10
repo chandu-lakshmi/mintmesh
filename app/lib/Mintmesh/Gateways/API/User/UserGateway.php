@@ -42,7 +42,8 @@ class UserGateway {
     protected $userFileUploader,$declines, $refer_nots, $deleteUserTypes;
     protected $commonFormatter, $postNotifications, $other_status_diferrent, $referralsRepository, $notificationFromP2, $notificationToP2,$newServiceNotifications;
     protected $loggedinUserDetails,$notificationsTypes,$extraTextsNotes,$directProfileRedirections,$infoTypes,$referFlowTypes ;
-	public function __construct(UserRepository $userRepository,
+    protected $allowedResumeExtensions, $resumeMaxSize ;
+    public function __construct(UserRepository $userRepository,
                                     NeoUserRepository $neoUserRepository,
                                     Authorizer $authorizer,
                                     UserValidator $userValidator,
@@ -81,6 +82,14 @@ class UserGateway {
                 $this->notificationFromP2 = array(10,11,20);
                 $this->notificationToP2 = array(12,15);
                 $this->newServiceNotifications = array(27);
+                $this->allowedResumeExtensions = array(
+                                'doc',
+                                'docx',
+                                'pdf',  
+                                'rtf',
+                                'msword'
+                                );
+                $this->resumeMaxSize = 307200;//file size max 300kb
         }
         // validation on user inputs for change password
         public function validateChangePassword($input) {            
@@ -1111,10 +1120,10 @@ class UserGateway {
                     $deep_link_type = !empty($input['os_type'])?$input['os_type']:'';
                     $deep_link = $this->getDeepLinkScheme($deep_link_type);
                     $appLink = $deep_link.Config::get('constants.MNT_VERSION')."/user/reset_password/".$code ;
-                    //$appLinkCoded = $this->base_64_encode("", $appLink) ; 
-                    $dataSet['link'] = $appLink ;
+                    $appLinkCoded = $this->base_64_encode("", $appLink) ; //comment it for normal flow of deep linki.e without http
+                    //$dataSet['link'] = $appLink ;//remove comment it for normal flow of deep linki.e without http
                     $dataSet['hrs'] = Config::get('constants.MNT_USER_EXPIRY_HR');
-                   //$dataSet['link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/redirect_to_app/".$appLinkCoded ;;
+                    $dataSet['link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/redirect_to_app/".$appLinkCoded ;//comment it for normal flow of deep linki.e without http
                     $this->userEmailManager->dataSet = $dataSet;
                     $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.forgot_password');
                     $this->userEmailManager->name = $neoUserDetails['fullname'];
@@ -1443,27 +1452,21 @@ class UserGateway {
         }
         
         public function editResumeInfo($input)
-        {
+        {           
             $response = array('FALSE');
             if (!empty($input))
             {
+                $loggedinUserDetails = $this->getLoggedInUser();
+                (!empty($loggedinUserDetails))?$userId=$loggedinUserDetails->id:$userId=0;
                 $originalFileName = $renamedFileName = "";
                 $originalFileExtension = $originalFileSize = "";
                 $neoInput = array();
                 $neoInput['emailid'] = $input['emailid'] ;
-                $fileMaxSize = 307200;//file size max 300kb
-                $allowedExtension = array(
-                                'doc',
-                                'docx',
-                                'pdf',  
-                                'rtf',
-                                'msword'
-                                );
-                  //delete resume
-                if(!isset($input['resume'])){
+                //delete resume
+                if(empty($input['resume'])){
                         $neoInput['cv_original_name'] = '';
                         $neoInput['cv_renamed_name'] = '' ;    
-                        $neoInput['cv_path'] = '' ;    
+                        $neoInput['cv_path'] = '' ;
                         $updatedNeoUser =  $this->neoUserRepository->updateUser($neoInput) ;
                 }      
                 
@@ -1473,12 +1476,12 @@ class UserGateway {
                     $originalFileExtension =  $input['resume']->getClientOriginalExtension();
                     $originalFileSize      =  $input['resume']->getClientSize();
                      //cheking file format              
-                   if(in_array($originalFileExtension, $allowedExtension)){
+                   if(in_array($originalFileExtension, $this->allowedResumeExtensions)){
                        //cheking file size
-                       if($originalFileSize <= $fileMaxSize ){
+                       if($originalFileSize <= $this->resumeMaxSize ){
                             //upload the file
                             $this->userFileUploader->source = $input['resume'] ;
-                            $this->userFileUploader->destination = Config::get('constants.S3BUCKET_RESUME') ;
+                            $this->userFileUploader->destination = Config::get('constants.S3BUCKET_RESUME').$userId ;
                             $renamedFileName = $this->userFileUploader->uploadToS3();
                             $neoInput['cv_original_name'] = $originalFileName ;
                             $neoInput['cv_renamed_name'] = $renamedFileName ;
@@ -1644,6 +1647,7 @@ class UserGateway {
         {
             $returnArray =  array();
             $battle_cards_count = $this->userRepository->getNotificationsCount($loggedinUserDetails, 'request_connect');
+            $battle_cards_count = $battle_cards_count + Config::get('constants.ADD_BATTLE_CARDS_COUNT');//adding battle cards count
             $returnArray['battle_cards_count']= !(empty($battle_cards_count))?(($profilePercentage < 100)?$battle_cards_count+1:$battle_cards_count):0;
             $badgeResult = $this->userRepository->getNotificationsCount($loggedinUserDetails, 'all');
             $returnArray['notifications_count']= !(empty($badgeResult))?$badgeResult:0;
@@ -1914,6 +1918,14 @@ class UserGateway {
                             {
                                 $postDetails = $relation[2]->getProperties() ;
                                 $postId = $relation[2]->getId() ;
+                                #get industry name
+                                $postDetails['industry_name'] = $this->referralsRepository->getIndustryNameForPost($postId);
+                                #get job function name
+                                $postDetails['job_function_name'] = $this->referralsRepository->getJobFunctionNameForPost($postId);
+                                #get experience range name
+                                $postDetails['experience_range_name'] = $this->referralsRepository->getExperienceRangeNameForPost($postId);
+                                #get employment type name
+                                $postDetails['employment_type_name'] = $this->referralsRepository->getEmploymentTypeNameForPost($postId);
                                 foreach ($postDetails as $k=>$v)
                                 {
                                     $a['post_details_'.$k] = $v ;
@@ -2357,6 +2369,8 @@ class UserGateway {
                         $extraDetails['skills'] = $skillsArray ;
                     }
                     $connectionsCount = $this->neoUserRepository->getConnectedUsersCount($input['emailid']);
+//                   remove loggedin user from the count
+                    $connectionsCount = $connectionsCount - 1;
                     $requestsCount = $this->neoUserRepository->getMutualRequestsCount($input['emailid'], $neoLoggedInUserDetails->emailid);
                     if (!empty($extraDetails))
                     {
@@ -4064,6 +4078,9 @@ class UserGateway {
                             }
 //                            $otherUserDetails = $this->neoUserRepository->getNodeByEmailId($row->other_email) ;
                             $details = $this->formUserDetailsArray($otherUserDetails,$type);
+                            //////////////////////////////
+                          $details['fullname'] = (isset($details['fullname']) && !empty(trim($details['fullname'])))?$details['fullname']:Lang::get('MINTMESH.user.non_mintmesh_user_name') ;             
+                           //////////////////////////////////////
                             $arr['other_details'] = $details ;
                         }
                         $returnResult[] = $arr ;
@@ -4506,8 +4523,7 @@ class UserGateway {
                         $message = array('msg'=>array(Lang::get('MINTMESH.professions.success')));
                     }
                 }
-            }
-            else{
+            }else{
                 $message = Lang::get('MINTMESH.user.user_not_found');
                 $responseCode = self::ERROR_RESPONSE_CODE;
                 $responseStatus = self::ERROR_RESPONSE_MESSAGE;
@@ -4579,6 +4595,95 @@ class UserGateway {
             }
             return true;
             
+        }
+	public function getExperienceRanges() {
+            if (Cache::has('experiences')) {                 
+                $data = Cache::get('experiences');
+                $responseCode = self::SUCCESS_RESPONSE_CODE;
+                $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
+                $message = Lang::get('MINTMESH.experience.success');
+            } else {
+                $experienceDetails = $this->userRepository->getExperienceRanges(); 
+                if (!empty($experienceDetails)) {
+                    $experiences = array();
+                    foreach ($experienceDetails as $experience){
+                        $experiences[] = array("experience_name"=>trim($experience->name), "experience_id"=>$experience->id) ;
+                    }
+                    $data = array("experience_ranges"=>$experiences);
+                    // adding to memcache for employment types
+                    Cache::forever('experiences', $data);
+                    $responseCode = self::SUCCESS_RESPONSE_CODE;
+                    $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
+                    $message = Lang::get('MINTMESH.experience.success');
+                }else{
+                    $responseCode = self::ERROR_RESPONSE_CODE;
+                    $responseStatus = self::ERROR_RESPONSE_MESSAGE;
+                    $message = Lang::get('MINTMESH.experience.failure');
+                }
+            }
+            return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $data);
+        }
+        
+        public function getEmploymentTypes() {
+            if (Cache::has('employmenttypes')) {                 
+                $data = Cache::get('employmenttypes');
+                $responseCode = self::SUCCESS_RESPONSE_CODE;
+                $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
+                $message = Lang::get('MINTMESH.employment_types.success');
+            } else {
+                $getEmploymentTypes = $this->userRepository->getEmploymentTypes();
+                if (!empty($getEmploymentTypes)) {
+                    $employmentTypes = array();
+                    foreach ($getEmploymentTypes as $getEmploymentType){
+                        $employmentTypes[] = array("employment_type_name"=>trim($getEmploymentType->name), "employment_type_id"=>$getEmploymentType->id) ;
+                    }
+                    $data = array("employmentTypes"=>$employmentTypes);
+                    // adding to memcache for employment types
+                    Cache::forever('employmenttypes', $data);
+                    $responseCode = self::SUCCESS_RESPONSE_CODE;
+                    $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
+                    $message = Lang::get('MINTMESH.employment_types.success');
+                } else {
+                    $responseCode = self::ERROR_RESPONSE_CODE;
+                    $responseStatus = self::ERROR_RESPONSE_MESSAGE;
+                    $message = Lang::get('MINTMESH.employment_types.failure');
+                }
+            }
+            return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $data);
+        }
+        
+        public function uploadResumeForRefer($resume='', $forMintmesh=0){
+            if (!empty($resume))
+            {
+                $response="";
+                $originalFileName      =  $resume->getClientOriginalName();
+                $originalFileExtension =  $resume->getClientOriginalExtension();
+                $originalFileSize      =  $resume->getClientSize();
+                $bucketSource = Config::get('constants.S3BUCKET_NON_MM_REFER_RESUME') ;
+                 //cheking file format              
+               if(in_array($originalFileExtension, $this->allowedResumeExtensions)){
+                   //cheking file size
+                   if($originalFileSize <= $this->resumeMaxSize ){
+                       if (!empty($forMintmesh)){#is mintmesh
+                           $bucketSource = Config::get('constants.S3BUCKET_MM_REFER_RESUME') ;
+                       }
+                        //upload the file
+                        $this->userFileUploader->source = $resume ;
+                        $this->userFileUploader->destination = $bucketSource ;
+                        $renamedFileName = $this->userFileUploader->uploadToS3();
+                        $response  = $renamedFileName;
+                   }
+                   else
+                   {
+                      $response = "uploaded_large_file";   
+                   }        
+               }
+               else
+               {
+                  $response = "invalid_file_format";
+               }
+            }
+            return $response ;
         }
 
 }
