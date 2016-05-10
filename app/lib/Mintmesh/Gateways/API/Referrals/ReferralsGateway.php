@@ -1123,8 +1123,9 @@ class ReferralsGateway {
                 if (!empty($result[0][0]) && !empty($result[0][1]))
                 {
                     $returnArray['relation_updated_at'] = !empty($result[0][0]->updated_at)?$result[0][0]->updated_at:$result[0][0]->created_at ;
-                    $returnArray['p2_cv_path'] = !empty($result[0][0]->resume_path)?$result[0][0]->resume_path:"" ;
+                    $returnArray['p3_cv_path'] = !empty($result[0][0]->resume_path)?$result[0][0]->resume_path:"" ;
                     $returnArray['uploaded_by_p2'] = !empty($result[0][0]->uploaded_by_p2)?$result[0][0]->uploaded_by_p2:0 ;
+                    $returnArray['service_scope'] = !empty($result[0][2]->service_scope)?$result[0][2]->service_scope:"" ;
                     if (!empty($result[0][0]->referred_for))
                     {
                         $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($result[0][0]->referred_for) ;
@@ -1998,7 +1999,7 @@ class ReferralsGateway {
             if (!empty($input['refer_non_mm_email']) && empty($input['resume'])){#for non mintmesh with no resume
                 $returnBoolean = false;
             }else if(empty($input['refer_non_mm_email']) && empty($input['resume'])){#for mintmesh with no resume
-                #check if the referring person is having resume attached
+               #check if the referring person is having resume attached
                 $resumePath = $this->neoUserRepository->getMintmeshUserResume($input['referring']);
                 if(empty($resumePath)){# if no resume uploaded in profile then ask for resume
                     $returnBoolean = false;

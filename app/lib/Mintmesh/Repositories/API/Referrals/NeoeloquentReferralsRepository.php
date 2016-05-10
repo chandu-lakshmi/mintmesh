@@ -711,12 +711,15 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 }
                 $relations = array(Config::get('constants.RELATIONS_TYPES.INTRODUCE_CONNECTION'), Config::get('constants.REFERRALS.GOT_REFERRED'));
                 $relationString = implode("|",$relations) ;
-                $queryString="match (u)-[r:".$relationString."]->(p) where ('Mintmesh' IN labels(u) OR 'NonMintmesh' IN labels(u) OR 'User' IN labels(u)) and case type(r) when '".Config::get('constants.RELATIONS_TYPES.INTRODUCE_CONNECTION')."' then u.emailid='".$userEmail."' else r.referred_by='".$userEmail."' end return r, type(r) as relationName, p, u, labels(u) order by r.created_at desc";
+                //$queryString="match (u)-[r:".$relationString."]->(p) where ('Mintmesh' IN labels(u) OR 'NonMintmesh' IN labels(u) OR 'User' IN labels(u)) and case type(r) when '".Config::get('constants.RELATIONS_TYPES.INTRODUCE_CONNECTION')."' then u.emailid='".$userEmail."' else r.referred_by='".$userEmail."' end return r, type(r) as relationName, p, u, labels(u) order by r.created_at desc";
+                $queryString="match (u:User:Mintmesh)-[r:INTRODUCE_CONNECTION]->(p:User:Mintmesh) where u.emailid='".$userEmail."' return r, type(r) as relationName, p, u, labels(u) order by r.created_at desc
+                                union
+                                match (u)-[r:GOT_REFERRED]->(p:Post) where r.referred_by='".$userEmail."' return r, type(r) as relationName, p, u, labels(u) order by r.created_at desc";
                 if (!empty($limit) && !($limit < 0))
                 {
                     $queryString.=" skip ".$skip." limit ".self::LIMIT ;
                 }
-                //echo $queryString ;exit;
+                echo $queryString ;exit;
                  $query = new CypherQuery($this->client, $queryString);
                  return $result = $query->getResultSet(); 
              }
@@ -1120,21 +1123,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 return $employmentTypeName ;
           }
           
-          /* 
-           * get mintmesh resume
-           */
-           public function getMintmeshUserResume($userEmail = ''){
-              $userEmail = $this->appEncodeDecode->filterString(strtolower($userEmail));
-              if (!empty($userEmail)){
-                  $queryString = "match (u:User:Mintmesh) where u.emailid='".$userEmail."' return u.cv_renamed_name limit 1";
-                  $query = new CypherQuery($this->client, $queryString);
-                  $result = $query->getResultSet();
-                  if (!empty($result[0])){
-                      $employmentTypeName = $result[0][0];
-                  }
-                }
-                return $employmentTypeName ;
-          }
+          
          
          
 
