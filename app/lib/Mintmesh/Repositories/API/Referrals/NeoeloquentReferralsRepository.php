@@ -712,9 +712,9 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 $relations = array(Config::get('constants.RELATIONS_TYPES.INTRODUCE_CONNECTION'), Config::get('constants.REFERRALS.GOT_REFERRED'));
                 $relationString = implode("|",$relations) ;
                 //$queryString="match (u)-[r:".$relationString."]->(p) where ('Mintmesh' IN labels(u) OR 'NonMintmesh' IN labels(u) OR 'User' IN labels(u)) and case type(r) when '".Config::get('constants.RELATIONS_TYPES.INTRODUCE_CONNECTION')."' then u.emailid='".$userEmail."' else r.referred_by='".$userEmail."' end return r, type(r) as relationName, p, u, labels(u) order by r.created_at desc";
-                $queryString="match (u:User:Mintmesh)-[r:INTRODUCE_CONNECTION]->(p:User:Mintmesh) where u.emailid='".$userEmail."' return r, type(r) as relationName, p, u, labels(u) 
+                $queryString="match (u:User:Mintmesh)-[r:INTRODUCE_CONNECTION]->(p:User:Mintmesh) where u.emailid='".$userEmail."' return r, type(r) as relationName, p, u, labels(u) order by r.created_at desc
                                 union
-                                match (u)-[r:GOT_REFERRED]->(p:Post) where r.referred_by='".$userEmail."' return r, type(r) as relationName, p, u, labels(u) ";
+                                match (u)-[r:GOT_REFERRED]->(p:Post) where r.referred_by='".$userEmail."' return r, type(r) as relationName, p, u, labels(u) order by r.created_at desc";
                 if (!empty($limit) && !($limit < 0))
                 {
                     $queryString.=" skip ".$skip." limit ".self::LIMIT ;
