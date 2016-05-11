@@ -1613,6 +1613,12 @@ class ReferralsGateway {
                         $return['referrals'][] = $a ;
                     }
                 }
+                 #sort the referrals
+                $sort_by = 'created_at' ;
+                $sort_order = SORT_DESC ;
+                $a = $this->appEncodeDecode->array_sort($return['referrals'], $sort_by, $sort_order) ;
+                $return['referrals'] = array_values($a) ;
+                //print_r($a);exit;
                 $data = array("my_referrals"=>$return) ;
                 $message = array('msg'=>array(Lang::get('MINTMESH.get_requests.success')));
                 return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;

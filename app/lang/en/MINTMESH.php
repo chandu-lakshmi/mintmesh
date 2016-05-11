@@ -121,12 +121,12 @@ return array(
              "failed"=>"Some Error Occured",
              "error"=>"Invalid Token",
              "valid"=>"Validated",
-             "same"=>"New password cant be same as old password",
+             "same"=>"New password cannot be same as old password",
              "codeexpired"=>"code has been expired"
          ),
          "check_reset_password"=>array(
              "success"=>"sucess",
-             "failed"=>"Reset password link has been expired"
+             "failed"=>"Reset password link has expired"
          ),
         "import_contacts"=>array(
              "success"=>"Contacts Successfully Imported",
