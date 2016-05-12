@@ -33,7 +33,11 @@ abstract class FileUploader {
                 $sourceFile = $this->source->getpathName();
                 $sourceMimeType = $this->source->getmimeType();            
                 $ext = $this->source->getClientOriginalExtension();
-                $fileName = time().".".$ext;
+                $sourceFileName = $this->source->getClientOriginalName();
+                $sourceFileName = basename($sourceFileName, ".".$ext);
+                $sourceFileName = str_replace(' ', '-', $sourceFileName); // Replaces all spaces with hyphens.
+                $sourceFileName = preg_replace('/[^A-Za-z0-9\-]/', '', $sourceFileName); // Removes special chars.
+                $fileName = $sourceFileName."_".time().".".$ext;
 
                 $s3 = \AWS::get('s3');                        
                 try {

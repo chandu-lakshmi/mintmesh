@@ -1125,6 +1125,7 @@ class ReferralsGateway {
                 {
                     $returnArray['relation_updated_at'] = !empty($result[0][0]->updated_at)?$result[0][0]->updated_at:$result[0][0]->created_at ;
                     $returnArray['p3_cv_path'] = !empty($result[0][0]->resume_path)?$result[0][0]->resume_path:"" ;
+                    $returnArray['p3_cv_original_name'] = !empty($result[0][0]->resume_original_name)?$result[0][0]->resume_original_name:"Resume" ;
                     $returnArray['uploaded_by_p2'] = !empty($result[0][0]->uploaded_by_p2)?$result[0][0]->uploaded_by_p2:0 ;
                     $returnArray['service_scope'] = !empty($result[0][2]->service_scope)?$result[0][2]->service_scope:"" ;
                     if (!empty($result[0][0]->referred_for))
@@ -1869,6 +1870,7 @@ class ReferralsGateway {
         {
             $referNonMintmesh = 0;
             $uploadedByP2=0;
+            $p3CvOriginalName = "";
             $referResumePath = "";
             $this->loggedinUserDetails = $this->getLoggedInUser();
             $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
@@ -1887,6 +1889,7 @@ class ReferralsGateway {
                    }else{
                        $referResumePath = $resumeResult['resume_path'] ;
                        $uploadedByP2 = $resumeResult['uploaded'] ;
+                       $p3CvOriginalName = $resumeResult['resume_original_name'] ;
                    }
                }
                //continue only when the request count is in limit
@@ -1962,6 +1965,7 @@ class ReferralsGateway {
                $relationAttrs['relation_count'] = $relationCount ;
                $relationAttrs['resume_path']=$referResumePath ;
                $relationAttrs['uploaded_by_p2']=$uploadedByP2 ;
+               $relationAttrs['resume_original_name']=$p3CvOriginalName ;
                if (!empty($referNonMintmesh)){
                    $result = $this->referralsRepository->referContactByPhone($userEmail, $input['refer_to'], $input['referring'], $input['post_id'], $relationAttrs);
                }else{
@@ -2001,17 +2005,19 @@ class ReferralsGateway {
         public function processResumeForRefer($input=array()){
             $returnBoolean = true;
             $uploaded = 1;
-            $resumePath = $resumePathRes = $message = "";
+            $resumePath = $resumePathRes = $message = $resumeOriginalName = "";
             $message = Lang::get('MINTMESH.user.no_resume');
             if (!empty($input['refer_non_mm_email']) && empty($input['resume'])){#for non mintmesh with no resume
                 $returnBoolean = false;
             }else if(empty($input['refer_non_mm_email']) && empty($input['resume'])){#for mintmesh with no resume
                #check if the referring person is having resume attached
-                $resumePath = $this->neoUserRepository->getMintmeshUserResume($input['referring']);
-                if(empty($resumePath)){# if no resume uploaded in profile then ask for resume
+                $resumePathResult = $this->neoUserRepository->getMintmeshUserResume($input['referring']);
+                if(empty($resumePathResult)){# if no resume uploaded in profile then ask for resume
                     $returnBoolean = false;
                 }else{
                     $uploaded = 0;
+                    $resumePath = $resumePathResult['cvRenamedName'];
+                    $resumeOriginalName = $resumePathResult['cvOriginalName'];
                 }
             }else if(!empty($input['refer_non_mm_email']) && !empty($input['resume'])){#for non mintmesh with resume
                 $resumePathRes = $this->userGateway->uploadResumeForRefer($input['resume'],0);
@@ -2021,12 +2027,15 @@ class ReferralsGateway {
             #check for validation of resume
             if ($returnBoolean && !in_array($resumePathRes, $this->resumeValidations)){# check if resume validations are fine
                 $resumePath = $resumePathRes ;
+                if ($uploaded!=0){//uploaded
+                    $resumeOriginalName = $input['resume']->getClientOriginalName();
+                }
             }else if(in_array($resumePathRes, $this->resumeValidations)){
                 $returnBoolean = false ;
                 $message = Lang::get('MINTMESH.user.'.$resumePathRes);
             }
             $msg = array('msg'=>array($message)) ;
-            return array('status'=>$returnBoolean, 'uploaded'=>$uploaded, 'resume_path'=>$resumePath, 'message'=>$msg);
+            return array('status'=>$returnBoolean, 'uploaded'=>$uploaded, 'resume_path'=>$resumePath, 'message'=>$msg,'resume_original_name'=>$resumeOriginalName);
             
         }
         
