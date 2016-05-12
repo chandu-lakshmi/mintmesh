@@ -3081,7 +3081,15 @@ class UserGateway {
                                             $note['post_'.$k] = $v ;
                                         }
                                         $note['referral'] = $e ;
-                                        $note['post_id'] = !empty($notification->extra_info)?$notification->extra_info:0;
+                                        $postId = $note['post_id'] = !empty($notification->extra_info)?$notification->extra_info:0;
+                                        #get industry name
+                                        $note['post_industry_name'] = $this->referralsRepository->getIndustryNameForPost($postId);
+                                        #get job function name
+                                        $note['post_job_function_name'] = $this->referralsRepository->getJobFunctionNameForPost($postId);
+                                        #get experience range name
+                                        $note['post_experience_range_name'] = $this->referralsRepository->getExperienceRangeNameForPost($postId);
+                                        #get employment type name
+                                        $note['post_employment_type_name'] = $this->referralsRepository->getEmploymentTypeNameForPost($postId);
                                         if ($e == $f){//self referred
                                             $note['is_self_referred'] = 1 ;
                                         }

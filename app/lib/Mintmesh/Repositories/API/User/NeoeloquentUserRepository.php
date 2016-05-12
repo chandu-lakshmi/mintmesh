@@ -1116,7 +1116,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                     $skip = $limit - 10 ;
                 }
                 $userEmail = $this->appEncodeDecode->filterString(strtolower($userEmail));
-                $queryString = "MATCH (u:User:Mintmesh),(u1:User:Mintmesh) where lower(u1.you_are)='4' and u1.location=~('.*' + u.location) and u.emailid='".$userEmail."' and u1.emailid<>'".$userEmail."' and not (u)-[:ACCEPTED_CONNECTION]-(u1) RETURN u1 ";
+                $queryString = "MATCH (u:User:Mintmesh),(u1:User:Mintmesh) where lower(u1.you_are)='4' and u1.location=~('.*' + u.location) and u.emailid='".$userEmail."' and u1.emailid<>'".$userEmail."' and not (u)-[:ACCEPTED_CONNECTION]-(u1) RETURN u1 order by lower(u1.fullname)";
                 //4 is the mysql id of recruiter profession
                 if (!empty($limit) && !($limit < 0))
                 {

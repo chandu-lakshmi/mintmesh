@@ -235,6 +235,7 @@ class ReferralsGateway {
                 $neoInput['job_function'] = !empty($input['job_function'])?$input['job_function']:'';
                 $neoInput['experience_range'] = !empty($input['experience_range'])?$input['experience_range']:'';
                 $neoInput['employment_type'] = !empty($input['employment_type'])?$input['employment_type']:'';
+                $neoInput['position_id'] = !empty($input['position_id'])?$input['position_id']:""  ;
                 if (!empty($input['web_link']))
                 {
                     $neoInput['web_link'] = $input['web_link'] ;
@@ -473,13 +474,13 @@ class ReferralsGateway {
                 $returnPosts = array();
                 foreach ($posts as $post)
                 {   
-                    if($post[0]->created_by != $this->loggedinUserDetails->emailid) {
+                    //if($post[0]->created_by != $this->loggedinUserDetails->emailid) {
                         $postDetails = $this->formPostDetailsArray($post[0]) ;
                         $postDetails['no_of_referrals'] = !empty($post[1])?$post[1]:0 ;
                         $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($postDetails['created_by']) ;
                         $postDetails['UserDetails'] = $this->userGateway->formUserDetailsArray($neoUserDetails, 'attribute',Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC'));
                         $returnPosts[] = $postDetails ;
-                    }
+                    //}
                 }
                 $data = array("posts"=>$returnPosts);
                 $message = array('msg'=>array(Lang::get('MINTMESH.referrals.success')));
@@ -1764,14 +1765,14 @@ class ReferralsGateway {
                 $returnPosts = array();
                 foreach ($posts as $post)
                 {
-                    if($post[0]->created_by != $this->loggedinUserDetails->emailid) {
+                    //if($post[0]->created_by != $this->loggedinUserDetails->emailid) {
                         $postDetails = $this->formPostDetailsArray($post[0]) ;
                         $postDetails['no_of_referrals'] = !empty($post[1])?$post[1]:0 ;
                         $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($postDetails['created_by']) ;
                         $postDetails['UserDetails'] = $this->userGateway->formUserDetailsArray($neoUserDetails, 'attribute', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC'));
                         $returnPosts[$postDetails['post_id']] = $postDetails ;
                         $postIds[] = $postDetails['post_id'];
-                    }
+                    //}
                 }
                 /*if (!empty($postIds)){
                    // print_r($postIds);exit;

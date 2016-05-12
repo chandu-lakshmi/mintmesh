@@ -208,7 +208,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 //and r1.created_at <= p.created_at
                 $email = $this->appEncodeDecode->filterString(strtolower($email));
                 $queryString = "match (n:User:Mintmesh)-[r1:ACCEPTED_CONNECTION]-(m:User:Mintmesh)-[r2:POSTED]->(p:Post)
-                                where n.emailid='".$email."' and m.emailid=p.created_by
+                                where n.emailid='".$email."' and m.emailid=p.created_by and p.created_by<>'".$email."'
                                 and case p.included_set when '1' then  (n-[:INCLUDED]-p) else 1=1 end
                                 and not(n-[:EXCLUDED]-p) 
                                 ".$filter_query."
@@ -931,7 +931,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 //and r1.created_at <= p.created_at
                 $email = $this->appEncodeDecode->filterString(strtolower($email));
                 $queryString = "match (n:User:Mintmesh)-[r1:ACCEPTED_CONNECTION]-(m:User:Mintmesh)-[r2:POSTED]->(p:Post)
-                                where n.emailid='".$email."' and m.emailid=p.created_by
+                                where n.emailid='".$email."' and m.emailid=p.created_by and p.created_by<>'".$email."'
                                 and case p.included_set when '1' then  (n-[:INCLUDED]-p) else 1=1 end
                                 and not(n-[:EXCLUDED]-p) 
                                 ".$filter_query."
