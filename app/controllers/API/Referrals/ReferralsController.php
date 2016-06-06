@@ -16,7 +16,7 @@ class ReferralsController extends \BaseController {
         }
 
         /**
-	 * Create new user entry
+		* Create new user entry
          * 
          * POST/user
          * 

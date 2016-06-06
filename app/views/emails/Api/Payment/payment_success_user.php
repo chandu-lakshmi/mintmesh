@@ -12,17 +12,17 @@
 						<td style="width:50%;padding-bottom:20px;">
 							<img src="<?php echo $public_url; ?>images/mintmesh-logo.png" style="width:70px;" /></td>
 						<td style="width:50%;"align="right">
-							<p style="font-size:16px; margin:0px; line-height:20px; padding-bottom:5px;"><?php echo $name; ?></p>
+							<p style="font-size:16px; margin:0px; line-height:20px; padding-bottom:5px;"><?php echo $name; ?>,</p>
                                                         <?php if(!empty($is_doller)){ ?>
-                                                            <p style="font-size:16px; margin:0px; line-height:20px;padding-bottom:5px;">Invoice #<?php echo $transaction_id; ?></p>
+                                                            <p style="font-size:16px; margin:0px; line-height:20px;padding-bottom:5px;">Invoice #<?php echo $transaction_id; ?>,</p>
                                                         <?php } ?> 
-							<p style="font-size:16px; margin:0px; line-height:20px;padding-bottom:5px;"><?php echo $date_of_payment;?></p>
+							<p style="font-size:16px; margin:0px; line-height:20px;padding-bottom:5px;"><?php echo $date_of_payment;?>.</p>
 						</td>
 					</tr>
 					<tr>
 				<td colspan="2">
 					<h2 align="center" style="margin:0px auto;margin-top:20px; font-size:30px; color:#333; font-weight:normal;padding-bottom:10px; "><?php if($is_doller){ ?>Invoice<?php } else { ?> Summary <?php } ?></h2>
-					<p align="center" style="font-family:arial;font-size:16px;margin:0px;padding-bottom:20px;">Thank you for choosing MintMesh to<br> grow your network</p>
+					<p align="center" style="font-family:arial;font-size:16px;margin:0px;padding-bottom:20px;">Thank you for choosing MintMesh to<br> grow your network.</p>
 				</td>
 				</tr>
 				</table>
@@ -50,7 +50,7 @@
 		<tr style="border-bottom:1px solid #C9C9C9;">
 			<td colspan="2" style="font-size:18px;padding:90px 20px 20px;line-height:30px;">
 					<p style="padding-bottom:20px;margin:0px">Sincerely, <br>
-					<span style="color:#C9C9C9;margin:0px">(MintMesh Team)</span></p>
+					<span style="color:#C9C9C9;margin:0px">(MintMesh Team).</span></p>
 				
                                         <p align="center" style="padding-top:20px;border-top:1px solid #C9C9C9;color:#999999;margin:0px">If you need assistance, please contact <br>MintMesh Support. <span style="color:black;margin:0px"><a style="color:#1b8c6e;text-decoration:none;" href="mailto:support@mintmesh.com" >(support@mintmesh.com)</a></span></p>
 				</td>

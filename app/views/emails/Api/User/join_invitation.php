@@ -29,9 +29,8 @@
   <tr>
     <td valign="top" class="textContent" style="padding:20px 20px 10px;line-height:135%;letter-spacing:0.2px;font-size:18px; font-weight:normal; color:#777777;"><h2 style="text-align:center;font-weight:normal;font-family: 'arial', sans-serif;font-size:26px;margin-bottom:35px;margin-top:0px; color:#cc6e35;letter-spacing:0.4px;font-weight:300;" class="wish_txt">MintMesh Invitation</h2>
       <h3 style="color:#000000;line-height:125%;font-family: 'arial', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello, </h3>
-      <p>I discovered a great way to refer people and ask for referrals, using MintMesh.</p>
+      <p><?php echo $sender_name; ?> has discovered MintMesh and requests you to refer people and ask for referrals, using MintMesh.</p>
       <p>This is a free app that solves your problems while you earn goodwill and money.</p>
-      <p style="padding-top:20px;" >I invite you to join my referral network.</p>
       <p>Download MintMesh from:</p>
       <p style="text-align:center; margin-top:50px;" ><a href="https://appsto.re/in/0jF98.i" style="margin-right:20px; " ><img src="<?php echo $public_url ; ?>images/app_store.png" style="width:45%" /></a><a href="https://play.google.com/store/apps/details?id=com.mintmesh.mintmesh"><img src="<?php echo $public_url ; ?>images/google_play.png" style="width:45%" /></a> </p></td>
   </tr>

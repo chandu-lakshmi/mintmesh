@@ -227,7 +227,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                             break;
                     default:
                         $type = 0;
-                        $excludeTypes=array(21,26,27);
+                        $excludeTypes=array(21,26);
                         $excludeType=implode(",",$excludeTypes);
 
                 } 
@@ -305,7 +305,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                     $type = 0;
                     $excludeType = 0;
                     $type = 0;
-                            $excludeTypes=array(21,26);
+                            $excludeTypes=array(21,26,27);
                             $excludeType=implode(",",$excludeTypes);
                     $sql = "select count(id) as count from notifications_logs nl 
                             where nl.to_email = '".$user->emailid."'";
@@ -476,7 +476,6 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
             {
                 $sql = "select ll.*, pt.name as point_type from levels_logs ll
                         left join points_types pt on pt.id=ll.points_types_id where ll.user_email='".$email."' and ll.levels_id=".$id." order by ll.id desc" ;
-                
                 return $result = DB::select($sql); 
             }
             else
@@ -709,5 +708,14 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
     public function getEmploymentTypes(){
         $sql = "select id,name from employment_type where status=1" ;
         return $result = DB::select($sql);
+    }
+    public function updateNotificationsFromPhoneToEmailId($userEmail='', $userPhone=''){
+        if (!empty($userEmail) && !empty($userPhone)){
+            $sql = "update notifications_logs set other_email='".$userEmail."',for_mintmesh=1,other_phone='' where other_email='' and other_phone='".$userPhone."'";
+            $result = DB::update($sql);
+            //update emailid for the notification of 11 type..this comes when p1 accepts p2 referrals of p3
+            $sql1 = "update notifications_logs set to_email='".$userEmail."',for_mintmesh=1 where to_email='' and to_phone='".$userPhone."'";
+            return $result1 = DB::update($sql1);
+        }
     }
 }

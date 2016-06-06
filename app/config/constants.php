@@ -16,7 +16,7 @@ return [
     'MNT_DEEP_LINK_ANDROID'=>'http://mintmeshstg/',
     'DP_PATH' => '/uploads/ProfilePics',
     'CV_PATH' => '/uploads/Resumes',
-    'ADD_BATTLE_CARDS_COUNT' => 0,
+    'ADD_BATTLE_CARDS_COUNT' => 3,
     'GOOGLE_CONTACTS_URL'=>'https://www.google.com/m8/feeds/contacts/default/full?alt=json&max-results=10000',
     'ANDROID'=>'android',
     'IOS'=>'ios',
@@ -75,7 +75,8 @@ return [
         'HAS_REFERRED'=>'HAS_REFERRED',
         'DELETED_CONTACT'=>'DELETED_CONTACT',
         'PROVIDES'=>'PROVIDES',
-        'LOOKING_FOR'=>'LOOKING_FOR'
+        'LOOKING_FOR'=>'LOOKING_FOR',
+        'WORKS_AS'=>'WORKS_AS'
     ],
     'MAPPED_RELATION_TYPES'=>[
         '3'=>'REQUEST_REFERENCE',
@@ -137,6 +138,7 @@ return [
     ],
     'S3BUCKET' => 'mintmesh/dev/profilepic',
     'S3BUCKET_RESUME' => 'mintmesh/dev/resume/',
+    'RESUME_MAX_SIZE' => 768000,//750kb
     'PROFILE_COMPLETION_VALUES'=>[
         'CERTIFICATION'=>10,
         'CONTACT'=>30,

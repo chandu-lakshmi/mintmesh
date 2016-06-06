@@ -29,9 +29,9 @@ font-family: 'arial'; font-style: italic; font-weight: 400; src: local('arial It
 <td>
 <table width="500" class="header-wrap" style="font-size: 28px; text-align: center; border-bottom-color: #cccccc; border-bottom-width: 1px; border-bottom-style: solid; background:#f5f8f7; padding: 10px;margin:0px auto 0px;">
 <tr><td class="logo" style="display: block; line-height: 22px; margin-bottom: 0;"><img src="<?php echo $public_url; ?>images/mintmesh-logo.png" alt="MintMesh"></td></tr>
-<tr><td class="template-title" style="display: block; line-height: 22px; font-weight: 500; font-size: 22px; margin: 10px 0 5px;">MintMesh India Pvt. Ltd</td></tr>
+<tr><td class="template-title" style="display: block; line-height: 22px; font-weight: 500; font-size: 22px; margin: 10px 0 5px;">MintMesh India Pvt. Ltd.</td></tr>
 <tr><td class="address-title" style="display: block; line-height: 22px; font-size: 16px;">8-2-269/S/33/A, Sagar Co-op Society Road no. 2,</td></tr>
-<tr><td class="address-title" style="display: block; line-height: 22px; font-size: 16px;">Banjara Hills, Hyderabad - 500034, Telangana, India</td></tr>
+<tr><td class="address-title" style="display: block; line-height: 22px; font-size: 16px;">Banjara Hills, Hyderabad - 500034, Telangana, India.</td></tr>
 </table>
 </td>
 </tr>
@@ -41,10 +41,10 @@ font-family: 'arial'; font-style: italic; font-weight: 400; src: local('arial It
 <tr>
 <td>
 <table style="margin-bottom: 20px; margin-top: 10px; padding: 10px 20px;">
-<tr><td style="font-weight: 400; display: block; font-size: 22px; color: #666666; margin-bottom: 15px;">To</td></tr>
-<tr><td style="font-weight: 500; margin-bottom: 12px; display: block; color: #000000; font-size: 22px;"><?php echo $name; ?></td></tr>
-<tr><td style="font-size: 16px; margin-bottom: 5px; display: block;"><?php echo $location; ?></td></tr>
-<tr><td style="font-size: 16px;"><?php echo $phone_country_name;?></td></tr>
+<tr><td style="font-weight: 400; display: block; font-size: 22px; color: #666666; margin-bottom: 15px;">To,</td></tr>
+<tr><td style="font-weight: 500; margin-bottom: 12px; display: block; color: #000000; font-size: 22px;"><?php echo $name; ?>,</td></tr>
+<tr><td style="font-size: 16px; margin-bottom: 5px; display: block;"><?php echo $location; ?>,</td></tr>
+<tr><td style="font-size: 16px;"><?php echo $phone_country_name;?>.</td></tr>
 </table>
 </td>
 </tr>
@@ -97,7 +97,7 @@ font-family: 'arial'; font-style: italic; font-weight: 400; src: local('arial It
 </tr>
 <tr>
 <td colspan="2" align="center">
-<table style="width: 100%; margin: 0 auto; padding: 10px 0 0;"><tr><td colspan="2" align="center" style="font-weight: 400; font-size: 18px; line-height:135%; color: #999999;">This is computer generated<br> statement and requires no signature</td></tr></table>
+<table style="width: 100%; margin: 0 auto; padding: 10px 0 0;"><tr><td colspan="2" align="center" style="font-weight: 400; font-size: 18px; line-height:135%; color: #999999;">This is computer generated<br> statement and requires no signature.</td></tr></table>
 </td>
 </tr>
 <tr>

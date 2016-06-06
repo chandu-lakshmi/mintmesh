@@ -876,14 +876,14 @@ class ReferralsGateway {
                     $userDetails[] = $u ;
                     
                 }
-                
-                $suggestions = $this->getPostSuggestions($input);
                 $data=array("users"=>$userDetails) ;
                 $data['postDetails'] = array();
                 if (count($postDetails) && isset($postDetails[0][0]))
                 {
+                    $input['post_scope'] = !empty($postDetails[0][0]->service_scope)?$postDetails[0][0]->service_scope:'';
                     $data['postDetails'] = $postDetails = $this->formPostDetailsArray($postDetails[0][0]);
                 }
+                $suggestions = $this->getPostSuggestions($input);
                 $data['suggestions'] = !empty($suggestions['data']['users'])?$suggestions['data']['users']:array() ;
                 $data['referrals_count'] = $this->referralsRepository->getPostReferralsCount($input['post_id']);
                 $data['is_self_referred'] = $self_referred ;
@@ -896,6 +896,7 @@ class ReferralsGateway {
                 if (count($postDetails) && isset($postDetails[0][0]))
                 {
                     $input['post_created_by'] = !empty($postDetails[0][0]->created_by)?$postDetails[0][0]->created_by:'';
+                    $input['post_scope'] = !empty($postDetails[0][0]->service_scope)?$postDetails[0][0]->service_scope:'';
                     $suggestions = $this->getPostSuggestions($input);
                     $data['suggestions'] = !empty($suggestions['data']['users'])?$suggestions['data']['users']:array() ;
                     $data['postDetails'] = $postDetails = $this->formPostDetailsArray($postDetails[0][0]);
@@ -913,6 +914,7 @@ class ReferralsGateway {
             $suggestionInput['limit'] = 5 ;
             $suggestionInput['suggestion'] = 1 ;
             $suggestionInput['post_id'] = $input['post_id'] ;
+            $suggestionInput['post_scope'] = !empty($input['post_scope'])?$input['post_scope']:'get_service';
             $suggestions = $this->getMyReferralContacts($suggestionInput) ;
             return $suggestions ;
         }
@@ -1329,19 +1331,21 @@ class ReferralsGateway {
                 }
                 
             }
-            $result = $this->referralsRepository->getMyReferralContacts($input);    
+            $result = $this->referralsRepository->getMyReferralContacts($input);
             if (count($result))
-            {
+            { 
+                $setLimit = 0;
+                $maxLimit = !empty($input['suggestion'])?10:true;//if request for suggestion, set max limit otherwise no limit
                 foreach ($result as $k1=>$v1)
-                {
-                    if (!in_array($v1[0]->emailid, $referrals))
+                {    
+                    if (!in_array($v1[0]->emailid, $referrals) && ++$setLimit <= $maxLimit)
                     {
                         if ($v1[0]->emailid != $input['other_email'])
                         {
                             $users[]=$this->userGateway->formUserDetailsArray($v1[0],'property', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC')) ;
                         }
                         
-                    }
+                    }  
                 }
                 //get non mintmesh users who already got referred
                 $nonMintmeshUsersResult = $this->referralsRepository->getMyNonMintmeshReferrals($input['post_id'], $userEmail);
@@ -1868,7 +1872,7 @@ class ReferralsGateway {
          */
         public function referContactV2($input)
         {
-            $referNonMintmesh = 0;
+            $referNonMintmesh = $nonMintmeshPhoneRefer = 0;
             $uploadedByP2=0;
             $p3CvOriginalName = "";
             $referResumePath = "";
@@ -1892,18 +1896,17 @@ class ReferralsGateway {
                        $p3CvOriginalName = $resumeResult['resume_original_name'] ;
                    }
                }
+               if (!empty($input['refer_non_mm_email']) && !empty($input['referring'])){
+                   $nonMintmeshPhoneRefer = 1 ;
+               }
                //continue only when the request count is in limit
                //create a relation between the post and user
-               $oldRelationCount = $this->referralsRepository->getOldRelationsCount($input['post_id'], $input['referring']);
+               $oldRelationCount = $this->referralsRepository->getOldRelationsCount($input['post_id'], $input['referring'], $nonMintmeshPhoneRefer);
                if (!empty($oldRelationCount))
                {
                    $relationCount = $oldRelationCount + 1 ;
                    //$message = array('msg'=>array(Lang::get('MINTMESH.referrals.already_referred')));
                    //return $this->commonFormatter->formatResponse(406, "error", $message, array()) ;
-               }
-               else
-               {
-                   $relationCount = 1 ;
                }
                if (!empty($input['refer_non_mm_email']) && !empty($input['referring'])){//non mintmesh and refer 
 
@@ -1915,13 +1918,12 @@ class ReferralsGateway {
                        $phoneContactRelationInput['firstname'] = !empty($input['referring_user_firstname'])?$this->appEncodeDecode->filterString($input['referring_user_firstname']):'';
                        $phoneContactRelationInput['lastname'] = !empty($input['referring_user_lastname'])?$this->appEncodeDecode->filterString($input['referring_user_lastname']):'';
                        $phoneContactRelationInput['fullname'] = $phoneContactRelationInput['firstname']." ".$phoneContactRelationInput['lastname'];
-                       $phoneContactInput['phone'] = !empty($input['referring'])?$this->appEncodeDecode->filterString($input['referring']):'';
+                       $phoneContactInput['phone'] = !empty($input['referring'])?$this->appEncodeDecode->formatphoneNumbers($input['referring']):'';
                         if (!empty($nonMintmeshContactExist)){
                            //create import relation
                            $relationCreated = $this->contactsRepository->relateContacts($this->neoLoggedInUserDetails , $nonMintmeshContactExist[0] , $phoneContactRelationInput, 1);
                        }else{
-                       
-                       $importedContact = $this->contactsRepository->createNodeAndRelationForPhoneContacts($userEmail, $phoneContactInput, $phoneContactRelationInput);
+                            $importedContact = $this->contactsRepository->createNodeAndRelationForPhoneContacts($userEmail, $phoneContactInput, $phoneContactRelationInput);
                        }
                        //send sms invitation to p3
                        $smsInput=array();

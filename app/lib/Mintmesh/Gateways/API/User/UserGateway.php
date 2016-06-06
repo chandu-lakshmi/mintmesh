@@ -89,7 +89,7 @@ class UserGateway {
                                 'rtf',
                                 'msword'
                                 );
-                $this->resumeMaxSize = 307200;//file size max 300kb
+                $this->resumeMaxSize = Config::get('constants.RESUME_MAX_SIZE');//file size max 750kb
         }
         // validation on user inputs for change password
         public function validateChangePassword($input) {            
@@ -420,7 +420,7 @@ class UserGateway {
                        ) ;
                     $this->userRepository->logEmail($emailLog);
                     
-                    //send second email
+                    //send second email for thanks for download
                     $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.user_introduction');
                     $this->userEmailManager->emailId = $input['emailid'];
                     $dataSet = array();
@@ -448,13 +448,13 @@ class UserGateway {
                     if (!empty($input['location'])){
                         $this->userRepository->logLevel(6, $this->appEncodeDecode->filterString(strtolower($input['emailid'])), "", "",Config::get('constants.POINTS.SIGNUP'));
                     }
+                    //check with phone number in non mintmesh users
+                    $nonMintmeshUserResult = $this->checkForNonMintmeshPhoneNumber($input['phone'], $input['emailid']);
                     $input['grant_type'] = "password";
                     $input['username'] = $input['emailid'];
                     $response = $this->loginCall($input);
                     $userDetails = (array) json_decode($response, TRUE);
                     if($userDetails['status'] == 'success') {
-                        //check with phone number in non mintmesh users
-                        $nonMintmeshUserResult = $this->checkForNonMintmeshPhoneNumber($input['phone'], $input['emailid']);
                         $responseMessage = Lang::get('MINTMESH.user.create_success');
                         $responseCode = self::SUCCESS_RESPONSE_CODE;
                         $responseStatus = self::SUCCESS_RESPONSE_MESSAGE;
@@ -1211,11 +1211,29 @@ class UserGateway {
                     {
                         $sectionInput = $input;
                         $sectionInput['emailid'] = $this->loggedinUserDetails->emailid ;
+                        $nodeID = !empty($input['id'])?$input['id']:0;
                         $sectionInfoSuccess = $this->editSectionInfo($sectionInput, $input['info_type']);
                         if ($sectionInfoSuccess)
                         {
+                            $nodeID = !empty($sectionInfoSuccess['node_id'])?$sectionInfoSuccess['node_id']:$nodeID;//added a section info
                             //update profile completion percentage
                             $userInput['completed_'.strtolower($input['info_type'])] = 1 ;
+                            if (!empty($sectionInfoSuccess)){
+                                $moreDetails = $this->neoUserRepository->getMoreDetails($this->loggedinUserDetails->emailid, 'Experience');
+                                if (!empty($moreDetails))
+                                {
+                                    $returnData = $this->formUserMoreDetailsArray($moreDetails);
+                                    if (!empty($returnData['Experience'])){
+                                        foreach ($returnData['Experience'] as $k=>$v){//only return the current experience details
+                                            if (!empty($v['id']) && $nodeID == $v['id']){
+                                                $data = $v ;
+                                            }
+                                        }
+                                        $data['total_experience'] = !empty($returnData['total_experience'])?$returnData['total_experience']:0;
+                                    }
+                                }
+                                $data['id'] = $nodeID;
+                            }
                         }
                         else
                         {
@@ -1428,16 +1446,30 @@ class UserGateway {
                     {
                         //update node and relation
                         $this->neoUserRepository->updateCategoryNodeNRelation($input, array(), $sectionName, $relationName);
-                    }
+//                        edit relation between user and job node
+                        if($sectionName == 'Experience' && !empty($input['job_title'])){
+                            $this->neoUserRepository->unMapJobs($this->loggedinUserDetails->emailid,$input['id']);
+                            $this->neoUserRepository->mapJobs(array($input['job_title']), $this->loggedinUserDetails->emailid, Config::get('constants.RELATIONS_TYPES.WORKS_AS'),array('experience_id'=>$input['id']));
+                        }
+                        }
                     else if ($input['action']=='add')
                     {
                         //create node and relation
-                        $this->neoUserRepository->createCategoryNodeNRelation($input, array(), $sectionName, $relationName);
+                        $nodeId = $this->neoUserRepository->createCategoryNodeNRelation($input, array(), $sectionName, $relationName);
+//                        create relation between user and job node
+                        if($sectionName == 'Experience' && !empty($input['job_title'])){
+                            $jobResult = $this->neoUserRepository->mapJobs(array($input['job_title']), $this->loggedinUserDetails->emailid, Config::get('constants.RELATIONS_TYPES.WORKS_AS'),array('experience_id'=>$nodeId));
+                        }
+                        $return = array('node_id'=>$nodeId);
                     }
                     else if ($input['action']=='delete' && !empty($input['id']))
                     {
                         //remove all relations for experience
                         $this->neoUserRepository->removeCategoryNodeRelation($input, $sectionName, $relationName);
+//                      delete relation between user and job node 
+                        if($sectionName == 'Experience'){
+                         $this->neoUserRepository->unMapJobs($this->loggedinUserDetails->emailid,$input['id']);
+                         }
                         //get number of categories relation remainng for the user
                         $remainingCount = $this->neoUserRepository->getCategoryNodeRelationCount($input, $sectionName, $relationName);
                         if (empty($remainingCount))
@@ -1648,7 +1680,7 @@ class UserGateway {
             $returnArray =  array();
             $battle_cards_count = $this->userRepository->getNotificationsCount($loggedinUserDetails, 'request_connect');
             $battle_cards_count = $battle_cards_count + Config::get('constants.ADD_BATTLE_CARDS_COUNT');//adding battle cards count
-            $returnArray['battle_cards_count']= !(empty($battle_cards_count))?(($profilePercentage < 100)?$battle_cards_count+1:$battle_cards_count):0;
+            $returnArray['battle_cards_count']= ($profilePercentage < 100)?$battle_cards_count+1:$battle_cards_count;
             $badgeResult = $this->userRepository->getNotificationsCount($loggedinUserDetails, 'all');
             $returnArray['notifications_count']= !(empty($badgeResult))?$badgeResult:0;
             $requestsCount = $this->neoUserRepository->getMyRequestsCount($loggedinUserDetails->emailid);
@@ -1747,6 +1779,11 @@ class UserGateway {
                                 $v['experience_count'] = $this->appEncodeDecode->calculateYear($months) ;
                                 $total_months = $total_months+$months ;
                             }
+                            //get user job details..like title nad mysql id
+                            $jobDetailsResult = $this->neoUserRepository->getJobTitleDetails($v['id']);
+                            $v['job_title']=!empty($v['job_title'])?$v['job_title']:"";
+                            $v['job_title'] = !empty($jobDetailsResult['job_title'])?$jobDetailsResult['job_title']:$v['job_title'];
+                            $v['job_title_id'] = !empty($jobDetailsResult['job_title_id'])?$jobDetailsResult['job_title_id']:0;
                             if (!empty($v['current_job']))
                             {
                                 $current_jobs[] = $v ;
@@ -2752,12 +2789,17 @@ class UserGateway {
         
         public function sendNotification($fromUser, $neofromUser, $email, $notificationType = 0, $extraInserts = array(), $otherInfoParams = array(),$parse=1, $nonMintmesh=0)
         {
+            $userDeviceResults = array();
             if (!empty($parse))//send if direct notification
             {
                 if (!empty($email) && !empty($neofromUser))
                 {
-                    
-                    $userDeviceResults = $this->neoUserRepository->getDeviceToken($email);
+                    if (strpos($email, "@") !== false) {//if emailid
+                        $userDeviceResults = $this->neoUserRepository->getDeviceToken($email);
+                    }else{//else is a number with non mintmesh
+                        $userDeviceResults[0][0] = $this->neoUserRepository->getNonMintmeshUserDetails($email);
+                       // print_r($userDeviceResults[0]->getProperties());exit;
+                    }
                     $is_mintmesh = 1 ;
                     
                     if (!empty($userDeviceResults))
@@ -2790,7 +2832,8 @@ class UserGateway {
                                     'notifications_types_id' => $notificationType,
                                     'from_user' => $fromUser->id,
                                     'from_email' => $fromUser->emailid,
-                                    'to_email' => $userDetails['emailid'],
+                                    'to_email' => !empty($userDetails['emailid'])?$userDetails['emailid']:"",
+                                    'to_phone' => empty($userDetails['emailid'])?$userDetails['phone']:"",
                                     'other_email' => $other_email,
                                     'other_phone'=>$other_phone,
                                     'for_mintmesh' => $is_mintmesh,
@@ -2857,8 +2900,22 @@ class UserGateway {
                                     $msg = $msg.Lang::get('MINTMESH.notifications.extra_texts.'.$notificationType) ;
                                 }
                             }
-                            $badgeResult = $this->userRepository->getNotificationsCount($userDeviceResult[0], 'all');
-                            $badge = !empty($badgeResult)?$badgeResult:0;
+                            $badge=$battle_cards_count=0;
+                            $profilePercentage = $this->calculateProfilePercentageCompletion($userDeviceResult[0]);
+                            $battle_cards_count = $this->userRepository->getNotificationsCount($userDeviceResult[0], 'request_connect');
+                            $battle_cards_count = $battle_cards_count + Config::get('constants.ADD_BATTLE_CARDS_COUNT');//adding battle cards count
+                            $battle_cards_count= ($profilePercentage < 100)?$battle_cards_count+1:$battle_cards_count;
+                            if($battle_cards_count > 0)
+                            {
+                              $badge = $battle_cards_count;
+                            }
+                            else 
+                            {
+                                $notification_count = $this->userRepository->getNotificationsCount($userDeviceResult[0], 'all');
+                                if($notification_count > 0 ){
+                                    $badge = 1;
+                                }
+                            }
                             $data = array("alert" => $msg,"emailid"=>$fromUser->emailid, "push_id"=>$t->id, "push_type"=>$notificationType, "badge"=>$badge);
                             // Push to Query
                             if (!empty($deviceDetails))
@@ -2926,7 +2983,6 @@ class UserGateway {
                                     $otherNoteUser = $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($notification->other_email) ;
                                      $normalFlow = 1 ;
                                 }
-                                
                             }
                             else{
                                 $fromNoteUser = $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($notification->from_email) ;
@@ -2937,6 +2993,7 @@ class UserGateway {
                             {
                                 $noReferralsPost = false ;
                                 $note = array();
+                                $note['post_service_name']="";
                                  if (empty($notification->for_mintmesh) && empty($normalFlow)){
                                     $note = $this->formUserDetailsArray($neoUserDetails, 'property', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC'));
                                     //print_r($note);exit;
@@ -3008,11 +3065,20 @@ class UserGateway {
                                 $extra_msg = "";
                                 if (in_array($notification->notifications_types_id,$this->extraTextsNotes))//for posts
                                 {
-                                    $extra_msg = Lang::get('MINTMESH.notifications.extra_texts.'.$notification->notifications_types_id) ;
+                                     //for new service push notification
+                                    if (in_array($notification->notifications_types_id,$this->newServiceNotifications)){
+                                        # get service name for the request
+                                        $serviceId = !empty($notification->extra_info)?$notification->extra_info:0;
+                                        $serviceName = $this->referralsRepository->getPostName($serviceId);
+                                        $note['post_service_name']=trim($serviceName) ;
+                                        $extra_msg=$extra_msg.trim($serviceName) ;
+                                    }
+                                    $extra_msg = $extra_msg.Lang::get('MINTMESH.notifications.extra_texts.'.$notification->notifications_types_id) ;
                                 }
                                 if (!empty($notification->other_message))
                                 $note['optional_message'] = $this->appEncodeDecode->filterStringDecode($notification->other_message) ;
-                                $note['notification'] = $fromNoteUser->fullname." ".$notification->message." ".$thirdName." ".$extra_msg ;
+                                $thirdName = !empty($thirdName)?" ".$thirdName:"";
+                                $note['notification'] = $fromNoteUser->fullname." ".$notification->message.$thirdName." ".$extra_msg ;
                                 $note['notify_time'] = $notification->created_at ;
                                 $note['notification_type'] = $notification->not_type ;
                                 $note['message'] = $notification->message ;
@@ -3317,13 +3383,15 @@ class UserGateway {
                         //$fromUser = $this->userRepository->getUserByEmail($from_email);
                         //$neofromUser = $this->neoUserRepository->getNodeByEmailId($from_email) ;
 
-                        if (!empty($input['refered_by']) && empty($input['self_reference']))
+                        if (!empty($input['refered_by']) && empty($input['self_reference']))//for request_reference flow
                         {
                             $extraInserts = array();
                             //take base relation id
                             $rel_id= !empty($input['base_rel_id'])?$input['base_rel_id']:0;
                             $extraInserts['extra_info'] = $rel_id ;
+                            //send notification to p1
                             $this->sendNotification($loggedinUserDetails, $neoLoggedInUserDetails, $to_email, 7, $extraInserts, $otherInfoParams);
+                            //change relation status between p1 and p2
                             $this->neoUserRepository->changeRelationStatus($input['from_email'], $input['refered_by'], $loggedinUserDetails->emailid,  Config::get('constants.RELATIONS_TYPES.REQUEST_REFERENCE'), Config::get('constants.REFERENCE_STATUS.SUCCESS'), Config::get('constants.POINTS.REFER_REQUEST'));
                             // log the points for p2
                             $this->userRepository->logLevel(1, $input['refered_by'], $input['from_email'], $loggedinUserDetails->emailid,Config::get('constants.POINTS.REFER_REQUEST'));
@@ -3347,7 +3415,7 @@ class UserGateway {
                                 $this->userRepository->logLevel(1, $input['refered_by'], $input['from_email'], $loggedinUserDetails->emailid,Config::get('constants.POINTS.REFER_REQUEST'));
                             }
                         }
-                        else
+                        else //for one to one connection
                         {
                             $this->neoUserRepository->changeRelationStatus($input['from_email'], $loggedinUserDetails->emailid,'', Config::get('constants.RELATIONS_TYPES.REQUESTED_CONNECTION'), Config::get('constants.REFERENCE_STATUS.SUCCESS'));
                             $this->sendNotification($loggedinUserDetails, $neoLoggedInUserDetails, $to_email, 2, array(), $otherInfoParams);
@@ -3919,7 +3987,6 @@ class UserGateway {
                 {
                     //create a delete contact relation
                     $deleted = $this->neoUserRepository->createDeleteContactRelation($loggedinUserDetails->emailid, $input['emailid']);
-                    
                     $message = array('msg'=>array(Lang::get('MINTMESH.user.user_disconnect_success')));
                     return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
                 }
@@ -4594,7 +4661,7 @@ class UserGateway {
                 $pushData = array();
                 $pushData['user_phone']=$this->appEncodeDecode->formatphoneNumbers($phone);
                 $pushData['user_email']=$this->appEncodeDecode->filterString(strtolower($emailid));
-                Queue::push('Mintmesh\Services\Queues\NonMintmeshPhoneCheckQueue', $pushData,'IMPORT');
+                Queue::push('Mintmesh\Services\Queues\NonMintmeshPhoneCheckQueue', $pushData);
                 }
                 catch(\RuntimeException $e)
                 {

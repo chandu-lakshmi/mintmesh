@@ -505,7 +505,7 @@ class ContactsGateway {
                         $this->userEmailManager->emailId = $email;
                         $dataSet = array();
                         $dataSet['name'] =!empty($userDetails['firstname'])?$userDetails['firstname']:'';
-                        $dataSet['sender_name'] =!empty($this->neoLoggedInUserDetails->firstname)?$this->neoLoggedInUserDetails->firstname:'';
+                        $dataSet['sender_name'] =!empty($this->neoLoggedInUserDetails->firstname && $this->neoLoggedInUserDetails->lastname)?$this->neoLoggedInUserDetails->firstname." ".$this->neoLoggedInUserDetails->lastname:'';
                         $dataSet['sender_email'] =!empty($this->neoLoggedInUserDetails->emailid)?$this->neoLoggedInUserDetails->emailid:'';
                         $this->userEmailManager->dataSet = $dataSet;
                         $this->userEmailManager->subject = "Invitation from ".$dataSet['sender_name'];//Lang::get('MINTMESH.user_email_subjects.join_invitaion');

@@ -535,6 +535,31 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
                 return false ;
             }
         }
+        
+        /*
+         * copy got_refered relation to the new node created for signup
+         */
+        public function copyGotReferredRelationsToMintmeshLabel($emailid='', $phone=''){
+            $returnArray = array();
+            $queryString = "MATCH (n1:NonMintmesh)-[r:GOT_REFERRED]->(n2:Post),(n3:User:Mintmesh{emailid:'".$emailid."'})
+                            where replace(n1.phone, '-', '') = '".$phone."' with collect(r) as rels,n2,n3
+                                FOREACH (rel in rels |
+                                CREATE (n3)-[r:GOT_REFERRED]->(n2)
+                                SET r+=rel
+                                delete rel
+                                
+                         )";
+            //echo $queryString ;exit;
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            //form an array for all the referrals to updae notifications_logs table
+            /*if (!empty($result)){
+                foreach ($result as $res){
+                    $returnArray[]=array('referred_by'=>$res[0]->referred_by, 'created_by'=>$res[0]->created_by, 'post_id'=>$res[1][0]);
+            }
+            }*/
+            return true;
+        }
        
         
 }

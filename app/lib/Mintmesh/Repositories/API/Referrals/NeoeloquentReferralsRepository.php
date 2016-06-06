@@ -257,14 +257,16 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             }
         }
         
-        public function getOldRelationsCount($postId=0, $userEmail="")
+        public function getOldRelationsCount($postId=0, $userEmail="", $isNonMintmesh=0)
         {
             if (!empty($postId) && !empty($userEmail))
             {
                 $userEmail = $this->appEncodeDecode->filterString(strtolower($userEmail));
                 $relationString = Config::get('constants.REFERRALS.GOT_REFERRED') ; //Config::get('constants.RELATIONS_TYPES.REQUEST_REFERENCE') ;
-                $queryString = "Match (n:User)-[r:".$relationString."]->(m:Post) 
-                                where ID(m)=".$postId." and n.emailid='".$userEmail."'";
+                $label = !empty($isNonMintmesh)?"NonMintmesh":"User";
+                $whereLabel = !empty($isNonMintmesh)?"replace(n.phone, '-', '')":"n.emailid";
+                $queryString = "Match (n:".$label.")-[r:".$relationString."]->(m:Post) 
+                                where ID(m)=".$postId." and ".$whereLabel."='".$userEmail."'";
                 $queryString.=" RETURN count(r)" ;
                 $query = new CypherQuery($this->client, $queryString);
                 $result = $query->getResultSet();
@@ -475,29 +477,67 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
          
         
          public function getMyReferralContacts($input=array())
-         {
+         {            
             if (!empty($input['other_email']) && !empty($input['email']))
              {
-                if (!empty($input['limit']) && !emptY($input['suggestion']))//to retrieve sugestions
+                if (!empty($input['limit']) && !empty($input['suggestion']))//to retrieve sugestions
                 {
                     $skip=0;
-                    $limit=5 ;
+                    $limit=10 ;
                 }
                  $input['other_email'] = $this->appEncodeDecode->filterString(strtolower($input['other_email']));
                  $input['email'] = $this->appEncodeDecode->filterString(strtolower($input['email']));
+                 
                  $queryString = "Match (m:User:Mintmesh), (n:User:Mintmesh), (o:User:Mintmesh)
                                     where m.emailid='".$input['email']."' and n.emailid='".$input['other_email']."'
                                      and (m)-[:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-(o)    
                                     and not (n-[:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-o)
                                     RETURN DISTINCT o order by lower(o.firstname) asc " ;
                  
-                 if (!empty($input['suggestion']))
-                 {
-                     $queryString = "Match (m:User:Mintmesh {emailid:'".$input['email']."'})-[:ACCEPTED_CONNECTION]-(o:User:Mintmesh), (n:User:Mintmesh {emailid:'".$input['other_email']."'}),(p:Post)
+                 if (!empty($input['suggestion'])&& !empty($input['post_scope']))
+                 { 
+                     $relation = 'PROVIDES';
+                     $scope = 'Service';
+                     if ($input['post_scope']=="find_candidate"||$input['post_scope']=="find_job")
+                     {
+                        $relation = 'WORKS_AS';
+                        $scope = 'Job';
+                     } 
+                    
+                    $queryString = "Match (m:User:Mintmesh {emailid:'".$input['email']."'})-[:ACCEPTED_CONNECTION]-(o:User:Mintmesh), (n:User:Mintmesh {emailid:'".$input['other_email']."'}),(p:Post) 
+                        where   not (n-[:ACCEPTED_CONNECTION]-o) and ID(p)=".$input['post_id']."
+                        with m,n,o,p
+                        match (o)-[:".$relation."]-(s:".$scope.")  
+                        where (lower(s.name) =~ ('.*' + lower(p.service_name)+ '.*' ) and lower(o.location) =~ ('.*' + lower(p.service_location)))
+                        RETURN DISTINCT o ";
+
+                    $query = new CypherQuery($this->client, $queryString);
+                    $result = $query->getResultSet();
+                     
+                    if($result->count()<= $limit)
+                    {    
+                        $queryString.= " union Match (m:User:Mintmesh {emailid:'".$input['email']."'})-[:ACCEPTED_CONNECTION]-(o:User:Mintmesh), (n:User:Mintmesh {emailid:'".$input['other_email']."'}),(p:Post) 
+                            where   not (n-[:ACCEPTED_CONNECTION]-o) and ID(p)=".$input['post_id']."
+                            with m,n,o,p
+                            match (o)-[:".$relation."]-(s:".$scope.")  
+                            where lower(s.name) =~ ('.*' + lower(p.service_name)+ '.*' )
+                            RETURN DISTINCT o ";
+
+                        $query = new CypherQuery($this->client, $queryString);
+                        $result = $query->getResultSet();
+                            
+                        if($result->count()<= $limit)
+                        {
+                            $queryString.= " union Match (m:User:Mintmesh {emailid:'".$input['email']."'})-[:ACCEPTED_CONNECTION]-(o:User:Mintmesh), (n:User:Mintmesh {emailid:'".$input['other_email']."'}),(p:Post) 
+                                where   not (n-[:ACCEPTED_CONNECTION]-o) and ID(p)=".$input['post_id']."
+                                and lower(o.location) =~ ('.*' + lower(p.service_location))
+                                RETURN DISTINCT o";
+                        }
+                    }
+                     /*$queryString = "Match (m:User:Mintmesh {emailid:'".$input['email']."'})-[:ACCEPTED_CONNECTION]-(o:User:Mintmesh), (n:User:Mintmesh {emailid:'".$input['other_email']."'}),(p:Post)
                                     where   not (n-[:ACCEPTED_CONNECTION]-o)
                                     and lower(o.location) =~ ('.*' + lower(p.service_location)) and ID(p)=".$input['post_id']."
                                     RETURN DISTINCT o order by lower(o.firstname) asc";
-                     /*
                      $queryString = "Match (m:User:Mintmesh), (n:User:Mintmesh), (o:User:Mintmesh),(p:Post)
                                     where m.emailid='".$input['email']."' and n.emailid='".$input['other_email']."'
                                      and (m)-[:".Config::get('constants.RELATIONS_TYPES.ACCEPTED_CONNECTION')."]-(o)    
@@ -509,6 +549,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                  {
                     $queryString.=" skip ".$skip." limit ".$limit ;
                  }
+                 //echo $queryString;exit;
                  $query = new CypherQuery($this->client, $queryString);
                  return $result = $query->getResultSet();
              }

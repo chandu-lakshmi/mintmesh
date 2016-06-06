@@ -177,7 +177,7 @@ class PaymentGateway {
                 $post['account_name'] = $input['account_name'];
                 $post['account_number'] = $input['account_number'];
                 $post['ifsc_code'] = $input['ifsc_code'];
-                $post['address'] = $input['address'];
+                $post['address'] = !empty($input['address'])?$input['address']:"";
                 //check bank details exist
                 $checkUserBank = $this->paymentRepository->checkUserBank($post);
                 if(empty($checkUserBank)) {
