@@ -441,7 +441,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                   {
                      $queryString .=" set r.completed_status='".Config::get('constants.REFERRALS.STATUSES.'.$status)."' , r.status='".Config::get('constants.REFERRALS.STATUSES.COMPLETED')."', r.p3_updated_at='".date("Y-m-d H:i:s")."'" ;
                   }
-                  $queryString.=" return p,r" ;
+                  $queryString.=" return p,r,u" ;
                   $query = new CypherQuery($this->client, $queryString);
                   return $result = $query->getResultSet();
                                  
@@ -729,7 +729,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                  if (!empty($is_self_referred)){
                      $queryString.= "r.completed_status='".Config::get('constants.REFERRALS.STATUSES.ACCEPTED')."'," ;
                  }
-                 $queryString.= " r.one_way_status='".Config::get('constants.REFERRALS.STATUSES.ACCEPTED')."', r.p1_updated_at='".date("Y-m-d H:i:s")."'" ; 
+                 $queryString.= " r.one_way_status='".Config::get('constants.REFERRALS.STATUSES.ACCEPTED')."', r.p1_updated_at='".date("Y-m-d H:i:s")."' return p,r" ; 
                  $query = new CypherQuery($this->client, $queryString);
                  return $result = $query->getResultSet(); 
              }

@@ -665,10 +665,14 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             }
         }
         
-        public function getMoreDetails($emailid="")
+        public function getMoreDetails($emailid="", $label="")
         {
             $emailid = $this->appEncodeDecode->filterString(strtolower($emailid));
-            $queryString = "MATCH (n:User:Mintmesh)-[r:MORE_INFO]->(m) where n.emailid='".$emailid."' RETURN m as row, labels(m) as labelName";
+            $queryString = "MATCH (n:User:Mintmesh)-[r:MORE_INFO]->(m";
+            if (!empty($label)){
+                $queryString.=":".$label;
+            }
+            $queryString.=") where n.emailid='".$emailid."' RETURN m as row, labels(m) as labelName";
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             //echo "<pre>";

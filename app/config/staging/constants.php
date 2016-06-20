@@ -160,6 +160,7 @@ return [
         'FULL'=>'full'
     ],
     'S3BUCKET_MM_REFER_RESUME' => 'mintmesh/dev/MintmeshReferredResumes',
-    'S3BUCKET_NON_MM_REFER_RESUME' => 'mintmesh/dev/NonMintmeshReferredResumes'
+    'S3BUCKET_NON_MM_REFER_RESUME' => 'mintmesh/dev/NonMintmeshReferredResumes',
+    'SEND_RESUME_ATTACHMENT'=>false
         
 ];

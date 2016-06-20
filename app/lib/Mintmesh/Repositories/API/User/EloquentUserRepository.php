@@ -227,7 +227,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                             break;
                     default:
                         $type = 0;
-                        $excludeTypes=array(21,26);
+                        $excludeTypes=array(21,26,27);
                         $excludeType=implode(",",$excludeTypes);
 
                 } 

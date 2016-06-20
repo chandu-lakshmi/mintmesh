@@ -320,11 +320,12 @@ class ReferralsController extends \BaseController {
          * POST/get_post_status_details
          * 
          * @param string $access_token The Access token of a user
-         * @param string $from_user from wher the request has come
+         * @param string $from_user p1 emailid
          * @param string $referred_by person who referred
          * @param string $referral person who got referred
          * @param string $relation_count relation count
          * @param string $post_id
+         * @param string $referred_by_phone in case the referral is a non mintmesh user
 	 * @return Response
 	 */
         public function getPostStatusDetails()
@@ -482,7 +483,7 @@ class ReferralsController extends \BaseController {
          * POST/get_posts
          * 
 	 * @param string $access_token The Access token of a user
-         * @param string $request_type get_service|provide_service
+         * @param string $request_type ["all","provide_service","get_service","find_candidate","find_job"]
          * @param string $page_no
          * 
 	 * @return Response

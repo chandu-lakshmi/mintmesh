@@ -30,6 +30,10 @@ abstract class EmailManager {
                     {
                     $message->to($emailInput['email'], $emailInput['name']);
                     $message->subject($emailInput['subject']);
+                    //send attachment if attached
+                    if (!empty($emailInput['attachment_path'])){
+                         $message->attach($emailInput['attachment_path']);
+                    }
                     });
                    
                     if( count(Mail::failures()) > 0 ) {

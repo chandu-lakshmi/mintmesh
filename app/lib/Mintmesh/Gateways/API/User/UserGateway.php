@@ -2983,6 +2983,7 @@ class UserGateway {
                                     $otherNoteUser = $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($notification->other_email) ;
                                      $normalFlow = 1 ;
                                 }
+                                
                             }
                             else{
                                 $fromNoteUser = $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($notification->from_email) ;
@@ -3987,6 +3988,7 @@ class UserGateway {
                 {
                     //create a delete contact relation
                     $deleted = $this->neoUserRepository->createDeleteContactRelation($loggedinUserDetails->emailid, $input['emailid']);
+                    
                     $message = array('msg'=>array(Lang::get('MINTMESH.user.user_disconnect_success')));
                     return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, array()) ;
                 }
@@ -4761,6 +4763,32 @@ class UserGateway {
                }
             }
             return $response ;
+        }
+        
+        public function sendAttachmentResumeToP1($fromEmail='', $toEmail='', $resume_path='', $userNameDetails=array()){
+            if (!empty($resume_path)){
+                $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.resume_attachment');
+                $this->userEmailManager->emailId = $toEmail;
+                $dataSet = array();
+                $dataSet['attachment_path'] = $resume_path;
+                $dataSet['name'] = !empty($userNameDetails['to_name'])?$userNameDetails['to_name']:"";
+                $dataSet['for_name'] = !empty($userNameDetails['for_name'])?$userNameDetails['for_name']:"The Contact";
+               // $dataSet['link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/redirect_to_app/".$appLinkCoded ;;
+                $this->userEmailManager->dataSet = $dataSet;
+                $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.resume_attachment').$dataSet['for_name'].".";
+                $this->userEmailManager->name = "";
+                $email_sent = $this->userEmailManager->sendMail();
+                $emailLog = array(
+                               'emails_types_id' => 4,
+                               'from_user' => 0,
+                               'from_email' => $fromEmail,
+                               'to_email' => $toEmail,
+                               'related_code' => "",
+                               'sent' => $email_sent,
+                               'ip_address' => $_SERVER['REMOTE_ADDR']
+                           ) ;
+                $this->userRepository->logEmail($emailLog);
+            }
         }
 
 }

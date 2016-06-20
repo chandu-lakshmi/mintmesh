@@ -983,7 +983,7 @@ class ReferralsGateway {
             $result = $this->referralsRepository->processPost($input['post_id'], $input['referred_by'], $referral, $input['status'], $input['post_way'], $input['relation_count'], $phoneNumberReferred);
             if (count($result))
             {
-                if ($input['post_way'] == 'one')
+                if ($input['post_way'] == 'one')//p1 accepting
                 {
                     $relationId = !empty($result[0][1])?$result[0][1]->getID():0 ;
                     $postId = $input['post_id'] ;
@@ -1070,7 +1070,26 @@ class ReferralsGateway {
                                 //send battle card to u1 containing u3 details
                                 $this->userGateway->sendNotification($referred_by_details, $referred_by_neo_user, $this->loggedinUserDetails->emailid, 20, array('extra_info'=>$input['post_id']), array('other_user'=>$referral),1) ;
                             }
+                            //send resume attachment to p1 if post type is find_candidate
+                            if (!empty($result[0][1]->resume_path) && $result[0][0]->service_scope == 'find_candidate'){
+                                $emailNameDetails = array();
+                                $emailNameDetails['to_name'] = $this->neoLoggedInUserDetails->fullname ;
+                                $forname = !empty($result[0][2]->fullname)?trim($result[0][2]->fullname):"" ;
+                                if (empty($forname)){//if non mintmesh
+                                    if (!empty($result[0][2]->emailid))//i.e non mintmesh with only emailid
+                                    {
+                                        $relationDetailsResult = $this->contactsRepository->getImportRelationDetailsByEmail($input['referred_by'], $result[0][2]->emailid);
+                                        $forname = !empty($relationDetailsResult->fullname)?trim($relationDetailsResult->fullname):"" ;
+                                    }else if (!empty($result[0][2]->phone)){
+                                        $relationDetailsResult = $this->contactsRepository->getImportRelationDetailsByPhone($input['referred_by'], $result[0][2]->phone);
+                                        $forname = !empty($relationDetailsResult->fullname)?trim($relationDetailsResult->fullname):"" ;
+                                    }
+                                }
+                                $emailNameDetails['for_name'] = ucwords($forname) ;
+                                $this->userGateway->sendAttachmentResumeToP1($input['referred_by'], $this->loggedinUserDetails->emailid, $result[0][1]->resume_path, $emailNameDetails);
+                            }
                         }
+                        
                     }
                     else
                     {
@@ -1880,7 +1899,7 @@ class ReferralsGateway {
             $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
             $userEmail = $this->neoLoggedInUserDetails->emailid ;
             $relationCount = 1 ;
-           //count for succss relations
+           //count for all relations
            $existingRelationCount = $this->referralsRepository->getReferralsCount(Config::get('constants.REFERRALS.GOT_REFERRED'), $input['post_id'], $userEmail, $input['refer_to']);
            if ($existingRelationCount < Config::get('constants.REFERRALS.MAX_REFERRALS'))
            {
@@ -2040,6 +2059,8 @@ class ReferralsGateway {
             return array('status'=>$returnBoolean, 'uploaded'=>$uploaded, 'resume_path'=>$resumePath, 'message'=>$msg,'resume_original_name'=>$resumeOriginalName);
             
         }
+        
+        
         
     
 }

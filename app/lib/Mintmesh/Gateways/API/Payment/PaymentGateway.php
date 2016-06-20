@@ -55,7 +55,6 @@ class PaymentGateway {
                 $this->referralsRepository =  $referralsRepository ;
                 $this->userGateway=$userGateway ;
                 $this->neoUserRepository = $neoUserRepository;
-               
 	}
         
         //validation on payout input
@@ -342,10 +341,15 @@ class PaymentGateway {
                            $is_self_referred = 1 ;
                        }
 
-                        $postUpdateStatus = $this->referralsRepository->updatePostPaymentStatus($transactionDetails->relation_id, Config::get('constants.PAYMENTS.STATUSES.SUCCESS'), $is_self_referred);
+                        $postUpdateDetails= $this->referralsRepository->updatePostPaymentStatus($transactionDetails->relation_id, Config::get('constants.PAYMENTS.STATUSES.SUCCESS'), $is_self_referred);
                         //send notifications to the respective people
                         $sendNotes = $this->processPostPaymentCompletion($transactionDetails);
-
+                        //send resume attachment to p1 if post type is find_candidate
+                        if (!empty($postUpdateDetails[0])){
+                            if (!empty($postUpdateDetails[0][1]->resume_path) && $postUpdateDetails[0][0]->service_scope == 'find_candidate'){
+                                $this->userGateway->sendAttachmentResumeToP1($transactionDetails->to_user, $loggedinUserDetails->emailid, $postUpdateDetails[0][1]->resume_path);
+                            }
+                        }
                     }
                     //log brain tree
                     $pt_input = array();
@@ -538,9 +542,15 @@ class PaymentGateway {
                         $successSupportTemplateServiceFee = Lang::get('MINTMESH.email_template_paths.payment_servicfee_success_user');
                         $emailiSent = $this->sendPaymentSuccessEmailToUser($successSupportTemplateServiceFee, $receipientEmail, $emailData);
                         
-                        $postUpdateStatus = $this->referralsRepository->updatePostPaymentStatus($transactionDetails->relation_id,Config::get('constants.PAYMENTS.STATUSES.SUCCESS'), $is_self_referred);
+                        $postUpdateDetails = $this->referralsRepository->updatePostPaymentStatus($transactionDetails->relation_id,Config::get('constants.PAYMENTS.STATUSES.SUCCESS'), $is_self_referred);
 
                         $sendNotes = $this->processPostPaymentCompletion($transactionDetails);
+                        //send resume attachment to p1 if post type is find_candidate
+                        if (!empty($postUpdateDetails[0])){
+                            if (!empty($postUpdateDetails[0][1]->resume_path) && $postUpdateDetails[0][0]->service_scope == 'find_candidate'){
+                                $this->userGateway->sendAttachmentResumeToP1($transactionDetails->to_user, $loggedinUserDetails->emailid, $postUpdateDetails[0][1]->resume_path);
+                            }
+                        }
                   }
                     $pt_input = array();
                     $pt_input['response'] = json_encode($input) ;
