@@ -1918,7 +1918,7 @@ class ReferralsGateway {
                        $phoneContactRelationInput['firstname'] = !empty($input['referring_user_firstname'])?$this->appEncodeDecode->filterString($input['referring_user_firstname']):'';
                        $phoneContactRelationInput['lastname'] = !empty($input['referring_user_lastname'])?$this->appEncodeDecode->filterString($input['referring_user_lastname']):'';
                        $phoneContactRelationInput['fullname'] = $phoneContactRelationInput['firstname']." ".$phoneContactRelationInput['lastname'];
-                       $phoneContactInput['phone'] = !empty($input['referring'])?$this->appEncodeDecode->formatphoneNumbers($input['referring']):'';
+                       $input['referring'] = $phoneContactInput['phone'] = !empty($input['referring'])?$this->appEncodeDecode->formatphoneNumbers($input['referring']):'';
                         if (!empty($nonMintmeshContactExist)){
                            //create import relation
                            $relationCreated = $this->contactsRepository->relateContacts($this->neoLoggedInUserDetails , $nonMintmeshContactExist[0] , $phoneContactRelationInput, 1);
