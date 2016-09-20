@@ -145,7 +145,9 @@ class ContactsGateway {
                                         $userPropertyArray['connected'] = 2 ;
                                     }
                                 }
-                                $formattedMintmeshPhoneNumber = str_replace('-', '', $userPropertyArray['phone']);
+                                if(!empty($userPropertyArray['phone'])){
+                                    $formattedMintmeshPhoneNumber = str_replace('-', '', $userPropertyArray['phone']);
+                                }
 
                                 if (!empty($emailMasterArray[$userPropertyArray['emailid']])) {
                                     $userPropertyArray['recordID'] = $emailMasterArray[$userPropertyArray['emailid']] ;

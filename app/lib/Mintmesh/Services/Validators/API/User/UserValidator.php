@@ -26,7 +26,7 @@ class UserValidator extends Validator {
             'username'      => 'required',
             'password' => 'required',
             'deviceToken' => 'required'
-        ),
+        ), 
         'edit_profile'=>array(
             'dpImage'   => 'image',
             'info_type'=>'required'

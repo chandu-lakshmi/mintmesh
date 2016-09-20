@@ -12,9 +12,11 @@ return [
     'MNT_USER_EXPIRY_HR_FOR_RESEND_ACTIVATION'=>120,
     'MNT_VERSION'=>"v1",
     'MNT_FROM_NAME'=>'Mintmesh',
+    'MM_ENTERPRISE_URL'=>'http://202.63.105.85/mmenterprise',
     'MNT_DEEP_LINK_IOS'=>'mintmeshstg://',
     'MNT_DEEP_LINK_ANDROID'=>'http://mintmeshstg/',
     'DP_PATH' => '/uploads/ProfilePics',
+    'LOGO_PATH' => '/public/uploads',
     'CV_PATH' => '/uploads/Resumes',
     'ADD_BATTLE_CARDS_COUNT' => 3,
     'GOOGLE_CONTACTS_URL'=>'https://www.google.com/m8/feeds/contacts/default/full?alt=json&max-results=10000',
@@ -76,7 +78,11 @@ return [
         'DELETED_CONTACT'=>'DELETED_CONTACT',
         'PROVIDES'=>'PROVIDES',
         'LOOKING_FOR'=>'LOOKING_FOR',
-        'WORKS_AS'=>'WORKS_AS'
+        'WORKS_AS'=>'WORKS_AS',
+        'CREATED'=>'CREATED',
+        'BUCKET_IMPORTED' => 'BUCKET_IMPORTED',
+        'COMPANY_CONTACT_IMPORTED' => 'COMPANY_CONTACT_IMPORTED', 
+        'CONNECTED_TO_COMPANY' => 'CONNECTED_TO_COMPANY' 
     ],
     'MAPPED_RELATION_TYPES'=>[
         '3'=>'REQUEST_REFERENCE',
@@ -139,6 +145,7 @@ return [
     'S3BUCKET' => 'mintmesh/dev/profilepic',
     'S3BUCKET_RESUME' => 'mintmesh/dev/resume/',
     'RESUME_MAX_SIZE' => 768000,//750kb
+    'EXCEL_MAX_SIZE' => 1000000,//1MB
     'PROFILE_COMPLETION_VALUES'=>[
         'CERTIFICATION'=>10,
         'CONTACT'=>30,
@@ -158,7 +165,22 @@ return [
         'MEDIUM'=>'medium',
         'FULL'=>'full'
     ],
+    'POST'=>[
+        'POSTED_FOR'=>'POSTED_FOR',
+        'STATUSES'=>[
+                'ACCEPTED'=>'ACCEPTED',
+                'PENDING'=>'PENDING',
+                'DECLINED'=>'DECLINED',
+                'ACTIVE'=>'ACTIVE',
+                'CLOSED'=>'CLOSED',
+                'COMPLETED'=>'COMPLETED',
+        ],
+        'REFERRAL' => 'REFERRAL'
+    ],
     'S3BUCKET_MM_REFER_RESUME' => 'mintmesh/dev/MintmeshReferredResumes',
-    'S3BUCKET_NON_MM_REFER_RESUME' => 'mintmesh/dev/NonMintmeshReferredResumes'
+    'S3BUCKET_NON_MM_REFER_RESUME' => 'mintmesh/dev/NonMintmeshReferredResumes',
+    'S3BUCKET_COMPANY_LOGO' => 'mintmesh/dev/companyLogo',
+    'S3BUCKET_COMPANY_IMAGES' => 'mintmesh/dev/companyImages',
+    'S3BUCKET_FILE' =>  'mintmesh/dev/files'
         
 ];

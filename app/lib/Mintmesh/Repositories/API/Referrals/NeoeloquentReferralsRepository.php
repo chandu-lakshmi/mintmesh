@@ -207,7 +207,10 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 //and p.service_scope='".$type."'
                 //and r1.created_at <= p.created_at
                 $email = $this->appEncodeDecode->filterString(strtolower($email));
-                $queryString = "match (n:User:Mintmesh)-[r1:ACCEPTED_CONNECTION]-(m:User:Mintmesh)-[r2:POSTED]->(p:Post)
+                $queryString = "match (u:User:Mintmesh {emailid:'".$email."'})-[r:INCLUDED]-(p:Post {status:'ACTIVE'})-[:POSTED_FOR]-(m:Company) 
+                                 ".$filter_query." return p,count(distinct(u)),m ORDER BY p.created_at DESC
+                                UNION
+                                match (n:User:Mintmesh)-[r1:ACCEPTED_CONNECTION]-(m:User:Mintmesh)-[r2:POSTED]->(p:Post)
                                 where n.emailid='".$email."' and m.emailid=p.created_by and p.created_by<>'".$email."'
                                 and case p.included_set when '1' then  (n-[:INCLUDED]-p) else 1=1 end
                                 and not(n-[:EXCLUDED]-p) 
@@ -216,7 +219,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                                 when 'in_location' then  lower(n.location) =~ ('.*' + lower(p.service_location)) else 1=1 end
                                 and p.status='".Config::get('constants.REFERRALS.STATUSES.ACTIVE')."' 
                                 OPTIONAL MATCH (p)-[r:GOT_REFERRED]-(u)
-                                return p, count(distinct(u)) ORDER BY p.created_at DESC " ;
+                                return p, count(distinct(u)),m ORDER BY p.created_at DESC " ;
                 if (!empty($limit) && !($limit < 0))
                 {
                     $queryString.=" skip ".$skip." limit ".self::LIMIT ;
@@ -298,7 +301,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 $queryString = rtrim($queryString, ",") ;
                 $queryString.="}";
             }
-            $queryString.="]->(p) return count(p)" ;
+            $queryString.="]->(p) set p.total_referral_count = p.total_referral_count + 1 return count(p)" ;
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             if (isset($result[0]) && isset($result[0][0]))
@@ -311,13 +314,17 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             }
         }
         
-        public function getPostDetails($post_id=0)
+        public function getPostDetails($post_id=0,$userEmailID ='')
         {
             if (!empty($post_id))
-            {
+            {                   
                 //p.status='".Config::get('constants.REFERRALS.STATUSES.ACTIVE')."'
-                $queryString = "match (p:Post) where ID(p)=".$post_id." 
-                    return p" ;
+                $queryString = "match (p:Post)-[r:INCLUDED]-(u:User:Mintmesh) where ID(p)=".$post_id." ";
+                if (!empty($userEmailID))
+                {   //post read status update here
+                    $queryString.= " and u.emailid = '".$userEmailID."' set r.post_read_status =1 ";
+                }
+                $queryString.= " return p" ;
                 $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();
             }
@@ -435,7 +442,9 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
 				 }
                   if ($post_way == 'one' && $status == Config::get('constants.REFERRALS.STATUSES.DECLINED'))
                   {
-                      $queryString .=" set r.one_way_status='".Config::get('constants.REFERRALS.STATUSES.'.$status)."', r.p1_updated_at='".date("Y-m-d H:i:s")."'" ;
+                      $queryString .=" set r.one_way_status='".Config::get('constants.REFERRALS.STATUSES.'.$status)."',
+                                           p.referral_declined_count = p.referral_declined_count + 1,
+                                           r.p1_updated_at='".date("Y-m-d H:i:s")."'" ;
                   }
                   else if ($post_way == 'round')
                   {
@@ -534,7 +543,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                                 RETURN DISTINCT o";
                         }
                     }
-                     /*$queryString = "Match (m:User:Mintmesh {emailid:'".$input['email']."'})-[:ACCEPTED_CONNECTION]-(o:User:Mintmesh), (n:User:Mintmesh {emailid:'".$input['other_email']."'}),(p:Post)
+                                         /*$queryString = "Match (m:User:Mintmesh {emailid:'".$input['email']."'})-[:ACCEPTED_CONNECTION]-(o:User:Mintmesh), (n:User:Mintmesh {emailid:'".$input['other_email']."'}),(p:Post)
                                     where   not (n-[:ACCEPTED_CONNECTION]-o)
                                     and lower(o.location) =~ ('.*' + lower(p.service_location)) and ID(p)=".$input['post_id']."
                                     RETURN DISTINCT o order by lower(o.firstname) asc";
@@ -716,7 +725,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
              }
          }
          
-         public function updatePostPaymentStatus($relation=0,$status='', $is_self_referred=0)
+         public function updatePostPaymentStatus($relation=0,$status='', $is_self_referred=0, $userEmail ='')
          {
              if (!empty($relation))
              {
@@ -729,7 +738,10 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                  if (!empty($is_self_referred)){
                      $queryString.= "r.completed_status='".Config::get('constants.REFERRALS.STATUSES.ACCEPTED')."'," ;
                  }
-                 $queryString.= " r.one_way_status='".Config::get('constants.REFERRALS.STATUSES.ACCEPTED')."', r.p1_updated_at='".date("Y-m-d H:i:s")."' return p,r" ; 
+                 $queryString.= " r.one_way_status='".Config::get('constants.REFERRALS.STATUSES.ACCEPTED')."',
+                                  p.referral_accepted_count = p.referral_accepted_count + 1, r.awaiting_action_status = '".Config::get('constants.REFERRALS.STATUSES.ACCEPTED')."',
+                                  r.awaiting_action_by = '".$userEmail."', r.awaiting_action_updated_at= '".date("Y-m-d H:i:s")."',
+                                  r.p1_updated_at='".date("Y-m-d H:i:s")."' return p,r" ; 
                  $query = new CypherQuery($this->client, $queryString);
                  return $result = $query->getResultSet(); 
              }
@@ -816,7 +828,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 $queryString = rtrim($queryString, ",") ;
                 $queryString.="}";
             }
-            $queryString.="]->(p) return count(p)" ;
+            $queryString.="]->(p) set p.total_referral_count = p.total_referral_count + 1 return count(p)" ;
             
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
@@ -958,7 +970,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                         if((in_array('free', $type_array) || in_array('paid', $type_array)) && !(in_array('free', $type_array) && in_array('paid', $type_array)) ) {
                             $filter_query .= (in_array('free', $type_array))?' and p.free_service = "1" ':' and p.free_service = "0" ';
                         }
-                    }
+                    }               
                     $type_array = array_flip($type_array);
                     unset($type_array['free']);
                     unset($type_array['paid']);
@@ -966,12 +978,15 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                     $type_array = array_flip($type_array);
                     if(count($type_array) > 0) {
                         $filter_query .= " and p.service_scope IN ['".implode("','",$type_array)."'] ";
-                    }                
+                    }
                 }
                 //and p.service_scope='".$type."'
                 //and r1.created_at <= p.created_at
                 $email = $this->appEncodeDecode->filterString(strtolower($email));
-                $queryString = "match (n:User:Mintmesh)-[r1:ACCEPTED_CONNECTION]-(m:User:Mintmesh)-[r2:POSTED]->(p:Post)
+                $queryString = "match (u:User:Mintmesh {emailid:'".$email."'})-[r:INCLUDED]-(p:Post)-[:POSTED_FOR]-(m:Company) 
+                                where  p.status='ACTIVE' ".$filter_query." return p,count(distinct(u)),m ORDER BY p.created_at DESC
+                                UNION
+                                match (n:User:Mintmesh)-[r1:ACCEPTED_CONNECTION]-(m:User:Mintmesh)-[r2:POSTED]->(p:Post)
                                 where n.emailid='".$email."' and m.emailid=p.created_by and p.created_by<>'".$email."'
                                 and case p.included_set when '1' then  (n-[:INCLUDED]-p) else 1=1 end
                                 and not(n-[:EXCLUDED]-p) 
@@ -980,7 +995,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                                 when 'in_location' then  lower(n.location) =~ ('.*' + lower(p.service_location)) else 1=1 end
                                 and p.status='".Config::get('constants.REFERRALS.STATUSES.ACTIVE')."' 
                                 OPTIONAL MATCH (p)-[r:GOT_REFERRED]-(u)
-                                return p, count(distinct(u)) ORDER BY p.created_at DESC " ;
+                                return p, count(distinct(u)),m ORDER BY p.created_at DESC " ;
                 if (!empty($limit) && !($limit < 0))
                 {
                     $queryString.=" skip ".$skip." limit ".self::LIMIT ;

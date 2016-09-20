@@ -250,7 +250,6 @@ class ReferralsGateway {
                 }
                 $neoInput['created_by'] = $this->loggedinUserDetails->emailid;
                 $neoInput['status'] = Config::get('constants.REFERRALS.STATUSES.ACTIVE');
-                
                 //relation attributes
                 $relationAttrs = array();
                 $relationAttrs['created_at'] = date("Y-m-d H:i:s") ;
@@ -269,6 +268,7 @@ class ReferralsGateway {
                     
                 }
                 $createdService = $this->referralsRepository->createPostAndRelation($fromId, $neoInput, $relationAttrs);
+                //print_r($createdService);exit;
                 if (isset($createdService[0]) && isset($createdService[0][0]))
                 {
                      $serviceId = $createdService[0][0]->getID() ;
@@ -811,7 +811,7 @@ class ReferralsGateway {
             $users = $this->referralsRepository->getMyReferrals($input['post_id'], $userEmail);
             $postCreatedBy = '' ;
             //get post details
-            $postDetails = $this->referralsRepository->getPostDetails($input['post_id']);
+            $postDetails = $this->referralsRepository->getPostDetails($input['post_id'], $userEmail);
             if (count($users))
             {
                 $userDetails = array();
@@ -1311,6 +1311,10 @@ class ReferralsGateway {
                     $returnArray["service_description"] = !empty($result[0][2]->service)?$result[0][2]->service:"";
                     $returnArray["service_created_at"] = !empty($result[0][2]->created_at)?$result[0][2]->created_at:"";
                     $returnArray['points_awarded'] = Config::get('constants.POINTS.SEEK_REFERRAL') ;
+                    //post details from web
+                    $returnArray["service_from_web"] = !empty($result[0][2]->service_from_web)?$result[0][2]->service_from_web:0;
+                    $returnArray["company_logo"] = !empty($result[0][2]->company_logo)?$result[0][2]->company_logo:"";
+                    $returnArray["company_name"] = !empty($result[0][2]->company)?$result[0][2]->company:"";
                     if ($isReferredUser)//p3 is veiwing it
                     {
                         if (isset($returnArray['bestfit_message']))
@@ -1792,6 +1796,7 @@ class ReferralsGateway {
                     //if($post[0]->created_by != $this->loggedinUserDetails->emailid) {
                         $postDetails = $this->formPostDetailsArray($post[0]) ;
                         $postDetails['no_of_referrals'] = !empty($post[1])?$post[1]:0 ;
+                        $postDetails['company_logo'] = !empty($post[2]->logo)?$post[2]->logo:'';
                         $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($postDetails['created_by']) ;
                         $postDetails['UserDetails'] = $this->userGateway->formUserDetailsArray($neoUserDetails, 'attribute', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC'));
                         $returnPosts[$postDetails['post_id']] = $postDetails ;
@@ -1809,9 +1814,22 @@ class ReferralsGateway {
                    //get referrals count for each post
                    $returnPosts = $this->getReferralsListCounts($this->loggedinUserDetails->emailid, $returnPosts);
                 }*/
+                //print_r($returnPosts).exit;
                 //get referrals count for each post
                 $returnPosts = $this->getReferralsListCounts($this->loggedinUserDetails->emailid, $returnPosts);
                 $data = array("posts"=>  array_values($returnPosts));
+                
+                //pagination
+                $show_per_page = 10;
+                $offset = 0;
+                if(!empty($page)){
+                    $page = $page-1 ;
+                    $offset  = $page*$show_per_page ;
+                }  
+                usort($data['posts'], array($this, "createdAtDesc"));
+                $data = array_splice($data['posts'], $offset, $show_per_page);
+                $data = array("posts"=>  array_values($data));
+                   
                 $message = array('msg'=>array(Lang::get('MINTMESH.referrals.success')));
                 return $this->commonFormatter->formatResponse(200, "success", $message, $data) ;
             }
@@ -1822,7 +1840,9 @@ class ReferralsGateway {
                 //echo round(microtime(true) * 1000);exit;
             }
         }
-        
+        public function createdAtDesc($a, $b){
+            return strtotime($b["created_at"]) - strtotime($a["created_at"]);           
+        } 
         
         public function getExcludedPostsList($userEmail='', $postIds=array()){
             $returnPostIds = array();

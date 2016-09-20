@@ -87,6 +87,7 @@ return array(
          ),
          "email_template_paths"=>array(
                 "user_welcome" => "emails.Api.User.welcome",
+                "enterprise_welcome" => "emails.Api.User.enterprise_welcome",
                 "user_introduction" => "emails.Api.User.introduction",
                 "forgot_password" => "emails.Api.User.forgot_password",
                 "join_invitation" => "emails.Api.User.join_invitation",
@@ -102,7 +103,9 @@ return array(
                 "payment_servicfee_success_user" => "emails.Api.Payment.payment_servicfee_success_user",
                 "post_success" => "emails.Api.User.post_success",
                 "reset_password_success" => "emails.Api.User.reset_password_success",
-                "resume_attachment" => "emails.Api.User.resume_attachment"
+                "enterprise_reset_password_success" => "emails.Api.User.enterprise_reset_password_success",
+                "resume_attachment" => "emails.Api.User.resume_attachment",
+                "enterprise_contacts_invitation" => "emails.Api.User.enterprise_contacts_invitation"
          ),
          "activate_user"=>array(
              "success"=>"Successfully activated",
@@ -290,7 +293,67 @@ return array(
         ),
         'user_profiles_abstractions'=>array('basic'=>array('firstname','lastname','fullname','company','position','dp_path','emailid','phone','location'),
             'medium'=>array('job_function','position','phone','location','lastname','emailid','industry','fullname','firstname','dp_path','company',
-                    'phoneverified','you_are','job_function_name','industry_name','you_are_name','profession_name'))
 
-
+                    'phoneverified','you_are','job_function_name','industry_name','you_are_name','profession_name')),
+        "post"=>array(
+            "valid"   => "Successfully Validated",
+            "success" => "Successfully Done",
+            "error" => "Failed To Process",
+            "no_posts" => "No Posts Found",
+       ) ,
+    
+     "referral_details"=>array(
+            "valid"   => "Successfully Validated",
+            "success" => "Successfully Done",
+            "error" => "Failed To Process",
+            "no_referrals" => "No referrals Found",
+       ) ,
+//                    'phoneverified','you_are','job_function_name','industry_name','you_are_name','profession_name')),
+        "enterprise"=>array(
+            'import_contacts_success' =>'Contacts imported Successfully',
+            'import_contacts_failure' =>'Records already exists',
+            'upload_contacts_inserted' =>'Contacts successfully imported ',
+            'upload_contacts_updated' =>'Contacts successfully updated',
+            'upload_contacts_failure' =>'No rows affected',
+            'invalid_headers'         =>'Invalid headers or Worksheet,Please download the template and import',
+            'invalid_file_format'     =>'Invalid file format or file size more than 1 MB',
+            'retrieve_success'        =>'Successfully retrieved',
+            'retrieve_failure'        =>'Failed to retrieved',
+            'success'                 => "Successfully Done",
+            'error'                   => "Failed To Process"
+        ),
+    "enterprise_user_email_subjects"=>array(
+                "welcome"      => "Welcome To MintMesh Enterprise"
+        ),
+     "companyDetails"=>array(
+               "success"                    => "successfully retrieved",
+               "no_details"                 => "no details found",
+               "bucket_success"             => "bucket successfully created",
+               "bucket_failure"             => "failed to create bucket",
+               "bucket_exsisted"            => "bucket name already exsisted",
+               "company_not_exists"         => "Invalid Company code",
+               "company_already_connected"  => "Company already connected"
+     ),
+    'editContactList' => array(
+            "success"   =>  "successfully updated",
+            "failure"   =>  "failed to update",
+            "file_format"       =>  "Invalid input file format.File extension should be:",
+            "invalid_headers"   =>  "Invalid input file Headers",
+            "invalidempid"      =>  "emp_id already exists"          
+    ),
+    'deleteContact'   => array(
+            "success"  =>   "successfully deleted",
+            "failure"   =>   "Failed to delete"
+    ),
+    'editStatus'      => array(
+            "success"   =>   "status changed successfully",
+            "failure"   =>   "failed to edit status"
+    ),
+    'addContact'      => array(
+               "success"  =>  "contact added successfully",
+               "failure"  =>   "failed to add contact",
+               "contactExists"   => "contact already exists",
+               "contactUpdated"  =>  "contact updated successfully"
+    )
+    
 );

@@ -132,7 +132,8 @@ return array(
                 'Bradleyboy\Laravel\BraintreeServiceProvider',
                 'Aloha\Twilio\Support\Laravel\ServiceProvider',
                 'F2m2\Apidocs\ApidocsServiceProvider',
-                'Aws\Laravel\AwsServiceProvider'
+                'Aws\Laravel\AwsServiceProvider',
+                'Maatwebsite\Excel\ExcelServiceProvider'
 	),
 
 	/*
@@ -202,7 +203,7 @@ return array(
 		'Authorizer' 		=> 'LucaDegasperi\OAuth2Server\Facades\AuthorizerFacade',
                 'Twilio' => 'Twilio\Support\Laravel\Facade',
                 'AWS'               => 'Aws\Laravel\AwsFacade',
-
+                'Excel'             => 'Maatwebsite\Excel\Facades\Excel'
 	),
 
 );

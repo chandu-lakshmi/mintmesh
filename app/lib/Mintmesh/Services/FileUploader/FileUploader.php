@@ -25,10 +25,44 @@ abstract class FileUploader {
 
             
         }
-        
+      
+            public function uploadToS3BySource($path) {
+                        
+//            if (file_exists($path)) {
+                $fileinfo = pathinfo($path);
+                $sourceFile = $path;//$this->source->getpathName();
+                $sourceMimeType = $fileinfo['extension'];
+                $ext = $fileinfo['extension'];
+                $sourceFileName = $fileinfo['filename'];// $this->source->getClientOriginalName();
+                $fileName = $sourceFileName."_".time().".".$ext;
+
+                $s3 = \AWS::get('s3');                        
+                try {
+                        // Upload data.
+                        $result = $s3->putObject(array(
+                            'Bucket'        => $this->destination,
+                            'Key'           => $fileName,
+                            'Body'          => fopen($sourceFile,'r'),
+                            'ContentType'   => $sourceMimeType,
+                            'ACL'           => 'public-read',
+                        ));
+                                // Print the URL to the object.
+                        if(true && file_exists($sourceFile)){ 
+                            unlink($sourceFile);
+                        }
+                        return $result['ObjectURL'];
+                } catch (S3Exception $e) {
+                        return $e->getMessage();
+                }
+//            } else {
+//                return false;
+//            }
+            
+        }       
+      
         public function uploadToS3() {
                         
-            if ($this->source->isValid()) {
+          //  if ($this->source->isValid()) {
 
                 $sourceFile = $this->source->getpathName();
                 $sourceMimeType = $this->source->getmimeType();            
@@ -54,9 +88,9 @@ abstract class FileUploader {
                 } catch (S3Exception $e) {
                         return $e->getMessage();
                 }
-            } else {
-                return false;
-            }
+//            } else {
+//                return false;
+//            }
             
         }       
 }

@@ -10,6 +10,7 @@
 
 use Mintmesh\Repositories\API\User\UserRepository;
 use Mintmesh\Repositories\API\User\NeoUserRepository;
+use Mintmesh\Repositories\API\Enterprise\NeoEnterpriseRepository;
 use Mintmesh\Repositories\API\Referrals\ReferralsRepository;
 use Mintmesh\Repositories\API\Payment\PaymentRepository;
 use Mintmesh\Services\Validators\API\User\UserValidator ;
@@ -54,12 +55,14 @@ class UserGateway {
                                     ReferralsRepository $referralsRepository,
                                     PaymentRepository $paymentRepository,
                                     ContactsGateway $contactsGateway,
-                                    ContactsRepository $contactsRepository) {
+                                    ContactsRepository $contactsRepository,
+                                    NeoEnterpriseRepository $neoEnterpriseRepository) {
 		$this->userRepository = $userRepository;
                 $this->neoUserRepository = $neoUserRepository;
                 $this->authorizer = $authorizer;
                 $this->userValidator = $userValidator;
                 $this->userEmailManager = $userEmailManager ;
+                $this->neoEnterpriseRepository = $neoEnterpriseRepository;
                 $this->commonFormatter = $commonFormatter ;
                 $this->paymentRepository = $paymentRepository ;
                 $this->appEncodeDecode = $appEncodeDecode ;
@@ -90,6 +93,7 @@ class UserGateway {
                                 'msword'
                                 );
                 $this->resumeMaxSize = Config::get('constants.RESUME_MAX_SIZE');//file size max 750kb
+                date_default_timezone_set('Asia/Kolkata');
         }
         // validation on user inputs for change password
         public function validateChangePassword($input) {            
@@ -1725,6 +1729,10 @@ class UserGateway {
             //get influencers count
             $influencersCount = $this->neoUserRepository->getInfluencersListCount($loggedinUserDetails->emailid);
             $returnArray['influencersCount'] = $influencersCount ;
+            //get Companies count
+            $companiesCount= $this->neoEnterpriseRepository->connectedCompaniesList($loggedinUserDetails->emailid);
+            $returnArray['connectedCompaniesCount'] = count($companiesCount);
+            
             return $returnArray ;
         }
         public function formUserMoreDetailsArray($input=array())

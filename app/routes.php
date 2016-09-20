@@ -86,7 +86,19 @@ Route::group(array('prefix' => 'v1'), function() {
        Route::get("get_experiences", "API\User\UserController@getExperiences");
     //employment_types
        Route::get("get_employment_types", "API\User\UserController@getEmploymentTypes");
-    
+       
+    // Mintmesh enterprise user creation
+       Route::post("enterprise/create_user", "API\Enterprise\EnterpriseController@createEnterpriseUser");
+    // Mintmesh enterprise user email verification
+       Route::post("enterprise/verify_email", "API\Enterprise\EnterpriseController@emailVerification");
+    // Mintmesh enterprise login
+       Route::post("enterprise/login", "API\Enterprise\EnterpriseController@enterpriseLogin");
+       
+       Route::post("enterprise/special_login", "API\Enterprise\EnterpriseController@enterpriseSpecialLogin");
+    // Mintmesh enterprise forgot password
+       Route::post("enterprise/forgot_password", "API\Enterprise\EnterpriseController@forgotPassword");
+    // Mintmesh enterprise reset password   
+       Route::post("enterprise/reset_password", "API\Enterprise\EnterpriseController@resetPassword");
 });
 
 //Route::group(array('prefix' => 'v1'), function() {
@@ -213,6 +225,52 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
         
        //resend activation link
        Route::post("resend_activation_link", "API\User\UserController@resendActivationLink");
+
+       /**************
+        * APIs for Mintmesh enterprise with oAuth
+        */
+       // Mintmesh enterprise Company Profile creation
+       Route::post("enterprise/update_company", "API\Enterprise\EnterpriseController@updateCompanyProfile");    
+       //Posting a job
+       Route::post("enterprise/post_job", "API\Post\PostController@postJob");
+       //enterprise contacts upload
+       Route::post("enterprise/contacts_upload", "API\Enterprise\EnterpriseController@enterpriseContactsUpload");
+       //enterprise create new bucket
+       Route::post("enterprise/create_bucket", "API\Enterprise\EnterpriseController@createBucket");
+       //enterprise contacts upload
+       Route::post("enterprise/upload_contacts", "API\Enterprise\EnterpriseController@uploadContacts");
+       //enterprise validate Contacts input File Headers
+       Route::post("enterprise/validate_headers", "API\Enterprise\EnterpriseController@validateContactsFileHeaders");
+       //enterprise add contact
+       Route::post("enterprise/add_contact", "API\Enterprise\EnterpriseController@addContact");
+       Route::post("enterprise/buckets_list", "API\Enterprise\EnterpriseController@enterpriseBucketsList");
+       Route::post("enterprise/contacts_list", "API\Enterprise\EnterpriseController@enterpriseContactsList");
+       Route::post("enterprise/email_invitation", "API\Enterprise\EnterpriseController@enterpriseContactsEmailInvitation");
+      //List of jobs posted from web
+       Route::post("enterprise/jobs_list", "API\Post\PostController@jobsList");
+      //Job details posted from web
+       Route::post("enterprise/job_details", "API\Post\PostController@jobDetails");
+       Route::post("enterprise/get_user_details", "API\Enterprise\EnterpriseController@getUserDetails");
+      //  Mintmesh enterprise referral details  
+       Route::post("enterprise/job_referral_details", "API\Post\PostController@jobReferralDetails");
+      //  Mintmesh enterprise status details
+       Route::post("enterprise/process_job", "API\Post\PostController@processJob");
+      //  Mintmesh enterprise awaiting action status update
+       Route::post("enterprise/awaiting_action", "API\Post\PostController@awaitingAction");
+      //company details for enterprise
+       Route::post("enterprise/view_company_details", "API\Enterprise\EnterpriseController@viewCompanyDetails");
+      //connected companies list for user
+       Route::post("enterprise/connected_companies_list", "API\Enterprise\EnterpriseController@connectedCompaniesList");
+      //connect to company for mobile user
+       Route::post("enterprise/connect_to_company", "API\Enterprise\EnterpriseController@connectToCompany");
+      //view dashboard details
+       Route::post("enterprise/view_dashboard", "API\Enterprise\EnterpriseController@viewDashboard");
+      //company_profile
+      Route::post("enterprise/get_company_profile", "API\Enterprise\EnterpriseController@getCompanyProfile");
+      //update contacts list
+      Route::post("enterprise/update_contacts_list", "API\Enterprise\EnterpriseController@updateContactsList");
+      //other edits in contact list
+      Route::post("enterprise/other_edits_in_contact_list", "API\Enterprise\EnterpriseController@otherEditsInContactList");
 });
 
 

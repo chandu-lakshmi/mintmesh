@@ -16,7 +16,8 @@
 		"authy/php": "2.2",
         "f2m2/apidocs": "1.0.0",
         "aws/aws-sdk-php-laravel": "1.*",
-		"paypal/rest-api-sdk-php": "*"
+        "paypal/rest-api-sdk-php": "*",
+        "maatwebsite/excel": "~1.3"
 	},
 	"autoload": {
 		"classmap": [

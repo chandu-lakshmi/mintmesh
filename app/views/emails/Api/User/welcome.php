@@ -37,7 +37,7 @@
       <p>You have successfully created MintMesh account for <a href="mailto:<?php echo $email ; ?>" style="color:#000;text-decoration:none;"><?php echo $email ; ?></a></p>
 <p>To complete the process, activate your account using the below activation link.</p>
 <p style="text-align:center; margin-top:50px; margin-bottom:50px;" >
-	<a class="activate_btn" style="color:#FFFFFF;text-decoration:none;font-family: 'arial', sans-serif;font-size:20px;padding:10px 15px; text-align: center;  background:#269b7b; width:auto; margin:0px auto; border-radius:5px; line-height:20px; " href="<?php echo $desktop_link ; ?>" target="_blank">Activate Account</a></p>
+	<a class="activate_btn" style="color:#FFFFFF;text-decoration:none;font-family:'arial',sans-serif;font-size:20px;padding:10px 15px; text-align: center;  background:#269b7b; width:auto; margin:0px auto; border-radius:5px; line-height:20px;" href="<?php echo $desktop_link ; ?>" target="_blank"> Activate Account</a></p>
 </td>
   </tr>
   <tr>

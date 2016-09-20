@@ -52,7 +52,7 @@ class ReferralsValidator extends Validator {
         ),
         'get_referrals_cash' => array(
             'payment_reason'=>'required'
-        )
+        )  
         );
     
     //conditional checks for you_are field in referrals

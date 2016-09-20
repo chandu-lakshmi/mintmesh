@@ -19,7 +19,7 @@ use Cache;
     protected $stdCodes = array('0','1');
     public function filterString($str) {
         if (isset($str) && $str != '' && $str != '0' && !is_array($str)) {
-            //$str = stripslashes($str) ;
+            $str = stripslashes($str) ;
             //$str = addcslashes($str,'\\') ;
             $search = array('\\', "\0", "\n", "\r", "'", '"', "\x1a");
             $replace = array('\\\\', '\\0', '\\n', '\\r', "\\'", '\\"', '\\Z');

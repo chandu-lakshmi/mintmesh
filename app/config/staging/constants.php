@@ -12,6 +12,7 @@ return [
     'MNT_USER_EXPIRY_HR_FOR_RESEND_ACTIVATION'=>120,
     'MNT_VERSION'=>"v1",
     'MNT_FROM_NAME'=>'Mintmesh',
+    'MM_ENTERPRISE_URL'=>'http://202.63.105.85/mmenterprise',
     'MNT_DEEP_LINK_IOS'=>'mintmeshstg://',
     'MNT_DEEP_LINK_ANDROID'=>'http://mintmeshstg/',
     'DP_PATH' => '/uploads/ProfilePics',
@@ -76,7 +77,11 @@ return [
         'DELETED_CONTACT'=>'DELETED_CONTACT',
         'PROVIDES'=>'PROVIDES',
         'LOOKING_FOR'=>'LOOKING_FOR',
-        'WORKS_AS'=>'WORKS_AS'
+        'WORKS_AS'=>'WORKS_AS',
+        'CREATED'=>'CREATED',
+        'BUCKET_IMPORTED' => 'BUCKET_IMPORTED',
+        'COMPANY_CONTACT_IMPORTED' => 'COMPANY_CONTACT_IMPORTED', 
+        'CONNECTED_TO_COMPANY' => 'CONNECTED_TO_COMPANY'
 
     ],
     'MAPPED_RELATION_TYPES'=>[
@@ -161,6 +166,9 @@ return [
     ],
     'S3BUCKET_MM_REFER_RESUME' => 'mintmesh/dev/MintmeshReferredResumes',
     'S3BUCKET_NON_MM_REFER_RESUME' => 'mintmesh/dev/NonMintmeshReferredResumes',
-    'SEND_RESUME_ATTACHMENT'=>false
+    'SEND_RESUME_ATTACHMENT'=>false,
+    'S3BUCKET_COMPANY_LOGO' => 'mintmesh/dev/companyLogo',
+    'S3BUCKET_COMPANY_IMAGES' => 'mintmesh/dev/companyImages',
+    'S3BUCKET_FILE' =>  'mintmesh/dev/files'
         
 ];
