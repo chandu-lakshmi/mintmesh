@@ -12,7 +12,7 @@ return [
     'MNT_USER_EXPIRY_HR_FOR_RESEND_ACTIVATION'=>120,
     'MNT_VERSION'=>"v1",
     'MNT_FROM_NAME'=>'Mintmesh',
-    'MM_ENTERPRISE_URL'=>'http://202.63.105.85/mmenterprise',
+    'MM_ENTERPRISE_URL'=>'http://enterprisestaging.mintmesh.com',
     'MNT_DEEP_LINK_IOS'=>'mintmeshstg://',
     'MNT_DEEP_LINK_ANDROID'=>'http://mintmeshstg/',
     'DP_PATH' => '/uploads/ProfilePics',
@@ -142,8 +142,8 @@ return [
 //        'EMAILID'=>'support@mintmesh.com'
         'EMAILID'=>'v.gopi314@gmail.com'
     ],
-    'S3BUCKET' => 'mintmesh/dev/profilepic',
-    'S3BUCKET_RESUME' => 'mintmesh/dev/resume/',
+    'S3BUCKET' => 'mintmesh/stg/profilepic',
+    'S3BUCKET_RESUME' => 'mintmesh/stg/resume/',
     'RESUME_MAX_SIZE' => 768000,//750kb
     'PROFILE_COMPLETION_VALUES'=>[
         'CERTIFICATION'=>10,
@@ -164,11 +164,11 @@ return [
         'MEDIUM'=>'medium',
         'FULL'=>'full'
     ],
-    'S3BUCKET_MM_REFER_RESUME' => 'mintmesh/dev/MintmeshReferredResumes',
-    'S3BUCKET_NON_MM_REFER_RESUME' => 'mintmesh/dev/NonMintmeshReferredResumes',
+    'S3BUCKET_MM_REFER_RESUME' => 'mintmesh/stg/MintmeshReferredResumes',
+    'S3BUCKET_NON_MM_REFER_RESUME' => 'mintmesh/stg/NonMintmeshReferredResumes',
     'SEND_RESUME_ATTACHMENT'=>false,
-    'S3BUCKET_COMPANY_LOGO' => 'mintmesh/dev/companyLogo',
-    'S3BUCKET_COMPANY_IMAGES' => 'mintmesh/dev/companyImages',
-    'S3BUCKET_FILE' =>  'mintmesh/dev/files'
+    'S3BUCKET_COMPANY_LOGO' => 'mintmesh/stg/companyLogo',
+    'S3BUCKET_COMPANY_IMAGES' => 'mintmesh/stg/companyImages',
+    'S3BUCKET_FILE' =>  'mintmesh/stg/files'
         
 ];

@@ -27,8 +27,8 @@ $app = new Illuminate\Foundation\Application;
 $env = $app->detectEnvironment(array(
 	// hostname of the machine
 	'local' => array('scotchbox'),
-	'staging' => array('mintmeshstg.com', 'mintmesh.com'),
-        'live'   => array('ip-172-31-16-142'),
+	'staging' => array('mintmeshstg.com', 'mintmesh.com', 'ip-172-31-9-209'),
+    'live'   => array('ip-172-31-16-142'),
 ));
 
 /*
