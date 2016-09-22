@@ -815,7 +815,7 @@ class EnterpriseGateway {
         $neoInput['lastname'] = $contactNode['lastname'];
         $neoInput['emailid'] = $contactNode['emailid'];
         $neoInput['contact_number'] = $contactNode['contact_number'];
-        $neoInput['other_id'] = $contactNode['other_id'];
+        $neoInput['employeeid'] = $contactNode['other_id'];
         $neoInput['status'] = $contactNode['status'];
         $relationAttrs = array();
         $relationAttrs['company_code'] = $contactNode['company_code'];
@@ -838,10 +838,10 @@ class EnterpriseGateway {
      * @return Response
      */
     public function enterpriseContactsEmailInvitation($input) {
-
         $params = array();
         $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser(); //get the logged in user details
         $params['user_id'] = $this->loggedinUserDetails->id;
+        $params['from_user_name'] = $this->loggedinUserDetails->firstname;
         $params['user_email'] = $this->loggedinUserDetails->emailid;
         $params['company_id'] = $input['company_id'];
         $emailSubject = $input['email_subject'];
@@ -850,10 +850,16 @@ class EnterpriseGateway {
         $params['ip_address'] = $_SERVER['REMOTE_ADDR'];
 
         $contactList = $this->enterpriseRepository->getCompanyContactsListById($params); //get the import contact list by Ids
-
+        $company = $this->enterpriseRepository->getCompanyDetails($params['company_id']);
         if (!empty($contactList)) {
             foreach ($contactList as $key => $value) {
                 $pushData = array();
+                if(!empty($company)){
+                    foreach ($company as $k=>$v){
+                        $pushData['company_name'] = $v->name;
+                        $pushData['company_logo'] = $v->logo;
+                    }
+                }
                 $pushData['firstname'] = $value[0]->firstname;
                 $pushData['lastname'] = $value[0]->lastname;
                 $pushData['emailid'] = $value[0]->emailid;
@@ -861,6 +867,7 @@ class EnterpriseGateway {
                 $pushData['email_body'] = $emailBody;
                 //for email logs
                 $pushData['from_user_id']    = $params['user_id'];
+                $pushData['from_user_name']    = $params['from_user_name'];
                 $pushData['from_user_email'] = $params['user_email'];
                 $pushData['company_code']    = $params['company_id'];
                 $pushData['ip_address']      = $params['ip_address'];
@@ -879,12 +886,14 @@ class EnterpriseGateway {
     }
 
     public function enterpriseSendContactsEmailInvitation($inputEmailData) {
-
         $dataSet = array();
         $fullName = $inputEmailData['firstname'] . ' ' . $inputEmailData['lastname'];
+        $dataSet['company_name'] = $inputEmailData['company_name'];
+        $dataSet['company_logo'] = !empty($inputEmailData['company_logo'])?$inputEmailData['company_logo']:'https://www.owbaz.com/images/default-company-logo.jpg';
         $dataSet['name'] = $fullName;
         $dataSet['email'] = $inputEmailData['emailid'];
         $dataSet['emailbody'] = $inputEmailData['email_body'];
+        $dataSet['fromName']  = $inputEmailData['from_user_name'];
         //for email logs
         $fromUserId  = $inputEmailData['from_user_id'];
         $fromEmailId = $inputEmailData['from_user_email'];
@@ -1418,7 +1427,7 @@ class EnterpriseGateway {
     public function getCompanyUserTopReferrals($userEmailId, $companyCode){
            
         $returnTopReferrals = $topReferrals = array();
-        $topReferrals = $this->neoEnterpriseRepository->getCompanyUserTopReferrals($userEmailId);
+        $topReferrals = $this->neoEnterpriseRepository->getCompanyUserTopReferrals($userEmailId);//get the top referrals list here
         if(!empty($topReferrals)){
             foreach($topReferrals as $referral){
                 $record = array();
@@ -1696,14 +1705,16 @@ class EnterpriseGateway {
         $inputParams['emailid']    = !empty($input['emailid'])?$input['emailid']:'';      
         $inputParams['phone']    = !empty($input['phone'])?$input['phone']:'';      
         $inputParams['status']    = !empty($input['status'])?$input['status']:'unknown';  
+        $inputParams['employeeid']    = $input['other_id'];      
         $relationAttrs = array();
-          $relationAttrs['company_code'] = $input['company_code'];
-          $relationAttrs['loggedin_emailid'] = $this->loggedinUserDetails->emailid;
+        $relationAttrs['company_code'] = $input['company_code'];
+        $relationAttrs['loggedin_emailid'] = $this->loggedinUserDetails->emailid;
           $relationAttrs['created_at'] = gmdate("Y-m-d H:i:s");
           $neoInput['firstname']   = $input['firstname'];
           $neoInput['lastname']   = $input['lastname'];
           $neoInput['phone']   = !empty($input['phone'])?$input['phone']:'';          
           $neoInput['emailid']   = $input['emailid'];
+          $neoInput['employeeid']   = $input['other_id'];
           $neoInput['status']    = !empty($input['status'])?$input['status']:'unknown';  
         $checkContact = $this->enterpriseRepository->checkContact($inputParams);
         

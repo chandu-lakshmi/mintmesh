@@ -113,7 +113,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
             $email = $this->appEncodeDecode->filterString(strtolower($email));
             if (!empty($search)) {
                 $search = $this->appEncodeDecode->filterString($search);
-                $queryString = "start p = node(*) where p.service_name =~ '(?i).*". $search .".*' ";
+                $queryString = "start p = node(*) where p.service_name =~ '(?i).*". $search .".*' or p.service_location =~ '(?i).*". $search .".*'";
 
                 $queryString .= "match (u:User {emailid:'" . $email . "'})-[r:POSTED]-(p:Post)-[:POSTED_FOR]-(:Company{companyCode:'" . $company_code . "'}) ";
             } else {

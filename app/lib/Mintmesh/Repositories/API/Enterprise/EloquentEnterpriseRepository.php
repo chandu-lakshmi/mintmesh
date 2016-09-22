@@ -285,7 +285,8 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                     $sql.= " OR c.phone like '%".  $this->appEncodeDecode->filterString(strtolower($params['search']))."%'";
                     $sql.= " OR c.firstname like '%".  $this->appEncodeDecode->filterString(strtolower($params['search']))."%'";
                     $sql.= " OR c.lastname like '%".  $this->appEncodeDecode->filterString(strtolower($params['search']))."%'";
-                    $sql.= " OR c.employeeid like '%".  $this->appEncodeDecode->filterString(strtolower($params['search']))."%')";
+                    $sql.= " OR c.employeeid like '%".  $this->appEncodeDecode->filterString(strtolower($params['search']))."%'";
+                    $sql.= " OR c.status like '%".  $this->appEncodeDecode->filterString(strtolower($params['search']))."%')";
                 }
                  $sql .= " GROUP BY c.id ";
                 $sql .= "order by status";
@@ -309,9 +310,9 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             $result =  array();
             foreach ($params['invite_contacts'] as $key=>$val)
                 {
-                    $result[] = DB::table('import_contacts_web')
-                                ->where('company_id', '=', $params['company_id'])
-                                ->where('id','=',$val)->get();
+                    $result[] = DB::table('contacts')
+                                ->where('company_id', '=', $params['company_id'])->get();
+//                                ->where('id','=',$val)->get();
                 }
             return $result;   
         }
@@ -433,8 +434,8 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                 $input['created_at'] = gmdate('Y-m-d H:i:s');
 		$input['created_by'] = $input['user_id'];
 		$input['ip_address'] = !empty($_SERVER['REMOTE_ADDR'])?$_SERVER['REMOTE_ADDR']:'127.1.1.0';
-                $sql = "insert into contacts (`user_id`,`company_id`,`import_file_id`,`firstname`,`lastname`,`emailid`,`phone`,`employeeid`,`status`,`updated_at`,`updated_by`,`created_at`,`created_by`,`ip_address`)" ;
-                $sql.=" values('".$input['user_id']."','".$input['company_id']."',' ','".$input['firstname']."','".$input['lastname']."','".$input['emailid']."','".$input['phone']."',' ','".$input['status']."'," ;
+                $sql = "insert into contacts (`user_id`,`company_id`,`import_file_id`,`firstname`,`lastname`,`emailid`,`phone`,`status`,`employeeid`,`updated_at`,`updated_by`,`created_at`,`created_by`,`ip_address`)" ;
+                $sql.=" values('".$input['user_id']."','".$input['company_id']."',' ','".$input['firstname']."','".$input['lastname']."','".$input['emailid']."','".$input['phone']."','".$input['status']."','".$input['employeeid']."'," ;
                 $sql.= " ' ',' ','".$input['created_at']."', '".$input['created_by']."', '".$input['ip_address']."') ";
                 $result = DB::statement($sql);
                 if($result){
@@ -456,5 +457,11 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             $result = DB::select($sql);
             return $result;
                         
+        }
+        
+        public function getCompanyDetails($id) {
+             return DB::table('company')
+                 ->where('id', '=', $id)->get(); 
+            
         }
 }

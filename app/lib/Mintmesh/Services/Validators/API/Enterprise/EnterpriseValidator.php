@@ -100,6 +100,7 @@ class EnterpriseValidator extends Validator {
             'firstname'         => 'required',
             'lastname'          => 'required',  
             'emailid'           => 'required',  
+            'other_id'          => 'required'
         )
         );
     
