@@ -497,7 +497,8 @@ class EnterpriseGateway {
         if (isset($oauthResult['access_token'])) {
             $loggedinUserDetails = $this->enterpriseRepository->getEnterpriseUserByEmail($inputUserData['username']);
             if (!empty($loggedinUserDetails)) {
-
+                if($loggedinUserDetails['is_enterprise'] == 1)
+                {
                 $responseData = $this->enterpriseRepository->getUserCompanyMap($loggedinUserDetails['id']);
                 $userDetails['emailid'] = $loggedinUserDetails['emailid'];
                 $userDetails['firstname'] = $loggedinUserDetails['firstname'];
@@ -517,6 +518,13 @@ class EnterpriseGateway {
                     $responseCode = self::ERROR_RESPONSE_CODE;
                     $responseMsg = self::ERROR_RESPONSE_MESSAGE;
                     $message = array(Lang::get('MINTMESH.login.email_inactive'));
+                    $data = array();
+                }
+                }else{
+                    //  returning failure message
+                    $responseCode = self::ERROR_RESPONSE_CODE;
+                    $responseMsg = self::ERROR_RESPONSE_MESSAGE;
+                    $message = array(Lang::get('MINTMESH.login.login_credentials'));
                     $data = array();
                 }
             } else {

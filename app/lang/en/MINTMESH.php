@@ -63,7 +63,8 @@ return array(
                 "login_valid"   => "Successfully Validated",
                 "login_success" => "Successfully Logged In",
                 "login_failure" => "Invalid Credentials",
-                "email_inactive" => "You are inactive please activate via email"
+                "email_inactive" => "You are inactive please activate via email",
+                 "login_credentials" => "Please login with your enterprise credentials"
          ),
          "resendActivationLink" => array(
                 "success" => "Mail Sent Successfully",

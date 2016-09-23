@@ -439,23 +439,27 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
         
         if (!empty($emailid)&&!empty($companyCode)) {
             $emailid = $this->appEncodeDecode->filterString(strtolower($emailid));
-            $queryString = "Match (u:User),(c:Company)
-                                 where u.emailid='" . $emailid . "' and c.companyCode='" . $companyCode . "'";
-                                     
-            $queryString.="create unique (u)<-[:" . Config::get('constants.RELATIONS_TYPES.CONNECTED_TO_COMPANY');
-            if (!empty($relationAttrs)) {
-                $queryString.="{";
-                foreach ($relationAttrs as $k => $v) {
-                    $queryString.=$k . ":'" . $this->appEncodeDecode->filterString($v) . "',";
-                }
-                $queryString = rtrim($queryString, ",");
-                $queryString.="}";
-            }
-            $queryString.="]-(c)";
-
-            //echo $queryString;exit;
+            //check user already exists
+            $queryString = "MATCH (u:User)-[r:CONNECTED_TO_COMPANY]-(c:Company) where u.emailid='" . $emailid . "' and c.companyCode='" . $companyCode . "' return r";
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
+            $count = $result->count();
+            //create new user node and relation to bucket here
+            if ($count == 0) {
+                $queryString = "Match (u:User),(c:Company) where u.emailid='" . $emailid . "' and c.companyCode='" . $companyCode . "' ";
+                $queryString.="create unique (u)<-[:" . Config::get('constants.RELATIONS_TYPES.CONNECTED_TO_COMPANY');
+                if (!empty($relationAttrs)) {
+                    $queryString.="{";
+                    foreach ($relationAttrs as $k => $v) {
+                        $queryString.=$k . ":'" . $this->appEncodeDecode->filterString($v) . "',";
+                    }
+                    $queryString = rtrim($queryString, ",");
+                    $queryString.="}";
+                }
+                $queryString.="]-(c)";
+                $query = new CypherQuery($this->client, $queryString);
+                $result = $query->getResultSet();
+            }
             return true;
         } else {
             return 0;
