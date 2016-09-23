@@ -20,16 +20,19 @@ abstract class EmailManager {
         public function sendMail()
         {
             if (!empty($this->emailId))
-            {
+            {    
                 try{
                     $this->dataSet['email'] = $this->emailId ;
                     $this->dataSet['subject'] = $this->subject ;
                     $this->dataSet['public_url'] = Config::get('constants.MNT_PUBLIC_URL');
                     $emailInput = $this->dataSet ;
                     Mail::queue($this->templatePath, $emailInput, function($message) use ($emailInput)  
-                    {
+                    {                                                    
                     $message->to($emailInput['email'], $emailInput['name']);
                     $message->subject($emailInput['subject']);
+                    if(!empty($emailInput['send_company_name'])){
+                     $message->from('xyz@gmail.com', $emailInput['send_company_name']); 
+                    }
                     //send attachment if attached
                     if (!empty($emailInput['attachment_path'])){
                          $message->attach($emailInput['attachment_path']);

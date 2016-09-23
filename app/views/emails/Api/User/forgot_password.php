@@ -29,7 +29,7 @@
   <tr>
     <td valign="top" class="textContent" style="padding:20px 20px 10px;line-height:135%;letter-spacing:0.2px;font-size:18px; font-weight:normal; color:#777777;">
       <h3 style="color:#000000;line-height:125%;font-family: 'arial', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello <?php echo ucfirst($name) ; ?>, </h3>
-      <p>Please click the button below to reset your password activation.</p>
+      <p>Please click the button below to reset your password.</p>
       <p>Thank you for choosing MintMesh.</p>
       <p style="text-align:center; margin-top:50px;" ><a style="color:#FFFFFF;text-decoration:none;font-family: 'arial', sans-serif;font-size:20px;padding-top:10px;padding-bottom:10px;padding-right:15px;padding-left:15px;display:inline-block; background:#269b7b; width:auto; margin:0px auto; border-radius:5px; line-height:20px; " href="<?php echo $link ; ?>" target="_blank">Reset Password</a> </p></td>
   </tr>

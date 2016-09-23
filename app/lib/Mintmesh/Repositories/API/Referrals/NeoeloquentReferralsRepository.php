@@ -206,10 +206,12 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 }
                 //and p.service_scope='".$type."'
                 //and r1.created_at <= p.created_at
+                //match (u:User:Mintmesh {emailid:'".$email."'})-[r:INCLUDED]-(p:Post {status:'ACTIVE'})-[:POSTED_FOR]-(m:Company) 
+                //".$filter_query." return p,count(distinct(u)),m ORDER BY p.created_at DESC
                 $email = $this->appEncodeDecode->filterString(strtolower($email));
-                $queryString = "match (u:User:Mintmesh {emailid:'".$email."'})-[r:INCLUDED]-(p:Post {status:'ACTIVE'})-[:POSTED_FOR]-(m:Company) 
-                                 ".$filter_query." return p,count(distinct(u)),m ORDER BY p.created_at DESC
-                                UNION
+                $queryString = "MATCH (u:User:Mintmesh)-[r1:CONNECTED_TO_COMPANY]-(m:Company)-[:POSTED_FOR]-(p:Post{status:'ACTIVE'}) 
+                                where u.emailid='".$email."' ".$filter_query." return p,count(distinct(u)),m ORDER BY p.created_at DESC
+                                 UNION
                                 match (n:User:Mintmesh)-[r1:ACCEPTED_CONNECTION]-(m:User:Mintmesh)-[r2:POSTED]->(p:Post)
                                 where n.emailid='".$email."' and m.emailid=p.created_by and p.created_by<>'".$email."'
                                 and case p.included_set when '1' then  (n-[:INCLUDED]-p) else 1=1 end
@@ -983,9 +985,9 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 //and p.service_scope='".$type."'
                 //and r1.created_at <= p.created_at
                 $email = $this->appEncodeDecode->filterString(strtolower($email));
-                $queryString = "match (u:User:Mintmesh {emailid:'".$email."'})-[r:INCLUDED]-(p:Post)-[:POSTED_FOR]-(m:Company) 
-                                where  p.status='ACTIVE' ".$filter_query." return p,count(distinct(u)),m ORDER BY p.created_at DESC
-                                UNION
+                $queryString = "MATCH (u:User:Mintmesh)-[r1:CONNECTED_TO_COMPANY]-(m:Company)-[:POSTED_FOR]-(p:Post{status:'ACTIVE'}) 
+                                where u.emailid='".$email."' ".$filter_query." return p,count(distinct(u)),m ORDER BY p.created_at DESC
+                                 UNION
                                 match (n:User:Mintmesh)-[r1:ACCEPTED_CONNECTION]-(m:User:Mintmesh)-[r2:POSTED]->(p:Post)
                                 where n.emailid='".$email."' and m.emailid=p.created_by and p.created_by<>'".$email."'
                                 and case p.included_set when '1' then  (n-[:INCLUDED]-p) else 1=1 end

@@ -607,7 +607,9 @@ class EnterpriseGateway {
         $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser();
         $arrResults = array();
         $createdAt = gmdate("Y-m-d H:i:s");
+        //print_r($input).exit;
         $inputFile = $this->createFileObject($input['contacts_file']);
+        //$inputFile = $input['contacts_file'];
         $inputFileExtension = $inputFile->getClientOriginalExtension();
         $inputFileSize = $inputFile->getClientSize();
         $userId = $this->loggedinUserDetails->id;
@@ -622,6 +624,7 @@ class EnterpriseGateway {
         if (in_array($inputFileExtension, $allowedExcelExtensions) && $inputFileSize <= $fileMaxSize) {
 
             $arrResults = Excel::load($inputFile)->all(); //reading input excel file here
+            //print_r($arrResults).exit;
             $firstRow = $arrResults->first()->toArray();
             $validHeaders = true;
             //comparing headers here
@@ -659,6 +662,7 @@ class EnterpriseGateway {
                     
                     //get the Import Contacts List By Import File Id
                     $contactsList = $this->enterpriseRepository->getContactsListByFileId($companyId, $importFileId);
+                   
                     //Creating relation between company and bucket in neo4j
                     $neoCompanyBucketContacts = array();
                     $neoCompanyBucketContacts = $this->enterpriseContactsList($input);
@@ -678,6 +682,9 @@ class EnterpriseGateway {
                         $pushData['bucket_id'] = $bucketId;
                         $pushData['company_code'] = $companyCode;
                         $pushData['loggedin_emailid'] = $this->loggedinUserDetails->emailid;
+                       
+                        //$this->createContactNodes($pushData);
+                        //$this->checkToCreateEnterpriseContactsQueue($pushData['firstname'],$pushData['lastname'],$pushData['emailid'],$pushData['contact_number'],$pushData['other_id'],$pushData['status'],$pushData['bucket_id'],$pushData['company_code'],$pushData['loggedin_emailid']);
 
                         Queue::push('Mintmesh\Services\Queues\CreateEnterpriseContactsQueue', $pushData, 'IMPORT');
                     }
@@ -810,22 +817,22 @@ class EnterpriseGateway {
     }
 
     public function createContactNodes($contactNode = array()) {
-        $neoInput = array();
-        $neoInput['firstname'] = $contactNode['firstname'];
-        $neoInput['lastname'] = $contactNode['lastname'];
-        $neoInput['emailid'] = $contactNode['emailid'];
+        
+        $neoInput = $relationAttrs  = array();
+        $neoInput['firstname']      = $contactNode['firstname'];
+        $neoInput['lastname']       = $contactNode['lastname'];
+        $neoInput['emailid']        = $contactNode['emailid'];
         $neoInput['contact_number'] = $contactNode['contact_number'];
-        $neoInput['employeeid'] = $contactNode['other_id'];
-        $neoInput['status'] = $contactNode['status'];
-        $relationAttrs = array();
-        $relationAttrs['company_code'] = $contactNode['company_code'];
-        $relationAttrs['loggedin_emailid'] = $contactNode['loggedin_emailid'];
-        $relationAttrs['created_at'] = gmdate("Y-m-d H:i:s");
-
-        // \Log::info("<<<<<<<<<<<<<<<< In Queue >>>>>>>>>>>>>".print_r($contactNode,1));
+        $neoInput['employeeid']     = $contactNode['other_id'];
+        $neoInput['status']         = $contactNode['status'];
+        
+        $relationAttrs['company_code']      = $contactNode['company_code'];
+        $relationAttrs['loggedin_emailid']  = $contactNode['loggedin_emailid'];
+        $relationAttrs['created_at']        = gmdate("Y-m-d H:i:s");
+         //\Log::info("<<<<<<<<<<<<<<<< In Queue >>>>>>>>>>>>>".print_r($neoInput,1));
         try {
-
             $this->neoEnterpriseRepository->createContactNodes($contactNode['bucket_id'], $neoInput, $relationAttrs);
+            $this->neoEnterpriseRepository->companyAutoConnect($neoInput['emailid'], $relationAttrs);
         } catch (\RuntimeException $e) {
             return false;
         }
@@ -863,7 +870,7 @@ class EnterpriseGateway {
                 $pushData['firstname'] = $value[0]->firstname;
                 $pushData['lastname'] = $value[0]->lastname;
                 $pushData['emailid'] = $value[0]->emailid;
-                $pushData['email_subject'] = $emailSubject;
+                $pushData['email_subject'] = 'Invitation to Referral Rewards Program from '.$pushData['company_name'];
                 $pushData['email_body'] = $emailBody;
                 //for email logs
                 $pushData['from_user_id']    = $params['user_id'];
@@ -894,6 +901,7 @@ class EnterpriseGateway {
         $dataSet['email'] = $inputEmailData['emailid'];
         $dataSet['emailbody'] = $inputEmailData['email_body'];
         $dataSet['fromName']  = $inputEmailData['from_user_name'];
+        $dataSet['send_company_name'] = $inputEmailData['company_name'];
         //for email logs
         $fromUserId  = $inputEmailData['from_user_id'];
         $fromEmailId = $inputEmailData['from_user_email'];
@@ -906,7 +914,6 @@ class EnterpriseGateway {
         $this->userEmailManager->subject = $inputEmailData['email_subject'];
         $this->userEmailManager->name = $fullName;
         $email_sent = $this->userEmailManager->sendMail();
-        
         //log email status
         $emailStatus = 0;
         if (!empty($email_sent)) {
@@ -1694,46 +1701,54 @@ class EnterpriseGateway {
     }
     
     public function addContact($input){ 
+        
         $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser();
-        $userId          = $this->loggedinUserDetails->id;
-        $inputParams = array();
+        $userId      = $this->loggedinUserDetails->id;
+        $inputParams =$relationAttrs = array();
         $inputParams['company_id']   = $input['company_id'];
         $inputParams['user_id']      = $userId;
         $inputParams['bucket_id']    = $input['bucket_id'];
         $inputParams['firstname']    = !empty($input['firstname'])?$input['firstname']:'';      
-        $inputParams['lastname']    = !empty($input['lastname'])?$input['lastname']:'';      
-        $inputParams['emailid']    = !empty($input['emailid'])?$input['emailid']:'';      
-        $inputParams['phone']    = !empty($input['phone'])?$input['phone']:'';      
-        $inputParams['status']    = !empty($input['status'])?$input['status']:'unknown';  
-        $inputParams['employeeid']    = $input['other_id'];      
-        $relationAttrs = array();
-        $relationAttrs['company_code'] = $input['company_code'];
+        $inputParams['lastname']     = !empty($input['lastname'])?$input['lastname']:'';      
+        $inputParams['emailid']      = !empty($input['emailid'])?$input['emailid']:'';      
+        $inputParams['phone']        = !empty($input['phone'])?$input['phone']:'';      
+        $inputParams['status']       = !empty($input['status'])?$input['status']:'unknown';  
+        $inputParams['employeeid']   = $input['other_id'];      
+         
+        $relationAttrs['company_code']     = $input['company_code'];
         $relationAttrs['loggedin_emailid'] = $this->loggedinUserDetails->emailid;
-          $relationAttrs['created_at'] = gmdate("Y-m-d H:i:s");
-          $neoInput['firstname']   = $input['firstname'];
-          $neoInput['lastname']   = $input['lastname'];
-          $neoInput['phone']   = !empty($input['phone'])?$input['phone']:'';          
-          $neoInput['emailid']   = $input['emailid'];
-          $neoInput['employeeid']   = $input['other_id'];
-          $neoInput['status']    = !empty($input['status'])?$input['status']:'unknown';  
-        $checkContact = $this->enterpriseRepository->checkContact($inputParams);
+        $relationAttrs['created_at']       = gmdate("Y-m-d H:i:s");
         
+        $neoInput['firstname']   = $input['firstname'];
+        $neoInput['lastname']    = $input['lastname'];
+        $neoInput['phone']       = !empty($input['phone'])?$input['phone']:'';          
+        $neoInput['emailid']     = $input['emailid'];
+        $neoInput['employeeid']  = $input['other_id'];
+        $neoInput['status']      = !empty($input['status'])?$input['status']:'unknown';  
+        $checkContact = $this->enterpriseRepository->checkContact($inputParams);
         if(empty($checkContact))
         {
-        $result = $this->enterpriseRepository->addContact($inputParams); 
-        $neoResult = $this->neoEnterpriseRepository->createContactNodes($input['bucket_id'],$neoInput,$relationAttrs);
-        if(!empty($result)){ 
-           $responseCode    = self::SUCCESS_RESPONSE_CODE;
-            $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
-            $message = array('msg' => array(Lang::get('MINTMESH.addContact.success')));
-        }
-        
-        
-        else {
-           $responseCode    = self::ERROR_RESPONSE_CODE;
-           $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-           $message = array('msg' => array(Lang::get('MINTMESH.addContact.failure')));
-        } 
+             $checkEmployeeId = $this->enterpriseRepository->checkEmpId($input);
+             if(!$checkEmployeeId)
+             {
+                $result    = $this->enterpriseRepository->addContact($inputParams); 
+                $neoResult = $this->neoEnterpriseRepository->createContactNodes($input['bucket_id'],$neoInput,$relationAttrs);
+                $neoResult = $this->neoEnterpriseRepository->companyAutoConnect($neoInput['emailid'],$relationAttrs);
+                if(!empty($result)){ 
+                    $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                    $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+                    $message = array('msg' => array(Lang::get('MINTMESH.addContact.success')));
+                }
+                else {
+                    $responseCode    = self::ERROR_RESPONSE_CODE;
+                    $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                    $message = array('msg' => array(Lang::get('MINTMESH.addContact.failure')));
+                } 
+              }else{
+                    $responseCode    = self::ERROR_RESPONSE_CODE;
+                    $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                    $message = array('msg' => array(Lang::get('MINTMESH.editContactList.invalidempid')));
+              } 
         }
         else if($checkContact[0]->bucket_id == '0'){
             $inputParams['id'] = $checkContact[0]->id;
@@ -1747,7 +1762,7 @@ class EnterpriseGateway {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
             $message = array('msg' => array(Lang::get('MINTMESH.addContact.contactExists')));
-        }
+        }     
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $message, array());
     }
 }

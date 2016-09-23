@@ -311,8 +311,8 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             foreach ($params['invite_contacts'] as $key=>$val)
                 {
                     $result[] = DB::table('contacts')
-                                ->where('company_id', '=', $params['company_id'])->get();
-//                                ->where('id','=',$val)->get();
+                                ->where('company_id', '=', $params['company_id'])
+                                ->where('id','=',$val)->get();
                 }
             return $result;   
         }
@@ -344,10 +344,10 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         }
         
         public function updateContactsList($input) {   
-            $input['other_id'] = strtoupper($input['other_id']);
+            $input['employeeid'] = strtoupper($input['other_id']);
             $fields = '';
             $field_set= array('employeeid','firstname','lastname','phone','status');
-            foreach($input as $k=>$v){
+            foreach($input as $k=>$v){   
                 $v = "'".$v."'";
                 if(in_array($k,$field_set))
                 $fields .= $k.'='.$v.',';
@@ -391,6 +391,10 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                    ->where('employeeid', '=', $input['other_id'])
                    ->where('id', '!=', $input['record_id'])->get(); 
            
+        }
+        public function checkEmpId($input) {
+            return DB::table('contacts')
+                   ->where('employeeid', '=', $input['other_id'])->get(); 
         }
         public function deleteContact($record) {   
             $sql="select emailid from contacts where id='".$record."'";

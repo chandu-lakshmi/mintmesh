@@ -163,11 +163,14 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
     }
 
     public function createContactNodes($bucket_id = '', $neoInput = array(), $relationAttrs = array()) {
+        //check user already exists
         $queryString = "MATCH (u:User)
                             WHERE u.emailid = '" . $neoInput['emailid'] . "' return u";
         $query = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
         $count = $result->count();
+        //if new user
+        //create new user node and relation to bucket here
         if ($count == 0) {
             $queryString = " MATCH (b:Contact_bucket)
                             WHERE b.mysql_id = '" . $bucket_id . "' ";
@@ -194,6 +197,8 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
             }
             $queryString.="]-(b)";
         }
+        //if exist user
+        //create relation bitween user and bucket here
         if ($count == 1) {
             $queryString = " MATCH (u:User),(b:Contact_bucket)
                             WHERE b.mysql_id = '" . $bucket_id . "' and u.emailid = '" . $neoInput['emailid'] . "' ";
@@ -208,8 +213,10 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
             }
             $queryString.="]-(b)";
         }
+        //fire the query here
         $query = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
+        
         if ($result->count()) {
             return $result;
         } else {
@@ -423,7 +430,37 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
           $result = $query->getResultSet();
           } 
         return $result;
-      }
+    }
+    
+    public function companyAutoConnect($emailid = '',$relationAttrs = array()) {
+        
+        $companyCode  = !empty($relationAttrs['company_code'])?$relationAttrs['company_code']:'';
+        unset($relationAttrs['company_code']);
+        
+        if (!empty($emailid)&&!empty($companyCode)) {
+            $emailid = $this->appEncodeDecode->filterString(strtolower($emailid));
+            $queryString = "Match (u:User),(c:Company)
+                                 where u.emailid='" . $emailid . "' and c.companyCode='" . $companyCode . "'";
+                                     
+            $queryString.="create unique (u)<-[:" . Config::get('constants.RELATIONS_TYPES.CONNECTED_TO_COMPANY');
+            if (!empty($relationAttrs)) {
+                $queryString.="{";
+                foreach ($relationAttrs as $k => $v) {
+                    $queryString.=$k . ":'" . $this->appEncodeDecode->filterString($v) . "',";
+                }
+                $queryString = rtrim($queryString, ",");
+                $queryString.="}";
+            }
+            $queryString.="]-(c)";
+
+            //echo $queryString;exit;
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            return true;
+        } else {
+            return 0;
+        }
+    }
 }
 
 ?>

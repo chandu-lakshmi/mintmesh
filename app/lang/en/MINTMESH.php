@@ -339,7 +339,7 @@ return array(
             "failure"   =>  "failed to update",
             "file_format"       =>  "Invalid input file format.File extension should be:",
             "invalid_headers"   =>  "Invalid input file Headers",
-            "invalidempid"      =>  "emp_id already exists"          
+            "invalidempid"      =>  "empid already exists"          
     ),
     'deleteContact'   => array(
             "success"  =>   "successfully deleted",
