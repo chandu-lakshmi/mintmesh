@@ -285,10 +285,10 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
         
         $result = false;
         if(!empty($email)){
-            $queryString = "MATCH (u:User:Mintmesh)-[r:CREATED|CONNECTED_TO_COMPANY]->(c:Company)
+            $queryString = "MATCH (u:User:Mintmesh)-[r:CREATED|CONNECTED_TO_COMPANY]-(c:Company)
                             where u.emailid='".$email."' return c order by r.created_at desc ";
-            $queryString.= " UNION MATCH (u:User:Mintmesh)-[r:COMPANY_CONTACT_IMPORTED]-(b:Contact_bucket)-[:BUCKET_IMPORTED]-(c:Company)
-                             where u.emailid='".$email."' and r.company_code=c.companyCode return c order by r.created_at desc";
+//            $queryString.= " UNION MATCH (u:User:Mintmesh)-[r:COMPANY_CONTACT_IMPORTED]-(b:Contact_bucket)-[:BUCKET_IMPORTED]-(c:Company)
+//                             where u.emailid='".$email."' and r.company_code=c.companyCode return c order by r.created_at desc";
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();   
         }
@@ -299,10 +299,10 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
         
         $result = $response = FALSE;   
         if (!empty($companyCode)) {  
-            $queryString = "Match (u:User:Mintmesh)-[r:CONNECTED_TO_COMPANY | CREATED]->(c:Company)
+            $queryString = "Match (u:User:Mintmesh)-[r:CONNECTED_TO_COMPANY | CREATED]-(c:Company)
                             where u.emailid='" . $userEmailId . "' and c.companyCode='" . $companyCode . "' return r";
-            $queryString.= " UNION MATCH (u:User:Mintmesh)-[r:COMPANY_CONTACT_IMPORTED]-(b:Contact_bucket)-[:BUCKET_IMPORTED]-(c:Company) 
-                             where u.emailid='" . $userEmailId . "' and c.companyCode='" . $companyCode . "' and r.company_code=c.companyCode return r";
+//            $queryString.= " UNION MATCH (u:User:Mintmesh)-[r:COMPANY_CONTACT_IMPORTED]-(b:Contact_bucket)-[:BUCKET_IMPORTED]-(c:Company) 
+//                             where u.emailid='" . $userEmailId . "' and c.companyCode='" . $companyCode . "' and r.company_code=c.companyCode return r";
             $query  = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             $response  = $result->count(); 
