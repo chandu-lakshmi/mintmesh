@@ -215,6 +215,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                     } 
                     if($i==500 && $inrt_sql!=''){
                             DB::statement($sql.trim($inrt_sql,','));
+                            $inrt_sql = '';
                             $i=0;
                     }
                 }
@@ -345,6 +346,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         
         public function updateContactsList($input) {   
             $input['employeeid'] = strtoupper($input['other_id']);
+            $input['phone'] = $input['contact_number'];
             $fields = '';
             $field_set= array('employeeid','firstname','lastname','phone','status');
             foreach($input as $k=>$v){   
@@ -370,7 +372,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             $input['updated_at'] = gmdate('Y-m-d H:i:s');
             $input['updated_by'] = $input['user_id'];
             $fields = '';
-            $field_set= array('firstname','lastname','phone','status','updated_at','updated_by');
+            $field_set= array('employeeid','firstname','lastname','phone','status','updated_at','updated_by');
             foreach($input as $k=>$v){
                 $v = "'".$v."'";
                 if(in_array($k,$field_set))
@@ -387,13 +389,14 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         {
             
             return DB::table('contacts')
-                   ->select('*')
+                   ->where('company_id', '=', $input['company_id'])
                    ->where('employeeid', '=', $input['other_id'])
                    ->where('id', '!=', $input['record_id'])->get(); 
            
         }
         public function checkEmpId($input) {
             return DB::table('contacts')
+                   ->where('company_id', '=', $input['company_id'])
                    ->where('employeeid', '=', $input['other_id'])->get(); 
         }
         public function deleteContact($record) {   

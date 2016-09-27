@@ -24,7 +24,7 @@
 </style>
 </head>
 <body>
-<div class="main" style="color:black;font-family: Times New Roman, Times, serif;">
+<div class="main" style="color:black;font-family: arial,sans-serif;">
 	<div class="sub">
 		<img src="<?php echo $company_logo ; ?>" style="float:left;width:80px;height:40px;">
 		<span style="font-weight:bold;font-size:26px;margin-top:50px;display:inline-block;border-left:2px solid #CCCCCC;padding-left:14px;margin-left:14px;">Referral Reward Program</span>

@@ -1452,8 +1452,10 @@ class EnterpriseGateway {
                 //get user designation here
                 if (!empty($referralUser) && $referralUser->completed_experience == '1'){
                     $result = $this->neoEnterpriseRepository->getDesignation($referralUser->emailid);
-                    foreach ($result[0] as $obj) {
-                        $designation = $obj->name;   
+                    if(!empty($result[0])){
+                        foreach ($result[0] as $obj) {
+                            $designation = $obj->name;   
+                        }
                     }
                 } 
                 //set the return response here
@@ -1489,6 +1491,9 @@ class EnterpriseGateway {
     }
     
     public function updateContactsList($input) {
+        $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser();
+        $company = $this->enterpriseRepository->getUserCompanyMap($this->loggedinUserDetails['id']);
+        $input['company_id'] = $company->company_id;
         $checkEmployeeId = $this->enterpriseRepository->checkEmployeeId($input);
         if(!$checkEmployeeId)
         {
