@@ -521,17 +521,19 @@ class PostGateway {
 
     public function processJob($input) {
 
-        $returnReferralDetails = array();
-        $this->loggedinEnterpriseUserDetails = $this->getLoggedInEnterpriseUser();
+        $objCompany = new \stdClass();
+        $returnReferralDetails = $data = array();
+        $this->loggedinEnterpriseUserDetails    = $this->getLoggedInEnterpriseUser();
         $this->neoLoggedInEnterpriseUserDetails = $this->neoEnterpriseRepository->getNodeByEmailId($this->loggedinEnterpriseUserDetails->emailid);
+        $company = $this->enterpriseRepository->getUserCompanyMap($this->loggedinEnterpriseUserDetails->id);
+        $objCompany->fullname = $company->name;
 
-        $data = array();
-        $parse = 1;
-        $postId = $input['post_id'];
-        $status = $input['status'];
-        $postWay = 'one';
+        $parse    = 1;
+        $postId   = $input['post_id'];
+        $status   = $input['status'];
+        $postWay  = 'one';
         $referral = $input['from_user'];
-        $referredBy = $input['referred_by'];
+        $referredBy    = $input['referred_by'];
         $relationCount = $input['relation_count'];
         $userEmail = $this->neoLoggedInEnterpriseUserDetails->emailid;
         $phoneNumberReferred = !empty($input['referred_by_phone']) ? 1 : 0;
@@ -556,20 +558,21 @@ class PostGateway {
 
                 if ($referral == $referredBy) {
                     //send notification to via person
-                    $notificationId = 24;
+                    $notificationId = 24; //indicates self referral accepted notify to P2
                 } else {
                     //send notification to via person
-                    $notificationId = 12;
+                    $notificationId = 12; //indicates referral accepted notify to P2
+                    //P3 got the notification
                     $this->userGateway->sendNotification($referred_by_details, $referred_by_neo_user, $referral, 11, array('extra_info' => $postId), array('other_user' => $userEmail), 1);
                     //send battle card to u1 containing u3 details
                     $this->userGateway->sendNotification($referred_by_details, $referred_by_neo_user, $this->loggedinEnterpriseUserDetails->emailid, 20, array('extra_info' => $postId), array('other_user' => $referral), 1);
                 }
                 //}
             } else {
-                $notificationId = ($referral == $referredBy) ? 25 : 15; //indicates self referral  
+                $notificationId = ($referral == $referredBy) ? 25 : 15; //indicates referral declined notify to P2
             }
             //send notification
-            $this->userGateway->sendNotification($this->loggedinEnterpriseUserDetails, $this->neoLoggedInEnterpriseUserDetails, $referredBy, $notificationId, array('extra_info' => $postId), array('other_user' => $referral), $parse);
+            $this->userGateway->sendNotification($this->loggedinEnterpriseUserDetails, $objCompany, $referredBy, $notificationId, array('extra_info' => $postId), array('other_user' => $referral), $parse);
             $message = array('msg' => array(Lang::get('MINTMESH.referrals.success')));
         } else {
             $message = array('msg' => array(Lang::get('MINTMESH.referrals.no_post')));

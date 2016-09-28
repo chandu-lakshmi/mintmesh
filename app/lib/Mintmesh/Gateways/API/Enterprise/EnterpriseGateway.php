@@ -868,25 +868,27 @@ class EnterpriseGateway {
         $company = $this->enterpriseRepository->getCompanyDetails($params['company_id']);
         if (!empty($contactList)) {
             foreach ($contactList as $key => $value) {
-                $pushData = array();
-                if(!empty($company)){
-                    foreach ($company as $k=>$v){
-                        $pushData['company_name'] = $v->name;
-                        $pushData['company_logo'] = $v->logo;
+                if(!empty($value[0]->emailid)){
+                    $pushData = array();
+                    if(!empty($company)){
+                        foreach ($company as $k=>$v){
+                            $pushData['company_name'] = $v->name;
+                            $pushData['company_logo'] = $v->logo;
+                        }
                     }
-                }
-                $pushData['firstname'] = $value[0]->firstname;
-                $pushData['lastname'] = $value[0]->lastname;
-                $pushData['emailid'] = $value[0]->emailid;
-                $pushData['email_subject'] = 'Invitation to Referral Rewards Program from '.$pushData['company_name'];
-                $pushData['email_body'] = $emailBody;
-                //for email logs
-                $pushData['from_user_id']    = $params['user_id'];
-                $pushData['from_user_name']    = $params['from_user_name'];
-                $pushData['from_user_email'] = $params['user_email'];
-                $pushData['company_code']    = $params['company_id'];
-                $pushData['ip_address']      = $params['ip_address'];
-                Queue::push('Mintmesh\Services\Queues\EmailInvitationEnterpriseContactsQueue', $pushData, 'IMPORT');
+                    $pushData['firstname'] = $value[0]->firstname;
+                    $pushData['lastname'] = $value[0]->lastname;
+                    $pushData['emailid'] = $value[0]->emailid;
+                    $pushData['email_subject'] = 'Invitation to Referral Rewards Program from '.$pushData['company_name'];
+                    $pushData['email_body'] = $emailBody;
+                    //for email logs
+                    $pushData['from_user_id']    = $params['user_id'];
+                    $pushData['from_user_name']    = $params['from_user_name'];
+                    $pushData['from_user_email'] = $params['user_email'];
+                    $pushData['company_code']    = $params['company_id'];
+                    $pushData['ip_address']      = $params['ip_address'];
+                    Queue::push('Mintmesh\Services\Queues\EmailInvitationEnterpriseContactsQueue', $pushData, 'IMPORT');
+                } 
             }
 
             $responseCode = self::SUCCESS_RESPONSE_CODE;

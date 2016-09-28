@@ -313,7 +313,9 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                 {
                     $result[] = DB::table('contacts')
                                 ->where('company_id', '=', $params['company_id'])
-                                ->where('id','=',$val)->get();
+                                ->where('id','=',$val)
+                                ->whereRaw('status NOT Like "%Separated%" ')
+                                ->get();
                 }
             return $result;   
         }
