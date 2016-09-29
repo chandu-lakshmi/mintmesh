@@ -28,7 +28,8 @@ return array(
 	|
 	*/
 
-	'host' => 'smtp.mandrillapp.com',//'smtp.mailgun.org',
+	//'host' => 'smtp.mandrillapp.com',//'smtp.mailgun.org',
+        'host' => 'smtp.gmail.com',//'smtp.mailgun.org',
 
 	/*
 	|--------------------------------------------------------------------------
@@ -80,7 +81,8 @@ return array(
 	|
 	*/
 
-	'username' => 'mintmesh@yahoo.com',//null,
+	//'username' => 'mintmesh@yahoo.com',//null,
+        'username' => 'mintmeshapp1@gmail.com',//null,
 
 	/*
 	|--------------------------------------------------------------------------
@@ -93,7 +95,8 @@ return array(
 	|
 	*/
 
-	'password' => 'j0L7nqRrZHLrQE5jy7y6cg',//null,
+	//'password' => 'j0L7nqRrZHLrQE5jy7y6cg',//null,
+        'password' => 'Enterpi@123',//null,
 
 	/*
 	|--------------------------------------------------------------------------
