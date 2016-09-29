@@ -28,8 +28,7 @@ return array(
 	|
 	*/
 
-	//'host' => 'smtp.mandrillapp.com',//'smtp.mailgun.org',
-        'host' => 'smtp.gmail.com',//'smtp.mailgun.org',
+	'host' => 'smtp.mandrillapp.com',//'smtp.mailgun.org',
 
 	/*
 	|--------------------------------------------------------------------------
@@ -95,8 +94,7 @@ return array(
 	|
 	*/
 
-	//'password' => 'j0L7nqRrZHLrQE5jy7y6cg',//null,
-        'password' => 'Enterpi@123',//null,
+	'password' => 'j0L7nqRrZHLrQE5jy7y6cg',//null,
 
 	/*
 	|--------------------------------------------------------------------------
