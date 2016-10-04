@@ -174,11 +174,11 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             {
                 $contactsList = $this->getImportContactByEmailId($userId, $bucketId, $companyId);
                 $contactIsExist = $updatedRows = $result = array();
-               
+                //checking email id already exist or not  
                 foreach ($contactsList as $obj){
-                    $contactIsExist[] = $obj->emailid;     
+                    //$contactIsExist[] = $obj->emailid; 
+                    $contactIsExist[$obj->emailid] = $obj->employeeid;    
                 }
-                  
                 $sql = "insert into contacts 
                         (`user_id`,`company_id`,`import_file_id`,`firstname`,`lastname`,`emailid`,`phone`,`employeeid`,`status`, `updated_by`,`created_at`,`created_by`,`ip_address`) values " ;
 				$inrt_sql = '';	
@@ -199,12 +199,17 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                         $usersArr  = User::select('id')->where('emailid',$emailId)->get();
                         $users_id  = !empty($usersArr[0])?$usersArr[0]->id:0;
                         
-                        if(!in_array($val['email_id'], $contactIsExist)){   
+                        if(!array_key_exists($val['email_id'], $contactIsExist)){ 
+                            $employeeId = ($employeeId!='' && in_array($employeeId, $contactIsExist))?'':$employeeId; 
+                            
                             $inrt_sql.="('".$users_id."','".$companyId."','".$importFileId."','".$firstName."','".$lastName."','".$emailId."','".$cellPhone."',";
                             $inrt_sql.="'".$employeeId."','".$status."','".$userId."','".$createdAt."','".$userId."','".$ipAddress."')," ;
                             $i++;
                             $insertResult++;
                         } else {
+                            
+                            $employeeId = ($employeeId!='' && in_array($employeeId, $contactIsExist))?(($contactIsExist[$emailId]==$employeeId)?$employeeId:''):$employeeId;
+                            
                             $sqlQuery = "UPDATE contacts SET `user_id`='".$users_id."', `import_file_id` = '".$importFileId."',`firstname`='".$firstName."',`lastname`='".$lastName."',";
                             $sqlQuery.= " `phone`='".$cellPhone."',`employeeid`='".$employeeId."',`status`='".$status."',`updated_by`='".$userId."'";
                             $sqlQuery.= " WHERE `emailid` = '".$emailId."' and`company_id` ='".$companyId."'";
@@ -238,11 +243,8 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         // get Import Contact By EmailId
         public function getImportContactByEmailId($userId, $bucketId, $companyId){   
             return DB::table('contacts')
-                   ->select('emailid')
-                   //->where('user_id', '=', $userId)
-                   ->where('company_id', '=', $companyId)
-                   //->where('bucket_id', '=', $bucketId)
-                   ->get();
+                ->select('emailid', 'employeeid')
+                ->where('company_id', '=', $companyId)->get();
         }
         
         public function getCompanyBucketsList($params){

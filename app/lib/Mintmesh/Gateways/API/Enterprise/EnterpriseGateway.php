@@ -652,11 +652,18 @@ class EnterpriseGateway {
                     $input['bucket_id'] = $bucketId;
                 }
 
+                $arrUniqueImpId = array();
                 foreach ($arrResults as $key => $val) {
-                    if ($val['email_id']) {
+                    if ($val['email_id']) {		 
+                        $val['employee_idother_id'] = ($val['employee_idother_id']!='' && in_array($val['employee_idother_id'],$arrUniqueImpId))?'':$val['employee_idother_id'];
                         $arrUniqueResults[$val['email_id']] = $val;
+                        
+                        if($val['employee_idother_id']!='')
+			$arrUniqueImpId[$val['email_id']] = $val['employee_idother_id'];
                     }
                 }
+		unset($arrUniqueImpId);
+                
                 //$instanceId = $this->enterpriseRepository->getInstanceId(); //getting Instance Id
                 //create file record
 		$importFileId = $this->enterpriseRepository->getFileId($inputFile,$userId);
@@ -1650,12 +1657,18 @@ class EnterpriseGateway {
                 $arrResults = $arrResults->toArray();
                 //create file record
 		$importFileId = $this->enterpriseRepository->getFileId($inputFile,$userId);
-                //filtering to make unique email ids for avoiding duplicate entry's 
+                //filtering to make unique email ids and employee id for avoiding duplicate entry's 
+                $arrUniqueImpId = array();
                 foreach ($arrResults as $key => $val) {
-                    if ($val['email_id']) {
+                    if ($val['email_id']) {		 
+                        $val['employee_idother_id'] = ($val['employee_idother_id']!='' && in_array($val['employee_idother_id'],$arrUniqueImpId))?'':$val['employee_idother_id'];
                         $arrUniqueResults[$val['email_id']] = $val;
+                        
+                        if($val['employee_idother_id']!='')
+			$arrUniqueImpId[$val['email_id']] = $val['employee_idother_id'];
                     }
                 }
+		unset($arrUniqueImpId);
                 //importing contacts to Mysql db
                 $resultsSet   = $this->enterpriseRepository->uploadContacts($arrUniqueResults, $userId, $bucketId, $companyId, $importFileId);    
                 //get the Import Contacts List By Instance Id
