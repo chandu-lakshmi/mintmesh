@@ -26,7 +26,7 @@
 <body>
 <div class="main" style="color:black;font-family: arial,sans-serif;">
 	<div class="sub">
-		<img src="<?php echo $company_logo ; ?>" style="float:left;width:80px;height:40px;">
+		<img src="<?php echo $company_logo ; ?>" style="float:left;width:89px;">
 		<span style="font-weight:bold;font-size:26px;margin-top:50px;display:inline-block;border-left:2px solid #CCCCCC;padding-left:14px;margin-left:14px;">Referral Reward Program</span>
 	</div>
 	<div style="font-size:16px;">
@@ -36,8 +36,8 @@
 	</div>
 	<div style="margin-bottom:60px;">
 		<p style="font-size:16px;margin-top: 50px;">Download the mobile app from</p>
-		<img src="<?php echo $public_url ; ?>images/app_store.png" width="120" style="display:inline-block;">
-		<img src="<?php echo $public_url ; ?>images/google_play.png" width="120">
+                <a href="http://mandrillapp.com/track/click/30830143/appsto.re?p=eyJzIjoiQVFqelk3LTJNazNJU3gxTHI3R3Q5WlFtVDdrIiwidiI6MSwicCI6IntcInVcIjozMDgzMDE0MyxcInZcIjoxLFwidXJsXCI6XCJodHRwczpcXFwvXFxcL2FwcHN0by5yZVxcXC9pblxcXC8wakY5OC5pXCIsXCJpZFwiOlwiMDIwOGRiZTllZTg0NDdmMzg3NDFhMDE4Mzc0ZTUzNjdcIixcInVybF9pZHNcIjpbXCI4NzY0YTI4NTc3NjAyZTFmZjEwNjY4ZDk4NTRjNzhkNTUzNDA5ZTcyXCJdfSJ9" style="margin-right:20px" target="_blank" data-saferedirecturl="https://www.google.com/url?hl=en&amp;q=http://mandrillapp.com/track/click/30830143/appsto.re?p%3DeyJzIjoiQVFqelk3LTJNazNJU3gxTHI3R3Q5WlFtVDdrIiwidiI6MSwicCI6IntcInVcIjozMDgzMDE0MyxcInZcIjoxLFwidXJsXCI6XCJodHRwczpcXFwvXFxcL2FwcHN0by5yZVxcXC9pblxcXC8wakY5OC5pXCIsXCJpZFwiOlwiMDIwOGRiZTllZTg0NDdmMzg3NDFhMDE4Mzc0ZTUzNjdcIixcInVybF9pZHNcIjpbXCI4NzY0YTI4NTc3NjAyZTFmZjEwNjY4ZDk4NTRjNzhkNTUzNDA5ZTcyXCJdfSJ9&amp;source=gmail&amp;ust=1476872919822000&amp;usg=AFQjCNFwOH2956h3q9vEFXj2ViADNKm57w"><img src="https://ci6.googleusercontent.com/proxy/aQGWtWB8jCPaZBsg0oTOBOIJtRvLs887ZZk0SIL0Mc3O7Tz6CMeoHKAOxYUwaKXSsDc9QwY6qt-PJIcCVe0uLyQ8yclwi-pt6QZuCWIS=s0-d-e1-ft#https://staging.mintmesh.com/public/images/app_store.png" style="width:120px" class="m_6902325881828435104m_-4812390644503282539CToWUd CToWUd"></a>
+                <a href="http://mandrillapp.com/track/click/30830143/play.google.com?p=eyJzIjoialY4bFNGV0ZaMGwyVWlDczFHRFhUVzg4STF3IiwidiI6MSwicCI6IntcInVcIjozMDgzMDE0MyxcInZcIjoxLFwidXJsXCI6XCJodHRwczpcXFwvXFxcL3BsYXkuZ29vZ2xlLmNvbVxcXC9zdG9yZVxcXC9hcHBzXFxcL2RldGFpbHM_aWQ9Y29tLm1pbnRtZXNoLm1pbnRtZXNoXCIsXCJpZFwiOlwiMDIwOGRiZTllZTg0NDdmMzg3NDFhMDE4Mzc0ZTUzNjdcIixcInVybF9pZHNcIjpbXCJhZGEyYzFiZjNlZWYwMDI0NzAzYjJiNTdmMmNmMjc3YTU2MDIyYjU1XCJdfSJ9" target="_blank" data-saferedirecturl="https://www.google.com/url?hl=en&amp;q=http://mandrillapp.com/track/click/30830143/play.google.com?p%3DeyJzIjoialY4bFNGV0ZaMGwyVWlDczFHRFhUVzg4STF3IiwidiI6MSwicCI6IntcInVcIjozMDgzMDE0MyxcInZcIjoxLFwidXJsXCI6XCJodHRwczpcXFwvXFxcL3BsYXkuZ29vZ2xlLmNvbVxcXC9zdG9yZVxcXC9hcHBzXFxcL2RldGFpbHM_aWQ9Y29tLm1pbnRtZXNoLm1pbnRtZXNoXCIsXCJpZFwiOlwiMDIwOGRiZTllZTg0NDdmMzg3NDFhMDE4Mzc0ZTUzNjdcIixcInVybF9pZHNcIjpbXCJhZGEyYzFiZjNlZWYwMDI0NzAzYjJiNTdmMmNmMjc3YTU2MDIyYjU1XCJdfSJ9&amp;source=gmail&amp;ust=1476873629638000&amp;usg=AFQjCNFSa0vXSFIDA9nfdzlIpNQQI8d4VA"><img src="https://ci6.googleusercontent.com/proxy/jigitJf24MtXaLZulAN2IbW3f8_i0Guj0xo9VMkkloD_tnN3dxb-Gibq98JdrCAeEwquEKWvPExkCyguxUgi2qw5Tqw5OTpJzx3i1mNArY8=s0-d-e1-ft#https://staging.mintmesh.com/public/images/google_play.png" style="width:120px" class="m_-6052049376936956587m_-4812390644503282539CToWUd CToWUd"></a>
 	</div>
 	<div style="font-size:16px;line-height:10px;">
 		<p>Thanks,</p>

@@ -16,6 +16,8 @@ use Mintmesh\Gateways\API\User\UserGateway;
 use Mintmesh\Gateways\API\SocialContacts\ContactsGateway;
 use Mintmesh\Repositories\API\Payment\PaymentRepository;
 use Mintmesh\Gateways\API\Payment\PaymentGateway;
+use Mintmesh\Gateways\API\Post\PostGateway;
+use Mintmesh\Repositories\API\Post\NeoPostRepository;
 use LucaDegasperi\OAuth2Server\Authorizer;
 use Mintmesh\Services\ResponseFormatter\API\CommonFormatter ;
 use Mintmesh\Services\APPEncode\APPEncode ;
@@ -31,7 +33,7 @@ class ReferralsGateway {
     const ERROR_RESPONSE_CODE = 403;
     const ERROR_RESPONSE_MESSAGE = 'error';
     protected $referralsRepository, $referralsValidator, $neoUserRepository, $userRepository;  
-    protected $authorizer, $appEncodeDecode,$paymentRepository,$paymentGateway;
+    protected $authorizer, $appEncodeDecode,$paymentRepository,$paymentGateway, $neoPostRepository, $postGateway;
     protected $commonFormatter, $loggedinUserDetails,$neoLoggedInUserDetails, $userGateway, $contactsGateway, $contactsRepository, $smsGateway;
     protected $userEmailManager,$service_scopes,$job_types, $resumeValidations;
 	public function __construct(referralsRepository $referralsRepository, 
@@ -41,6 +43,8 @@ class ReferralsGateway {
                                     Authorizer $authorizer,
                                     CommonFormatter $commonFormatter,
                                     UserGateway $userGateway,
+                                    //PostGateway $postGateway,
+                                    NeoPostRepository $neoPostRepository, 
                                     PaymentRepository $paymentRepository,
                                     PaymentGateway $paymentGateway,
                                     APPEncode $appEncodeDecode,
@@ -57,6 +61,8 @@ class ReferralsGateway {
                 $this->authorizer = $authorizer;
                 $this->commonFormatter = $commonFormatter ;
                 $this->userGateway = $userGateway ;
+                //$this->postGateway = $postGateway;
+                $this->neoPostRepository = $neoPostRepository;
                 $this->appEncodeDecode = $appEncodeDecode ;
                 $this->paymentRepository = $paymentRepository ;
                 $this->paymentGateway = $paymentGateway ;
@@ -465,7 +471,8 @@ class ReferralsGateway {
         {
             $this->loggedinUserDetails = $this->getLoggedInUser();
             $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
-            $userEmail = $this->neoLoggedInUserDetails->emailid ;
+            $userEmail   = $this->neoLoggedInUserDetails->emailid ;
+            $userCountry = $this->neoLoggedInUserDetails->phone_country_name;
             $page = !empty($input['page_no'])?$input['page_no']:0;
             $request_type = isset($input['request_type'])?$input['request_type']:'';
             $posts = $this->referralsRepository->getAllPosts($userEmail, $request_type,$page);
@@ -476,8 +483,10 @@ class ReferralsGateway {
                 {   
                     //if($post[0]->created_by != $this->loggedinUserDetails->emailid) {
                         $postDetails = $this->formPostDetailsArray($post[0]) ;
-                        $postDetails['no_of_referrals'] = !empty($post[1])?$post[1]:0 ;
+                        //$postDetails['no_of_referrals'] = !empty($post[1])?$post[1]:0 ;
+                        $postDetails['no_of_referrals'] = $this->referralsRepository->getPostMyReferralsCount($userEmail, $postDetails['post_id']);
                         $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($postDetails['created_by']) ;
+                        $postDetails['rewards']     = $this->getPostRewards($postDetails['post_id'], $userCountry);
                         $postDetails['UserDetails'] = $this->userGateway->formUserDetailsArray($neoUserDetails, 'attribute',Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC'));
                         $returnPosts[] = $postDetails ;
                     //}
@@ -885,7 +894,7 @@ class ReferralsGateway {
                 }
                 $suggestions = $this->getPostSuggestions($input);
                 $data['suggestions'] = !empty($suggestions['data']['users'])?$suggestions['data']['users']:array() ;
-                $data['referrals_count'] = $this->referralsRepository->getPostReferralsCount($input['post_id']);
+                $data['referrals_count'] = $this->referralsRepository->getPostMyReferralsCount($userEmail, $input['post_id']);
                 $data['is_self_referred'] = $self_referred ;
                 $message = array('msg'=>array(Lang::get('MINTMESH.referrals.success')));
                 return $this->commonFormatter->formatResponse(200, "success", $message, $data) ;
@@ -901,7 +910,7 @@ class ReferralsGateway {
                     $data['suggestions'] = !empty($suggestions['data']['users'])?$suggestions['data']['users']:array() ;
                     $data['postDetails'] = $postDetails = $this->formPostDetailsArray($postDetails[0][0]);
                 }
-                $data['referrals_count'] = $this->referralsRepository->getPostReferralsCount($input['post_id']);
+                $data['referrals_count'] = $this->referralsRepository->getPostMyReferralsCount($userEmail, $input['post_id']);
                 $message = array('msg'=>array(Lang::get('MINTMESH.referrals.no_referrals')));
                 return $this->commonFormatter->formatResponse(200, "success", $message, $data) ;
             }
@@ -1633,7 +1642,7 @@ class ReferralsGateway {
                             }
                                 $a['post_id'] = $postId ;
                                 $a['post_status'] = !empty($postDetails['status'])?strtolower($postDetails['status']):'' ;
-                                $a['referrals_count'] = $this->referralsRepository->getPostReferralsCount($postId);
+                                $a['referrals_count'] = $this->referralsRepository->getPostMyReferralsCount($userEmail, $postId);
                                 $a['other_status'] = !empty($relation[0]->one_way_status)?$relation[0]->one_way_status:Config::get('constants.REFERENCE_STATUS.PENDING');
                                 
                             }
@@ -1784,7 +1793,8 @@ class ReferralsGateway {
         {
             $this->loggedinUserDetails = $this->getLoggedInUser();
             $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
-            $userEmail = $this->neoLoggedInUserDetails->emailid ;
+            $userEmail   = $this->neoLoggedInUserDetails->emailid ;
+            $userCountry = $this->neoLoggedInUserDetails->phone_country_name;
             $page = !empty($input['page_no'])?$input['page_no']:0;
             $posts = $this->referralsRepository->getAllPostsV3($userEmail, $input['request_type'],$page);
             $postIds = $excludedPostsList = array();
@@ -1795,9 +1805,11 @@ class ReferralsGateway {
                 {
                     //if($post[0]->created_by != $this->loggedinUserDetails->emailid) {
                         $postDetails = $this->formPostDetailsArray($post[0]) ;
-                        $postDetails['no_of_referrals'] = !empty($post[1])?$post[1]:0 ;
+                        //$postDetails['no_of_referrals'] = !empty($post[1])?$post[1]:0 ;
+                        $postDetails['no_of_referrals'] = $this->referralsRepository->getPostMyReferralsCount($userEmail, $postDetails['post_id']);
                         $postDetails['company_logo'] = !empty($post[2]->logo)?$post[2]->logo:'';
                         $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($postDetails['created_by']) ;
+                        $postDetails['rewards']     = $this->getPostRewards($postDetails['post_id'], $userCountry);
                         $postDetails['UserDetails'] = $this->userGateway->formUserDetailsArray($neoUserDetails, 'attribute', Config::get('constants.USER_ABSTRACTION_LEVELS.BASIC'));
                         $returnPosts[$postDetails['post_id']] = $postDetails ;
                         $postIds[] = $postDetails['post_id'];
@@ -1816,7 +1828,7 @@ class ReferralsGateway {
                 }*/
                 //print_r($returnPosts).exit;
                 //get referrals count for each post
-                $returnPosts = $this->getReferralsListCounts($this->loggedinUserDetails->emailid, $returnPosts);
+                //$returnPosts = $this->getReferralsListCounts($this->loggedinUserDetails->emailid, $returnPosts);
                 $data = array("posts"=>  array_values($returnPosts));
                 
                 //pagination
@@ -2079,9 +2091,45 @@ class ReferralsGateway {
             return array('status'=>$returnBoolean, 'uploaded'=>$uploaded, 'resume_path'=>$resumePath, 'message'=>$msg,'resume_original_name'=>$resumeOriginalName);
             
         }
-        
-        
-        
     
+    public function getPostRewards($postId='', $userCountry='') {
+        $aryRewards  = $rewards  = array();
+        $tot_points  = $tot_cash = 0;
+        $postRewards = $this->neoPostRepository->getPostRewards($postId);
+            foreach ($postRewards as $value) {  
+               $rewards  = array();
+               $relObj   = $value[1];//POST_REWARDS relation
+               $valueObj = $value[2];//REWARDS node
+               $relRewardsMode              = !empty($relObj->rewards_mode)?$relObj->rewards_mode:'';
+               $currency_type               = !empty($valueObj->currency_type)?$valueObj->currency_type:0;
+               $rewards['rewards_type']     = !empty($valueObj->rewards_type)?$valueObj->rewards_type:'';
+               $rewards['rewards_value']    = !empty($valueObj->rewards_value)?$valueObj->rewards_value:'';
+
+               if($rewards['rewards_type'] == 'paid'){
+                   
+                   if (strtolower($userCountry) =="india" && $currency_type == 1){
+                        $rewards['rewards_value'] = $this->paymentGateway->convertUSDToINR($rewards['rewards_value']);
+                    }
+                    else if (strtolower($userCountry) !="india" && $currency_type == 2){
+                        $rewards['rewards_value'] = $this->paymentGateway->convertINRToUSD($rewards['rewards_value']);
+                    } 
+                    else {
+                        $rewards['rewards_value'];
+                    }
+                    $tot_cash += $rewards['rewards_value'];
+                    
+               } else if($rewards['rewards_type'] == 'points'){
+                    $tot_points += $rewards['rewards_value'];
+               } else {
+                    $tot_points += 50;
+               }
+               $aryRewards[$relRewardsMode] = $rewards;
+            } 
+            $aryRewards['total_points']  = $tot_points;
+            $aryRewards['total_cash']    = $tot_cash;
+            $aryRewards['currency_type'] = (strtolower($userCountry) =="india")?2:1;
+            
+        return $aryRewards;
+    }         
 }
 ?>

@@ -211,7 +211,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 $email = $this->appEncodeDecode->filterString(strtolower($email));
                 $queryString = "MATCH (u:User:Mintmesh)-[r1:CONNECTED_TO_COMPANY]-(m:Company)-[:POSTED_FOR]-(p:Post{status:'ACTIVE'}) 
                                 where u.emailid='".$email."' ".$filter_query." return p,count(distinct(u)),m ORDER BY p.created_at DESC
-                                 UNION
+                                UNION
                                 match (n:User:Mintmesh)-[r1:ACCEPTED_CONNECTION]-(m:User:Mintmesh)-[r2:POSTED]->(p:Post)
                                 where n.emailid='".$email."' and m.emailid=p.created_by and p.created_by<>'".$email."'
                                 and case p.included_set when '1' then  (n-[:INCLUDED]-p) else 1=1 end
@@ -1181,9 +1181,18 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 return $employmentTypeName ;
           }
           
-          
-         
-         
-
+        public function getPostMyReferralsCount($userEmail='', $postId=0){
+            $count      = 0;
+            $userEmail  = $this->appEncodeDecode->filterString(strtolower($userEmail));
+            if (!empty($userEmail)){                 
+               $queryString = "MATCH (p:Post)-[r:GOT_REFERRED{referred_by:'".$userEmail."'}]-(u) where ID(p) = ".$postId." return count(distinct(u))";
+               $query       = new CypherQuery($this->client, $queryString);
+               $result      = $query->getResultSet();
+               if (!empty($result[0])){
+                   $count   = $result[0][0];
+                }
+            }
+            return $count;
+        }  
 }
 ?>

@@ -601,5 +601,207 @@ class EnterpriseController extends \BaseController {
             }
             
         }
+                
+        /**
+        *  get permissions list
+        * 
+        * POST/permissions
+        * @param string  $access_token The Access token of a user   
+        * @return 
+        */
+        public function getPermissions(){
+            $response = $this->EnterpriseGateway->getPermissions();
+            return \Response::json($response);
+        }
+        
+        /**
+        * Get permissions for the user
+        * @POST/ get_user_permissions 
+        * 
+        * @return Response
+        */
+        public function getUserPermissions() {
+            $response = $this->EnterpriseGateway->getUserPermissions();
+            return \Response::json($response);
+        }
+        
+        private function addingUser() {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->EnterpriseGateway->validateAddingUserInput($inputUserData);
+            if($validation['status'] == 'success') 
+            {
+                $inputUserData['login_source'] = Config::get('constants.MNT_LOGIN_SOURCE') ;
+                // creating entry in mysql DB
+                $returnResponse = \Response::json($this->EnterpriseGateway->addingUser($inputUserData));
+            } else {
+                // returning validation failure
+                $returnResponse = \Response::json($validation);
+            }
+            
+            return $returnResponse;
+        }
+        
+        private function editingUser(){
+           // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->EnterpriseGateway->validateEditingUserInput($inputUserData);
+            if($validation['status'] == 'success') 
+            {
+                $inputUserData['login_source'] = Config::get('constants.MNT_LOGIN_SOURCE') ;
+                // creating entry in mysql DB
+                $returnResponse = \Response::json($this->EnterpriseGateway->editingUser($inputUserData));
+            } else {
+                // returning validation failure
+                $returnResponse = \Response::json($validation);
+            }
+            
+            return $returnResponse;
+            
+        }
+
+
+        /**
+	 * Add user to company
+         * 
+         * POST/add_user
+         * 
+	 * @param string $fullname The fullname of a user
+	 * @param string $location
+         * @param string $emailid The email id of a user
+         * @param string $designation The designation of the user
+         * @param string $status 
+         * 
+	 * @return Response
+	 */
+        public function addUser() {
+             $inputUserData = \Input::all();
+             if($inputUserData['action'] == '0'){
+              return $this->addingUser();
+             }  else {
+                  return $this->editingUser();
+             }     
+        }
+          
+         /**
+	 * Add user to company
+         * 
+         * POST/add_group
+         * 
+	 * @param string $name The name of the group
+	 * @param string $status 
+         * @param string $permission
+         * @param string $action 0|1
+         * @param string $group_id  
+         * 
+	 * @return Response
+	 */
+        public function addGroup() {
+             $inputUserData = \Input::all();
+             if($inputUserData['action'] == '0'){
+              return $this->addingGroup();
+             }  else {
+                  return $this->editingGroup();
+             }     
+        }
+        
+        
+        private function addingGroup() {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->EnterpriseGateway->validateAddGroupInput($inputUserData);
+            if($validation['status'] == 'success') 
+            {
+                $inputUserData['login_source'] = Config::get('constants.MNT_LOGIN_SOURCE') ;
+                // creating entry in mysql DB
+                $returnResponse = \Response::json($this->EnterpriseGateway->addingGroup($inputUserData));
+            } else {
+                // returning validation failure
+                $returnResponse = \Response::json($validation);
+            }
+            
+            return $returnResponse;
+        }
+        
+        private function editingGroup() {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->EnterpriseGateway->validateEditGroupInput($inputUserData);
+            if($validation['status'] == 'success') 
+            {
+                $inputUserData['login_source'] = Config::get('constants.MNT_LOGIN_SOURCE') ;
+                // creating entry in mysql DB
+                $returnResponse = \Response::json($this->EnterpriseGateway->editingGroup($inputUserData));
+            } else {
+                // returning validation failure
+                $returnResponse = \Response::json($validation);
+            }
+            
+            return $returnResponse;
+        }
+        
+        /**
+        * Get groups
+        * @POST/ get_groups
+        * @return Response
+        */
+        public function getGroups(){
+            $response = $this->EnterpriseGateway->getGroups();
+            return \Response::json($response);
+        }
+        
+         /**
+	 * set user's password
+         * 
+         * POST/set_password
+         * 
+         * @param string $code The reset password code
+         * @param string $password The new password of a user account
+         * @param string $password_confirmation password confirmation field
+         * 
+	 * @return Response
+	 */
+        public function setPassword()
+        {      
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->EnterpriseGateway->validateSetPasswordInput($inputUserData);
+            if($validation['status'] == 'success') {
+               $response = $this->EnterpriseGateway->setPassword($inputUserData);
+               return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+        }
+        
+        /**
+	 * update enterprise user details
+         * 
+         * POST/update_user
+         * 
+         * @param string $name 
+         * @param string $emailid
+         * @param $photo
+	 * @return Response
+	 */
+        public function updateUser() {
+             // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->EnterpriseGateway->validateupdateUserInput($inputUserData);
+            if($validation['status'] == 'success') {
+               $response = $this->EnterpriseGateway->updateUser($inputUserData);
+               return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+        }
 }
 ?>

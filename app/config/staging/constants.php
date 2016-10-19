@@ -10,6 +10,7 @@ return [
     'FB_LOGIN_SOURCE'=>2,
     'MNT_USER_EXPIRY_HR'=>1440,//336,
     'MNT_USER_EXPIRY_HR_FOR_RESEND_ACTIVATION'=>120,
+    'USER_EXPIRY_HR'=>48,
     'MNT_VERSION'=>"v1",
     'MNT_FROM_NAME'=>'Mintmesh',
     'MM_ENTERPRISE_URL'=>'http://enterprisestaging.mintmesh.com',
@@ -81,7 +82,8 @@ return [
         'CREATED'=>'CREATED',
         'BUCKET_IMPORTED' => 'BUCKET_IMPORTED',
         'COMPANY_CONTACT_IMPORTED' => 'COMPANY_CONTACT_IMPORTED', 
-        'CONNECTED_TO_COMPANY' => 'CONNECTED_TO_COMPANY'
+        'CONNECTED_TO_COMPANY' => 'CONNECTED_TO_COMPANY',
+        'POST_REWARDS' => 'POST_REWARDS'
 
     ],
     'MAPPED_RELATION_TYPES'=>[
@@ -169,6 +171,7 @@ return [
     'SEND_RESUME_ATTACHMENT'=>false,
     'S3BUCKET_COMPANY_LOGO' => 'mintmesh/stg/companyLogo',
     'S3BUCKET_COMPANY_IMAGES' => 'mintmesh/stg/companyImages',
+    'S3BUCKET_USER_IMAGE' => 'mintmesh/stg/userImage',
     'S3BUCKET_FILE' =>  'mintmesh/stg/files'
         
 ];

@@ -271,7 +271,11 @@ class UserGateway {
                             $currentTime =  date('Y-m-d H:i:s');
                             $code = $this->base_64_encode($currentTime, $this->loggedinUserDetails->emailid) ;
                             //send mail
+                            if($this->loggedinUserDetails['is_enterprise'] == 1){
+                             $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.enterprise_reset_password_success');
+                            }else{
                             $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.reset_password_success');
+                            }
                             $this->userEmailManager->emailId = $this->neoLoggedInUserDetails->emailid;
                             $dataSet = array();
                             $dataSet['name'] =$this->neoLoggedInUserDetails->firstname;

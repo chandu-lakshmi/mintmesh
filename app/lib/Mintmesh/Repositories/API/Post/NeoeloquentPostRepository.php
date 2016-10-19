@@ -103,7 +103,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         return $result = $query->getResultSet();
     }
 
-    public function jobsList($email = "", $company_code = "", $type = "", $page = 0, $search = "") {
+    public function jobsList($email = "", $company_code = "", $type = "", $page = 0, $search = "",$permission="",$postby="") {
         if (!empty($email) && !empty($company_code)) {
             $skip = $limit = 0;
             if (!empty($page)) {
@@ -114,20 +114,31 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
             if (!empty($search)) {
                 $search = $this->appEncodeDecode->filterString($search);
                 $queryString = "start p = node(*) where p.service_name =~ '(?i).*". $search .".*' or p.service_location =~ '(?i).*". $search .".*'";
+                if($permission == '1' && $postby == '0'){
+                    $queryString .= "match (u:User)";
+                }else{
+                    $queryString .= "match (u:User {emailid:'" . $email . "'})";
+                }
+                $queryString .= "-[r:POSTED]-(p:Post)-[:POSTED_FOR]-(:Company{companyCode:'" . $company_code . "'}) ";
+            } 
+            else {
+                if($permission == '1' && $postby == '0'){    
+                 $queryString = "match (u:User)";
+                }else{
+                $queryString = "match (u:User {emailid:'" . $email . "'})";
+                }           
+             $queryString .= "-[r:POSTED]-(p:Post)-[:POSTED_FOR]-(:Company{companyCode:'" . $company_code . "'}) ";
 
-                $queryString .= "match (u:User {emailid:'" . $email . "'})-[r:POSTED]-(p:Post)-[:POSTED_FOR]-(:Company{companyCode:'" . $company_code . "'}) ";
-            } else {
-                $queryString = "match (u:User {emailid:'" . $email . "'})-[r:POSTED]-(p:Post)-[:POSTED_FOR]-(:Company{companyCode:'" . $company_code . "'}) ";
             }
             if (isset($type) && $type != '2') {
                 $queryString .= "where p.free_service='" . $type . "' ";
             }
-
             $queryString .= "return p,count(p) as listCount,count(distinct(u)) ORDER BY p.created_at DESC";
 
             if (!empty($limit) && !($limit < 0)) {
                 $queryString.=" skip " . $skip . " limit " . self::LIMIT;
-            }  
+            } 
+            //echo $queryString;exit;
             $query = new CypherQuery($this->client, $queryString);
             return $result = $query->getResultSet();
         } else {
@@ -139,6 +150,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         if (!empty($jobid)) {
 
             $queryString = "match (p:Post),(n:Company) where ID(p)=" . $jobid . " AND n.companyCode='" . $company_code . "' return p,n";
+            //echo $queryString;exit;
             $query = new CypherQuery($this->client, $queryString);
             return $result = $query->getResultSet();
         } else {
@@ -285,6 +297,46 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
              } 
             return $result;
          }
+         
+         public function bucket($id='') {
+             $queryString = "MATCH (c:Contact_bucket) where c.mysql_id='".$id."' return c.name";
+             $query = new CypherQuery($this->client, $queryString);
+             $result = $query->getResultSet();   
+             return $result[0][0];
+             
+         }
+        
+    public function createRewardsAndPostRelation($postId, $rewardsAttrs = array()){ 
+         
+        $result = array();
+        $rewardsType = !empty($rewardsAttrs['type'])?$rewardsAttrs['type']:'free';
+        $queryString = "MATCH (p:Post) WHERE ID(p)= " . $postId . " CREATE (n:Rewards ";
+        if (!empty($rewardsAttrs)) {
+            $queryString.="{";
+            foreach ($rewardsAttrs as $k => $v) {
+                $value =$k . ":'" . $this->appEncodeDecode->filterString($v) . "',";
+                if ($k == 'post_id' || $k == 'currency_type')
+                    $value = str_replace("'", "", $value);
+                
+                $queryString.=$value;
+            }
+            $queryString = rtrim($queryString, ",");
+            $queryString.="}";
+        }
+        $queryString.=")<-[:" . Config::get('constants.RELATIONS_TYPES.POST_REWARDS') . " {rewards_mode: '".$rewardsType."' } ]-(p) return p";
+        $query  = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();
+        return $result;
+    } 
+    
+    public function getPostRewards($postId='') {
+        
+        $queryString = "MATCH (p:Post)-[r:POST_REWARDS]-(w:Rewards) where ID(p)=".$postId." return distinct(p),r,w";
+        $query  = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();   
+        return $result;
+    }
+    
 }
 
 ?>

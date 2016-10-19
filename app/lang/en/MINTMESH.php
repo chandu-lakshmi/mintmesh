@@ -64,7 +64,8 @@ return array(
                 "login_success" => "Successfully Logged In",
                 "login_failure" => "Invalid Credentials",
                 "email_inactive" => "You are inactive please activate via email",
-                 "login_credentials" => "Please login with your enterprise credentials"
+                 "login_credentials" => "Please login with your enterprise credentials",
+                 "inactive_group" => "You are an inactive group user"
          ),
          "resendActivationLink" => array(
                 "success" => "Mail Sent Successfully",
@@ -84,13 +85,15 @@ return array(
                 "payout_success_admin" => "MintMesh Payout Request",
                 "reset_password_success" => "MintMesh - Your password changed",
                 "post_success" => "Request Posted Successfully! Next Steps",
-                "resume_attachment" => "MintMesh has sent you a resume of "
+                "resume_attachment" => "MintMesh has sent you a resume of ",
+                "set_password" => "MintMesh enterprise-User Account Activation"
          ),
          "email_template_paths"=>array(
                 "user_welcome" => "emails.Api.User.welcome",
                 "enterprise_welcome" => "emails.Api.User.enterprise_welcome",
                 "user_introduction" => "emails.Api.User.introduction",
                 "forgot_password" => "emails.Api.User.forgot_password",
+                "set_password" => "emails.Api.User.set_password",
                 "join_invitation" => "emails.Api.User.join_invitation",
                 "payout_success_admin" => "emails.Api.Payment.payout_success_admin",
                 "payout_failure_admin" => "emails.Api.Payment.payout_failure_admin",
@@ -348,13 +351,69 @@ return array(
     ),
     'editStatus'      => array(
             "success"   =>   "status changed successfully",
-            "failure"   =>   "failed to edit status"
+            "failure"   =>   "failed to update status"
     ),
     'addContact'      => array(
                "success"  =>  "contact added successfully",
                "failure"  =>   "failed to add contact",
                "contactExists"   => "contact already exists",
                "contactUpdated"  =>  "contact updated successfully"
-    )
+    ),
+    'getPermissions'   => array(
+                "success"  => "permissions successfully retrieved",
+                "failure"  => "no data found"
+    ),
+    'addPermissions'   => array(
+                "success"  => "permissions added successfully",
+                "failure"  =>  "failed to add permissions",
+                "invalidUserId"  => "please provide valid user id"
+    ),
+    'getGroupPermissions' => array(
+                "success"  => "permissions retrieved successfully",
+                "failure"  =>  "failed to retrieve permissions",
+                "invalidUserId"  => "please provide valid user id"
+    ),
+    'addUser'    =>   array(
+                "success"  =>  "user added successfully",
+                "failue"   =>   "failed to add user",
+                "userexists" =>  "user already exists",
+                "edit"     => "user details updated successfully",
+                "emailidexists"  => "emailid already exists"
+    ),
+    'editUser'   =>   array(
+                "success"  =>  "user updated successfully",
+                "failure"   =>   "failed to update user",
+                "emailexists" => "emailid already exists"
+    ),
+    'getGroups'   =>   array(
+                "success"  =>  "successfully retrieved groups",
+                "failure"  =>  "no groups found"
+    ),
+    'addGroup'   =>   array(
+                "success"  =>  "group added successfully",
+                "failure"  =>   "failed to add group",
+                "groupExists"=>  "group name has already been taken"
+    ),
+    'editGroup'   =>   array(
+                "success"  =>  "group updated successfully",
+                "failure"   =>   "failed to update group",
+                "groupExists"=>  "group name has already been taken",
+                "permissionserror" => "permissions cannot be edited"
+    ),
+    'getUserPermissions' => array(
+                "success"  =>  "user permissions retrieved successfully",
+                "failure"   =>   "failed to retrieve user permissions",
+    ),
+    'updateUser' => array(
+                "success"  =>   "updated user details successfully",
+                "failure"  =>   "failed to update user details"
+    ),
+    'set_password'=>array(
+             "success"=>"Password Created Successfully",
+             "invalid"=>"Password Period Expired",
+             "failed"=>"Some Error Occured",
+             "error"=>"Invalid Token",
+             "codeexpired"=>"code has been expired"
+         ),
     
 );

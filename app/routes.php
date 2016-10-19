@@ -99,6 +99,8 @@ Route::group(array('prefix' => 'v1'), function() {
        Route::post("enterprise/forgot_password", "API\Enterprise\EnterpriseController@forgotPassword");
     // Mintmesh enterprise reset password   
        Route::post("enterprise/reset_password", "API\Enterprise\EnterpriseController@resetPassword");
+    //set password
+      Route::post("enterprise/set_password", "API\Enterprise\EnterpriseController@setPassword");
 });
 
 //Route::group(array('prefix' => 'v1'), function() {
@@ -271,6 +273,21 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       Route::post("enterprise/update_contacts_list", "API\Enterprise\EnterpriseController@updateContactsList");
       //other edits in contact list
       Route::post("enterprise/other_edits_in_contact_list", "API\Enterprise\EnterpriseController@otherEditsInContactList");
+      //get permissions
+      Route::post("enterprise/permissions", "API\Enterprise\EnterpriseController@getPermissions");
+      //add user to company
+      Route::post("enterprise/add_user", "API\Enterprise\EnterpriseController@addUser");
+      //add group
+      Route::post("enterprise/add_group", "API\Enterprise\EnterpriseController@addGroup");
+      //get groups
+      Route::post("enterprise/get_groups", "API\Enterprise\EnterpriseController@getGroups");
+      //get user permissions
+      Route::post("enterprise/get_user_permissions", "API\Enterprise\EnterpriseController@getUserPermissions");
+      //update enterprise user details
+      Route::post("enterprise/update_user", "API\Enterprise\EnterpriseController@updateUser");
+      //change enterprise user password
+      Route::post("enterprise/change_password", "API\User\UserController@changePassword");
+
 });
 
 

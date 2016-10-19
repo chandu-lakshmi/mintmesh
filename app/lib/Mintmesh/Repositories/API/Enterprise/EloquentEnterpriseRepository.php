@@ -2,6 +2,7 @@
 
 use User;
 use Company_Profile;
+use Groups;
 use Company_Contacts;
 use Emails_Logs;
 use Levels_Logs;
@@ -14,13 +15,14 @@ use Illuminate\Support\Facades\Hash;
 use Mintmesh\Services\APPEncode\APPEncode ;
 class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseRepository {
 
-        protected $user, $companyProfile, $CompanyContact;
+        protected $user, $companyProfile, $CompanyContact,$groups;
         protected $email, $level, $appEncodeDecode;
         
-        public function __construct(User $user,Company_Profile $companyProfile,Company_Contacts $CompanyContact,
+        public function __construct(User $user,Company_Profile $companyProfile,Groups $groups,Company_Contacts $CompanyContact,
                                     Emails_Logs $email, APPEncode $appEncodeDecode){ 
                 $this->user = $user;    
-                $this->companyProfile = $companyProfile;    
+                $this->companyProfile = $companyProfile; 
+                $this->groups = $groups; 
                 $this->companyContact = $CompanyContact;    
                 $this->appEncodeDecode = $appEncodeDecode ;       
         }
@@ -34,6 +36,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                         "emailid"   =>$this->appEncodeDecode->filterString(strtolower($input['emailid'])), 
                         "password"  =>Hash::make($input['password']),
                         "is_enterprise"  =>$this->appEncodeDecode->filterString($input['is_enterprise']),
+                        "group_id"  =>$this->appEncodeDecode->filterString($input['group_id']),
                         "emailactivationcode" => $emailActivationCode
             );
             return $this->user->create($user);
@@ -45,6 +48,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             $companyProfile = array(
                         "name" => $this->appEncodeDecode->filterString($input['company']),
                         "code" => $input['company_code'],
+                        "is_primary" => '1',
                         "created_by" => $input['user_id'],
                         "ip_address"    => $_SERVER['REMOTE_ADDR']
             );
@@ -475,4 +479,339 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                  ->where('id', '=', $id)->get(); 
             
         }
+        
+        public function addPermissions($groupId, $permArray, $loginUserId, $input) {
+        $type = isset($input['type']) ? $input['type'] : 1;
+        if ($groupId && $permArray) {
+            DB::table('groups_permissions')
+                    ->where('groups_id', '=', $groupId)
+                    ->where('type', '=', $type)
+                    ->delete();
+            if (is_array($permArray)) {
+                foreach ($permArray as $a => $b) {
+//                    if ($b != 0) {
+                        DB::table('groups_permissions')->insert(
+                                array(
+                                    'groups_id' => $groupId,
+                                    'permissions_id' => $a,
+                                    'permission' => $b,
+                                    'type' => $type,
+                                    'last_modified_by' => $loginUserId
+                                )
+                        );
+//                    }
+                }
+                if (isset($input['child']) && is_array($input['child'])) {
+                    foreach ($input['child'] as $k => $v) {
+
+                        foreach ($v as $k2 => $v2) {
+                            DB::table('groups_permissions')->insert(
+                                    array(
+                                        'groups_id' => $groupId,
+                                        'permissions_id' => $k2,
+                                        'permission' => $v2,
+                                        'type' => $type,
+                                        'last_modified_by' => $loginUserId
+                                    )
+                            );
+                        }
+                    }
+                }
+                return true;
+            }
+        } else {
+            return false;
+        }
+    }
+    
+    public function getPermissions() {
+        $result = array();
+        $data = array();
+        $result = self::getTabs();
+        $data['permissions'] = $result;
+        return $data;
+    }
+    
+    static function getTabs($userid = 0) {
+
+        $userTabs = array();
+
+        /* new query writen by shankar anand */
+        $result = DB::select("SELECT p.id,p.name,p.type AS utype,p.parent_id,p.top_parent_id,p.level as length
+									FROM permissions p
+									WHERE p.internal='2' AND p.status='1'
+									ORDER BY p.parent_id ASC");
+        foreach ($result as $row) {
+            if (array_key_exists($row->parent_id, $userTabs)) {
+                $userTabs[$row->parent_id]['children'][$row->id]['id'] = $row->id;
+                $userTabs[$row->parent_id]['children'][$row->id]['label'] = $row->name;
+                $userTabs[$row->parent_id]['children'][$row->id]['type'] = $row->utype;
+                $userTabs[$row->parent_id]['children'][$row->id]['length'] = $row->length;
+                //$userTabs[$row->parent_id]['children'][$row->id]['access']=$row->tabper;
+            } else {
+                $userTabs[$row->id]['id'] = $row->id;
+                $userTabs[$row->id]['label'] = $row->name;
+                $userTabs[$row->id]['type'] = $row->utype;
+                $userTabs[$row->id]['length'] = $row->length;
+                //$userTabs[$row->id]['access']=$row->tabper;
+                if($row->utype == 'select'){
+                    $userTabs[$row->id]['options'] = array(array('id' => '1','label' => 'Manager'),array('id' => '2','label' => 'Employee'),array('id' => '3','label' => 'Client'),array('id' => '4','label' => 'Others'));
+                    
+                }
+            }
+        }
+        foreach ($userTabs as $i => $u) {
+            $temp = array();
+            if (isset($u['children'])) {
+                foreach ($u['children'] as $tempUser) {
+                    if (isset($tempUser['children'])) {
+                        $tempUser['children'] = self::sort_usertab($tempUser['children']);
+                    }
+
+                    array_push($temp, $tempUser);
+                }
+            }
+
+            $userTabs[$i]['children'] = $temp;
+        }
+       
+        $res = self::sortTwoDimenArray($userTabs, 'label', $order = 'asc', $natsort = FALSE, $case_sensitive = FALSE);
+        return $res;
+    }
+
+    /**
+     * sort_usertab
+     *
+     * function to sort the user tab
+     * 
+     * @access	public
+     * @return	object
+     */
+    static function sort_usertab($data) {
+        $aa = array();
+        $j = 0;
+        foreach ($data as $i => $u) {
+
+            array_push($aa, $u);
+        }
+        return $aa;
+    }
+    
+     /**
+     * sortTwoDimenArray
+     *
+     * function to sort the two dimensional array
+     * 
+     * @access	public
+     * @return	object
+     */
+        
+    static function sortTwoDimenArray($array, $index, $order = 'asc', $natsort = FALSE, $case_sensitive = FALSE) {
+        if (is_array($array) && count($array) > 0) {
+            foreach (array_keys($array) as $key)
+                $temp[$key] = $array[$key][$index];
+//            if (!$natsort)
+//                ($order == 'asc') ? asort($temp) : arsort($temp);
+//            else {
+//                ($case_sensitive) ? natsort($temp) : natcasesort($temp);
+//                if ($order != 'asc')
+//                    $temp = array_reverse($temp, TRUE);
+//            }                              
+
+            foreach (array_keys($temp) as $key)
+                (is_numeric($key)) ? $sorted[] = $array[$key] : $sorted[$key] = $array[$key];
+            return $sorted;
+        }
+        return $array;
+    }
+    
+    public function getGroupPermissions($group_id, $input) {
+        $type = isset($input['type']) ? $input['type'] : 1;
+        $perm = array();
+        $permArray = array();
+        $compPermArray = array();
+        if ($group_id && is_numeric($group_id)) {
+
+            $perm = DB::select("select p.id, p.name as label,p.code,up.permission,p.parent_id,p.`type`,p.parent_id
+                                from groups_permissions up 
+                                left join permissions p on p.id=up.permissions_id
+                                left join groups g on g.id=up.groups_id
+                                WHERE up.groups_id='" . $group_id . "' ");
+            if ($perm) {
+                foreach ($perm as $k => $v) {
+                    if ($v->parent_id != '0') {
+                        $p_id = $v->parent_id . '_' . $v->id;
+                        $permArray[$p_id] = $v->permission;
+                    } else
+                        $permArray[$v->id] = $v->permission;
+                }
+            }
+        }
+        return $permArray;
+    }
+    
+     public function getUserPermissions($group_id, $input) {
+        $type = isset($input['type']) ? $input['type'] : 1;
+        $perm = array();
+        $permArray = array();
+        $compPermArray = array();
+        if ($group_id && is_numeric($group_id)) {
+
+            $perm = DB::select("select p.id,p.name as label,p.code,up.permission,p.parent_id,p.`type`,p.parent_id
+                                from groups_permissions up 
+                                left join permissions p on p.id=up.permissions_id
+                                left join groups g on g.id=up.groups_id
+                                WHERE up.groups_id='" . $group_id . "' ");
+            if ($perm) {
+                foreach ($perm as $k => $v) {
+                    if ($v->parent_id != '0') {
+                        $p_id = $v->parent_id . '_' . $v->id;
+                        $permArray[$v->code] = $v->permission;
+                    } else
+                        $permArray[$v->code] = $v->permission;
+                }
+            }
+        }
+        return $permArray;
+    }
+    
+    public function addUser($input) {
+        // md5 the email id and attach with mintmesh constant for verification code
+            $emailActivationCode = md5($input['emailid']."_".Config::get('constants.MINTMESH')) ;
+           $date = gmdate('Y-m-d H:i:s');
+            $user = array(
+                        "firstname" => $this->appEncodeDecode->filterString($input['fullname']),
+                        "emailid"   =>$this->appEncodeDecode->filterString(strtolower($input['emailid'])), 
+                        "status"   =>$this->appEncodeDecode->filterString(strtolower($input['status'])), 
+                        "is_enterprise"  =>$this->appEncodeDecode->filterString($input['is_enterprise']),
+                        "group_id"  =>$this->appEncodeDecode->filterString($input['group_id']),
+                        "emailactivationcode" => $emailActivationCode
+            );
+            $result[] = $this->user->create($user);
+            return $result;
+           
+      }
+      public function editingUser($input) {
+//            $sql = "update users set firstname='".$input['fullname']."',status='".$input['status']."',emailid='".$input['emailid']."',group_id='".$input['group_id']."' where id='".$input['user_id']."'";
+//            $result = DB::statement($sql);
+//            if($result){
+//             return $input['user_id'];
+//            }
+            $fields = '';
+            $field_set= array('firstname','status','emailid','group_id');
+            foreach($input as $k=>$v){
+                $v = "'".$v."'";
+                if(in_array($k,$field_set))
+                $fields .= $k.'='.$v.',';
+            }
+            if($fields != ''){
+                $sql = "update users set ".trim($fields,',')." where id='".$input['user_id']."'";
+                $result = DB::Statement($sql);
+            }
+            return $input['user_id'];
+      }
+    public function getUsers($companyCode,$groupId) {
+        return DB::select("select u.id as user_id,u.firstname as name, u.emailid, u.status from users u inner join company_user_mapping c on c.user_id=u.id where c.code='".$companyCode."' and u.group_id='".$groupId."' ORDER BY firstname");  
+    }
+    
+   // creating new Enterprise user Company Profile in storage
+    public function createGroup()
+    {        
+      $groups = array(
+                    "name" => "admin",
+                    "ip_address"    => $_SERVER['REMOTE_ADDR'],
+                    "is_primary"    => '1',
+                    "status"        => "Active"
+       );
+       return $this->groups->create($groups);
+     }
+     
+     public function updateGroup($input,$companyId) {
+         $sql = "update groups set created_by='".$input['user_id']."',company_id='".$companyId."' where id='".$input['group_id']."'";
+         return $result = DB::statement($sql);
+         
+     }
+     
+     public function addGroup($input) {
+         $ipaddress = !empty($_SERVER['REMOTE_ADDR'])?$_SERVER['REMOTE_ADDR']:'127.1.1.0';
+         $sql = "insert into groups(`name`,`company_id`,`created_by`,`ip_address`,`status`) values('".$input['name']."','".$input['company_id']."','".$input['user_id']."','".$ipaddress."','".$input['status']."')";
+         $r = DB::statement($sql);
+         if($r){
+         $result = DB::select("select id from groups where name='".$input['name']."'");  
+         return $result;
+         }
+     }
+     
+     public function getGroups($id) {
+        return DB::SELECT("select DISTINCT g.* from groups g left join users u on g.id=u.group_id
+                                WHERE u.id='" . $id . "' OR g.created_by='".$id."' ORDER BY name");
+     }
+     
+     public function adminPermissions($input) {
+         for($i = 1; $i <= 7; $i++) {       
+         DB::table('groups_permissions')->insert(
+                                array(
+                                    'groups_id' => $input['group_id'],
+                                    'permissions_id' => $i,
+                                    'permission' => '1',
+                                    'type' => '1',
+                                    'last_modified_by' => $input['user_id']
+                                )
+                        );
+         }
+         
+     }
+     
+      public function editGroup($input) {
+            $sql = "update groups set name='".$input['name']."',status='".$input['status']."' where id='".$input['group_id']."'";
+            $r = DB::statement($sql);
+            if($r){
+             return DB::table("groups")
+                     ->where('id','=',$input['group_id'])->get();
+      }
+      }
+      
+      public function checkGroup($input) {
+          return DB::table('groups')
+                  ->where('name', '=', $input['name'])
+                  ->where('id','!=', $input['id'])
+                  ->where('company_id', '=', $input['company_id'])->get();
+          
+      }
+      
+      public function getEmailActivationCode($input) {
+            return DB::table('users')
+                  ->where('resetactivationcode', '=', $input['code'])->get();
+          
+      }
+      
+      public function checkUser($input) {
+           return DB::table('users')
+                  ->where('emailid', '=', $input['emailid'])
+                  ->where('id','!=', $input['user_id'])->get();
+      }
+      
+      public function checkGroupStatus($groupId) {
+              return DB::table('groups')
+                  ->where('id', '=', $groupId)->get();
+      }
+      
+      public function updateCompanyLogo($input) {
+//          return Company_Profile::where ('created_by',$input['created_by'])->update('logo' => $input['photo']); 
+             $sql = DB::table('company')
+                    ->where('created_by', $input['user_id'])  
+                    ->limit(1)  // optional - to ensure only one record is updated.
+                    ->update(array('logo' => $input['photo'])); 
+             if($sql){
+                 return DB::Select("select id from company where created_by = '".$input['user_id']."'");
+             }
+      }
+      
+      public function updateUser($input) {
+            return DB::table('users')
+                    ->where('id', $input['user_id'])  
+                    ->limit(1)  // optional - to ensure only one record is updated.
+                    ->update(array('firstname' => $input['name']));
+          
+      }
 }

@@ -213,6 +213,7 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
             }
             $queryString.="]-(b)";
         }
+        $queryString.=" return u";
         //fire the query here
         $query = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
@@ -239,6 +240,7 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
                 $queryString.="}";
             }
             $queryString.="]-(b)";
+            $queryString.=" return u";
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             if ($result->count()) {
@@ -264,6 +266,12 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
             $queryString = "MATCH (u:User)-[r:CREATED]->(c:Company) where u.emailid='".$email."' return c,u";
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();   
+             $count = $result->count();
+             if($count == 0){
+                $queryString = "MATCH (u:User)-[r:CONNECTED_TO_COMPANY]->(c:Company) where u.emailid='".$email."' return c,u";
+                $query = new CypherQuery($this->client, $queryString);
+                $result = $query->getResultSet();   
+             }
         }
         return $result;
     }
@@ -464,6 +472,52 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
         } else {
             return 0;
         }
+    }
+    
+    /*
+     * Create new enterpise user node in neo4j
+     */
+
+    public function createAddUser($input) {
+        $queryString = "CREATE (n:User";
+        if (!empty($input)) {
+            $queryString = "CREATE (n:User:Mintmesh";
+            $queryString.="{";
+            foreach ($input as $k => $v) {
+                if ($k == 'emailid')
+                    $v = strtolower($v);
+                $queryString.=$k . ":'" . $this->appEncodeDecode->filterString($v) . "',";
+            }
+            $queryString = rtrim($queryString, ",");
+            $queryString.="}";
+        }
+        $queryString.=") return n";
+        $query = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();
+        return $result[0][0];
+        //return $this->neoUser->create($input);
+    }
+    
+    public function getUsers($email='') {
+        $queryString = "MATCH (u:User) where u.emailid='".$email."' return u";
+        $query = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();
+        return $result[0][0];
+        
+    }
+    
+    public function updateCompanyLogo($input='') {
+        $queryString = "MATCH (c:Company) where c.mysql_id='".$input['id']."' set c.logo='".$input['photo']."',c.logo_org_name='".$input['photo_org_name']."' return c";
+        $query = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();
+        return $result[0][0];
+    }
+    
+    public function updateUser($input) {
+        $queryString = "MATCH (u:User) where u.mysql_id='".$input['user_id']."' set u.fullname='".$input['name']."',u.photo='".$input['photo']."',u.photo_org_name='".$input['photo_org_name']."' return u";
+        $query = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();
+        return $result[0][0];
     }
 }
 

@@ -140,11 +140,13 @@ class PostGateway {
 
     public function postJob($input) {
         
-        $objCompany = new \stdClass();
-        $bucket_id  = explode(',', $input['bucket_id']);
+        $objCompany  = new \stdClass();
+        $bucket_id   = explode(',', $input['bucket_id']);
+        $rewardsAry  = !empty($input['rewards']) ? $input['rewards'] :array();
         $this->loggedinEnterpriseUserDetails    = $this->getLoggedInEnterpriseUser();
         $this->neoLoggedInEnterpriseUserDetails = $this->neoEnterpriseRepository->getNodeByEmailId($this->loggedinEnterpriseUserDetails->emailid);
-        $fromId = $this->neoLoggedInEnterpriseUserDetails->id;
+        $fromId  = $this->neoLoggedInEnterpriseUserDetails->id;
+        $emailId = $this->loggedinEnterpriseUserDetails->emailid;
         
         if ($this->loggedinEnterpriseUserDetails) {
             $relationAttrs = $neoInput = $excludedList = array();
@@ -169,7 +171,7 @@ class PostGateway {
             $neoInput['company']            = $input['company_name'];
             $neoInput['job_description']    = $input['job_description'];
             $neoInput['status']             = Config::get('constants.POST.STATUSES.ACTIVE');
-            $neoInput['created_by']         = $this->loggedinEnterpriseUserDetails->emailid;
+            $neoInput['created_by']         = $emailId;
             
             $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($input['company_code']);
             
@@ -182,6 +184,18 @@ class PostGateway {
                 $postId = $createdPost[0][0]->getID();
             } else {
                 $postId = 0;
+            }
+            #creating rewards data here
+            foreach ($rewardsAry as $rewards) {
+                $rewardsAttrs = array();
+                $rewardsAttrs['post_id']        = $postId;
+                $rewardsAttrs['rewards_type']   = !empty($rewards['rewards_type'])?$rewards['rewards_type']:'free';
+                $rewardsAttrs['type']           = !empty($rewards['type'])?$rewards['type']:'';
+                $rewardsAttrs['currency_type']  = !empty($rewards['currency_type'])?$rewards['currency_type']:0;
+                $rewardsAttrs['rewards_value']  = !empty($rewards['rewards_value'])?$rewards['rewards_value']:0;
+                $rewardsAttrs['created_at']     = gmdate("Y-m-d H:i:s");
+                $rewardsAttrs['created_by']     = $emailId;
+                $createdRewards = $this->neoPostRepository->createRewardsAndPostRelation($postId, $rewardsAttrs); 
             }
             #map post and company
             $postCompanyrelationAttrs['created_at']     = gmdate("Y-m-d H:i:s");
@@ -302,7 +316,9 @@ class PostGateway {
         $userEmail = $this->neoLoggedInEnterpriseUserDetails->emailid;
         $page = !empty($input['page_no']) ? $input['page_no'] : 0;
         $search_for = !empty($input['search_for']) ? $input['search_for'] : 0;
-        $posts = $this->neoPostRepository->jobsList($userEmail, $input['company_code'], $input['request_type'], $page, $search_for);
+        $post_by = !empty($input['post_by']) ? $input['post_by'] : 0;
+        $checkPermissions = $this->enterpriseRepository->getUserPermissions($this->loggedinEnterpriseUserDetails->group_id,$input);
+        $posts = $this->neoPostRepository->jobsList($userEmail, $input['company_code'], $input['request_type'], $page, $search_for,$checkPermissions['view_jobs'],$post_by);
         $totalCount = count($this->neoPostRepository->jobsList($userEmail, $input['company_code'], $input['request_type'], "", $search_for));
         if (!empty(count($posts))) {
             $returnPostsData = $returnPosts = array();
@@ -336,6 +352,7 @@ class PostGateway {
                 $returnPosts['referral_count']  = $referralCount;
                 $returnPosts['accepted_count']  = $acceptedCount;
                 $returnPosts['pending_count']   = max($pendingCount, 0);
+                $returnPosts['rewards']         = $this->getPostRewards($postDetails['post_id']);
                 $returnPostsData[] = $returnPosts;
             }
         }
@@ -356,12 +373,16 @@ class PostGateway {
         if (!empty(count($posts))) {
             $returnPosts = array();
             $returnPostsData = array();
-
+            $buckets = array();
             foreach ($posts as $post) {
                 $postDetails    = $this->referralsGateway->formPostDetailsArray($post[0]);
                 $companyDetails = $this->referralsGateway->formPostDetailsArray($post[1]);
                 $returnPosts['id']  = $postDetails['post_id'];
-                
+               $bucket_id = explode(',', $postDetails['bucket_id']);
+               foreach ($bucket_id as $bucket){
+                $bucket          =    $this->neoPostRepository->bucket($bucket);
+                $buckets[]       =     $bucket;
+                }
                 $invitedCount   = !empty($postDetails['invited_count']) ? $postDetails['invited_count'] : 0;
                 $referralCount  = !empty($postDetails['total_referral_count']) ? $postDetails['total_referral_count'] : 0;
                 $acceptedCount  = !empty($postDetails['referral_accepted_count']) ? $postDetails['referral_accepted_count'] : 0;
@@ -373,14 +394,16 @@ class PostGateway {
                 $returnPosts['job_title']   = $postDetails['service_name'];
                 $returnPosts['created_at']  = $postDetails['created_at'];
                 $returnPosts['position_id'] = $postDetails['position_id'];
-                $returnPosts['status'] = $postDetails['status'];
+                $returnPosts['status']      = $postDetails['status'];
                 
                 $returnPosts['hired_count']     = $hiredCount;
                 $returnPosts['invited_count']   = $invitedCount;
                 $returnPosts['referral_count']  = $referralCount;
                 $returnPosts['accepted_count']  = $acceptedCount;
                 $returnPosts['pending_count']   = max($pendingCount,0);
-                
+                $returnPosts['bucket_name']     = $buckets;
+                $returnPosts['currency']        = $postDetails['service_currency'];
+                $returnPosts['cost']            = $postDetails['service_cost'];
                 $returnPosts['free_service']    = $postDetails['free_service'];
                 $returnPosts['job_function']    = isset($postDetails['job_function_name']) ? $postDetails['job_function_name'] : "";
                 $returnPosts['industry_name']   = $postDetails['industry_name'];
@@ -390,6 +413,7 @@ class PostGateway {
                 $returnPosts['experience_range']    = isset($postDetails['experience_range_name']) ? $postDetails['experience_range_name'] : "";
                 $returnPosts['company_description'] = isset($companyDetails['description']) ? $companyDetails['description'] : "";
                 $returnPosts['company_logo'] = isset($companyDetails['logo']) ? $companyDetails['logo'] : "";
+                $returnPosts['rewards']      = $this->getPostRewards($postDetails['post_id']);
                 $returnPostsData[] = $returnPosts;
             }
         }
@@ -618,6 +642,21 @@ class PostGateway {
             $message = array('msg' => array(Lang::get('MINTMESH.referrals.no_post')));
         }
         return $this->commonFormatter->formatResponse(200, "success", $message,$data);
+    }
+    
+    public function getPostRewards($postId='') {
+        $aryRewards  = $rewards = array();
+        $postRewards = $this->neoPostRepository->getPostRewards($postId);
+            foreach ($postRewards as $value) { 
+               $relObj   = $value[1];//POST_REWARDS relation
+               $valueObj = $value[2];//REWARDS node
+               $rewards['rewards_name']     = !empty($relObj->rewards_mode)?ucfirst($relObj->rewards_mode):'';
+               $rewards['currency_type']    = !empty($valueObj->currency_type)?$valueObj->currency_type:0;
+               $rewards['rewards_type']     = !empty($valueObj->rewards_type)?$valueObj->rewards_type:'';
+               $rewards['rewards_value']    = !empty($valueObj->rewards_value)?$valueObj->rewards_value:'';
+               $aryRewards[] = $rewards;
+            }
+        return $aryRewards;
     }
     
 }
