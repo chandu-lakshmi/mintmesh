@@ -142,7 +142,8 @@ return [
     ],
     'MINTMESH_SUPPORT'=>[
 //        'EMAILID'=>'support@mintmesh.com'
-        'EMAILID'=>'v.gopi314@gmail.com'
+        //'EMAILID'=>'v.gopi314@gmail.com'
+        'EMAILID'=>'no-reply@mintmesh.com'
     ],
     'S3BUCKET' => 'mintmesh/stg/profilepic',
     'S3BUCKET_RESUME' => 'mintmesh/stg/resume/',
