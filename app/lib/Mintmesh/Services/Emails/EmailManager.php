@@ -31,7 +31,7 @@ abstract class EmailManager {
                     $message->to($emailInput['email'], $emailInput['name']);
                     $message->subject($emailInput['subject']);
                     if(!empty($emailInput['send_company_name'])){
-                     $message->from('xyz@gmail.com', $emailInput['send_company_name']); 
+                     $message->from(Config::get('constants.MINTMESH_SUPPORT.EMAILID'), $emailInput['send_company_name']); 
                     }
                     //send attachment if attached
                     if (!empty($emailInput['attachment_path'])){
