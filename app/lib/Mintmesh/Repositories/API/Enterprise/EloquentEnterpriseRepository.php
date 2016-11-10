@@ -57,11 +57,12 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         
         // creating new Enterprise user Company Profile in storage
         public function updateCompanyProfile($input)
-        { 
+        {            
            $companyProfile = array(
                         "name"          => $this->appEncodeDecode->filterString($input['company']),
                         "industry"      => !empty($input['industry'])?$input['industry']:0,
-                        "description"   => $this->appEncodeDecode->filterString($input['description']),
+                        "description"   => !empty($input['description'])?$input['description']:'',
+//                        "description"   => !empty($input['description'])?$this->appEncodeDecode->filterString($input['description']):'',
                         "website"       => !empty($input['website'])?$input['website']:'',
                         "employees_no"  => !empty($input['number_of_employees'])?$input['number_of_employees']:'',
                         "logo"          => !empty($input['company_logo'])?$input['company_logo']:'',
@@ -69,7 +70,6 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                         "updated_by"    => !empty($input['user_id'])?$input['user_id']:'',
                         
              );
-           
             if(!empty($input['company_id'])){
                 Company_Profile::where ('id',$input['company_id'])->update($companyProfile); 
             }
@@ -650,7 +650,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         return $permArray;
     }
     
-     public function getUserPermissions($group_id, $input) {
+     public function getUserPermissions($group_id, $input='') {
         $type = isset($input['type']) ? $input['type'] : 1;
         $perm = array();
         $permArray = array();
@@ -737,7 +737,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
          $sql = "insert into groups(`name`,`company_id`,`created_by`,`ip_address`,`status`) values('".$input['name']."','".$input['company_id']."','".$input['user_id']."','".$ipaddress."','".$input['status']."')";
          $r = DB::statement($sql);
          if($r){
-         $result = DB::select("select id from groups where name='".$input['name']."'");  
+         $result = DB::select("SELECT LAST_INSERT_ID() as last_id");  
          return $result;
          }
      }
@@ -748,7 +748,8 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
      }
      
      public function adminPermissions($input) {
-         for($i = 1; $i <= 7; $i++) {       
+          
+         for($i = 1; $i <= 8; $i++) {     
          DB::table('groups_permissions')->insert(
                                 array(
                                     'groups_id' => $input['group_id'],
@@ -759,6 +760,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                                 )
                         );
          }
+         
          
      }
      
@@ -814,4 +816,40 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                     ->update(array('firstname' => $input['name']));
           
       }
+      public function getEnterpriseUsers() {
+          return DB::table('users')
+                  ->where('is_enterprise','=','1')->get();
+          
+      }
+      public function updateNewPermission($input) {     
+         DB::table('groups_permissions')->insert(
+                                array(
+                                    'groups_id' => $input['group_id'],
+                                    'permissions_id' => '8',
+                                    'permission' => '1',
+                                    'type' => '1',
+                                    'last_modified_by' => $input['user_id']
+                                )
+                        );
+         
+     }
+     
+     public function getEnterpriseCompanies() {
+        return DB::SELECT("SELECT c.id as cid,c.created_by, IFNULL(g.id,0) AS gid FROM company c
+                            LEFT JOIN groups g ON g.company_id=c.id AND g.name='admin'
+                        where 1");
+     }
+     
+     public function getUsersGroupId($input) {
+        return DB::SELECT("UPDATE users u
+                            INNER JOIN company_user_mapping cu ON cu.user_id=u.id 
+                            SET u.group_id='".$input['group_id']."'
+                            WHERE 1 and cu.company_id='".$input['company_id']."'");
+     }
+     
+     public function deleteGroupPermissions($groups_id) {
+        return DB::statement("DELETE FROM groups_permissions WHERE groups_id ='".$groups_id."'");
+     }
+     
+     
 }

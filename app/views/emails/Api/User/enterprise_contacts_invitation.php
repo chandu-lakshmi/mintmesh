@@ -31,8 +31,9 @@
 	</div>
 	<div style="font-size:16px;">
 		<p style="margin-top:50px;font-weight:600;">Hello <?php echo ucfirst($name) ; ?>,</p>
-		<p>We bring these powerful referral platform to you. Please download the App and Signup.</p>
-		<p style="line-height:20px;">We are excited to have you be a part of our success here at <?php echo $company_name; ?>.</p>
+                <p> <?php echo $emailbody; ?></p>
+<!--		<p>We bring these powerful referral platform to you. Please download the App and Signup.</p>
+		<p style="line-height:20px;">We are excited to have you be a part of our success here at <?php echo $company_name; ?>.</p>-->
 	</div>
 	<div style="margin-bottom:60px;">
 		<p style="font-size:16px;margin-top: 50px;">Download the mobile app from</p>

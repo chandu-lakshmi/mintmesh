@@ -10,6 +10,7 @@ namespace Mintmesh\Gateways\API\Enterprise;
  * data and is not concerned with the validation.
  */
 use Mintmesh\Repositories\API\Enterprise\EnterpriseRepository;
+use Mintmesh\Repositories\API\Referrals\ReferralsRepository;
 use Mintmesh\Repositories\API\User\UserRepository;
 use Mintmesh\Repositories\API\User\NeoUserRepository;
 use Mintmesh\Repositories\API\Post\NeoPostRepository;
@@ -41,12 +42,13 @@ class EnterpriseGateway {
     const ERROR_RESPONSE_MESSAGE = 'error';
 
     protected $userRepository, $enterpriseRepository, $enterpriseValidator, $userFileUploader, $commonFormatter, $authorizer, $appEncodeDecode, $neoEnterpriseRepository;
-    protected $allowedHeaders, $allowedExcelExtensions, $createdNeoUser, $referralsGateway, $contactsRepository;
+    protected $allowedHeaders, $allowedExcelExtensions, $createdNeoUser, $referralsGateway, $contactsRepository,$referralsRepository;
 
     public function __construct(EnterpriseRepository $enterpriseRepository, 
                                 NeoEnterpriseRepository $neoEnterpriseRepository, 
             UserGateway $userGateway, 
             ReferralsGateway $referralsGateway, 
+            ReferralsRepository $referralsRepository,
             UserRepository $userRepository, 
             NeoUserRepository $neoUserRepository, 
             NeoPostRepository $neoPostRepository, 
@@ -62,6 +64,7 @@ class EnterpriseGateway {
         $this->enterpriseRepository = $enterpriseRepository;
         $this->neoEnterpriseRepository = $neoEnterpriseRepository;
         $this->userGateway = $userGateway;
+        $this->referralsRepository = $referralsRepository;
         $this->referralsGateway = $referralsGateway;
         $this->userRepository = $userRepository;
         $this->neoUserRepository = $neoUserRepository;
@@ -171,14 +174,10 @@ class EnterpriseGateway {
     public function validateSetPasswordInput($input) {
         return $this->doValidation('set_password', 'MINTMESH.set_password.valid');
     }
-//    //validation on add permissions
-//    public function validatePermissions($input) {
-//        return $this->doValidation('add_permissions', 'MINTMESH.user.valid');
-//    }
-    //validation on get user permissions
-//    public function validategetUserPermissions($input) {
-//        return $this->doValidation('add_permissions', 'MINTMESH.user.valid');
-//    }
+    //validation on deactivate post input
+    public function validateDeactivatePostInput($input) {
+        return $this->doValidation('deactivate_post', 'MINTMESH.deactivate_post.valid');
+    }
     //validation on add user to company
     public function validateAddingUserInput($input) {
         return $this->doValidation('add_user', 'MINTMESH.user.valid');
@@ -199,7 +198,11 @@ class EnterpriseGateway {
     public function validateupdateUserInput($input) {
         return $this->doValidation('editing_user', 'MINTMESH.user.valid');
     }
-
+    //validation on campaign details
+    public function validatecampaignDetailsInput($input) {
+        return $this->doValidation('campaign_details', 'MINTMESH.user.valid');
+    }
+   
     public function doValidation($validatorFilterKey, $langKey) {
         //validator passes method accepts validator filter key as param
         if ($this->enterpriseValidator->passes($validatorFilterKey)) {
@@ -539,7 +542,7 @@ class EnterpriseGateway {
                 {
                 $input['group_id'] = $loggedinUserDetails->group_id;
                 $checkGroupStatus = $this->enterpriseRepository->checkGroupStatus($input['group_id']);
-                if($checkGroupStatus[0]->status == 'Active'){
+                if(!empty($checkGroupStatus) && $checkGroupStatus[0]->status == 'Active'){
                 $responseData = $this->enterpriseRepository->getUserCompanyMap($loggedinUserDetails['id']);
                 $userPermissions = $this->enterpriseRepository->getUserPermissions($input['group_id'],$input);
                 $userPermissions['is_primary'] = $checkGroupStatus[0]->is_primary;
@@ -793,7 +796,7 @@ class EnterpriseGateway {
         if ($resultsSetArr) { 
             foreach ($resultsSetArr as $result){
                 $record = array();
-                $record['bucket_id']   = $result->bucket_id;
+                $record['bucket_id']   = (int)$result->bucket_id;
                 $record['bucket_name'] = $result->bucket_name;
                 $record['count']       = $result->count;
                 array_push($bucketsListArr,$record);
@@ -1804,7 +1807,7 @@ class EnterpriseGateway {
         $inputParams['emailid']      = !empty($input['emailid'])?$input['emailid']:'';      
         $inputParams['phone']        = !empty($input['phone'])?$input['phone']:'';      
         $inputParams['status']       = !empty($input['status'])?$input['status']:'unknown';  
-        $inputParams['employeeid']   = $input['other_id'];      
+        $inputParams['employeeid']   = !empty($input['other_id'])?$input['other_id']:'';      
          
         $relationAttrs['company_code']     = $input['company_code'];
         $relationAttrs['loggedin_emailid'] = $this->loggedinUserDetails->emailid;
@@ -1814,7 +1817,7 @@ class EnterpriseGateway {
         $neoInput['lastname']    = $input['lastname'];
         $neoInput['phone']       = !empty($input['phone'])?$input['phone']:'';          
         $neoInput['emailid']     = $input['emailid'];
-        $neoInput['employeeid']  = $input['other_id'];
+        $neoInput['employeeid']  = !empty($input['other_id'])?$input['other_id']:'';
         $neoInput['status']      = !empty($input['status'])?$input['status']:'unknown';  
         $checkContact = $this->enterpriseRepository->checkContact($inputParams);
         if(empty($checkContact))
@@ -2123,7 +2126,7 @@ class EnterpriseGateway {
             $checkGroup = $this->enterpriseRepository->checkGroup($input);
             if(!$checkGroup){
             $createdGroup = $this->enterpriseRepository->addGroup($input);
-            $input['group_id'] = $createdGroup[0]->id;
+            $input['group_id'] = $createdGroup[0]->last_id;
             if (!empty($createdGroup)) {
                 if(!empty($input['permission'])){
                     $this->addPermissions($input);
@@ -2232,7 +2235,6 @@ class EnterpriseGateway {
         $email = $decodedString['string2'];
         //to get resetactivationcode 
         $passwordData = $this->userRepository->getresetcodeNpassword($email);
-
         if (!empty($email) && !empty($passwordData) && $passwordData->resetactivationcode == $input['code']) {
             //set timezone of mysql if different servers are being used
             //date_default_timezone_set('America/Los_Angeles');
@@ -2294,7 +2296,7 @@ class EnterpriseGateway {
         $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser();
         $input['user_id'] = $this->loggedinUserDetails->id;
         $input['firstname'] = $input['name'];
-        if (isset($input['flag']) && !empty($input['flag']) && isset($input['photo']) && !empty($input['photo'])) {
+          if (isset($input['photo']) && !empty($input['photo'])) {
             //upload the file
             $this->userFileUploader->source =  $input['photo'];
             $this->userFileUploader->destination = Config::get('constants.S3BUCKET_USER_IMAGE');
@@ -2313,9 +2315,11 @@ class EnterpriseGateway {
             $input['id'] = $updatedCompanyLogo[0]->id; 
             $neoupdatedCompanyLogo = $this->neoEnterpriseRepository->updateCompanyLogo($input);
         }
-        $updatedUser = $this->enterpriseRepository->updateUser($input);
+        $updatedUser    = $this->enterpriseRepository->updateUser($input);
         $neoUpdatedUser = $this->neoEnterpriseRepository->updateUser($input);
+        
         if(!empty($neoUpdatedUser)){
+           $data['user_dp'] = $neoUpdatedUser->photo;
            $responseCode    = self::SUCCESS_RESPONSE_CODE;
            $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
            $message = array('msg' => array(Lang::get('MINTMESH.updateUser.success'))); 
@@ -2324,7 +2328,7 @@ class EnterpriseGateway {
            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
            $message = array('msg' => array(Lang::get('MINTMESH.updateUser.failure'))); 
         }
-         return $this->commonFormatter->formatResponse($responseCode, $responseMsg,$message,array());    
+         return $this->commonFormatter->formatResponse($responseCode, $responseMsg,$message,$data);    
     }
     
     public function getPostRewards($postId='') {
@@ -2340,6 +2344,34 @@ class EnterpriseGateway {
                $aryRewards[] = $rewards;
             }
         return $aryRewards;
+    }
+    
+   
+    public function updateNewPermission(){
+        
+        $companies = $this->enterpriseRepository->getEnterpriseCompanies();
+         
+         foreach($companies as $v){
+             $input = array();
+             $input['user_id']   = $v->created_by;
+                if($v->gid==0){
+                    $createdGroup       = $this->enterpriseRepository->createGroup();//add new group 'Admin'
+                    $input['group_id']  = $createdGroup['id'];
+                    $input['company_id']= $v->cid;
+                    $updatedGroup       = $this->enterpriseRepository->updateGroup($input,$v->cid);//update group with user id and company id
+                    $updateUser         = $this->enterpriseRepository->getUsersGroupId($input);//updating users table
+                } else {
+                    $input['group_id']  = $v->gid;
+                    
+                }
+             $updateUser         = $this->enterpriseRepository->deleteGroupPermissions($input['group_id']);
+             $permissions        = $this->enterpriseRepository->adminPermissions($input);   
+             }
+               $responseCode    = self::SUCCESS_RESPONSE_CODE;
+               $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+               $message = array('msg' => array(Lang::get('MINTMESH.updateNewPermission.success'))); 
+         
+           return $this->commonFormatter->formatResponse($responseCode, $responseMsg,$message,array());    
     }
 }
 

@@ -98,9 +98,7 @@ class EnterpriseValidator extends Validator {
             'company_id'      => 'required',
             'bucket_id'         => 'required',
             'firstname'         => 'required',
-            'lastname'          => 'required',  
-            'emailid'           => 'required',  
-            'other_id'          => 'required'
+            'emailid'           => 'required'
         ),
 //        'add_permissions'  => array(
 //            'user_id'           => 'required'  
@@ -131,6 +129,15 @@ class EnterpriseValidator extends Validator {
         'editing_user'    => array(
             'emailid'                =>  'required',    
             'name'                   =>  'required'
+        ),
+        'job_rewards'    => array(
+            'post_id'                =>  'required'    
+        ),
+        'deactivate_post'  => array(
+            'post_id'                =>   'required'
+        ),
+        'campaign_details' => array(
+            'id'                     => 'required'
         )
         );
     

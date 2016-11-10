@@ -672,6 +672,9 @@ class EnterpriseController extends \BaseController {
 	 * @param string $location
          * @param string $emailid The email id of a user
          * @param string $designation The designation of the user
+         * @param string $group_id
+         * @param string $action 0|1
+         * @param string $user_id when action is 1
          * @param string $status 
          * 
 	 * @return Response
@@ -787,7 +790,9 @@ class EnterpriseController extends \BaseController {
          * 
          * @param string $name 
          * @param string $emailid
-         * @param $photo
+         * @param string $flag 0|1
+         * @param string $photo
+         * @param string $photo_org_name
 	 * @return Response
 	 */
         public function updateUser() {
@@ -803,5 +808,36 @@ class EnterpriseController extends \BaseController {
                 return \Response::json($validation);
             }
         }
+        
+        public function updateNewPermission(){
+            $response = $this->EnterpriseGateway->updateNewPermission();
+            return \Response::json($response);
+        }
+             
+        
+        /**
+	 * Deactivate a post
+         * 
+         * POST/deactivate_post
+         * 
+         * @param string $access_token The Access token of a user
+	 * @param string $post_id Id of the post
+         * 
+	 * @return Response
+	 */
+	public function deactivatePost()
+	{
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->EnterpriseGateway->validateDeactivatePostInput($inputUserData);
+            if($validation['status'] == 'success') 
+            {
+                return \Response::json($this->EnterpriseGateway->deactivatePost($inputUserData));
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+	}
 }
 ?>

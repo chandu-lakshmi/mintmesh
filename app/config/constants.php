@@ -10,7 +10,7 @@ return [
     'FB_LOGIN_SOURCE'=>2,
     'MNT_USER_EXPIRY_HR'=>1440,//336,
     'MNT_USER_EXPIRY_HR_FOR_RESEND_ACTIVATION'=>120,
-    'USER_EXPIRY_HR'=>48,
+    'USER_EXPIRY_HR'=>240,
     'MNT_VERSION'=>"v1",
     'MNT_FROM_NAME'=>'Mintmesh',
     'MM_ENTERPRISE_URL'=>'http://202.63.105.85/mmenterprise',
@@ -84,7 +84,11 @@ return [
         'BUCKET_IMPORTED' => 'BUCKET_IMPORTED',
         'COMPANY_CONTACT_IMPORTED' => 'COMPANY_CONTACT_IMPORTED', 
         'CONNECTED_TO_COMPANY' => 'CONNECTED_TO_COMPANY' ,
-        'POST_REWARDS' => 'POST_REWARDS' 
+        'POST_REWARDS' => 'POST_REWARDS',
+        'COMPANY_CREATED_CAMPAIGN' => 'COMPANY_CREATED_CAMPAIGN', 
+        'CAMPAIGN_SCHEDULE' => 'CAMPAIGN_SCHEDULE', 
+        'CAMPAIGN_POST' => 'CAMPAIGN_POST',
+        'CAMPAIGN_CONTACT' => 'CAMPAIGN_CONTACT' 
     ],
     'MAPPED_RELATION_TYPES'=>[
         '3'=>'REQUEST_REFERENCE',
@@ -146,7 +150,7 @@ return [
     ],
     'S3BUCKET' => 'mintmesh/dev/profilepic',
     'S3BUCKET_RESUME' => 'mintmesh/dev/resume/',
-    'RESUME_MAX_SIZE' => 768000,//750kb
+    'RESUME_MAX_SIZE' => 1000000,//1MB
     'EXCEL_MAX_SIZE' => 1000000,//1MB
     'PROFILE_COMPLETION_VALUES'=>[
         'CERTIFICATION'=>10,
@@ -183,6 +187,7 @@ return [
     'S3BUCKET_NON_MM_REFER_RESUME' => 'mintmesh/dev/NonMintmeshReferredResumes',
     'S3BUCKET_COMPANY_LOGO' => 'mintmesh/dev/companyLogo',
     'S3BUCKET_USER_IMAGE' => 'mintmesh/dev/userImage',
+    'S3BUCKET_CAMPAIGN_IMAGES' => 'mintmesh/dev/campaignImages',
     'S3BUCKET_COMPANY_IMAGES' => 'mintmesh/dev/companyImages',
     'S3BUCKET_FILE' =>  'mintmesh/dev/files'
         

@@ -29,8 +29,10 @@
   <tr>
     <td valign="top" class="textContent" style="padding:20px 20px 10px 0px;line-height:135%;letter-spacing:0.2px;font-size:18px; font-weight:normal; color:#777777;">
        <h3 style="color:#000000;line-height:125%;font-family: 'arial', sans-serif;font-size:16px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello <b><?php echo ucfirst($name) ; ?>,</b></h3>
-      <p style="color:#000000;font-size:16px">You have been added as a new user by <b><?php echo $company_name ; ?></b> in Mintmesh enterprise with <b><?php echo $emailid ; ?></b></p>
-      <p style="color:#000000;font-size:16px">Please click the link below to create a password and activate your account, this link will expire in 48 hours.</p>
+      <p style="color:#000000;font-size:16px">You have been added as a new user to <b><?php echo $company_name ; ?></b> Employee Referral Management
+          system with the following User ID. </p>
+       <p><b><?php echo $emailid ; ?></b></p>
+      <p style="color:#000000;font-size:16px">Please click the link below to create a password and activate your account. This link will expire in 10 days.</p>
       <p style="text-align:left; margin-top:50px;color:#000000;" ><a style="color:#FFFFFF;text-decoration:none;font-family: 'arial', sans-serif;font-size:18px;padding-top:10px;padding-bottom:10px;padding-right:15px;padding-left:15px;display:inline-block; background:#269b7b; width:auto; border-radius:5px; line-height:20px;" href="<?php echo $link ; ?>" target="_blank">Activate Your Account</a> </p></td>
   </tr>
   <tr>

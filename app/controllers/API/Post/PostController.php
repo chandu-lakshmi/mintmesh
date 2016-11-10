@@ -70,7 +70,7 @@ class PostController extends \BaseController {
      * 
      * @param string $access_token The Access token of a user
      * @param string $company_code 
-     * @param string $request_type free|paid
+     * @param string $request_type 1(free)|0(paid)|2(all)
      * @param string $search_for 
      * @param string $page_no
      * @return Response
@@ -190,6 +190,91 @@ class PostController extends \BaseController {
                     // returning validation failure
                 return \Response::json($validation);
             }
+        }
+        
+     /**
+	 * Reward details for post
+         * POST/job_rewards
+         * 
+         * @param string $access_token The Access token of a user
+         * @param string $post_id
+	 * @return Response
+	 */
+        public function jobRewards()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->PostGateway->jobRewardsInput($inputUserData);
+            if($validation['status'] == 'success') {
+                $response = $this->PostGateway->jobRewards($inputUserData);
+                return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+        }
+        
+        
+     /**
+	 * add Campaign for posts
+         * 
+         * POST/add_campaign
+         * 
+         * @param string $access_token The Access token of a user
+         * @param string $from_user from where the request has come
+	 * @return Response
+	 */
+        public function addCampaign()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->PostGateway->addCampaignInput($inputUserData);
+            if($validation['status'] == 'success') {
+                $response = $this->PostGateway->addCampaign($inputUserData);
+                return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+        }
+        
+        /**
+	 * view Campaign for posts
+         * 
+         * POST/view_campaign
+         * 
+         * @param string $access_token The Access token of a user
+         * @param string $from_user from where the request has come
+	 * @return Response
+	 */
+        public function viewCampaign()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->PostGateway->viewCampaignInput($inputUserData);
+            if($validation['status'] == 'success') {
+                $response = $this->PostGateway->viewCampaign($inputUserData);
+                return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+        }
+        
+         /**
+        * Get campaigns list
+        * @POST/campaigns_list 
+        * 
+        * @return Response
+        */
+        public function campaignsList() {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            $response = $this->PostGateway->campaignsList($inputUserData);
+            return \Response::json($response);
         }
         
 }

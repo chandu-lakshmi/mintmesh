@@ -31,6 +31,15 @@ class PostValidator extends Validator {
         'referral_details' => array(
             'post_id'         => 'required'
         ),
+        'add_campaign' => array(
+            'campaign_name'         => 'required',
+            'campaign_type'         => 'required',
+            'company_code'          => 'required',
+        ),
+        'view_campaign' => array(
+            'company_code'          => 'required',
+            'campaign_id'          => 'required',
+        ),
     );
 
     //conditional checks for you_are field in referrals

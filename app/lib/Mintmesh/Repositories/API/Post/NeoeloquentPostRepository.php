@@ -81,13 +81,12 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
     }
 
     public function createPostContactsRelation($relationAttrs = array(), $postId = '', $company_code = '') {
-        $queryString = "Match (b:Contact_bucket)-[r:COMPANY_CONTACT_IMPORTED]->(u:User)
-        where r.company_code='" . $company_code . "' and b.mysql_id='" . $relationAttrs['bucket_id'] . "' ";
+        $queryString = "Match (b:Contact_bucket)-[r:COMPANY_CONTACT_IMPORTED]->(u:User),(p:Post)
+        where r.company_code='" . $company_code . "' and b.mysql_id='" . $relationAttrs['bucket_id'] . "' and ID(p)=" . $postId . "";
         if ($queryString) {
 
-            $queryString .= "Match (p:Post)
-                                    where ID(p)=" . $postId . "
-                                    create unique (p)-[:" . Config::get('constants.REFERRALS.INCLUDED');
+            $queryString .= " create unique (p)-[:" . Config::get('constants.REFERRALS.INCLUDED') ;
+                                   ;
             if (!empty($relationAttrs)) {
                 $queryString.="{";
                 foreach ($relationAttrs as $k => $v) {
@@ -329,12 +328,273 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         return $result;
     } 
     
-    public function getPostRewards($postId='') {
+    public function getPostRewards($postId=0) {
         
         $queryString = "MATCH (p:Post)-[r:POST_REWARDS]-(w:Rewards) where ID(p)=".$postId." return distinct(p),r,w";
         $query  = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();   
         return $result;
+    }
+    public function getJobReferrals($postId=0) {
+        
+        $queryString = "match (u)-[r:GOT_REFERRED]->(p:Post) where ID(p)=".$postId." return u,r,p ORDER BY r.created_at DESC";
+        $query  = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();   
+        return $result;
+    }
+    
+    public function getPosts($postId) {
+        $queryString = "match (p:Post) where ID(p)=".$postId." return p";
+        $query  = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();   
+        return $result[0][0];
+    }
+    
+    public function createCampaignAndCompanyRelation($companyCode='', $campaign = array(), $userEmailId='') {
+        $userEmailId = $this->appEncodeDecode->filterString($userEmailId);
+        $queryString = "MATCH (c:Company) WHERE c.companyCode = '". $companyCode ."'
+                            CREATE (n:Campaign ";
+        if (!empty($campaign)) {
+            $queryString.="{";
+            foreach ($campaign as $k => $v) { 
+                $queryString.=$k . ":'" . $this->appEncodeDecode->filterString($v) . "',";
+            }
+            $queryString = rtrim($queryString, ",");
+            $queryString.="}";
+        }
+        $queryString.=")<-[r:" . Config::get('constants.RELATIONS_TYPES.COMPANY_CREATED_CAMPAIGN') ." ]-(c) ";
+        $queryString.=" set r.created_at='".date("Y-m-d H:i:s")."', n.created_at='".date("Y-m-d H:i:s")."', n.created_by = '".$userEmailId."' ";
+        $queryString.=" return n";
+        //echo $queryString;exit;
+        $query = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();
+        if ($result->count()) {
+            return $result;
+        } else {
+            return false;
+        }
+    }
+    
+    public function createCampaignScheduleRelation($campaignId='', $campaignSchedule = array(), $userEmailId='') {
+        $userEmailId = $this->appEncodeDecode->filterString($userEmailId);
+        $queryString = "MATCH (c:Campaign) WHERE ID(c)=".$campaignId."
+                            CREATE (n:CampaignSchedule ";
+        if (!empty($campaignSchedule)) {
+            $queryString.="{";
+            foreach ($campaignSchedule as $k => $v) { 
+                $queryString.=$k . ":'" . $this->appEncodeDecode->filterString($v) . "',";
+            }
+            $queryString = rtrim($queryString, ",");
+            $queryString.="}";
+        }
+        $queryString.=")<-[r:" . Config::get('constants.RELATIONS_TYPES.CAMPAIGN_SCHEDULE') ." ]-(c) ";
+        $queryString.=" set r.created_at='".date("Y-m-d H:i:s")."', n.created_at='".date("Y-m-d H:i:s")."', n.created_by = '".$userEmailId."' ";
+        $queryString.=" return n";
+        //echo $queryString;exit;
+        $query = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();
+        if ($result->count()) {
+            return $result;
+        } else {
+            return false;
+        }
+    }
+    
+    public function createPostAndCampaignRelation($postId = '', $campaignId = '', $postCampaignRelationAttrs = array()) {
+        $queryString = "Match (p:Post),(c:Campaign)
+                                    where ID(p)=".$postId." and ID(c)=".$campaignId."
+                                    create unique (c)-[:" . Config::get('constants.RELATIONS_TYPES.CAMPAIGN_POST');
+        if (!empty($postCampaignRelationAttrs)) {
+            $queryString.="{";
+            foreach ($postCampaignRelationAttrs as $k => $v) {
+                $queryString.=$k . ":'" . $this->appEncodeDecode->filterString($v) . "',";
+            }
+            $queryString = rtrim($queryString, ",");
+            $queryString.="}";
+        }
+        $queryString.="]->(p) return c";
+        $query = new CypherQuery($this->client, $queryString);
+        return $result = $query->getResultSet();
+    }
+    
+    public function campaignsList($email='',$input='',$page = 0,$permission='') {
+        if(!empty($email)){
+            $skip = $limit = 0;
+            if (!empty($page)) {
+                $limit = $page * 10;
+                $skip = $limit - 10;
+            }
+            if (!empty($input['search'])) {
+                $search = $this->appEncodeDecode->filterString($input['search']);
+                $queryString = "start c = node(*) where c.campaign_name =~ '(?i).*". $search .".*'";
+                $queryString .= " MATCH (c:Campaign{company_code:'" . $input['company_code'] . "'";
+            }else{
+                $queryString = "MATCH (c:Campaign{company_code:'" . $input['company_code'] . "'";
+            }         
+            if($input['all_campaigns'] == '0' || $permission == '0'){
+                $queryString .= ",created_by:'".$email."'";
+            }
+            $queryString .= "})";
+            if($input['mass_recruitment'] == 'true' || $input['militery_veterans'] == 'true' || $input['campus_hires'] == 'true' || !empty($input['location']) || $input['open'] == 'true' || $input['close'] == 'true'){
+                $queryString .= " where"; 
+            }
+            if($input['mass_recruitment'] == 'true' || $input['militery_veterans'] == 'true' || $input['campus_hires'] == 'true'){
+                $queryString .= " (";
+            }
+            if(isset($input['mass_recruitment']) && !empty($input['mass_recruitment']) && $input['mass_recruitment'] == 'true'){
+                $queryString .= "c.campaign_type='Mass Recruitment'";
+            }
+            if(isset($input['militery_veterans']) && !empty($input['militery_veterans']) && $input['militery_veterans'] == 'true'){
+                if($input['mass_recruitment'] == 'true'){
+                 $queryString .= " or";
+                }
+                $queryString .= " c.campaign_type='Military Veterans'";
+            }
+            if(isset($input['campus_hires']) && !empty($input['campus_hires']) && $input['campus_hires'] == 'true'){
+                if($input['mass_recruitment'] == 'true' || $input['militery_veterans'] == 'true'){
+                    $queryString .= " or";
+                }
+                $queryString .= " c.campaign_type='Campus Hires'";
+            }
+            if($input['mass_recruitment'] == 'true' || $input['militery_veterans'] == 'true' || $input['campus_hires'] == 'true'){
+                $queryString .= ")";
+            }
+            if((isset($input['open']) && $input['open'] == 'true') || (isset($input['close']) && $input['close'] == 'true')){
+                if($input['mass_recruitment'] == 'true' || $input['militery_veterans'] == 'true' || $input['campus_hires'] == 'true'){
+                    $queryString .= " and";
+                }
+                                    $queryString .= " (";
+                if($input['open'] == 'true'){
+                    $queryString .= "c.status='ACTIVE'";
+                }if($input['close'] == 'true'){
+                    if($input['open'] == 'true'){
+                        $queryString .= "or ";
+                }
+                    $queryString .= "c.status='closed'";
+                 }
+                $queryString .= ")";
+
+            }
+            if(isset($input['location']) && !empty($input['location'])){
+                foreach($input['location'] as $key=>$value){
+                    if(isset($value) && !empty($value)){  
+                        if($input['mass_recruitment'] == 'true' || $input['militery_veterans'] == 'true' || $input['campus_hires'] == 'true' || $input['open'] == 'true' || $input['close'] == 'true'){
+                            if($key == '0'){
+                                $queryString .= " and (";
+                                }else{
+                                    $queryString .= " or ";
+                            }
+                     }
+                     else if($key != '0'){
+                        $queryString .= " or ";
+                     }
+                    $queryString .= "c.city='".$value."'";
+                    }
+                 }
+                 $queryString .= ")";
+            }
+            $queryString .= " return c, count(distinct(c)) as total_count";
+            if (!empty($limit) && !($limit < 0)) {
+                $queryString.=" skip " . $skip . " limit " . self::LIMIT;
+            } 
+            $query = new CypherQuery($this->client, $queryString);
+            return $result = $query->getResultSet();
+        }  
+        else{
+            return false;
+        }
+    }
+    
+    public function createCampaignContactsRelation($relationAttrs = array(), $campaignId='', $contactId='') {
+        $queryString = "Match (u:User),(c:Campaign)
+                            where ID(c)=".$campaignId." and u.emailid = '".$contactId."'
+                            create unique (c)-[:" . Config::get('constants.RELATIONS_TYPES.CAMPAIGN_CONTACT');
+        if (!empty($relationAttrs)) {
+            $queryString.="{";
+            foreach ($relationAttrs as $k => $v) {
+                $queryString.=$k . ":'" . $this->appEncodeDecode->filterString($v) . "',";
+            }
+            $queryString = rtrim($queryString, ",");
+            $queryString.="}";
+        }
+        $queryString.="]->(u) return c";
+        $query = new CypherQuery($this->client, $queryString);
+        return $result = $query->getResultSet();
+    }
+    
+    public function getCampaignById($campaignId='') {
+        
+        $return = FALSE;
+        $queryString = "MATCH (c:Campaign) where ID(c)=".$campaignId." return c";
+        $query  = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();  
+        if (isset($result[0]) && isset($result[0][0])){
+            $return = $result[0][0];
+        } 
+        return  $return;   
+    }
+    public function getCampaignSchedule($campaignId='') {
+        
+        $queryString = "MATCH (c:Campaign)-[r:CAMPAIGN_SCHEDULE]-(s:CampaignSchedule) where ID(c)=".$campaignId." return distinct(s) ORDER BY s.start_date ASC";
+        $query  = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();   
+        return $result;
+    }
+    public function getCampaignPosts($campaignId='') {
+        
+        $queryString = "MATCH (c:Campaign)-[r:CAMPAIGN_POST]-(p:Post) where ID(c)=".$campaignId." return distinct(p)";
+        $query  = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();   
+        return $result;
+    }
+    
+    public function getCampaignBuckets($campaignId='') {
+        
+        $queryString = "MATCH (c:Campaign)-[r:CAMPAIGN_CONTACT]-(u) where ID(c)=".$campaignId." return distinct(r.bucket_id)";
+        $query  = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();   
+        return $result;
+    }
+    
+    public function editCampaignAndCompanyRelation($companyCode, $campaignId='', $campaign = array(), $userEmailId='') {
+        $userEmailId = $this->appEncodeDecode->filterString($userEmailId);
+        $queryString = "Match (n:Campaign)<-[r:COMPANY_CREATED_CAMPAIGN]-(c:Company) where ID(n)=".$campaignId." set ";
+        if (!empty($campaign)) {
+            foreach ($campaign as $k => $v) { 
+                $queryString.="n.".$k . "='" . $this->appEncodeDecode->filterString($v) . "',";
+            }
+            $queryString.=" n.updated_at='".date("Y-m-d H:i:s")."', n.updated_by = '".$userEmailId."' ";
+        }
+        $queryString.=" return n";
+        //echo $queryString;exit;
+        $query = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();
+        if ($result->count()) {
+            return $result;
+        } else {
+            return false;
+        }
+    }
+    
+    public function updateCampaignScheduleRelation($scheduleId='', $campaignId='', $campaignSchedule = array(), $userEmailId='') {
+        $userEmailId = $this->appEncodeDecode->filterString($userEmailId);
+        $queryString = "MATCH (n:CampaignSchedule)<-[r:" . Config::get('constants.RELATIONS_TYPES.CAMPAIGN_SCHEDULE') ." ]-(c:Campaign) 
+                WHERE ID(n)=".$scheduleId." and ID(c)=".$campaignId." set ";                 
+        if (!empty($campaignSchedule)) {
+            foreach ($campaignSchedule as $k => $v) { 
+                $queryString.="n.".$k . "='" . $this->appEncodeDecode->filterString($v) . "',";
+            }
+        }
+        $queryString.=" n.updated_at='".date("Y-m-d H:i:s")."', n.updated_by = '".$userEmailId."' ";
+        $queryString.=" return n";
+        //echo $queryString;exit;
+        $query = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();
+        if ($result->count()) {
+            return $result;
+        } else {
+            return false;
+        }
     }
     
 }

@@ -101,6 +101,7 @@ Route::group(array('prefix' => 'v1'), function() {
        Route::post("enterprise/reset_password", "API\Enterprise\EnterpriseController@resetPassword");
     //set password
       Route::post("enterprise/set_password", "API\Enterprise\EnterpriseController@setPassword");
+      Route::get("enterprise/update_new_permission", "API\Enterprise\EnterpriseController@updateNewPermission");
 });
 
 //Route::group(array('prefix' => 'v1'), function() {
@@ -287,6 +288,17 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       Route::post("enterprise/update_user", "API\Enterprise\EnterpriseController@updateUser");
       //change enterprise user password
       Route::post("enterprise/change_password", "API\User\UserController@changePassword");
+      //get Job rewards
+      Route::post("enterprise/job_rewards", "API\Post\PostController@jobRewards");
+      //deactivate post
+      Route::post("enterprise/deactivate_post", "API\Enterprise\EnterpriseController@deactivatePost");
+      
+      //add campaign
+      Route::post("enterprise/add_campaign", "API\Post\PostController@addCampaign");
+      //campaigns list
+      Route::post("enterprise/campaigns_list", "API\Post\PostController@campaignsList");
+      //edit campaign
+      Route::post("enterprise/view_campaign", "API\Post\PostController@viewCampaign");
 
 });
 

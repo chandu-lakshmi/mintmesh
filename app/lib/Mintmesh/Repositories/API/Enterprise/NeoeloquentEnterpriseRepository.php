@@ -519,6 +519,8 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
         $result = $query->getResultSet();
         return $result[0][0];
     }
+    
+    
 }
 
 ?>

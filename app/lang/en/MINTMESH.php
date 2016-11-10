@@ -86,7 +86,7 @@ return array(
                 "reset_password_success" => "MintMesh - Your password changed",
                 "post_success" => "Request Posted Successfully! Next Steps",
                 "resume_attachment" => "MintMesh has sent you a resume of ",
-                "set_password" => "MintMesh enterprise-User Account Activation"
+                "set_password" => "Employee Referral Management System-User Account Activation"
          ),
          "email_template_paths"=>array(
                 "user_welcome" => "emails.Api.User.welcome",
@@ -305,12 +305,16 @@ return array(
             "error" => "Failed To Process",
             "no_posts" => "No Posts Found",
        ) ,
+        "campaign"=>array(
+            "success" => "Successfully Done",
+            "error" => "Failed To Process",
+       ) ,
     
      "referral_details"=>array(
             "valid"   => "Successfully Validated",
             "success" => "Successfully Done",
             "error" => "Failed To Process",
-            "no_referrals" => "No referrals Found",
+            "no_referrals" => "No Referrals Found",
        ) ,
 //                    'phoneverified','you_are','job_function_name','industry_name','you_are_name','profession_name')),
         "enterprise"=>array(
@@ -414,6 +418,30 @@ return array(
              "failed"=>"Some Error Occured",
              "error"=>"Invalid Token",
              "codeexpired"=>"code has been expired"
-         ),
+    ),
+    'campaigns'=>array(
+            "success"=>"successfully retrieved campaigns",
+            "no_campaigns"=>"no campaigns found",
+            "failure"=>"failed to retrieve campaigns"
+    ),
+    'campaignDetails'=>array(
+            "success"=>"successfully retrieved campaign details",
+            "no_campaigns"=>"no campaigns found",
+            "failure"=>"failed to retrieve campaign details"
+    ),
+    'updateNewPermission'=>array(
+            "success"=>"updated permission successfully",
+            "failure"=>"failed to update permission",
+          ),
+    'rewards' => array(
+            "success"=>"Successfully Done",
+            "no_rewards"=>"No Rewards found"
+          ),
+    'deactivatepost' => array(
+            "success" => "Successfully Closed",
+            "failure" => "No posts found",
+            "no_permissions" => "permission not allowed to close the job"
+            
+            )
     
 );
