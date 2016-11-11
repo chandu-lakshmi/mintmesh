@@ -841,7 +841,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
      }
      
      public function getUsersGroupId($input) {
-        return DB::SELECT("UPDATE users u
+        return DB::statement("UPDATE users u
                             INNER JOIN company_user_mapping cu ON cu.user_id=u.id 
                             SET u.group_id='".$input['group_id']."'
                             WHERE 1 and cu.company_id='".$input['company_id']."'");

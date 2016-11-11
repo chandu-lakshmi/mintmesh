@@ -2373,6 +2373,36 @@ class EnterpriseGateway {
          
            return $this->commonFormatter->formatResponse($responseCode, $responseMsg,$message,array());    
     }
+    
+    public function deactivatePost($input)
+        {
+            $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser();
+            $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
+            $userEmail = $this->neoLoggedInUserDetails->emailid ;
+            $postId = $input['post_id'] ;
+            $checkPermissions = $this->enterpriseRepository->getUserPermissions($this->neoLoggedInUserDetails->group_id,$input);
+            $closeJobs = !empty($checkPermissions['close_jobs'])?$checkPermissions['close_jobs']:'';
+            $posts = $this->neoPostRepository->getPosts($postId);
+            if($closeJobs == 1 || $posts->created_by == $userEmail)
+            {
+                $closed = $this->referralsRepository->deactivatePost($userEmail, $postId);
+                if (!empty($closed))
+                {
+                    $message = array('msg'=>array(Lang::get('MINTMESH.deactivatepost.success')));
+                    return $this->commonFormatter->formatResponse(200, "success", $message, array()) ;
+                }
+                else
+                {
+                    $message = array('msg'=>array(Lang::get('MINTMESH.deactivatepost.no_posts')));
+                    return $this->commonFormatter->formatResponse(406, "error", $message, array()) ;
+                }
+            }else{
+                $message = array('msg'=>array(Lang::get('MINTMESH.deactivatepost.no_permissions')));
+                return $this->commonFormatter->formatResponse(406, "error", $message, array()) ;
+            }
+            return $this->commonFormatter->formatResponse($responseCode,$responseMsg,$message,array());    
+            
+        }
 }
 
 ?>
