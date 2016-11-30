@@ -395,17 +395,19 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         
         public function checkEmployeeId($input)
         {
-            
+            if(!empty($input['other_id'])){
             return DB::table('contacts')
                    ->where('company_id', '=', $input['company_id'])
                    ->where('employeeid', '=', $input['other_id'])
                    ->where('id', '!=', $input['record_id'])->get(); 
-           
+            }
         }
         public function checkEmpId($input) {
+            if(!empty($input['other_id'])){
             return DB::table('contacts')
                    ->where('company_id', '=', $input['company_id'])
                    ->where('employeeid', '=', $input['other_id'])->get(); 
+            }
         }
         public function deleteContact($record) {   
             $sql="select emailid from contacts where id='".$record."'";

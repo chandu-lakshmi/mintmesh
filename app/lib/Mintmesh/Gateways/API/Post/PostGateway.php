@@ -931,7 +931,7 @@ class PostGateway {
         $userEmailId    = $loggedInUser->emailid;
         $objCompany->fullname   = $company->name;
         //explode jobs and buckets here
-        $campPostIds    = !empty($input['job_ids'])?$input['job_ids']:!empty($input['jobs'])?$input['jobs']:'';
+        $campPostIds    = !empty($input['job_ids'])?$input['job_ids']:'';
         $campBucketIds  = !empty($input['selectedBuckets'])?explode(',',$input['selectedBuckets']):'';
         $campaignId     = !empty($input['campaign_id'])?$input['campaign_id']:'';
         $requestType    = !empty($input['request_type'])?$input['request_type']:'add';

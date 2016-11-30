@@ -109,16 +109,18 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
                 $limit = $page * 10;
                 $skip = $limit - 10;
             }
+            $queryString ='';
             $email = $this->appEncodeDecode->filterString(strtolower($email));
             if (!empty($search)) {
                 $search = $this->appEncodeDecode->filterString($search);
-                $queryString = "start p = node(*) where p.service_name =~ '(?i).*". $search .".*' or p.service_location =~ '(?i).*". $search .".*'";
+                //$queryString = "start p = node(*) where p.service_name =~ '(?i).*". $search .".*' or p.service_location =~ '(?i).*". $search .".*'";
                 if($permission == '1' && $postby == '0'){
                     $queryString .= "match (u:User)";
                 }else{
                     $queryString .= "match (u:User {emailid:'" . $email . "'})";
                 }
-                $queryString .= "-[r:POSTED]-(p:Post)-[:POSTED_FOR]-(:Company{companyCode:'" . $company_code . "'}) ";
+                $queryString .= "-[r:POSTED]-(p:Post)-[:POSTED_FOR]-(:Company{companyCode:'" . $company_code . "'})
+                         where p.service_name =~ '(?i).*". $search .".*' or p.service_location =~ '(?i).*". $search .".*' ";
             } 
             else {
                 if($permission == '1' && $postby == '0'){    
@@ -493,7 +495,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
                  }
                  $queryString .= ")";
             }
-            $queryString .= " return c, count(distinct(c)) as total_count";
+            $queryString .= " return c, count(distinct(c)) as total_count ORDER BY c.created_at DESC";
             if (!empty($limit) && !($limit < 0)) {
                 $queryString.=" skip " . $skip . " limit " . self::LIMIT;
             } 

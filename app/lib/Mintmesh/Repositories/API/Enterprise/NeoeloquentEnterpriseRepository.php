@@ -364,7 +364,7 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
     public function getCompanyUserTopReferrals($email='') {
         $result = array();
         if(!empty($email)){
-            $queryString = "MATCH (u:User:Mintmesh)-[:INCLUDED]-(p:Post)-[r:GOT_REFERRED]-() 
+            $queryString = "MATCH (u:User:Mintmesh),(p:Post)-[r:GOT_REFERRED]-() 
                             where r.referred_for='".$email."' and u.emailid = r.referred_by 
                             return DISTINCT(r.referred_by),count(r) as count,u order by count desc limit 6";
             $query = new CypherQuery($this->client, $queryString);
