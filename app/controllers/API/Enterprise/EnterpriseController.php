@@ -813,8 +813,7 @@ class EnterpriseController extends \BaseController {
             $response = $this->EnterpriseGateway->updateNewPermission();
             return \Response::json($response);
         }
-             
-        
+         
         /**
 	 * Deactivate a post
          * 
@@ -822,6 +821,7 @@ class EnterpriseController extends \BaseController {
          * 
          * @param string $access_token The Access token of a user
 	 * @param string $post_id Id of the post
+         * @param string $emailid The emailid of a user
          * 
 	 * @return Response
 	 */
@@ -838,6 +838,33 @@ class EnterpriseController extends \BaseController {
                     // returning validation failure
                 return \Response::json($validation);
             }
+	}
+        
+        
+        /**
+	 * Resend Activation link for user who is not activated
+         * 
+         * POST/user
+         * 
+	 * @param string $access_token The Access token of a user
+         * @param string $emailid The emailid of a user
+         * 
+	 * @return Response
+	 */
+	public function resendActivationLink()
+	{
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->EnterpriseGateway->validateResendActivationLinkInput($inputUserData);
+            if($validation['status'] == 'success') {
+               $response = $this->EnterpriseGateway->resendActivationLink($inputUserData);
+               return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+            
 	}
 }
 ?>

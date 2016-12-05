@@ -18,6 +18,7 @@ use Mintmesh\Repositories\API\Payment\PaymentRepository;
 use Mintmesh\Gateways\API\Payment\PaymentGateway;
 use Mintmesh\Gateways\API\Post\PostGateway;
 use Mintmesh\Repositories\API\Post\NeoPostRepository;
+use Mintmesh\Repositories\API\Enterprise\EnterpriseRepository;
 use LucaDegasperi\OAuth2Server\Authorizer;
 use Mintmesh\Services\ResponseFormatter\API\CommonFormatter ;
 use Mintmesh\Services\APPEncode\APPEncode ;
@@ -44,7 +45,8 @@ class ReferralsGateway {
                                     CommonFormatter $commonFormatter,
                                     UserGateway $userGateway,
                                     //PostGateway $postGateway,
-                                    NeoPostRepository $neoPostRepository, 
+                                    NeoPostRepository $neoPostRepository,
+                                    EnterpriseRepository $enterpriseRepository,
                                     PaymentRepository $paymentRepository,
                                     PaymentGateway $paymentGateway,
                                     APPEncode $appEncodeDecode,
@@ -63,6 +65,7 @@ class ReferralsGateway {
                 $this->userGateway = $userGateway ;
                 //$this->postGateway = $postGateway;
                 $this->neoPostRepository = $neoPostRepository;
+                $this->enterpriseRepository = $enterpriseRepository;
                 $this->appEncodeDecode = $appEncodeDecode ;
                 $this->paymentRepository = $paymentRepository ;
                 $this->paymentGateway = $paymentGateway ;
@@ -74,6 +77,30 @@ class ReferralsGateway {
                 $this->resumeValidations = array('uploaded_large_file', 'invalid_file_format');
                 
 	}
+        
+        public function doValidation($validatorFilterKey, $langKey) {
+            //validator passes method accepts validator filter key as param
+            if ($this->referralsValidator->passes($validatorFilterKey)) {
+                /* validation passes successfully */
+                $message = array('msg' => array(Lang::get($langKey)));
+                $responseCode = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg = self::SUCCESS_RESPONSE_MESSAGE;
+                $data = array();
+            } else {
+                /* Return validation errors to the controller */
+                $message = $this->referralsValidator->getErrors();
+                $responseCode = self::ERROR_RESPONSE_CODE;
+                $responseMsg = self::ERROR_RESPONSE_MESSAGE;
+                $data = array();
+            }
+
+            return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $message, $data);
+        }
+        
+        //validation on campaign details
+        public function validateGetCampaigns($input) {
+            return $this->doValidation('get_campaigns', 'MINTMESH.user.valid');
+        }
         
         public function validateServiceSeekReferralInput($input)
         {
@@ -473,9 +500,10 @@ class ReferralsGateway {
             $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
             $userEmail   = $this->neoLoggedInUserDetails->emailid ;
             $userCountry = $this->neoLoggedInUserDetails->phone_country_name;
-            $page = !empty($input['page_no'])?$input['page_no']:0;
-            $request_type = isset($input['request_type'])?$input['request_type']:'';
-            $posts = $this->referralsRepository->getAllPosts($userEmail, $request_type,$page);
+            $page           = !empty($input['page_no'])?$input['page_no']:0;
+            $search         = !empty($input['search'])?$input['search']:'';
+            $request_type   = isset($input['request_type'])?$input['request_type']:'';
+            $posts = $this->referralsRepository->getAllPosts($userEmail, $request_type, $page, $search);
             if (!empty(count($posts)))
             {
                 $returnPosts = array();
@@ -1793,11 +1821,13 @@ class ReferralsGateway {
         {
             $this->loggedinUserDetails = $this->getLoggedInUser();
             $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
-            $userEmail   = $this->neoLoggedInUserDetails->emailid ;
-            $userCountry = $this->neoLoggedInUserDetails->phone_country_name;
-            $page = !empty($input['page_no'])?$input['page_no']:0;
-            $posts = $this->referralsRepository->getAllPostsV3($userEmail, $input['request_type'],$page);
-            $postIds = $excludedPostsList = array();
+            $userEmail  = $this->neoLoggedInUserDetails->emailid ;
+            $userCountry= $this->neoLoggedInUserDetails->phone_country_name;
+            $page       = !empty($input['page_no'])?$input['page_no']:0;
+            $search     = !empty($input['search'])?$input['search']:'';
+            $request_type = isset($input['request_type'])?$input['request_type']:'';
+            $posts      = $this->referralsRepository->getAllPostsV3($userEmail, $request_type,$page, $search);
+            $postIds    = $excludedPostsList = array();
             if (!empty(count($posts)))
             {
                 $returnPosts = array();
@@ -2130,6 +2160,102 @@ class ReferralsGateway {
             $aryRewards['currency_type'] = (strtolower($userCountry) =="india")?2:1;
             
         return $aryRewards;
-    }         
+    }  
+    
+    
+    public function viewCampaign($campaignId='') {
+        $campSchedule = $returnData = $scheduleRes = $postAry = $postsRes = array();
+        #get Campaign Schedule here
+        $scheduleRes   = $this->neoPostRepository->getCampaignSchedule($campaignId);
+            foreach ($scheduleRes as $k => $value){
+                $value = $value[0];
+                $schedule['schedule_id']    = $value->getID();
+                $schedule['start_on_date']  = date('Y-m-d', strtotime($value->start_date));
+                $schedule['start_on_time']  = $value->start_time;
+                $schedule['end_on_date']    = date('Y-m-d', strtotime($value->end_date));
+                $schedule['end_on_time']    = $value->end_time;
+                $campSchedule[] = $schedule; 
+            }
+            
+        #get Campaign Posts here
+        $postsRes   = $this->neoPostRepository->getCampaignPosts($campaignId);
+            $vacancies = 0;
+            foreach($postsRes as $posts){
+                $post = array();
+                $postDetails = $this->formPostDetailsArray($posts[0]);
+                $post['post_id']        = $postDetails['post_id'];
+                $post['service_name']   = $postDetails['service_name'];
+                $postAry[] = $post;
+                $vacancies += !empty($postDetails['no_of_vacancies'])?$postDetails['no_of_vacancies']:'';
+            }
+            $returnData['schedule']         = $campSchedule;
+            $returnData['jobs']             = $postAry;
+            $returnData['total_vacancies']  = $vacancies;
+        return $returnData;
+    }
+    
+    
+    public function getCampaigns($input=array()) {
+        #variable declaration
+        $campCount      = 0;
+        $campaignsAry   = $campReturn = $campResult = $viewCampRes = array();
+        #get Logged In User Details  
+        $this->user     = $this->getLoggedInUser();
+        $this->neoUser  = $this->neoUserRepository->getNodeByEmailId($this->user->emailid) ;
+        $userEmail      = $this->neoUser->emailid ;
+        #get campaign result here
+        $campaignsAry = $this->referralsRepository->getCampaigns($userEmail);
+        
+        foreach ($campaignsAry as $value) {
+            $campAry    = array();
+            $campaign   = $value[0];
+            $campaignId = '';
+            #form return campaign Details here
+            $campaignId = $campaign->getID();
+            $campAry['campaign_id']     = $campaignId;
+            $campAry['campaign_name']   = $campaign->campaign_name;
+            $campAry['campaign_type']   = $campaign->campaign_type;
+            $campAry['location_type']   = $campaign->location_type;
+            #form location Details here
+            if(strtolower($campAry['location_type']) == 'onsite'){
+                $location = array();
+                $location['address']    = $campaign->address;
+                $location['state']      = $campaign->state;
+                $location['country']    = $campaign->country;
+                $location['city']       = $campaign->city;
+                $location['zip_code']   = $campaign->zip_code;
+                $campAry['location']    = $location;
+            }
+            #get campaign schedule and posts details
+            $viewCampRes = $this->viewCampaign($campaignId);
+            $campAry['created_at']  = $campaign->created_at;
+            $campAry['schedule']    = $viewCampRes['schedule'];
+            $campAry['posts']       = $viewCampRes['jobs'];
+            #get company details here
+            $companyCode    = $campaign->company_code;
+            $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+            $companyLogo    = !empty($companyDetails[0])?$companyDetails[0]->logo:0;
+            $companyName    = !empty($companyDetails[0])?$companyDetails[0]->name:'';
+            #attachment details form here
+            $campAry['ceos_file']   = $campaign->ceos_file;
+            $campAry['emp_file']    = $campaign->emp_file;
+            $campAry['cmp_logo']    = $companyLogo;
+            $campAry['cmp_name']    = $companyName;
+
+            $campReturn[] = $campAry;
+            $campCount += 1;
+        }
+        $camp_count  = $campCount;
+        $campResult  = array('campaigns'=>$campReturn,'camp_count'=>$camp_count);
+        
+        if(!empty($campResult)){
+            $data    = $campResult;
+            $message = array('msg' => array(Lang::get('MINTMESH.campaigns.success')));
+        } else { 
+            $message = array('msg' => array(Lang::get('MINTMESH.campaigns.no_campaigns')));
+        }
+        
+        return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data);
+    }
 }
 ?>

@@ -23,6 +23,7 @@ use Mintmesh\Gateways\API\SocialContacts\ContactsGateway;
 use Mintmesh\Repositories\API\SocialContacts\ContactsRepository;
 use Illuminate\Support\Facades\Hash;
 use GuzzleHttp\Client;
+use Mintmesh\Services\Parser\ParserManager as ParserManager;
 
 use Lang;
 use Config;
@@ -56,9 +57,11 @@ class UserGateway {
                                     PaymentRepository $paymentRepository,
                                     ContactsGateway $contactsGateway,
                                     ContactsRepository $contactsRepository,
+                                    ParserManager $parserManager,
                                     NeoEnterpriseRepository $neoEnterpriseRepository) {
 		$this->userRepository = $userRepository;
                 $this->neoUserRepository = $neoUserRepository;
+                $this->parserManager = $parserManager;
                 $this->authorizer = $authorizer;
                 $this->userValidator = $userValidator;
                 $this->userEmailManager = $userEmailManager ;
@@ -4802,6 +4805,10 @@ class UserGateway {
                 $this->userRepository->logEmail($emailLog);
             }
         }
+        
+        public function getParser() {
+           return $this->parserManager->processParsing();
+       }
 
 }
 ?>

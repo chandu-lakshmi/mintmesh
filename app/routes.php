@@ -11,6 +11,7 @@
 |
 */
 /* Route related to API docs */
+Route::get('getMails','Email2Controller@getMails');
 Route::get('docs', function() {
 	return View::make('docs.v1.index');
 });
@@ -228,6 +229,8 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
         
        //resend activation link
        Route::post("resend_activation_link", "API\User\UserController@resendActivationLink");
+       //get campaigns
+       Route::post("referral/get_campaigns", "API\Referrals\ReferralsController@getCampaigns");
 
        /**************
         * APIs for Mintmesh enterprise with oAuth
@@ -299,7 +302,17 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       Route::post("enterprise/campaigns_list", "API\Post\PostController@campaignsList");
       //edit campaign
       Route::post("enterprise/view_campaign", "API\Post\PostController@viewCampaign");
-
+      //deactivate post
+      Route::post("enterprise/deactivate_post", "API\Enterprise\EnterpriseController@deactivatePost");
+      //resend activation link
+      Route::post("enterprise/resend_activation_link", "API\Enterprise\EnterpriseController@resendActivationLink");
+      //testing
+      Route::post("parser/get_parser", "API\User\UserController@getParser");
+      Route::post("parser/ptest", "API\Post\PostController@ptest");
+      
+      //get company all referrals link
+      Route::post("enterprise/get_company_all_referrals", "API\Post\PostController@getCompanyAllReferrals");
+      
 });
 
 

@@ -26,7 +26,7 @@ use Cache;
             $str = str_replace($search, $replace, $str);
             //$str = (trim(htmlentities($str, ENT_QUOTES,"UTF-8")));
             //$str = str_replace("&amp;", "&", $str);
-            
+            //$str = addslashes($str);
             return $str;
         }
         else
@@ -235,6 +235,131 @@ use Cache;
             }
             return $number;
         }
+        
+        function UserTimezoneGmt($gmttime,$usertimezone)
+        {
+    
+            $userTime=strtotime($gmttime);
+            $tm = $userTime+($usertimezone*60);
+            return  date("Y-m-d H:i:s",$tm);
+        }
+        
+        function UserTimezone($gmttime, $usertimezone) {
+            $userTime = strtotime($gmttime);
+            $tm = $userTime - ($usertimezone * 60);
+            return date("Y-m-d H:i:s", $tm);
+       }
+       
+       static function getParserValues($resumeText){
+           $records = array();
+	$fileInfo = explode(PHP_EOL, $resumeText);
+               // $records = [];
+			/*	echo "<pre>";
+				print_r($fileInfo);exit;*/
+				   foreach ($fileInfo as $row) {
+                    // if($row == '') continue;
+                    // $parts = explode(',12', $row);
+                    $parts = preg_split('/(?<=[.?!])\s+(?=[a-z])/i', $row);
+                    foreach ($parts as $part) {
+                        if ($part == '') {
+                            continue;
+                        }
+                    // echo $part.'<br><br>';
+                        $part = strtolower($part);
+
+                        //  ***************  EMAIL  **************
+
+                        if (strpos($part, '@') || strpos($part, 'mail')) {
+                            $pattern = '/[a-z0-9_.\-\+]+@[a-z0-9\-]+\.([a-z]{2,3})(?:\.[a-z]{2})?/i';
+                            preg_match_all($pattern, $part, $matches);
+                            foreach ($matches[0] as $match) {
+                                $records['email'][] = $match;
+                            }
+                        }
+
+                        //  ***************  DOB  **************
+
+                        if (preg_match('/dob|d.o.b|date of birth/', $part)) {
+                            $dob = preg_split('/:|-/', $part);
+                            foreach ($dob as $db) {
+                                $date = date_parse($db);
+                                if ($date['error_count'] == 0) {
+                                    $records['dob'][] = $date['year'].'-'.$date['month'].'-'.$date['day'];
+                                }
+                            }
+                        }
+
+                       /* $date = @find_date($part);
+                        if ($date) {
+                            $records['dob'][] = $date['year'].'-'.$date['month'].'-'.$date['day'];
+                        }
+                       */
+
+                        $p = '{.*?(\d\d?)[\\/\.\-]([\d]{2})[\\/\.\-]([\d]{4}).*}';
+                        if (preg_match($p, $part)) {
+                            $date = preg_replace($p, '$3-$2-$1', $part);
+                            $dd = new \DateTime($date);
+                            $records['dob'][] = $dd->format('Y-m-d');
+                        }
+
+                        //  ***************  MOBILE  **************
+
+                        preg_match_all('/\d{10}/', $part, $matches);
+                        if (count($matches[0])) {
+                            foreach ($matches[0] as $mob) {
+                                $records['mobile'][] = $mob;
+                            }
+                        }
+
+                        preg_match_all('/\d{12}/', $part, $matches);
+                        if (count($matches[0])) {
+                            foreach ($matches[0] as $mob) {
+                                $records['mobile'][] = $mob;
+                            }
+                        }
+
+                        preg_match_all('/(\d{5}) (\d{5})/', $part, $matches);
+                        if (count($matches[0])) {
+                            foreach ($matches[0] as $mob) {
+                                $records['mobile'][] = $mob;
+                            }
+                        }
+
+                        //  ***************  SKILLS  **************
+
+                        preg_match_all('/production|sales|call center|Accounts|marketting|tele communication|engineer|software engineering|software engineer|manufacturing|office administration|human resource|admin|secretarial|customer service|call center|finance account/', $part, $matches);
+                        if (count($matches[0])) {
+                            foreach ($matches[0] as $skill) {
+                                $records['skills'][] = $skill;
+                            }
+                        }
+
+                        //  ***************  PLACE  **************
+
+                       /* preg_match_all($places_regx, $part, $matches);
+                        if (count($matches[0])) {
+                            foreach ($matches[0] as $skill) {
+                                $records['place'][] = ucwords($skill);
+                            }
+                        }*/
+
+                        //  ***************  NAME  **fe************
+
+                        if (isset($records['email'])) {
+                            foreach ($records['email'] as $email) {
+                                $e = explode('@', $email);
+                                $records['name'][] = $e[0];
+                            // code...
+                            }
+                        }
+                    }
+                }
+				foreach ($records as $key => $value) {
+                    $records[$key] = array_unique($value);
+                }
+				return $records;
+}
+
 
 
 }

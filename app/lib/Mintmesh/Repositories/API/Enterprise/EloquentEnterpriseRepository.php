@@ -335,9 +335,9 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                    ->where('company_id', '=', $companyId)
                    ->where('import_file_id', '=', $importFileId)->get();
         }
-        public function getCompanyDetailsByCode($companyCode){    
+        public function getCompanyDetailsByCode($companyCode=0){    
             return DB::table('company')
-                   ->select('logo','id')
+                   ->select('logo','id','name')
                    ->where('code', '=', $companyCode)->get();
         }
         
@@ -713,7 +713,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             return $input['user_id'];
       }
     public function getUsers($companyCode,$groupId) {
-        return DB::select("select u.id as user_id,u.firstname as name, u.emailid, u.status from users u inner join company_user_mapping c on c.user_id=u.id where c.code='".$companyCode."' and u.group_id='".$groupId."' ORDER BY firstname");  
+        return DB::select("select u.id as user_id,u.firstname as name, u.emailid, u.status,u.resetactivationcode from users u inner join company_user_mapping c on c.user_id=u.id where c.code='".$companyCode."' and u.group_id='".$groupId."' ORDER BY firstname");  
     }
     
    // creating new Enterprise user Company Profile in storage
@@ -744,11 +744,20 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
          }
      }
      
-     public function getGroups($id) {
-        return DB::SELECT("select DISTINCT g.* from groups g left join users u on g.id=u.group_id
-                                WHERE u.id='" . $id . "' OR g.created_by='".$id."' ORDER BY name");
+     public function getGroups($input) {
+         if($input['group_name'] == 'admin'){
+             $sql = "select DISTINCT g.* from groups g where g.company_id='".$input['company_id']."'";
+         }else{
+             $sql = "select DISTINCT g.* from groups g left join users u on g.id=u.group_id
+                     WHERE u.id='" . $input['user_id'] . "'";
+         }
+         $sql .= " ORDER BY name";
+         return $result = DB::SELECT($sql);
      }
      
+     public function getGroup($id) {
+         return DB::SELECT("select g.name from groups g where g.id='".$id."'");
+     }
      public function adminPermissions($input) {
           
          for($i = 1; $i <= 8; $i++) {     

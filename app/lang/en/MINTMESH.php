@@ -65,11 +65,13 @@ return array(
                 "login_failure" => "Invalid Credentials",
                 "email_inactive" => "You are inactive please activate via email",
                  "login_credentials" => "Please login with your enterprise credentials",
-                 "inactive_group" => "You are an inactive group user"
+                 "inactive_group" => "You are an inactive group user",
+                 "inactive_user"  => "You are an inactive user"
          ),
          "resendActivationLink" => array(
                 "success" => "Mail Sent Successfully",
-                "already_activated" => "You are already activated"
+                "already_activated" => "You are already activated", 
+                "failure"  => "Failed to send mail"    
         ),
          "fb_login"=>array(
              "valid" => "Successfully validated",
@@ -86,7 +88,7 @@ return array(
                 "reset_password_success" => "MintMesh - Your password changed",
                 "post_success" => "Request Posted Successfully! Next Steps",
                 "resume_attachment" => "MintMesh has sent you a resume of ",
-                "set_password" => "Employee Referral Management System-User Account Activation"
+                "set_password" => "MintMesh enterprise-User Account Activation"
          ),
          "email_template_paths"=>array(
                 "user_welcome" => "emails.Api.User.welcome",
@@ -314,7 +316,7 @@ return array(
             "valid"   => "Successfully Validated",
             "success" => "Successfully Done",
             "error" => "Failed To Process",
-            "no_referrals" => "No Referrals Found",
+            "no_referrals" => "No referrals Found",
        ) ,
 //                    'phoneverified','you_are','job_function_name','industry_name','you_are_name','profession_name')),
         "enterprise"=>array(
@@ -432,7 +434,9 @@ return array(
     'updateNewPermission'=>array(
             "success"=>"updated permission successfully",
             "failure"=>"failed to update permission",
-          ),
+            "not_admin"=>"not an admin user"
+        
+    ),
     'rewards' => array(
             "success"=>"Successfully Done",
             "no_rewards"=>"No Rewards found"
@@ -442,6 +446,11 @@ return array(
             "failure" => "No posts found",
             "no_permissions" => "permission not allowed to close the job"
             
-            )
+            ),
+     'candidates'=>array(
+            "success"=>"successfully retrieved candidates List",
+            "no_candidates"=>"no candidate records found",
+            "failure"=>"failed to retrieve candidates"
+    )
     
 );

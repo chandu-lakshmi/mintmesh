@@ -10,4 +10,7 @@
 | the console gets access to each of the command object instances.
 |
 */
-
+Artisan::add(new job1);
+Artisan::add(new job2);
+Artisan::add(new job3);
+Artisan::add(new parserJob);

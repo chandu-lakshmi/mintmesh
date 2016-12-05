@@ -1245,6 +1245,11 @@ class UserController extends \BaseController {
             return \Response::json($response);
 
         }
+        public function getParser(){
+           $response = $this->userGateway->getParser();
+           return \Response::json($response);
+
+       }
         
 }
 ?>

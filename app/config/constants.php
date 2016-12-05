@@ -146,7 +146,9 @@ return [
     ],
     'MINTMESH_SUPPORT'=>[
 //        'EMAILID'=>'support@mintmesh.com'
-        'EMAILID'=>'v.gopi314@gmail.com'
+        'EMAILID'=>'v.gopi314@gmail.com',
+        'REFERRER_NAME'=>'karthik.jangeti533',
+        'REFERRER_HOST'=>'@gmail.com'
     ],
     'S3BUCKET' => 'mintmesh/dev/profilepic',
     'S3BUCKET_RESUME' => 'mintmesh/dev/resume/',

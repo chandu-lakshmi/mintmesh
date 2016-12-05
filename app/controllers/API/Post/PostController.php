@@ -276,6 +276,25 @@ class PostController extends \BaseController {
             $response = $this->PostGateway->campaignsList($inputUserData);
             return \Response::json($response);
         }
+        public function ptest() {
+            
+           
+            $response = $this->PostGateway->ptest();
+            return \Response::json($response);
+        }
+        
+        /**
+        * Get company all referrals list
+        * @POST/get_company_all_referrals 
+        * 
+        * @return Response
+        */
+        public function getCompanyAllReferrals() {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            $response = $this->PostGateway->getCompanyAllReferrals($inputUserData);
+            return \Response::json($response);
+        }
         
 }
 

@@ -83,7 +83,11 @@ return [
         'BUCKET_IMPORTED' => 'BUCKET_IMPORTED',
         'COMPANY_CONTACT_IMPORTED' => 'COMPANY_CONTACT_IMPORTED', 
         'CONNECTED_TO_COMPANY' => 'CONNECTED_TO_COMPANY',
-        'POST_REWARDS' => 'POST_REWARDS'
+        'POST_REWARDS' => 'POST_REWARDS',
+        'COMPANY_CREATED_CAMPAIGN' => 'COMPANY_CREATED_CAMPAIGN', 
+        'CAMPAIGN_SCHEDULE' => 'CAMPAIGN_SCHEDULE', 
+        'CAMPAIGN_POST' => 'CAMPAIGN_POST',
+        'CAMPAIGN_CONTACT' => 'CAMPAIGN_CONTACT'
 
     ],
     'MAPPED_RELATION_TYPES'=>[
@@ -141,13 +145,14 @@ return [
         ]
     ],
     'MINTMESH_SUPPORT'=>[
-//        'EMAILID'=>'support@mintmesh.com'
+        //'EMAILID'=>'support@mintmesh.com'
         //'EMAILID'=>'v.gopi314@gmail.com'
         'EMAILID'=>'no-reply@mintmesh.com'
     ],
     'S3BUCKET' => 'mintmesh/stg/profilepic',
     'S3BUCKET_RESUME' => 'mintmesh/stg/resume/',
-    'RESUME_MAX_SIZE' => 768000,//750kb
+    'RESUME_MAX_SIZE' => 1000000,//750kb
+    'EXCEL_MAX_SIZE' => 1000000,//1MB
     'PROFILE_COMPLETION_VALUES'=>[
         'CERTIFICATION'=>10,
         'CONTACT'=>30,

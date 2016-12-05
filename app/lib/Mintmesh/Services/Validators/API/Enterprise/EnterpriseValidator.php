@@ -138,6 +138,9 @@ class EnterpriseValidator extends Validator {
         ),
         'campaign_details' => array(
             'id'                     => 'required'
+        ),
+        'resend_activation' => array(
+            'emailid'                =>  'required'
         )
         );
     

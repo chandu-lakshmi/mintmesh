@@ -28,10 +28,6 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 $this->client->getTransport()->setAuth($this->db_user, $this->db_pwd);
         }
         
-        public function createService($input)
-        {
-            
-        }
         public function createPostAndRelation($fromId, $neoInput=array(),$relationAttrs = array())
         {
             $queryString = "MATCH (u:User:Mintmesh)
@@ -176,7 +172,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             }
         }
         
-        public function getAllPosts($email="", $type="", $page=0)
+        public function getAllPosts($email="", $type="", $page=0, $search='')
         {
             $type_array = json_decode($type);
 //            if (!empty($email) && !empty($type))
@@ -210,12 +206,13 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 //".$filter_query." return p,count(distinct(u)),m ORDER BY p.created_at DESC
                 $email = $this->appEncodeDecode->filterString(strtolower($email));
                 $queryString = "MATCH (u:User:Mintmesh)-[r1:CONNECTED_TO_COMPANY]-(m:Company)-[:POSTED_FOR]-(p:Post{status:'ACTIVE'}) 
-                                where u.emailid='".$email."' ".$filter_query." return p,count(distinct(u)),m ORDER BY p.created_at DESC
+                                where u.emailid='".$email."' and p.service_name =~ '(?i).*". $search .".*' ".$filter_query." return p,count(distinct(u)),m ORDER BY p.created_at DESC
                                 UNION
                                 match (n:User:Mintmesh)-[r1:ACCEPTED_CONNECTION]-(m:User:Mintmesh)-[r2:POSTED]->(p:Post)
                                 where n.emailid='".$email."' and m.emailid=p.created_by and p.created_by<>'".$email."'
                                 and case p.included_set when '1' then  (n-[:INCLUDED]-p) else 1=1 end
                                 and not(n-[:EXCLUDED]-p) 
+                                and p.service_name =~ '(?i).*". $search .".*'
                                 ".$filter_query."
                                 and  case p.service_type 
                                 when 'in_location' then  lower(n.location) =~ ('.*' + lower(p.service_location)) else 1=1 end
@@ -303,7 +300,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 $queryString = rtrim($queryString, ",") ;
                 $queryString.="}";
             }
-            $queryString.="]->(p) set p.total_referral_count = p.total_referral_count + 1 return count(p)" ;
+            $queryString.="]->(p) set p.total_referral_count = p.total_referral_count + 1 , r.resume_parsed =0 return count(p)" ;
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             if (isset($result[0]) && isset($result[0][0]))
@@ -830,7 +827,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 $queryString = rtrim($queryString, ",") ;
                 $queryString.="}";
             }
-            $queryString.="]->(p) set p.total_referral_count = p.total_referral_count + 1 return count(p)" ;
+            $queryString.="]->(p) set p.total_referral_count = p.total_referral_count + 1 , r.resume_parsed =0 return count(p)" ;
             
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
@@ -915,7 +912,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
              }
          }
          
-        public function getAllPostsV3($email="", $type="", $page=0)
+        public function getAllPostsV3($email="", $type="", $page=0, $search='')
         {
 //            if (!empty($email) && !empty($type))
 //            {
@@ -986,12 +983,13 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 //and r1.created_at <= p.created_at
                 $email = $this->appEncodeDecode->filterString(strtolower($email));
                 $queryString = "MATCH (u:User:Mintmesh)-[r1:CONNECTED_TO_COMPANY]-(m:Company)-[:POSTED_FOR]-(p:Post{status:'ACTIVE'}) 
-                                where u.emailid='".$email."' ".$filter_query." return p,count(distinct(u)),m ORDER BY p.created_at DESC
+                                where u.emailid='".$email."' and p.service_name =~ '(?i).*". $search .".*' ".$filter_query." return p,count(distinct(u)),m ORDER BY p.created_at DESC
                                  UNION
                                 match (n:User:Mintmesh)-[r1:ACCEPTED_CONNECTION]-(m:User:Mintmesh)-[r2:POSTED]->(p:Post)
                                 where n.emailid='".$email."' and m.emailid=p.created_by and p.created_by<>'".$email."'
                                 and case p.included_set when '1' then  (n-[:INCLUDED]-p) else 1=1 end
                                 and not(n-[:EXCLUDED]-p) 
+                                and p.service_name =~ '(?i).*". $search .".*'
                                 ".$filter_query."
                                 and  case p.service_type 
                                 when 'in_location' then  lower(n.location) =~ ('.*' + lower(p.service_location)) else 1=1 end
@@ -1193,6 +1191,17 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 }
             }
             return $count;
+        } 
+        
+        public function getCampaigns($userEmail=''){
+            $result = array();
+            $userEmail  = $this->appEncodeDecode->filterString(strtolower($userEmail));
+            if (!empty($userEmail)){                 
+               $queryString = "MATCH (u:User)<-[:CAMPAIGN_CONTACT]-(c:Campaign{status:'ACTIVE'}) where u.emailid='".$userEmail."' RETURN distinct(c)";
+               $query       = new CypherQuery($this->client, $queryString);
+               $result      = $query->getResultSet();
+            }
+            return $result;
         }  
 }
 ?>

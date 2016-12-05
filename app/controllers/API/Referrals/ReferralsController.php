@@ -167,14 +167,14 @@ class ReferralsController extends \BaseController {
             // Receiving user input data
             $inputUserData = \Input::all();
             // Validating user input data
-//            $validation = $this->referralsGateway->validateGetPostsInput($inputUserData);
-//            if($validation['status'] == 'success') 
-//            {
+            $validation = $this->referralsGateway->validateGetPostsInput($inputUserData);
+            if($validation['status'] == 'success') 
+            {
                 return \Response::json($this->referralsGateway->getPosts($inputUserData));
-//            } else {
-//                    // returning validation failure
-//                return \Response::json($validation);
-//            }
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
 	}
         
         /**
@@ -532,6 +532,27 @@ class ReferralsController extends \BaseController {
             $validation = $this->referralsGateway->validatereferContact($inputUserData);
             if($validation['status'] == 'success') {
                 $response = $this->referralsGateway->referContactV2($inputUserData);
+                return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+        }
+        
+        /**
+         * POST/get_campaigns
+         * @param string $access_token The Access token of a user
+         * 
+	 * @return Response
+	 */
+        public function getCampaigns()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->referralsGateway->validateGetCampaigns($inputUserData);
+            if($validation['status'] == 'success') {
+                $response = $this->referralsGateway->getCampaigns($inputUserData);
                 return \Response::json($response);
             } else {
                     // returning validation failure

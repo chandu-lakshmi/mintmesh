@@ -186,7 +186,7 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
                 $queryString = rtrim($queryString, ",");
                 $queryString.="}) set u.created_at='" . gmdate("Y-m-d H:i:s") . "'";
             }
-            $queryString.="create unique (u)<-[:" . Config::get('constants.RELATIONS_TYPES.COMPANY_CONTACT_IMPORTED');
+            $queryString.=" create unique (u)<-[:" . Config::get('constants.RELATIONS_TYPES.COMPANY_CONTACT_IMPORTED');
             if (!empty($relationAttrs)) {
                 $queryString.="{";
                 foreach ($relationAttrs as $k => $v) {
