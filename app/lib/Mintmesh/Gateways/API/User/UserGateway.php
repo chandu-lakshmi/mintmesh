@@ -4809,6 +4809,49 @@ class UserGateway {
         public function getParser() {
            return $this->parserManager->processParsing();
        }
+       
+       /*
+         * countries
+         */
+        public function getCountries($input)
+        {
+            $name = !empty($input['search'])?$input['search']:'';
+            $data = $countries = array();     
+            $countryCodes = $this->userRepository->getCountryCodes($name);
+            if (!empty($countryCodes))
+            {
+                foreach($countryCodes as $key=>$val)
+                {
+                    $countries[] = array("country_name"=>trim($val->name), "country_code"=>$val->country_code) ;
+                }
+                $data = array("countries"=>$countries);
+                $responseCode = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg  = self::SUCCESS_RESPONSE_MESSAGE;
+                $message = array('msg'=>array(Lang::get('MINTMESH.country_codes.success')));
+            } else {
+                $responseCode = self::ERROR_RESPONSE_CODE;
+                $responseMsg  = self::ERROR_RESPONSE_MESSAGE;
+                $message = array('msg'=>array(Lang::get('MINTMESH.country_codes.error')));               
+            }
+            return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $message, $data, $checkBadWords=false) ;
+        }
+        
+        public function getSkillsFromJobTitle($title='', $description='')
+        {   $matchesAry   = array();
+            $getSkillsAry = $this->userRepository->getSkills();           
+            $jobData      = $title." ".$description;
+            foreach ($getSkillsAry as $skill){
+                $matches  ='';
+                $keywords = preg_quote($skill->name, '/');
+                preg_match("/\b$keywords\b/i", $jobData, $matches, PREG_OFFSET_CAPTURE);
+                if(isset($matches[0]) && isset($matches[0][0])){
+                     $matchesAry[] = $matches[0][0];
+                }
+            }
+            //$matchesAry = array_unique($matchesAry, SORT_REGULAR);
+            $return =  implode(', ', $matchesAry);
+            return $return;
+        }
 
 }
 ?>

@@ -53,7 +53,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
             $queryString.="}";
         }
         $queryString.="]-(u) set p.created_at='" . date("Y-m-d H:i:s") . "' ";
-        $queryString.=" , p.invited_count=0, p.total_referral_count=0, p.referral_accepted_count=0, p.referral_declined_count=0, p.referral_hired_count=0, p.referral_interviewed_count=0 return p";
+        $queryString.=" , p.invited_count=0, p.total_referral_count=0, p.referral_accepted_count=0, p.referral_declined_count=0, p.referral_hired_count=0, p.referral_interviewed_count=0,p.unsolicited_count=0 return p";
         $query = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
         if ($result->count()) {
@@ -80,26 +80,31 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         return $result = $query->getResultSet();
     }
 
-    public function createPostContactsRelation($relationAttrs = array(), $postId = '', $company_code = '') {
-        $queryString = "Match (b:Contact_bucket)-[r:COMPANY_CONTACT_IMPORTED]->(u:User),(p:Post)
-        where r.company_code='" . $company_code . "' and b.mysql_id='" . $relationAttrs['bucket_id'] . "' and ID(p)=" . $postId . " and u.status<>'Separated' ";
-        if ($queryString) {
+    public function createPostContactsRelation($relationAttrs = array(), $postId = '', $company_code = '', $contactEmailid = '') {
+        
+        if (!empty($postId) && !empty($company_code) && !empty($contactEmailid)) {
+            $queryString = "Match (b:Contact_bucket)-[r:COMPANY_CONTACT_IMPORTED]->(u:User),(p:Post)
+            where r.company_code='" . $company_code . "' and b.mysql_id='" . $relationAttrs['bucket_id'] . "' and ID(p)=" . $postId . " and u.emailid='".$contactEmailid."' ";
+            if ($queryString) {
 
-            $queryString .= " create unique (p)-[:" . Config::get('constants.REFERRALS.INCLUDED') ;
-                                   ;
-            if (!empty($relationAttrs)) {
-                $queryString.="{";
-                foreach ($relationAttrs as $k => $v) {
-                    $queryString.=$k . ":'" . $this->appEncodeDecode->filterString($v) . "',";
+                $queryString .= " create unique (p)-[:" . Config::get('constants.REFERRALS.INCLUDED') ;
+                                       
+                if (!empty($relationAttrs)) {
+                    $queryString.="{";
+                    foreach ($relationAttrs as $k => $v) {
+                        $queryString.=$k . ":'" . $this->appEncodeDecode->filterString($v) . "',";
+                    }
+                    $queryString = rtrim($queryString, ",");
+                    $queryString.="}";
                 }
-                $queryString = rtrim($queryString, ",");
-                $queryString.="}";
+                $queryString.="]->(u)";
             }
-            $queryString.="]->(u)";
+            $queryString .= " return u";
+            //echo $queryString;
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
         }
-        $queryString .= " return u";
-        $query = new CypherQuery($this->client, $queryString);
-        return $result = $query->getResultSet();
+        return TRUE;
     }
 
     public function jobsList($email = "", $company_code = "", $type = "", $page = 0, $search = "",$permission="",$postby="") {
@@ -273,17 +278,17 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
                     $label = 'NonMintmesh';
                     $where = 'phone';
                 }  
+//                                                and p.status='".Config::get('constants.REFERRALS.STATUSES.ACTIVE')."'
                 $queryString = "MATCH (u:".$label.")-[r:GOT_REFERRED]->(p:Post) where ID(p)=".$postId." 
-                                and p.status='".Config::get('constants.REFERRALS.STATUSES.ACTIVE')."'
                                 and r.referred_by='".$referredBy."' and r.relation_count='".$relationCount."'
 				and u.".$where." ='".$referral."' and  r.awaiting_action_status = 'INTERVIEWED'
                                 return p,r " ;
                 $query  = new CypherQuery($this->client, $queryString);
                 $result = $query->getResultSet();
                 $response  = $result->count();
-                
+//                                                and p.status='".Config::get('constants.REFERRALS.STATUSES.ACTIVE')."'
+
                 $queryString = "MATCH (u:".$label.")-[r:GOT_REFERRED]->(p:Post) where ID(p)=".$postId." 
-                                and p.status='".Config::get('constants.REFERRALS.STATUSES.ACTIVE')."'
                                 and r.referred_by='".$referredBy."' and r.relation_count='".$relationCount."'
 				and u.".$where." ='".$referral."' 
                                 set r.awaiting_action_status = '".$status."', r.awaiting_action_by = '".$userEmailId."',
@@ -346,10 +351,14 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
     }
     
     public function getPosts($postId) {
+        $return = array();
         $queryString = "match (p:Post) where ID(p)=".$postId." return p";
         $query  = new CypherQuery($this->client, $queryString);
-        $result = $query->getResultSet();   
-        return $result[0][0];
+        $result = $query->getResultSet();         
+        if (isset($result[0]) && isset($result[0][0])){
+            $return = $result[0][0];
+        }
+       return $return;
     }
     
     public function createCampaignAndCompanyRelation($companyCode='', $campaign = array(), $userEmailId='') {
@@ -472,7 +481,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
                     if($input['open'] == 'true'){
                         $queryString .= "or ";
                 }
-                    $queryString .= "c.status='closed'";
+                    $queryString .= "c.status='CLOSED'";
                  }
                 $queryString .= ")";
 
@@ -721,7 +730,93 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         } 
        return $return; 
     }
-       
+    
+    public function referCandidate($neoInput='',$input='') {
+        $queryString = "Match (p:Post),(u:User)
+                                    where ID(p)=". $input['post_id'] ." and u.emailid='" . $neoInput['referral'] . "'
+                                    create unique (u)-[r:" . Config::get('constants.REFERRALS.GOT_REFERRED');
+         if (!empty($neoInput)) {
+                    $queryString.="{";
+                    foreach ($neoInput as $k => $v) {
+                        $queryString.=$k.":'".$this->appEncodeDecode->filterString($v)."'," ;
+                    }
+                    $queryString = rtrim($queryString, ",");
+                    $queryString.="}";
+                    }
+                    $queryString.="]->(p) set p.total_referral_count = p.total_referral_count + 1,r.resume_parsed=0";
+                    if($neoInput['one_way_status'] == 'UNSOLICITED'){
+                        $queryString .= ",p.unsolicited_count = p.unsolicited_count + 1";
+                    }
+                    $queryString .=  " return count(p)";
+                    $query = new CypherQuery($this->client, $queryString);
+                    $result = $query->getResultSet();
+                    return $result;
+        
+    }
+    
+    public function getReferralDetails($id='') {
+        $queryString = "Match (u:User)-[r:GOT_REFERRED]->(p:Post) where ID(r)=".$id." return u,r,p";
+        $query = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();
+        return $result;
+        
+    }
+    
+    public function checkIncludedRelation($postId=0, $refById=0) {
+        $return = FALSE;
+        $queryString = "MATCH (p:Post)-[r:INCLUDED]->(u:User) where ID(p)=".$postId." and ID(u)=".$refById." return r";
+        $query  = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();
+        if (isset($result[0]) && isset($result[0][0])){
+            $return = $result[0][0];
+        }
+       return $return;
+    }
+    
+    public function getApplyJobsList($companyCode='', $page=0) {
+        $return = array();
+        $skip   = $limit = 0;
+        if (!empty($page)){
+            $limit = $page*10 ;
+            $skip  = $limit - 10 ;
+        }
+        $queryString = "MATCH (c:Company)<-[:POSTED_FOR]-(p:Post) where c.companyCode = '".$companyCode."'
+                        WITH count(p) AS cnt
+                        MATCH (c:Company)<-[:POSTED_FOR]-(p:Post) where c.companyCode = '".$companyCode."'
+                        RETURN p,c, cnt order by p.created_at desc ";
+        if (!empty($limit) && !($limit < 0))
+        {
+            $queryString.=" skip ".$skip." limit ".self::LIMIT ;
+        }
+        $query  = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();
+        if($result->count())
+            $return = $result;  
+         
+       return $return;
+    }
+    
+    public function getPostCompany($postId=''){
+        $queryString = "MATCH (p:Post)-[:POSTED_FOR]->(c:Company) where ID(p)=".$postId." return c";
+        $query  = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();
+        if($result){
+            return $result[0][0];
+        }else{
+            return false;
+        }
+    }
+    
+    public function getBucketForPost($postId=''){
+        $queryString = "MATCH (p:Post)<-[r:CAMPAIGN_POST]-(c:Campaign)-[r1:CAMPAIGN_CONTACT]->(u:User) where ID(p)=".$postId." return distinct(r1.bucket_id)";
+        $query  = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();
+        if($result){
+            return $result;
+        }else{
+            return false;
+        }
+    }
 }
 
 ?>

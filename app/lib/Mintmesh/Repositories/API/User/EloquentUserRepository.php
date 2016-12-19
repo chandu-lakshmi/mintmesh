@@ -336,9 +336,9 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                 return 0;
             }
         }
-        public function getCountryCodes()
+        public function getCountryCodes($name='')
         {
-            $sql = "select id, name, country_code from country where status = 1 order by name";
+            $sql = "select id, name, country_code from country where status = 1 and name like '%".$name."%' order by name";
             $result = DB::select($sql);
             return $result ;
         }
@@ -539,7 +539,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
             return $result = DB::select($sql);
         }
         
-        public function getJobFunctionName($functionId)
+        public function getJobFunctionName($functionId=0)
         {
             if (!empty($functionId) && is_numeric($functionId))
             {

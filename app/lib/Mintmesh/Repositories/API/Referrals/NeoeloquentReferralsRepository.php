@@ -1203,5 +1203,192 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             }
             return $result;
         }  
+
+        /* function for initiating confident score data */
+        public function initConfidentScoreDetails($relationID) {
+            $metaData = $this->getRequiredDataforConfidentScore($relationID);
+            
+            return $metaData;
+        }
+        
+        public function getRequiredDataforConfidentScore($relationID) {
+            //echo "\n before neo4j query".date("H:i:s");
+            $initialValues = '';
+            $queryString = "MATCH (p:Post)-[r:".Config::get('constants.REFERRALS.GOT_REFERRED')."]-(u) WHERE Id(r)=$relationID RETURN p,r,u";
+            $query  = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            //echo "\n".$queryString;
+            if($result->count()) {
+                foreach($result as $data) {
+                    $postData['ID'] = $data[0]->getID();
+                    $postData['employment_type']  = $this->getEmploymentTypeNameForPost($data[0]->getID());
+                    $postData['job_function']  = $this->getJobFunctionNameForPost($data[0]->getID());
+                    $postData['Industry']  = $this->getIndustryNameForPost($data[0]->getID());
+                    $postData['experience']  = $this->getExperienceRangeNameForPost($data[0]->getID());
+                    $postData['description']  = $data[0]->job_description;
+                    $postData['title']  = $data[0]->service_name;
+                    $postData['location']  = $data[0]->service_location;
+                    $postData['skills']  = $data[0]->skills;
+                    //$postData = $data[0]->getProperties();
+                    $relationData['ID'] = $relationID;
+                    $relationData['RESUME_JSON'] = $data[1]->resume_parsed_Json;
+                    
+
+                    $userData = $data[2]->getProperties();
+
+                }
+                $initialValues['post'] = $postData;
+                $initialValues['relation'] = $relationData;
+            }
+            //echo "\n after neo4j query".date("H:i:s");
+            return $initialValues;
+        }
+        
+        public function calculateSolicitedConfidenceScore($relationID) {
+            $initialValues = $this->initConfidentScoreDetails($relationID);
+            $resumeJSON = $this->getResumeString($initialValues['relation']['RESUME_JSON']);
+            
+            // calculate confidence score based on job function
+            $job_function_confidentScore = round($this->confidentScore($initialValues['post']['job_function'],$resumeJSON),2);
+            // calcuate confident score based on industry
+            $industry_confidentScore = round($this->confidentScore($initialValues['post']['Industry'],$resumeJSON),2);
+            // calcuate confident score based on location
+            $location_confidentScore = round($this->confidentScore_location($initialValues['post']['location'],$resumeJSON), 2);
+            // calculate confident score based on skills
+            $skills_confidentScore = round($this->confidentScore_skills($initialValues['post']['skills'],$resumeJSON), 2);
+            
+            $overall_score = round(($job_function_confidentScore + $industry_confidentScore + $location_confidentScore + $skills_confidentScore)/4, 2);
+            //echo "\nJF_% - ".$job_function_confidentScore;
+            //echo "\nIndustry_% - ".$industry_confidentScore;
+            //echo "\nLocation_% - ".$location_confidentScore;
+            //echo "\nSkills_% - ".$skills_confidentScore;
+            // updating the relation with confident score
+            $queryString = "MATCH (p:Post)-[r:".Config::get('constants.REFERRALS.GOT_REFERRED')."]-(u) WHERE Id(r)=$relationID SET r.job_function_score = ".$job_function_confidentScore.", r.industry_score = ".$industry_confidentScore.", r.service_location_score = ".$location_confidentScore.", r.skills_score = ".$skills_confidentScore.", r.overall_score = ".$overall_score." return r";
+            //echo "\n".$queryString;
+            $query  = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            
+            return true;
+            //print_r($initialValues);
+        }
+        
+        public function getResumeString($resumeJSONPath) {
+            $jsonString = file_get_contents($resumeJSONPath);
+            $resumeString = str_replace(array("\r\n","\r","\n","\\r","\\n","\\r\\n","\\n\\n")," ",$jsonString);
+            
+            return $resumeString;
+        }
+        
+        public function confidentScore($searchKey, $resumeJSON) {
+            $returnPercent = 0;
+            $pattern = ""; $string = "";
+            // explode searchKey for multiple values
+            //echo "\n".$searchKey;
+            $string = explode("/", $searchKey);
+            if(count($string) > 1) {
+                foreach($string as $data) {
+                    $str = explode(" ",$data);
+                    if(count($str)>1){
+                        foreach($str as $val) {
+                            //echo "\n".$val;
+                            $pattern = "/\b$val\b/i";
+                            preg_match($pattern, $resumeJSON, $matches, PREG_OFFSET_CAPTURE);
+                            //print_r($matches);
+                            if(count($matches) > 0){
+                                $returnPercent += 50;
+                                //echo "\n1 - ".$returnPercent."\n";
+                            }
+                        }
+                        $returnPercent = $returnPercent / count($str);
+                        //echo "\n2 - ".$returnPercent."\n";
+                    } else {
+                        //echo "\n".$data;
+                        $pattern = "/\b$data\b/i";
+                        preg_match($pattern, $resumeJSON, $matches, PREG_OFFSET_CAPTURE);
+                        //print_r($matches);
+                        if(count($matches) > 0){
+                            $returnPercent += 100;
+                        }
+                        //echo "\n3 - ".$returnPercent."\n";
+                    }
+                }
+                $returnPercent = $returnPercent / count($string);
+            } else {
+                //echo "\n".$searchKey;
+                $pattern = "/\b$searchKey\b/i";
+                preg_match($pattern, $resumeJSON, $matches, PREG_OFFSET_CAPTURE);
+                if(count($matches) > 0){
+                    $returnPercent += 100;
+                    //echo "\n4 - ".$returnPercent."\n";
+                }
+            }
+            
+            return $returnPercent;
+        }
+        
+        public function confidentScore_location($searchLocation, $resumeJSON) {
+            $returnPercent = 0;
+            if($searchLocation != "Anywhere") {
+                $locationString = explode(",",$searchLocation);
+                if(count($locationString)>1) {
+                    foreach ($locationString as $value) {
+                        $value = trim($value);
+                        //echo "\n".$value;
+                        $pattern = "/\b$value\b/i";
+                        preg_match($pattern, $resumeJSON, $matches, PREG_OFFSET_CAPTURE);
+                        //print_r($matches);
+                        if(count($matches) > 0){
+                            $returnPercent += 100;
+                            //echo "\n5 - ".$returnPercent."\n";
+                        }
+                    }
+                    $returnPercent = $returnPercent / count($locationString);
+                    //echo "\n6 - ".$returnPercent."\n";
+                } else {
+                    //echo "\n".$searchLocation;
+                    $pattern = "/\b$searchLocation\b/i";
+                    preg_match($pattern, $resumeJSON, $matches, PREG_OFFSET_CAPTURE);
+                    //print_r($matches);
+                    if(count($matches) > 0){
+                        $returnPercent += 100;
+                        //echo "\n7 - ".$returnPercent."\n";
+                    }
+                }
+            } else {
+                $returnPercent = 100;
+            }
+            
+            return $returnPercent;
+        }
+        
+        function confidentScore_skills($skills, $resumeJSON) {
+            $returnPercent = 0;
+            $string = explode(",",$skills);
+            if(count($string) > 1) {
+                foreach($string as $skill){
+                    $skill = preg_quote(trim($skill));
+                    $pattern = "/\b$skill\b/i";
+                    preg_match($pattern, $resumeJSON, $matches, PREG_OFFSET_CAPTURE);
+                    print_r($matches);
+                    if(count($matches) > 0) {
+                        $returnPercent += 100;
+                    }
+                }
+                //echo "\n 1 return% -".$returnPercent;
+                $returnPercent = $returnPercent / count($string);
+                //echo "\n 2 return% -".$returnPercent;
+            } else {
+                $skills = preg_quote($skills);
+                $pattern = "/\b$skills\b/i";
+                preg_match($pattern, $resumeJSON, $matches, PREG_OFFSET_CAPTURE);
+                //print_r($matches);
+                if(count($matches) > 0){
+                    $returnPercent += 100;
+                    //echo "\n7 - ".$returnPercent."\n";
+                }
+            }
+            
+            return $returnPercent;
+        }
 }
 ?>

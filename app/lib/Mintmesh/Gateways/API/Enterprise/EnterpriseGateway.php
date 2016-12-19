@@ -2301,7 +2301,8 @@ class EnterpriseGateway {
                    $expired = '';
                }
                $details['users'][] = array('emailid' => $u['emailid'],'user_id' => $u['user_id'],'fullname' => $u['fullname'],
-                   'location' => $u['location'],'status' => $u['status'],'designation' => $u['designation'],'photo' => $u['photo'],'expired' => $expired);
+                   'location' => $u['location'],'status' => $u['status'],'designation' => $u['designation'],'photo' => $u['photo'],'expired' => $expired,
+                   'admin' => ($u['emailid'] == $this->loggedinUserDetails->emailid)?1:0);
            }
            $permissions = $this->enterpriseRepository->getGroupPermissions($groups->id, $input);
            $details['permissions'] = !empty($permissions)?$permissions:json_decode ("{}");

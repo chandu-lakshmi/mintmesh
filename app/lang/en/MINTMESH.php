@@ -111,7 +111,8 @@ return array(
                 "reset_password_success" => "emails.Api.User.reset_password_success",
                 "enterprise_reset_password_success" => "emails.Api.User.enterprise_reset_password_success",
                 "resume_attachment" => "emails.Api.User.resume_attachment",
-                "enterprise_contacts_invitation" => "emails.Api.User.enterprise_contacts_invitation"
+                "enterprise_contacts_invitation" => "emails.Api.User.enterprise_contacts_invitation",
+                "contacts_job_invitation" => "emails.Api.User.job_invitation"
          ),
          "activate_user"=>array(
              "success"=>"Successfully activated",
@@ -451,6 +452,24 @@ return array(
             "success"=>"successfully retrieved candidates List",
             "no_candidates"=>"no candidate records found",
             "failure"=>"failed to retrieve candidates"
+    ),
+    'apply_job'=>array(
+            "success"=>"successfully referred",
+            "failure"=>"failed to refer",
+            "post_closed"=>"job is closed",
+            "referred"=>"candidate is already referred for the post.",
+            "referrer_invalid"=>"invalid referrer",
+            "invalid"=>"invalid reference id and post id"
+    ),
+    'apply_jobs_list'=>array(
+            "success"=>"successfully retrieved Jobs List",
+            "no_jobs"=>"no Jobs found",
+            "failure"=>"failed to retrieve Jobs List"
+    ),
+    'apply_job_details'=>array(
+            "success"=>"successfully retrieved Job details",
+            "no_jobs"=>"no Jobs found",
+            "failure"=>"failed to retrieve Job details"
     )
     
 );

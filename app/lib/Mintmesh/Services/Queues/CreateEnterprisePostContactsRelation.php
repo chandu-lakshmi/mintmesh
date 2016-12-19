@@ -11,7 +11,7 @@ class CreateEnterprisePostContactsRelation {
     }
     public function fire($job, $jobData)
     {
-        $this->postGateway->checkToCreateEnterprisePostContactsRelationQueue($jobData['company_code'], $jobData['user_emailid'], $jobData['bucket_id'],$jobData['postId'],$jobData['notification_msg']) ;
+        $this->postGateway->createPostContactsRelation($jobData) ;
         $job->delete();
     }
 

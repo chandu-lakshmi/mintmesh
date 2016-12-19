@@ -113,7 +113,8 @@ return [
                 'DECLINED'=>'DECLINED',
                 'ACTIVE'=>'ACTIVE',
                 'CLOSED'=>'CLOSED',
-                'COMPLETED'=>'COMPLETED'
+                'COMPLETED'=>'COMPLETED',
+                'UNSOLICITED'=>'UNSOLICITED'
         ],
         'ASSIGNED_INDUSTRY'=>'ASSIGNED_INDUSTRY',
         'ASSIGNED_JOB_FUNCTION'=>'ASSIGNED_JOB_FUNCTION',
@@ -150,6 +151,7 @@ return [
         'REFERRER_NAME'=>'karthik.jangeti533',
         'REFERRER_HOST'=>'@gmail.com'
     ],
+    'MINTMESH_ENCCODE'=>'MiNtM35h',
     'S3BUCKET' => 'mintmesh/dev/profilepic',
     'S3BUCKET_RESUME' => 'mintmesh/dev/resume/',
     'RESUME_MAX_SIZE' => 1000000,//1MB

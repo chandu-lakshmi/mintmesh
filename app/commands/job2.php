@@ -66,13 +66,14 @@ class job2 extends Command {
                 where cm.flag = '0' LIMIT 1");
         foreach ($mails as $mail) {
             $id = $mail->id;
+			if(file_exists($directory.'/'.$mail->fn_re)){
             $parsefiles = $this->parseFile($directory.'/'.$mail->fn_re,$mail->cnt_type);
             if(isset($parsefiles['email']) && count($parsefiles['email']) > 0){
                $from = $parsefiles['email'][0];
-               $neoInput['referrer_name'] = $parsefiles['name'][0];
+               $neoInput['referral_name'] = $parsefiles['name'][0];
             }else{
                 $from = $mail->from;
-                $neoInput['referrer_name'] = substr($from, 0, strpos($from, '@'));
+                $neoInput['referral_name'] = substr($from, 0, strpos($from, '@'));
             }
             $reply_vals = array(); 
             $mail_params = explode("@", $mail->to);
@@ -113,15 +114,15 @@ class job2 extends Command {
                     $createUser = $this->createUser($from,$neoInput);
                     $neoInput['referral'] = $createUser[0][0];
                 }
-                $files = File::allFiles($directory);
-                foreach ($files as $file){
-                    $this->userFileUploader->source = $file;
+                //Log::info("<<<<<<<<<<<<<<<< In job2 >>>>>>>>>>>>>".print_r($neoInput,1));
+               /* $files = File::allFiles($directory);
+                foreach ($files as $file){*/
+                    $this->userFileUploader->source = $directory.$mail->fn_re;
                     $this->userFileUploader->destination = Config::get('constants.S3BUCKET_NON_MM_REFER_RESUME');
-                    $renamedFileName = $this->userFileUploader->uploadToS3BySource($file);
+                    $renamedFileName = $this->userFileUploader->uploadToS3BySource($directory.$mail->fn_re);
                     $neoInput['resume_path'] = $renamedFileName;
-                }
+               // }
                 $neoInput['resume_original_name'] = $mail->fn_or;
-                $neoInput['resume_parsed'] = 0;
                 $neoInput['created_at'] = gmdate('Y-m-d H:i:s');
                 $neoInput['awaiting_action_status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
                 $neoInput['status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
@@ -131,7 +132,7 @@ class job2 extends Command {
                 $neoInput['awaiting_action_by'] = $neoInput['referred_for'];
                 $queryString = "Match (p:Post),(u:User)
                                     where ID(p)=". $neoInput['post_id'] ." and u.emailid='" . $neoInput['referral'] . "'
-                                    create unique (u)-[:" . Config::get('constants.REFERRALS.GOT_REFERRED');
+                                    create unique (u)-[r:" . Config::get('constants.REFERRALS.GOT_REFERRED');
                 if (!empty($neoInput)) {
                     $queryString.="{";
                     foreach ($neoInput as $k => $v) {
@@ -140,11 +141,12 @@ class job2 extends Command {
                 $queryString = rtrim($queryString, ",");
                 $queryString.="}";
                 }
-                $queryString.="]->(p) set p.total_referral_count = p.total_referral_count + 1 return count(p)";
+                $queryString.="]->(p) set p.total_referral_count = p.total_referral_count + 1, r.resume_parsed=0  return count(p)";
+               // Log::info("<<<<<<<<<<<<<<<< In neo4j_query >>>>>>>>>>>>>".print_r($queryString,1));
+			  
                 $query = new CypherQuery($this->client, $queryString);
                 $result = $query->getResultSet();
             }else{
-                
                 DB::statement("UPDATE cm_mails c set c.flag = '2' where c.id='" . $id . "'");
                 
             }
@@ -192,9 +194,12 @@ class job2 extends Command {
 //                );
 //                $this->userRepository->logEmail($emailLog);
             }
-        }else{
-            DB::statement("UPDATE cm_mails c set c.flag = '2' where c.id='" . $id . "'");
-        }
+				}else{
+					DB::statement("UPDATE cm_mails c set c.flag = '2' where c.id='" . $id . "'");
+				}
+			}else{
+				DB::statement("UPDATE cm_mails c set c.flag = '2' where c.id='" . $id . "'");
+			}
         } 
         
     }
@@ -219,20 +224,24 @@ class job2 extends Command {
         ];
     }
     
-    private function checkUser($emailid){
+    public function checkUser($emailid){
         $queryString = "MATCH (u:User) where u.emailid='".$emailid."' return u.emailid";
         $query = new CypherQuery($this->client, $queryString);
         return $result = $query->getResultSet();
     }
     
-     private function createUser($emailid,$neoInput){
-        $queryString = "CREATE (u:User) SET u.emailid='".$emailid."',u.firstname='".$neoInput['referrer_name']."',u.fullname='".$neoInput['referrer_name']."' return u.emailid";
+     public function createUser($emailid,$neoInput){
+        $queryString = "CREATE (u:User) SET u.emailid='".$emailid."',u.firstname='".$neoInput['referral_name']."',u.fullname='".$neoInput['referral_name']."' ";
+        if(!empty($neoInput['phone_no']) && isset($neoInput['phone_no'])){
+        $queryString .= ",u.phone_no='".$neoInput['phone_no']."' ";
+        }
+        $queryString .="return u.emailid";
         $query = new CypherQuery($this->client, $queryString);
         return $result = $query->getResultSet();
     }
     
  
-    private function checkRel($neoInput){
+    public function checkRel($neoInput){
         $queryString = "MATCH (p:Post)-[r:INCLUDED]->(u:User) where ID(p)=".$neoInput['post_id']." and ID(u)=".$neoInput['referred_by_id']." return r,u";
         $query = new CypherQuery($this->client, $queryString);
         return $result = $query->getResultSet();
@@ -254,7 +263,7 @@ class job2 extends Command {
               return $records;
     }
     
-    private function checkCandidate($neoInput,$from) {
+    public function checkCandidate($neoInput,$from) {
         $queryString = "MATCH (u:User)-[r:GOT_REFERRED]->(p:Post) where u.emailid='".$from."' and ID(p)=".$neoInput['post_id']." and r.status<>'DECLINED' return r";
         $query = new CypherQuery($this->client, $queryString);
          $result = $query->getResultSet();
@@ -264,7 +273,7 @@ class job2 extends Command {
             return true;    
         }
     }
-    private function getPost($neoInput){
+    public function getPost($neoInput){
         $queryString = "MATCH (p:Post) where ID(p)=".$neoInput['post_id']." return p";
         $query = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();

@@ -40,6 +40,40 @@ class PostValidator extends Validator {
             'company_code'          => 'required',
             'campaign_id'          => 'required',
         ),
+        'refer_candidate' => array(
+            'emp_email_id'      =>   'required',
+            'firstname'         =>   'required',
+            'emailid'           =>   'required',
+            'department'        =>   'required',
+            'cv'                =>   'required'
+        ),
+        'multiple_awaiting_action' => array(
+            'id'                =>    'required',
+            'awaiting_action_status' =>  'required'
+        ),
+        'apply_job' => array(
+            'fullname'         =>   'required',
+            'emailid'           =>   'required',
+            'cv'                =>   'required',
+        ),
+        'apply_jobs_list' => array(
+            'reference_id'     =>   'required'
+        ),
+        'job_post_from_campaigns' => array(
+            'job_title'       => 'required',
+            'job_function'    => 'required',
+            'location'        => 'required',
+            'industry'        => 'required',
+            'employment_type' => 'required',
+            'experience_range'=> 'required',
+            'job_description' => 'required',
+            'job_period'      => 'required',
+            'job_type'        => 'required',
+        ),
+        'add_bucket_contacts_to_post'  => array(
+            'post_id'        => 'required',
+            'bucket_id'      => 'required'
+        )
     );
 
     //conditional checks for you_are field in referrals

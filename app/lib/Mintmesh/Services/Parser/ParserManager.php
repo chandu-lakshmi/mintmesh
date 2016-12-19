@@ -46,9 +46,9 @@ class ParserManager {
     public function processParsing($filepath='') {
         
         $inputFile = $this->initiateParser($filepath);
-        
+
         $rand = rand(10, 10000);
-        $outputfile = Config::get('constants.PARSER_INPUT_PATH').$rand.".json";
+        $outputfile = Config::get('constants.PARSER_OUTPUT_PATH').$rand.".json";
         
         try {
             shell_exec("sh ".Config::get('constants.PARSER_PATH')." $inputFile $outputfile");
@@ -63,6 +63,7 @@ class ParserManager {
     }
     
     public function uploadOutputJSONtoS3($filepath) {
+        $renamedFileName = '';
         if(file_exists($filepath)) {
             $this->userFileUploader->destination = Config::get('constants.S3BUCKET_MM_REFER_RESUME_JSON');
             $renamedFileName = $this->userFileUploader->uploadToS3BySource($filepath);

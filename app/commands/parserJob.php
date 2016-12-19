@@ -66,6 +66,8 @@ class parserJob extends Command {
                $parsedRes        =  $this->Parser->processParsing($filepath);
                #save the parsed json file path here
                $updateParsedJson =  $this->updateResumeParsedJsonPath($relationId, $parsedRes);
+               // adding confident score calcuation job to queue
+               $this->addSolicitedConfidentScoreJobtoQueue($relationId);
             }
         }
         return TRUE;
@@ -83,15 +85,20 @@ class parserJob extends Command {
     }
     
     public function updateResumeParsedStatus($relationId=0, $status=0){
-        $queryString = "MATCH (u)-[r:GOT_REFERRED]->(p) where ID(r)=".$relationId." set r.resume_parsed=".$status." RETURN r";
+        $queryString = "MATCH (u)-[r:GOT_REFERRED]->(p:Post) where ID(r)=".$relationId." set r.resume_parsed=".$status." RETURN r";
         $query = new CypherQuery($this->client, $queryString);
         return $result = $query->getResultSet();
     } 
     
     public function updateResumeParsedJsonPath($relationId=0, $jsonPath=''){
-        $queryString = "MATCH (u)-[r:GOT_REFERRED]->(p) where ID(r)=".$relationId." set  r.resume_parsed_Json ='".$jsonPath."' RETURN r";
+        $queryString = "MATCH (u)-[r:GOT_REFERRED]->(p:Post) where ID(r)=".$relationId." set  r.resume_parsed_Json ='".$jsonPath."' RETURN r";
         $query = new CypherQuery($this->client, $queryString);
         return $result = $query->getResultSet();
     }
 
+    // function for initiating the job for confident score calculation
+    public function addSolicitedConfidentScoreJobtoQueue($relationID) {
+        $pushData['relationID'] = $relationID;
+        Queue::push('Mintmesh\Services\Queues\ConfidentScoreQueue', $pushData);
+    }
 }

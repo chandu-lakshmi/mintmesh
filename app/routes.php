@@ -50,6 +50,9 @@ Route::group(array('prefix' => 'v1'), function() {
     
     //get skills
     Route::post("get_skills", "API\User\UserController@getSkills");
+    
+    //get Countries list by name search
+    Route::post("get_countries", "API\User\UserController@getCountries");
         
     //check email existance
     Route::post("checkEmailExistance", "API\User\UserController@checkEmailExistance");
@@ -103,6 +106,16 @@ Route::group(array('prefix' => 'v1'), function() {
     //set password
       Route::post("enterprise/set_password", "API\Enterprise\EnterpriseController@setPassword");
       Route::get("enterprise/update_new_permission", "API\Enterprise\EnterpriseController@updateNewPermission");
+      //refer candidate
+      Route::post("enterprise/refer_candidate", "API\Post\PostController@referCandidate");
+      //applying job 
+      Route::post("enterprise/apply_job", "API\Post\PostController@applyJob");
+      //decrpyting ref
+      Route::post("enterprise/decrypt_ref", "API\Post\PostController@decryptRef");
+      //get applying job list
+      Route::post("enterprise/apply_jobs_list", "API\Post\PostController@applyJobsList");
+      //get applying job details
+      Route::post("enterprise/apply_job_details", "API\Post\PostController@applyJobDetails");
 });
 
 //Route::group(array('prefix' => 'v1'), function() {
@@ -312,6 +325,10 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       
       //get company all referrals link
       Route::post("enterprise/get_company_all_referrals", "API\Post\PostController@getCompanyAllReferrals");
+      //mutliple awaiting action
+      Route::post("enterprise/multiple_awaiting_action", "API\Post\PostController@multipleAwaitingAction");
+      //posting job from campaigns
+      Route::post("enterprise/job_post_from_campaigns", "API\Post\PostController@jobPostFromCampaigns");
       
 });
 

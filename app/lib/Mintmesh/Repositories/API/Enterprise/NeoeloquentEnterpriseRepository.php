@@ -520,6 +520,12 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
         return $result[0][0];
     }
     
+    public function getNodeById($id='') {
+        $queryString = "MATCH (n:User) where ID(n)=".$id." return n";
+        $query = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();
+        return $result[0][0];
+    }
     
 }
 

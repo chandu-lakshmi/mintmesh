@@ -1250,6 +1250,20 @@ class UserController extends \BaseController {
            return \Response::json($response);
 
        }
+       
+        /**
+	 * list the countries by name search
+         *  
+         * POST
+         * 
+	 * @return Response
+	 */
+        public function getCountries()
+        {
+            $inputUserData = \Input::all();
+            $response = $this->userGateway->getCountries($inputUserData);
+            return \Response::json($response);
+        }
         
 }
 ?>
