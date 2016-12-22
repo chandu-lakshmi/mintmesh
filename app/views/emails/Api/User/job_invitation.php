@@ -108,7 +108,7 @@
                                     </table>
                                 </td>
                             <tr>
-                                <td style="padding-top:30px">Here is a job that has come up at my company. If you are interested, please attach your resume to this email and forward this to <a href="<?php echo $reply_emailid; ?>"><?php echo $reply_emailid; ?></a></td> 
+                                <td style="padding-top:30px">You can also attach your resume and send an email by clicking on the link below <a href="mailto:<?php echo $reply_emailid; ?>" target="_top"><?php echo $reply_emailid; ?></a></td> 
                             </tr>
                             </tr>
                             <tr height="40px"><td style="border-bottom:1px solid #cccccc">&nbsp;</td></tr>

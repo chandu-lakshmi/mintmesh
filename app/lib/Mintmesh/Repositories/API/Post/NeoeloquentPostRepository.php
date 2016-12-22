@@ -701,7 +701,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         return $result = $query->getResultSet();
     }
     
-    public function getCompanyAllReferrals($emailId='', $companyCode='', $search='', $page=0)
+    public function getCompanyAllReferrals($emailId='', $companyCode='', $search='', $page=0,$filters = '')
     {
        $return = FALSE;
        if (!empty($emailId) && !empty($companyCode))
@@ -715,14 +715,49 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
 
            $queryString = "MATCH (c:Company)<-[:POSTED_FOR]-(p:Post)<-[r:GOT_REFERRED]-(u) where c.companyCode='".$companyCode."' ";
            if (!empty($search)){
-              $queryString.=" and (p.service_name =~ '(?i).*". $search .".*' or r.one_way_status =~ '(?i).*". $search .".*')  ";
+              $queryString.=" and (p.service_name =~ '(?i).*". $search .".*' or r.one_way_status =~ '(?i).*". $search .".*') ";
+           }
+           if(!empty($filters)){
+               if(!empty($search)){
+                   $queryString .= "or (";
+               }else{
+                   $queryString .= "and (";
+               }
+           if(in_array("Accepted",$filters)){
+               $queryString .= "r.awaiting_action_status='ACCEPTED' "; 
+           }
+           if(in_array("Declined",$filters)){
+               if(in_array("Accepted",$filters)){
+               $queryString .= "or ";}
+               $queryString .= "r.one_way_status='DECLINED' "; 
+           }
+           if(in_array("Unsolicited",$filters)){
+               if(in_array("Accepted",$filters) || in_array("Declined",$filters)){
+               $queryString .= "or ";}
+               $queryString .= "r.one_way_status='UNSOLICITED' "; 
+           }
+           if(in_array("Interviewed",$filters)){
+               if(in_array("Accepted",$filters) || in_array("Declined",$filters) || in_array("Unsolicited",$filters)){
+               $queryString .= "or ";}
+               $queryString .= "r.awaiting_action_status='INTERVIEWED' "; 
+           }
+           if(in_array("Offered",$filters)){
+               if(in_array("Accepted",$filters) || in_array("Declined",$filters) || in_array("Unsolicited",$filters) || in_array("Interviewed",$filters)){
+               $queryString .= "or ";}
+               $queryString .= "r.awaiting_action_status='OFFERMADE' "; 
+           }
+           if(in_array("Hired",$filters)){
+               if(in_array("Accepted",$filters) || in_array("Declined",$filters) || in_array("Unsolicited",$filters) || in_array("Interviewed",$filters) || in_array("Offered",$filters)){
+               $queryString .= "or ";}
+               $queryString .= "r.awaiting_action_status='HIRED' "; 
+           }
+           $queryString .= ")";
            }
            $queryString.=" return p,u,r order by r.created_at desc";
            if (!empty($limit) && !($limit < 0))
            {
                $queryString.=" skip ".$skip." limit ".self::LIMIT ;
            }
-           //echo $queryString ;exit;
            $query = new CypherQuery($this->client, $queryString);
            $result = $query->getResultSet(); 
             if($result->count())
@@ -780,9 +815,9 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
             $limit = $page*10 ;
             $skip  = $limit - 10 ;
         }
-        $queryString = "MATCH (c:Company)<-[:POSTED_FOR]-(p:Post) where c.companyCode = '".$companyCode."'
+        $queryString = "MATCH (c:Company)<-[:POSTED_FOR]-(p:Post) where c.companyCode = '".$companyCode."'  and (NOT (HAS (p.post_from_campaign)) OR (p.post_from_campaign <> '1'))
                         WITH count(p) AS cnt
-                        MATCH (c:Company)<-[:POSTED_FOR]-(p:Post) where c.companyCode = '".$companyCode."'
+                        MATCH (c:Company)<-[:POSTED_FOR]-(p:Post) where c.companyCode = '".$companyCode."' and (NOT (HAS (p.post_from_campaign)) OR (p.post_from_campaign <> '1'))
                         RETURN p,c, cnt order by p.created_at desc ";
         if (!empty($limit) && !($limit < 0))
         {

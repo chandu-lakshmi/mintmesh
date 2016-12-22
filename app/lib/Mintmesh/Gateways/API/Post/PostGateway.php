@@ -87,7 +87,7 @@ class PostGateway {
         $this->userFileUploader = $userFileUploader;
         $this->userEmailManager = $userEmailManager;
         $this->job2 = $job2 ;
-        
+            
     }
     
     public function doValidation($validatorFilterKey, $langKey) {
@@ -535,7 +535,10 @@ class PostGateway {
                 $hiredCount     = !empty($postDetails['referral_hired_count']) ? $postDetails['referral_hired_count'] : 0;
                 $unsolicitedCount     = !empty($postDetails['unsolicited_count']) ? $postDetails['unsolicited_count'] : 0;
                 $pendingCount   = $referralCount - ($acceptedCount + $declinedCount + $unsolicitedCount);
-                
+                if(!empty($postDetails['post_from_campaign'])){
+                    $postFromCampaign = $postDetails['post_from_campaign'];
+                    $returnPosts['post_from_campaign']  = (int)$postFromCampaign;
+                }
                 $returnPosts['id']          = $postDetails['post_id'];
                 $returnPosts['location']    = $postDetails['service_location'];
                 $returnPosts['job_title']   = $postDetails['service_name'];
@@ -592,7 +595,7 @@ class PostGateway {
                     $bucket_id = $this->neoPostRepository->getBucketForPost($returnPosts['id']);
                     foreach($bucket_id as $buckets_id){
                     $bucketDetails     =  $this->neoPostRepository->bucket($buckets_id[0]);
-                    $buckets[]       =     $bucketDetails;
+                    $buckets[]         =  $bucketDetails;
                 } 
                 }
                 $invitedCount   = !empty($postDetails['invited_count']) ? $postDetails['invited_count'] : 0;
@@ -664,7 +667,6 @@ class PostGateway {
                 if(!empty($userDetails['emailid']) && !empty($postRelDetails['referred_by'])){
                     
                     $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($userDetails['emailid']);
-
                     if(empty($userDetails['firstname']) || empty($userDetails['fullname'])){
                           $nonMMUser    = $this->contactsRepository->getImportRelationDetailsByEmail($postRelDetails['referred_by'], $userDetails['emailid']);
                           $referralName = !empty($nonMMUser->fullname)?$nonMMUser->fullname:!empty($nonMMUser->firstname)?$nonMMUser->firstname: "The contact";
@@ -1358,7 +1360,9 @@ class PostGateway {
                 $post = array();
                 $postDetails = $this->referralsGateway->formPostDetailsArray($posts[0]);
                 $post['post_id'] = $postDetails['post_id'];
-                $postAry[] = $post['post_id'];
+                $post['name'] = $postDetails['service_name'];
+                $post['no_of_vacancies'] = $postDetails['no_of_vacancies'];
+                $postAry[] = $post;
                 $vacancies += !empty($postDetails['no_of_vacancies'])?$postDetails['no_of_vacancies']:'';;
             }
             $returnData['total_vacancies'] = $vacancies;
@@ -1371,7 +1375,7 @@ class PostGateway {
             }
             //form response details here
             $returnData['schedule']     = $campSchedule;
-            $returnData['job_ids']      = $postAry;
+            $returnData['job_details']      = $postAry;
             $returnData['bucket_ids']   = $bucketAry;
         
             $data = $returnData;
@@ -1436,8 +1440,14 @@ class PostGateway {
         $search         = !empty($input['search']) ? $input['search']:'';
         $company        = $this->enterpriseRepository->getUserCompanyMap($loggedInUser->id);
         $companyCode    = !empty($company->code)?$company->code:'';
-        $ReferralsRes   = $this->neoPostRepository->getCompanyAllReferrals($emailId, $companyCode, $search, $page);
-        $totalReferralsRes   = $this->neoPostRepository->getCompanyAllReferrals($emailId, $companyCode, '', '');
+        if(!empty($input['filter'])){
+            $filter = explode(',', $input['filter']);
+            $ReferralsRes   = $this->neoPostRepository->getCompanyAllReferrals($emailId, $companyCode, $search, $page,$filter);
+
+        }else{
+            $ReferralsRes   = $this->neoPostRepository->getCompanyAllReferrals($emailId, $companyCode, $search, $page,'');
+        }
+        $totalReferralsRes   = $this->neoPostRepository->getCompanyAllReferrals($emailId, $companyCode, '', '','');
         $totalRec       = !empty($ReferralsRes)?$ReferralsRes->count():'';
         $totalRecords       = !empty($totalReferralsRes)?$totalReferralsRes->count():'';
         if($ReferralsRes){
@@ -1672,6 +1682,7 @@ class PostGateway {
                     $record['vacancies']        = $postRes->no_of_vacancies;
                     $record['location']         = $postRes->service_location;
                     $record['job_description']  = $postRes->job_description;
+                    $record['status']           = $postRes->status;
                     $record['ref_code']         = MyEncrypt::encrypt_blowfish($postId.'_'.$refById,Config::get('constants.MINTMESH_ENCCODE'));
                     
                     $returnData[] = $record; 
@@ -1781,8 +1792,6 @@ class PostGateway {
         $compName       = '';
         $resJobsList    = $refAry = $returnData =  $data = array();
         $referenceId    = isset($input['reference_id'])?$input['reference_id']:'';
-        $page           = !empty($input['page_no']) ? $input['page_no'] : 0;
-
         if(!empty($referenceId)){
             $refId          = MyEncrypt::decrypt_blowfish($referenceId, Config::get('constants.MINTMESH_ENCCODE'));
             $refAry         = array_map('intval', explode('_', $refId));
@@ -1799,6 +1808,7 @@ class PostGateway {
                 $record['vacancies']        = $postDetails->no_of_vacancies;
                 $record['location']         = $postDetails->service_location;
                 $record['job_description']  = $postDetails->job_description;
+                $record['status']           = $postDetails->status;
                 $record['job_function']     = $postResult['job_function_name'];
                 $record['rewards']          = $this->getPostRewards($postId);
                 $record['ref_code']         = MyEncrypt::encrypt_blowfish($postId.'_'.$refById,Config::get('constants.MINTMESH_ENCCODE'));
