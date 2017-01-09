@@ -11,6 +11,7 @@
 |
 */
 /* Route related to API docs */
+
 Route::get('getMails','Email2Controller@getMails');
 Route::get('docs', function() {
 	return View::make('docs.v1.index');
@@ -116,6 +117,12 @@ Route::group(array('prefix' => 'v1'), function() {
       Route::post("enterprise/apply_jobs_list", "API\Post\PostController@applyJobsList");
       //get applying job details
       Route::post("enterprise/apply_job_details", "API\Post\PostController@applyJobDetails");
+      //get success Factor jobs
+      Route::get('create_sfjob/{reqid}','API\SuccessFactors\successFactorController@createSFJob');
+      //decrpyting campaign ref
+      Route::post("enterprise/decrypt_campaign_ref", "API\Post\PostController@decryptCampaignRef");
+      //get campaign job list
+      Route::post("enterprise/campaign_jobs_list", "API\Post\PostController@campaignJobsList");
 });
 
 //Route::group(array('prefix' => 'v1'), function() {
@@ -242,8 +249,16 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
         
        //resend activation link
        Route::post("resend_activation_link", "API\User\UserController@resendActivationLink");
+       
+       /**************
+        * APIs for Mintmesh enterprise APP with oAuth
+        */
+       //posting job from campaigns
+       Route::post("enterprise/get_jobs_list", "API\Post\PostController@getJobsList");
        //get campaigns
-       Route::post("referral/get_campaigns", "API\Referrals\ReferralsController@getCampaigns");
+       Route::post("referral/get_campaign_details", "API\Referrals\ReferralsController@getCampaignDetails");
+       //get job details
+       Route::post("enterprise/get_job_details", "API\Post\PostController@getJobDetails");
 
        /**************
         * APIs for Mintmesh enterprise with oAuth
@@ -318,11 +333,7 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       //deactivate post
       Route::post("enterprise/deactivate_post", "API\Enterprise\EnterpriseController@deactivatePost");
       //resend activation link
-      Route::post("enterprise/resend_activation_link", "API\Enterprise\EnterpriseController@resendActivationLink");
-      //testing
-      Route::post("parser/get_parser", "API\User\UserController@getParser");
-      Route::post("parser/ptest", "API\Post\PostController@ptest");
-      
+      Route::post("enterprise/resend_activation_link", "API\Enterprise\EnterpriseController@resendActivationLink");    
       //get company all referrals link
       Route::post("enterprise/get_company_all_referrals", "API\Post\PostController@getCompanyAllReferrals");
       //mutliple awaiting action
@@ -339,7 +350,7 @@ App::missing(function($exception)
     return Response::json(array('status_code' => 404, 'status' => 'error', 'message' => array('msg'=>'Page not found'), 'data' =>array()));
 });
 
-/* Route for getting the access toker with end users oAuth2.0
+/* Route for getting the access token with end users oAuth2.0
 |  Frst Time:
 |  POST: username & password
 |  returns accesstoken

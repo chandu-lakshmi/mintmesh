@@ -1193,13 +1193,20 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             return $count;
         } 
         
-        public function getCampaigns($userEmail=''){
+        public function getCampaigns($userEmail='', $campaignId=0){
             $result = array();
-            $userEmail  = $this->appEncodeDecode->filterString(strtolower($userEmail));
-            if (!empty($userEmail)){                 
-               $queryString = "MATCH (u:User)<-[:CAMPAIGN_CONTACT]-(c:Campaign{status:'ACTIVE'}) where u.emailid='".$userEmail."' RETURN distinct(c)";
+            if (!empty($userEmail) && !empty($campaignId)){                 
+               $userEmail   = $this->appEncodeDecode->filterString(strtolower($userEmail));
+               $queryString = "MATCH (u:User)<-[r:CAMPAIGN_CONTACT]-(c:Campaign{status:'ACTIVE'}) 
+                               where ID(c)=".$campaignId." and u.emailid='".$userEmail."' set r.post_read_status =1
+                               RETURN distinct(c)";
+               //echo $queryString;exit;
                $query       = new CypherQuery($this->client, $queryString);
-               $result      = $query->getResultSet();
+               $resultData  = $query->getResultSet();
+               if(!empty($resultData[0]) &&!empty($resultData[0][0]) ){
+                   $result = $resultData[0][0];
+               }
+               
             }
             return $result;
         }  

@@ -452,6 +452,7 @@ class EnterpriseGateway {
         }
          if (isset($input['logo_image_s3']) && !empty($input['logo_image_s3'])) {
             //upload the file
+            $input['company_logo'] = $input['logo_image_s3'];
             $responseData['company_logo'] = $input['logo_image_s3'];
         }
         if (isset($input['photos_s3']) && !empty($input['photos_s3'])) {
@@ -1163,12 +1164,14 @@ class EnterpriseGateway {
         // get the logged in user company details here
         $companyDetails = $this->neoEnterpriseRepository->viewCompanyDetails($userEmailId, $companyCode);
         if(!empty($companyDetails[0])){
-            
+            $industry= '';
             $company = $companyDetails[0][0];
             $user    = $companyDetails[0][1];
+            
             $returnDetails['name']         = !empty($company->name)?$company->name:'';
-            $returnDetails['images']       = !empty($company->images)?array_filter(explode(',',$company->images)):'';
+            $returnDetails['images']       = !empty($company->images)?array_filter(explode(',',$company->images)):array();
             $returnDetails['industry']     = !empty($company->industry)?$company->industry:'';  
+            $returnDetails['industry_name']= !empty($company->industry)?$this->userRepository->getIndustryName($company->industry):'';  
             $returnDetails['website']      = !empty($company->website)?$company->website:'';
             $returnDetails['username']     = !empty($user->fullname)?$user->fullname:'';
             $returnDetails['description']  = !empty($company->description)?$company->description:'';
@@ -1443,13 +1446,12 @@ class EnterpriseGateway {
                               $referralName = $userDetails['fullname'];
                         }
                         $neoReferredByDetails = $this->neoUserRepository->getNodeByEmailId($postRelDetails['referred_by']);
-                        
                         $returnDetails['job_title']      = $postDetails['service_name'];
                         $returnDetails['status']         = $postRelDetails['one_way_status'];
                         $returnDetails['created_at']     = \Carbon\Carbon::createFromTimeStamp(strtotime($postRelDetails['created_at']))->diffForHumans();
                         $returnDetails['referral']       = !empty($referralName)?$referralName:'The contact';
                         $returnDetails['referral_img']   = !empty($userDetails['dp_renamed_name'])?$userDetails['dp_renamed_name']:'';
-                        $returnDetails['referred_by']    = $neoReferredByDetails['fullname'];
+                        $returnDetails['referred_by']    = !empty($neoReferredByDetails['fullname'])?$neoReferredByDetails['fullname']:$neoReferredByDetails['firstname'];
                         $returnDetails['referred_by_img']= $neoReferredByDetails['dp_renamed_name'];
                         $returnDetails['service_cost']   = !empty($postDetails['service_cost'])?$postDetails['service_cost']:0;
                         
@@ -1505,7 +1507,7 @@ class EnterpriseGateway {
                             $returnDetails['created_at']     =  \Carbon\Carbon::createFromTimeStamp(strtotime($postRelDetails['created_at']))->diffForHumans();
                             $returnDetails['referral']       =  !empty($referralName)?$referralName:'The contact';
                             $returnDetails['referral_img']   =  !empty($userDetails['dp_renamed_name'])?$userDetails['dp_renamed_name']:'';
-                            $returnDetails['referred_by']    =  $neoReferredByDetails['fullname'];
+                            $returnDetails['referred_by']    =  !empty($neoReferredByDetails['fullname'])?$neoReferredByDetails['fullname']:$neoReferredByDetails['firstname'];
                             $returnDetails['referred_by_img']=  $neoReferredByDetails['dp_renamed_name'];
                             $returnDetails['free_service']   =  !empty($postDetails['free_service'])?$postDetails['free_service']:'0';
                             $returnDetails['rewards']        =  $PostRewards;
@@ -1825,7 +1827,8 @@ class EnterpriseGateway {
         $relationAttrs['company_code']     = $input['company_code'];
         $relationAttrs['loggedin_emailid'] = $this->loggedinUserDetails->emailid;
         $relationAttrs['created_at']       = gmdate("Y-m-d H:i:s");
-        
+        $relationAttrs['firstname']       = !empty($input['firstname'])?$input['firstname']:'';    
+        $relationAttrs['lastname']       = !empty($input['lastname'])?$input['lastname']:'';    
         $neoInput['firstname']   = $input['firstname'];
         $neoInput['lastname']    = $input['lastname'];
         $neoInput['phone']       = !empty($input['phone'])?$input['phone']:'';          

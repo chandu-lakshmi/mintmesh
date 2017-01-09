@@ -303,6 +303,21 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
         return $result;
     }
     
+    public function connectedCompanyDetails($email=''){
+        
+        $result = false;
+        if(!empty($email)){
+            $queryString = "MATCH (u:User:Mintmesh)-[r:CREATED|CONNECTED_TO_COMPANY]-(c:Company)
+                            where u.emailid='".$email."' return c limit 1";
+            $query = new CypherQuery($this->client, $queryString);
+            $resultData = $query->getResultSet();  
+            if(!empty($resultData[0]) && !empty($resultData[0][0])){
+                $result = $resultData[0][0];
+            }
+        }
+        return $result;
+    }
+    
     public function checkCompanyUserConnected($userEmailId, $companyCode){
         
         $result = $response = FALSE;   

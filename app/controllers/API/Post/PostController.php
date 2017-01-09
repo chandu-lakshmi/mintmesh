@@ -276,12 +276,6 @@ class PostController extends \BaseController {
             $response = $this->PostGateway->campaignsList($inputUserData);
             return \Response::json($response);
         }
-        public function ptest() {
-            
-           
-            $response = $this->PostGateway->ptest();
-            return \Response::json($response);
-        }
         
         /**
         * Get company all referrals list
@@ -430,8 +424,80 @@ class PostController extends \BaseController {
                 return \Response::json($validation);
             }
         }
-    
-       
+        
+     /**
+	 * get users invited jobs list 
+         * 
+         * POST/get_jobs_list
+         * @param string $access_token the access token of enterprise user
+	 * @return Response
+	 */
+        public function getJobsList()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->PostGateway->validateGetJobsListInput($inputUserData);
+            if($validation['status'] == 'success') {
+                $response = $this->PostGateway->getJobsList($inputUserData);
+                return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+        }
+       /**
+	 * campaign jobs list
+         * 
+         * POST/campaign_jobs_list
+         * 
+         * @param string $reference_id reference id of the invite mail
+         
+	 * @return Response
+	 */
+        public function campaignJobsList()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->PostGateway->campaignJobsListInput($inputUserData);
+            if($validation['status'] == 'success') {
+                $response = $this->PostGateway->campaignJobsList($inputUserData);
+                return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+        }
+        
+         public function decryptCampaignRef() {
+           // Receiving user input data
+           $inputUserData = \Input::all();
+           $response = $this->PostGateway->decryptCampaignRef($inputUserData);
+           return \Response::json($response);
+        }
+        
+         /**
+	 * get users invited job details
+         * 
+         * POST/get_job_details
+         * @param string $access_token the access token of enterprise app user
+	 * @return Response
+	 */
+        public function getJobDetails()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->PostGateway->validateGetJobDetailsInput($inputUserData);
+            if($validation['status'] == 'success') {
+                $response = $this->PostGateway->getJobDetails($inputUserData);
+                return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+        }
 }
 
 ?>

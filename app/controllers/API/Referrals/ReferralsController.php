@@ -545,14 +545,14 @@ class ReferralsController extends \BaseController {
          * 
 	 * @return Response
 	 */
-        public function getCampaigns()
+        public function getCampaignDetails()
         {
             // Receiving user input data
             $inputUserData = \Input::all();
             // Validating user input data
-            $validation = $this->referralsGateway->validateGetCampaigns($inputUserData);
+            $validation = $this->referralsGateway->validateGetCampaignDetails($inputUserData);
             if($validation['status'] == 'success') {
-                $response = $this->referralsGateway->getCampaigns($inputUserData);
+                $response = $this->referralsGateway->getCampaignDetails($inputUserData);
                 return \Response::json($response);
             } else {
                     // returning validation failure

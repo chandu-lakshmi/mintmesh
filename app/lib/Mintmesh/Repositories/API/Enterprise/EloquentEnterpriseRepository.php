@@ -862,5 +862,15 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         return DB::statement("DELETE FROM groups_permissions WHERE groups_id ='".$groups_id."'");
      }
      
+    public function getContactByEmailId($userId,$companyId){   
+            return DB::table('contacts')  
+            ->where('emailid', '=', $userId)
+            ->where('company_id', '=', $companyId)->get();
+    }
+    
+    public function getContactById($id){   
+            return DB::table('contacts')  
+            ->where('id', '=', $id)->get();
+    }
      
 }

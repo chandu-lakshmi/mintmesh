@@ -526,7 +526,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
     public function createCampaignContactsRelation($relationAttrs = array(), $campaignId='', $contactId='') {
         $queryString = "Match (u:User),(c:Campaign)
                             where ID(c)=".$campaignId." and u.emailid = '".$contactId."'
-                            create unique (c)-[:" . Config::get('constants.RELATIONS_TYPES.CAMPAIGN_CONTACT');
+                            create unique (c)-[r:" . Config::get('constants.RELATIONS_TYPES.CAMPAIGN_CONTACT');
         if (!empty($relationAttrs)) {
             $queryString.="{";
             foreach ($relationAttrs as $k => $v) {
@@ -535,7 +535,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
             $queryString = rtrim($queryString, ",");
             $queryString.="}";
         }
-        $queryString.="]->(u) return c";
+        $queryString.="]->(u) set r.post_read_status =0 return c";
         $query = new CypherQuery($this->client, $queryString);
         return $result = $query->getResultSet();
     }
@@ -558,9 +558,21 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         $result = $query->getResultSet();   
         return $result;
     }
-    public function getCampaignPosts($campaignId='') {
-        
-        $queryString = "MATCH (c:Campaign)-[r:CAMPAIGN_POST]-(p:Post) where ID(c)=".$campaignId." return distinct(p)";
+    public function getCampaignPosts($campaignId='', $page=0,$search = '') {
+        $skip  = $limit = 0;
+        if (!empty($page)){
+            $limit = $page*10 ;
+            $skip  = $limit - 10 ;
+        }
+        $queryString = "MATCH (c:Campaign)-[r:CAMPAIGN_POST]-(p:Post) where ID(c)=".$campaignId." ";
+          if(!empty($search)){
+                $queryString .= "and (p.service_name =~ '(?i).*". $search .".*' or p.service_location =~ '(?i).*". $search .".*') ";
+            }
+        $queryString .= "return distinct(p) ORDER BY p.created_at DESC ";
+        if (!empty($limit) && !($limit < 0))
+        {
+            $queryString.=" skip ".$skip." limit ".self::LIMIT ;
+        }
         $query  = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();   
         return $result;
@@ -715,7 +727,13 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
 
            $queryString = "MATCH (c:Company)<-[:POSTED_FOR]-(p:Post)<-[r:GOT_REFERRED]-(u) where c.companyCode='".$companyCode."' ";
            if (!empty($search)){
-              $queryString.=" and (p.service_name =~ '(?i).*". $search .".*' or r.one_way_status =~ '(?i).*". $search .".*') ";
+              $queryString.=" and (p.service_name =~ '(?i).*". $search .".*' ";
+              if($search[0] == 'a'){
+                  $queryString .= "or r.awaiting_action_status =~ '(?i).*". $search .".*'";
+              }else{
+                  $queryString .= "or r.one_way_status =~ '(?i).*". $search .".*'";
+              }
+              $queryString .= ") ";
            }
            if(!empty($filters)){
                if(!empty($search)){
@@ -808,17 +826,23 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
        return $return;
     }
     
-    public function getApplyJobsList($companyCode='', $page=0) {
+    public function getApplyJobsList($companyCode='',$refById='', $page=0,$search = '') {
         $return = array();
         $skip   = $limit = 0;
         if (!empty($page)){
             $limit = $page*10 ;
             $skip  = $limit - 10 ;
         }
-        $queryString = "MATCH (c:Company)<-[:POSTED_FOR]-(p:Post) where c.companyCode = '".$companyCode."'  and (NOT (HAS (p.post_from_campaign)) OR (p.post_from_campaign <> '1'))
-                        WITH count(p) AS cnt
-                        MATCH (c:Company)<-[:POSTED_FOR]-(p:Post) where c.companyCode = '".$companyCode."' and (NOT (HAS (p.post_from_campaign)) OR (p.post_from_campaign <> '1'))
-                        RETURN p,c, cnt order by p.created_at desc ";
+        $queryString = "MATCH (c:Company)<-[:POSTED_FOR]-(p:Post)-[:INCLUDED]->(u:User) where c.companyCode = '".$companyCode."' and ID(u)=".$refById." and p.post_type <> 'campaign' ";
+            if(!empty($search)){
+                $queryString .= "and (p.service_name =~ '(?i).*". $search .".*' or p.service_location =~ '(?i).*". $search .".*') ";
+            }
+            $queryString .= "WITH count(p) AS cnt
+                        MATCH (c:Company)<-[:POSTED_FOR]-(p:Post)-[:INCLUDED]->(u:User) where c.companyCode = '".$companyCode."' and ID(u)=".$refById." and p.post_type <> 'campaign' ";
+            if(!empty($search)){
+                $queryString .= "and (p.service_name =~ '(?i).*". $search .".*' or p.service_location =~ '(?i).*". $search .".*') ";
+            }
+          $queryString    .=  "RETURN p,c, cnt order by p.created_at desc ";
         if (!empty($limit) && !($limit < 0))
         {
             $queryString.=" skip ".$skip." limit ".self::LIMIT ;
@@ -850,6 +874,70 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
             return $result;
         }else{
             return false;
+        }
+    }
+    
+     public function getCampaignCompany($campaignId=''){
+        $queryString = "MATCH (c:Company)-[:COMPANY_CREATED_CAMPAIGN]->(n:Campaign) where ID(n)=".$campaignId." return c";
+        $query  = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();
+        if($result){
+            return $result[0][0];
+        }else{
+            return false;
+        }
+    }
+    
+    public function checkCampaignUserRelation($input) {
+        $queryString = "MATCH (c:Campaign)-[:CAMPAIGN_CONTACT]->(n:User) where ID(c)=".$input['campaign_id']." and ID(n)=".$input['reference_id']." return c";
+        $query  = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();
+        if($result){
+            return $result[0][0];
+        }else{
+            return false;
+        }
+    }
+    
+    public function getJobsList($userEmailId='', $companyCode='',$page=0, $search = '') {
+        
+        $skip = $limit = 0;
+        if (!empty($page)){
+            $limit = $page*10;
+            $skip  = $limit - 10;
+        }
+        
+        if(!empty($userEmailId)){
+        $queryString = "MATCH (u:User:Mintmesh{emailid:'".$userEmailId."'})-[r:INCLUDED]-(p:Post{status:'ACTIVE'})-[:POSTED_FOR]-(Company{companyCode:'".$companyCode."'})
+                        WHERE  p.post_type <>'campaign'
+                        WITH collect({post:p,rel:r}) as posts 
+                        OPTIONAL MATCH (u:User:Mintmesh{emailid:'".$userEmailId."'})-[r:CAMPAIGN_CONTACT]-(p:Campaign{status:'ACTIVE', company_code:'".$companyCode."'})
+                        WITH posts + collect({post:p,rel:r}) as rows
+                        UNWIND rows as row
+                        RETURN row ORDER BY row.post.created_at DESC";
+        if (!empty($limit) && !($limit < 0))
+        {
+            $queryString.=" skip ".$skip." limit ".self::LIMIT ;
+        }
+        //echo $queryString;exit;
+        $query  = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();
+            if($result)
+                return $result;
+            
+        }else{
+            return false;
+        }
+    }
+    
+    public function checkCampaignContactRelation($campaignId='',$emailid='') {
+        $queryString = "MATCH (c:Campaign)-[:CAMPAIGN_CONTACT]->(n:User) where ID(c)=".$campaignId." and n.emailid='".$emailid."' return n";
+        $query  = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();
+        if(count($result)>0){
+        return false;
+        }else{
+            return true;
         }
     }
 }

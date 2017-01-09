@@ -15,7 +15,7 @@ return [
     'MNT_FROM_NAME'=>'Mintmesh',
     'MM_ENTERPRISE_URL'=>'http://202.63.105.85/mmenterprise',
     'MNT_DEEP_LINK_IOS'=>'mintmeshstg://',
-    'MNT_DEEP_LINK_ANDROID'=>'http://mintmeshstg/',
+    'MNT_DEEP_LINK_ANDROID'=>'http://202.63.105.85/mintmesh/',
     'DP_PATH' => '/uploads/ProfilePics',
     'LOGO_PATH' => '/public/uploads',
     'CV_PATH' => '/uploads/Resumes',

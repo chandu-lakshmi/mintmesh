@@ -1739,6 +1739,9 @@ class UserGateway {
             //get Companies count
             $companiesCount= $this->neoEnterpriseRepository->connectedCompaniesList($loggedinUserDetails->emailid);
             $returnArray['connectedCompaniesCount'] = count($companiesCount);
+            //get company Details
+            $companyDetailsAry= $this->neoEnterpriseRepository->connectedCompanyDetails($loggedinUserDetails->emailid);
+            $returnArray['connected_company_code'] = !empty($companyDetailsAry->companyCode)?$companyDetailsAry->companyCode:0;
             
             return $returnArray ;
         }
@@ -4851,6 +4854,11 @@ class UserGateway {
             //$matchesAry = array_unique($matchesAry, SORT_REGULAR);
             $return =  implode(', ', $matchesAry);
             return $return;
+        }
+        
+        public function snsTest()
+        {   
+           print_r($this->userFileUploader->sns()); 
         }
 
 }

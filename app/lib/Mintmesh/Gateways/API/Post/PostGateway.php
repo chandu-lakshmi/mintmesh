@@ -203,6 +203,20 @@ class PostGateway {
         return $this->doValidation('job_post_from_campaigns', 'MINTMESH.user.valid');
     }
     
+    //validation on validate Get Jobs List Input
+    public function validateGetJobsListInput($input) {
+        return $this->doValidation('get_jobs_list', 'MINTMESH.user.valid');
+    }
+    
+    //validation on validate Get Job Details Input
+    public function validateGetJobDetailsInput($input) {
+        return $this->doValidation('get_job_details', 'MINTMESH.user.valid');
+    }
+    
+    //validation on campaign jobs list
+    public function campaignJobsListInput($input) {
+        return $this->doValidation('campaign_jobs_list', 'MINTMESH.user.valid');
+    }
  
     public function postJob($input) {
         
@@ -214,7 +228,7 @@ class PostGateway {
         $fromId     = $this->neoLoggedInEnterpriseUserDetails->id;
         $emailId    = $this->loggedinEnterpriseUserDetails->emailid;
         $fromName   = $this->loggedinEnterpriseUserDetails->firstname;
-        
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($input['company_code']);
         if ($this->loggedinEnterpriseUserDetails) {
             $relationAttrs = $neoInput = $excludedList = $getSkillsAry = array();
             $neoInput['service_scope']      = "find_candidate";
@@ -233,6 +247,7 @@ class PostGateway {
             $neoInput['no_of_vacancies']    = !empty($input['no_of_vacancies']) ? $input['no_of_vacancies'] :0;
             $neoInput['service_period']     = $input['job_period'];
             $neoInput['service_type']       = $input['job_type'];
+            $neoInput['post_type']          = $input['post_type'];
             $neoInput['free_service']       = !empty($input['free_job']) ? 1 : 0;
             $neoInput['service_currency']   = !empty($input['job_currency']) ? $input['job_currency'] : "";
             $neoInput['service_cost']       = !empty($input['job_cost']) ? $input['job_cost'] : "";
@@ -254,6 +269,7 @@ class PostGateway {
             $createdPost = $this->neoPostRepository->createPostAndUserRelation($fromId,$neoInput, $relationAttrs);
             if (isset($createdPost[0]) && isset($createdPost[0][0])) {
                 $postId = $createdPost[0][0]->getID();
+                $postType = $createdPost[0][0]->post_type;
             } else {
                 $postId = 0;
             }
@@ -339,7 +355,8 @@ class PostGateway {
                             $emailData['company_name']      = $input['company_name'];
                             $emailData['company_code']      = $input['company_code'];
                             $emailData['post_id']           = $postId;
-                            $emailData['company_logo']      = '';
+                            $emailData['post_type']         = $postType;
+                            $emailData['company_logo']      = $companyDetails[0]->logo;
                             $emailData['to_firstname']      = $contacts->firstname;
                             $emailData['to_lastname']       = $contacts->lastname;
                             $emailData['to_emailid']        = $contacts->emailid;
@@ -349,8 +366,8 @@ class PostGateway {
                             $emailData['ip_address']        = $_SERVER['REMOTE_ADDR'];
                             $emailData['ref_code']          = $refCode;
                             $emailData['reply_to']          = $replyToName.$replyToData.$replyToHost;
-                            //$this->sendJobPostEmailToContacts($emailData);  
-                            Queue::push('Mintmesh\Services\Queues\SendJobPostEmailToContactsQueue', $emailData, 'Notification');
+//                            $this->sendJobPostEmailToContacts($emailData);  
+                          Queue::push('Mintmesh\Services\Queues\SendJobPostEmailToContactsQueue', $emailData, 'Notification');
                         }
                     }
                 }
@@ -398,7 +415,6 @@ class PostGateway {
             $relationAttrs['company_code']  = $jobData['company_code'];
             $relationAttrs['user_emailid']  = $jobData['user_emailid'];
             $relationAttrs['bucket_id']     = $jobData['bucket_id'];
-
              // Log::info("<<<<<<<<<<<<<<<< In Queue >>>>>>>>>>>>>".print_r($postDetails,1));
             try {
                 $postDetails = $this->neoPostRepository->createPostContactsRelation($relationAttrs, $postId, $company_code, $contactEmailid);
@@ -434,8 +450,9 @@ class PostGateway {
         $dataSet['reply_emailid']       = $emailData['reply_to'];
         $dataSet['email']               = $emailData['to_emailid'];
         $dataSet['fromName']            = $emailData['from_firstname'];
+        $dataSet['post_type']            = $emailData['post_type'];
         $dataSet['company_name']        = $emailData['company_name'];//Enterpi Software Solutions Pvt.Ltd.
-        $dataSet['company_logo']        = '';
+        $dataSet['company_logo']        = $emailData['company_logo'];
         $dataSet['emailbody']           = 'just testing';
         $dataSet['send_company_name']   = $emailData['company_name'];
         $dataSet['reply_to']            = $emailData['reply_to'];
@@ -466,22 +483,23 @@ class PostGateway {
                if($value['rewards_name']=='Discovery'){
                    $discovery   = $reward;
                    $isDisPoints = $isPoints;
+                   $dataSet['dis_points']  = $isDisPoints;
                 } elseif ($value['rewards_name']=='Referral') {  
                    $referral    = $reward;
                    $isRefPoints = $isPoints;
+                   $dataSet['ref_points']  = $isRefPoints;
                 }   
             }
         }
         $dataSet['free_service']= $freeService;
         $dataSet['discovery']   = $discovery;
         $dataSet['referral']    = $referral;
-        $dataSet['dis_points']  = $isDisPoints;
-        $dataSet['ref_points']  = $isRefPoints;
+        
         #redirect email links
-        $dataSet['apply_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/candidate-details?ref=" . $refCode."&flag=0";
-        $dataSet['refer_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/referral-details?ref=" . $refCode."&flag=0";
-        $dataSet['view_jobs_link']      = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/all-jobs?ref=" . $refCode."&flag=0";
-        $dataSet['drop_cv_link']        = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/referral-details?ref=" . $refCode."&flag=1";
+        $dataSet['apply_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/candidate-details?ref=" . $refCode."";
+        $dataSet['refer_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/referral-details?ref=" . $refCode."&flag=0&jc=0";
+        $dataSet['view_jobs_link']      = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/all-jobs?ref=" . $refCode."";
+        $dataSet['drop_cv_link']        = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/referral-details?ref=" . $refCode."&flag=1&jc=0";
         #set email required params
         $this->userEmailManager->templatePath   = Lang::get('MINTMESH.email_template_paths.contacts_job_invitation');
         $this->userEmailManager->emailId        = $emailData['to_emailid'];//target email id
@@ -535,10 +553,7 @@ class PostGateway {
                 $hiredCount     = !empty($postDetails['referral_hired_count']) ? $postDetails['referral_hired_count'] : 0;
                 $unsolicitedCount     = !empty($postDetails['unsolicited_count']) ? $postDetails['unsolicited_count'] : 0;
                 $pendingCount   = $referralCount - ($acceptedCount + $declinedCount + $unsolicitedCount);
-                if(!empty($postDetails['post_from_campaign'])){
-                    $postFromCampaign = $postDetails['post_from_campaign'];
-                    $returnPosts['post_from_campaign']  = (int)$postFromCampaign;
-                }
+                $returnPosts['post_type']       = $postDetails['post_type'];
                 $returnPosts['id']          = $postDetails['post_id'];
                 $returnPosts['location']    = $postDetails['service_location'];
                 $returnPosts['job_title']   = $postDetails['service_name'];
@@ -665,9 +680,8 @@ class PostGateway {
                 $nonMMUser    = new \stdClass();
                 
                 if(!empty($userDetails['emailid']) && !empty($postRelDetails['referred_by'])){
-                    
                     $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($userDetails['emailid']);
-                    if(empty($userDetails['firstname']) || empty($userDetails['fullname'])){
+                    if(empty($userDetails['firstname']) && empty($userDetails['fullname'])){
                           $nonMMUser    = $this->contactsRepository->getImportRelationDetailsByEmail($postRelDetails['referred_by'], $userDetails['emailid']);
                           $referralName = !empty($nonMMUser->fullname)?$nonMMUser->fullname:!empty($nonMMUser->firstname)?$nonMMUser->firstname: "The contact";
                     }else{
@@ -704,7 +718,6 @@ class PostGateway {
                 }
                 
                 $neoReferrerDetails = $this->neoUserRepository->getNodeByEmailId($postRelDetails['referred_by']);
-
                 if ($neoReferrerDetails['completed_experience'] == '1') {
                     $title = $this->neoPostRepository->getJobTitle($neoReferrerDetails['emailid']);
                     foreach ($title as $t) {
@@ -717,13 +730,14 @@ class PostGateway {
                 $cvPath = !empty($userDetails['cv_path'])?$userDetails['cv_path']:'';
                
                 $returnReferralDetails['status']                = $postRelDetails['one_way_status'];   
-                $returnReferralDetails['created_at']            = \Carbon\Carbon::createFromTimeStamp(strtotime($postRelDetails['created_at']))->diffForHumans();
+                $createdAt = $this->appEncodeDecode->UserTimezone($postRelDetails['created_at'],$input['time_zone']); 
+                $returnReferralDetails['created_at']            = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
                 $returnReferralDetails['updated_at']            = !empty($postRelDetails['p1_updated_at'])?date("d M Y H:i", strtotime($postRelDetails['p1_updated_at'])):'';
                 $returnReferralDetails['referred_by']           = $neoReferrerDetails['emailid'];
                 $returnReferralDetails['resume_path']           = !empty($postRelDetails['resume_path'])?$postRelDetails['resume_path']:$cvPath;
                 $returnReferralDetails['resume_original_name']  = $postRelDetails['resume_original_name'];
                 $returnReferralDetails['relation_count']        = $postRelDetails['relation_count'];
-                $returnReferralDetails['referred_by_name']      = $neoReferrerDetails['fullname'];
+                $returnReferralDetails['referred_by_name']      = !empty($neoReferrerDetails['fullname'])?$neoReferrerDetails['fullname']:$neoReferrerDetails['firstname'];
                 $returnReferralDetails['referred_by_dp_image']  = $neoReferrerDetails['dp_renamed_name'];
                 $returnReferralDetails['confidence_score']      = !empty($postRelDetails['overall_score'])?$postRelDetails['overall_score']:0;
                 $returnReferralDetails['name']                  = !empty($referralName)?$referralName:'The contact';
@@ -767,14 +781,12 @@ class PostGateway {
     }
 
     public function processJob($input) {
-
         $objCompany = new \stdClass();
         $returnReferralDetails = $data = array();
         $this->loggedinEnterpriseUserDetails    = $this->getLoggedInEnterpriseUser();
         $this->neoLoggedInEnterpriseUserDetails = $this->neoEnterpriseRepository->getNodeByEmailId($this->loggedinEnterpriseUserDetails->emailid);
         $company = $this->enterpriseRepository->getUserCompanyMap($this->loggedinEnterpriseUserDetails->id);
         $objCompany->fullname = $company->name;
-
         $parse    = 1;
         $postId   = $input['post_id'];
         $status   = $input['status'];
@@ -794,10 +806,15 @@ class PostGateway {
                 $is_self_referred = ($referral == $referredBy) ? 1 : 0;
 
                 $postUpdateStatus = $this->referralsRepository->updatePostPaymentStatus($relationId, '', $is_self_referred, $userEmail);
-
                 //send notification to the person who referred to the post
                 $sqlUser = $this->userRepository->getUserByEmail($referredBy);
+                if(empty($sqlUser)){
+                    $sqlUser = $this->enterpriseRepository->getContactByEmailId($referredBy,$company->company_id);
+                    $referred_byDetails = $this->enterpriseRepository->getContactById($sqlUser[0]->id);
+                    $referred_by_details = $referred_byDetails[0];
+                }else{
                 $referred_by_details = $this->userRepository->getUserById($sqlUser->id);
+                }
                 $referred_by_neo_user = $this->neoUserRepository->getNodeByEmailId($referredBy);
                 //add credits
                 $this->userRepository->logLevel(3, $referredBy, $userEmail, $referral, Config::get('constants.POINTS.SEEK_REFERRAL'));
@@ -1016,11 +1033,9 @@ class PostGateway {
     }
     
     public function createRelationBwPostAndContacts($postId='', $input=array(), $bucketIds=array(), $loggedInUser='', $objCompany){
-
         $inviteCount = 0;
         $notificationMsg = Lang::get('MINTMESH.notifications.messages.27');
         foreach ($bucketIds as $key => $value) {
-
             $input['bucket_id'] = $value;
 
             $neoCompanyBucketContacts = $this->enterpriseGateway->enterpriseContactsList($input);
@@ -1033,27 +1048,17 @@ class PostGateway {
                 $pushData['bucket_id']      = $input['bucket_id'];
                 $pushData['company_code']   = $input['company_code'];
                 $pushData['user_emailid']   = $loggedInUser->emailid;
+                $pushData['contact_emailid']  = $contacts->emailid;
                 $pushData['notification_msg'] = $notificationMsg;
-                //$this->checkToCreateEnterprisePostContactsRelationQueue($pushData['company_code'], $pushData['user_emailid'], $pushData['bucket_id'],$pushData['postId'],$pushData['notification_msg']) ;
+//                $this->createPostContactsRelation($pushData) ;
                 Queue::push('Mintmesh\Services\Queues\CreateEnterprisePostContactsRelation', $pushData, 'default');
-
-                #send push notifications to all the contacts
-                $notifyData   = $excludedList = array();
-                $notifyData['serviceId']            = $postId;
-                $notifyData['loggedinUserDetails']  = $loggedInUser;
-                $notifyData['neoLoggedInUserDetails'] = $objCompany;//obj
-                $notifyData['includedList']     = array($contacts->emailid);
-                $notifyData['excludedList']     = $excludedList;
-                $notifyData['service_type']     = '';
-                $notifyData['service_location'] = '';
-                Queue::push('Mintmesh\Services\Queues\NewPostReferralQueue', $notifyData, 'Notification');    
+ 
             }
         }
         $this->neoPostRepository->updatePostInviteCount($postId, $inviteCount);       
     }
     
-    public function createRelationBwCampaignAndContacts($campaignId='', $input=array(), $bucketIds=array(), $loggedInUser=''){
-
+    public function createRelationBwCampaignAndContacts($campaignId='', $input=array(), $bucketIds=array(), $loggedInUser='',$objCompany){
         foreach ($bucketIds as $key => $value) {
             $input['bucket_id'] = $value;
             $neoCompanyBucketContacts = $this->enterpriseGateway->enterpriseContactsList($input);
@@ -1064,10 +1069,35 @@ class PostGateway {
                 $pushData['campaign_id']        = $campaignId;
                 $pushData['bucket_id']          = $input['bucket_id'];
                 $pushData['contact_emailid']    = $contacts->emailid;
+                $pushData['contact_name']       = !empty($contacts->fullname)?$contacts->fullname:$contacts->firstname;
                 $pushData['company_code']       = $input['company_code'];
+                $pushData['company_name']       = $input['company_name'];
+                $pushData['company_logo']       = $input['company_logo'];
+                $pushData['campaign_name']       = $input['campaign_name'];
+                $pushData['campaign_type']       = $input['campaign_type'];
+                $pushData['campaign_location']       = $input['campaign_location'];
+                $pushData['campaign_start_date']       = $input['campaign_start_date'];
+                $pushData['campaign_end_date']       = $input['campaign_end_date'];
+                $pushData['user_name']       = $input['user_name'];
                 $pushData['user_emailid']       = $loggedInUser->emailid;
-                $this->createCampaignContactsRelation($pushData);
+                $pushData['user_id']       = $loggedInUser->id;
+                $pushData['time_zone']       = $input['time_zone'];
+                $pushData['ip_address']        = $_SERVER['REMOTE_ADDR'];
+                $checkCampaignContactRelation = $this->neoPostRepository->checkCampaignContactRelation($campaignId,$pushData['contact_emailid']);
+                if($checkCampaignContactRelation){
+//                $this->createCampaignContactsRelation($pushData);
                 Queue::push('Mintmesh\Services\Queues\CreateCampaignContactsRelationQueue', $pushData, 'default');
+                #send push notifications to all the contacts
+                $notifyData   = $excludedList = array();
+                $notifyData['serviceId']            = $campaignId;
+                $notifyData['loggedinUserDetails']  = $loggedInUser;
+                $notifyData['neoLoggedInUserDetails'] = $objCompany;//obj
+                $notifyData['includedList']     = array($contacts->emailid);
+                $notifyData['excludedList']     = $excludedList;
+                $notifyData['service_type']     = '';
+                $notifyData['service_location'] = '';
+                Queue::push('Mintmesh\Services\Queues\NewPostReferralQueue', $notifyData, 'Notification');    
+                }
             }
         }
     }
@@ -1082,16 +1112,91 @@ class PostGateway {
         $relationAttrs['company_code']  = $relationInput['company_code'];
         $relationAttrs['created_by']    = $relationInput['user_emailid'];
         $relationAttrs['created_at']    = date("Y-m-d H:i:s");
-        
          //\Log::info("<<<<<<<<<<<<<<<< In Queue >>>>>>>>>>>>>".print_r($neoInput,1));
         try {
             $this->neoPostRepository->createCampaignContactsRelation($relationAttrs, $campaignId, $contactEmailid);
+            #send email notifications to all the contacts
+            $refId = $refCode = 0;
+            $emailData  = array();
+            $refId = $this->neoPostRepository->getUserNodeIdByEmailId($contactEmailid);
+            $refCode                        = MyEncrypt::encrypt_blowfish($campaignId.'_'.$refId,Config::get('constants.MINTMESH_ENCCODE'));
+            $emailData['company_name']      = $relationInput['company_name'];
+            $emailData['company_code']      = $relationInput['company_code'];
+            $emailData['campaign_id']       = $campaignId;
+            $emailData['campaign_name']     = $relationInput['campaign_name'];
+            $emailData['campaign_type']     = $relationInput['campaign_type'];
+            $emailData['campaign_location']     = $relationInput['campaign_location'];
+            $emailData['campaign_start_date']     = $relationInput['campaign_start_date'];
+            $emailData['campaign_end_date']     = $relationInput['campaign_end_date'];
+            $emailData['company_logo']      = $relationInput['company_logo'];
+            $emailData['to_emailid']        = $contactEmailid;
+            $emailData['contact_name']        = $relationInput['contact_name'];
+            $emailData['from_emailid']      = $relationInput['user_emailid'];
+            $emailData['from_userid']      = $relationInput['user_id'];
+            $emailData['time_zone']      = $relationInput['time_zone'];
+            $emailData['user_name']      = $relationInput['user_name'];
+            $emailData['ref_code']          = $refCode;
+            $emailData['ip_address']     = $relationInput['ip_address'] ;
+            $this->sendCampaignEmailToContacts($emailData); 
+        
+
         } catch (\RuntimeException $e) {
             return false;
         }
         return true;
     }
 
+    public function sendCampaignEmailToContacts ($emailData) {
+        
+        $dataSet    = array();
+        $email_sent = '';
+        $campaignId     = $emailData['campaign_id'];
+        $refCode    = $emailData['ref_code']; 
+        #form email variables here
+        $dataSet['name']                = $emailData['user_name'];
+        $dataSet['campaign_name']       = $emailData['campaign_name'];
+        $dataSet['campaign_type']       = $emailData['campaign_type'];
+        $dataSet['send_company_name']   = $emailData['company_name'];
+        $startDate = $this->appEncodeDecode->UserTimezone($emailData['campaign_start_date'],$emailData['time_zone']); 
+        $endDate = $this->appEncodeDecode->UserTimezone($emailData['campaign_end_date'],$emailData['time_zone']); 
+        $dataSet['campaign_start_date']  = \Carbon\Carbon::parse($startDate)->format('dS M Y');
+        $dataSet['campaign_end_date']  = \Carbon\Carbon::parse($endDate)->format('dS M Y');
+        $dataSet['campaign_start_time']= \Carbon\Carbon::parse($startDate)->format('h:i A');
+        $dataSet['campaign_end_time'] = \Carbon\Carbon::parse($endDate)->format('h:i A');
+        $dataSet['campaign_location']       = $emailData['campaign_location'];
+        $dataSet['company_name']        = $emailData['company_name'];//Enterpi Software Solutions Pvt.Ltd.
+        $dataSet['company_logo']        = $emailData['company_logo'];
+        $dataSet['app_id']              = '730971373717257';
+        #redirect email links
+          $dataSet['view_jobs_link']      = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/all-campaigns?ref=" . $refCode."";
+        #set email required params
+        $this->userEmailManager->templatePath   = Lang::get('MINTMESH.email_template_paths.contacts_campaign_invitation');
+        $this->userEmailManager->emailId        = $emailData['to_emailid'];//target email id
+        $this->userEmailManager->dataSet        = $dataSet;
+        $this->userEmailManager->subject        = $dataSet['campaign_type'];
+        $this->userEmailManager->name           = $emailData['contact_name'];
+        $email_sent = $this->userEmailManager->sendMail();
+        #for email logs
+        $fromUserId  = $emailData['from_userid'];
+        $fromEmailId = $emailData['from_emailid'];
+        $companyCode = $emailData['company_code'];
+        $ipAddress   = $emailData['ip_address'];
+        #log email status
+        $emailStatus = 0;
+        if (!empty($email_sent)) {
+            $emailStatus = 1;
+        }
+        $emailLog = array(
+            'emails_types_id'   => 6,
+            'from_user'         => $fromUserId,
+            'from_email'        => $fromEmailId,
+            'to_email'          => $this->appEncodeDecode->filterString(strtolower($emailData['to_emailid'])),
+            'related_code'      => $companyCode,
+            'sent'              => $emailStatus,
+            'ip_address'        => $ipAddress
+        );
+        $this->userRepository->logEmail($emailLog);
+    }
     public function addCampaign($input) {
         //variable declaration here
         $campaignId     = '';
@@ -1181,10 +1286,10 @@ class PostGateway {
                         $scheduleAttrs['company_code'] = $companyCode;
                         if(!empty($scheduleId)){
                             //update Campaign Schedule here
-                            $this->neoPostRepository->updateCampaignScheduleRelation($scheduleId, $campaignId, $scheduleAttrs, $userEmailId);
+                            $campaignSchedule = $this->neoPostRepository->updateCampaignScheduleRelation($scheduleId, $campaignId, $scheduleAttrs, $userEmailId);
                         }  else {
                             //create Campaign Schedule here
-                            $this->neoPostRepository->createCampaignScheduleRelation($campaignId, $scheduleAttrs, $userEmailId);
+                            $campaignSchedule = $this->neoPostRepository->createCampaignScheduleRelation($campaignId, $scheduleAttrs, $userEmailId);
                         }
                     }
             }
@@ -1208,9 +1313,23 @@ class PostGateway {
             //checking if user selected at least one bucket or not
             if(!empty($campBucketIds)){
                 $campaignContacts['company_code'] = $companyCode;
+                $campaignContacts['user_name']    = !empty($loggedInUser->fullname)?$loggedInUser->fullname:$loggedInUser->firstname;
+                $campaignContacts['time_zone'] = $input['time_zone'];
                 $campaignContacts['company_id']   = $companyId;
+                $campaignContacts['company_name'] = $company->name;
+                $campaignContacts['company_logo']    = $company->logo;
+                $campaignContacts['campaign_name'] = !empty($createdCampaign[0][0]->campaign_name)?$createdCampaign[0][0]->campaign_name:$editedCampaign[0][0]->campaign_name; 
+                $campaignContacts['campaign_type'] = !empty($createdCampaign[0][0]->campaign_type)?$createdCampaign[0][0]->campaign_type:$editedCampaign[0][0]->campaign_type; 
+                if((isset($createdCampaign[0][0]) && $createdCampaign[0][0]->location_type === 'onsite') || (isset($editedCampaign[0][0]) && $editedCampaign[0][0]->location_type === 'onsite')){
+                   $campaignContacts['campaign_location'] = !empty($createdCampaign[0][0])?$createdCampaign[0][0]->address.','.$createdCampaign[0][0]->city.','.$createdCampaign[0][0]->state_country.','.$createdCampaign[0][0]->zip_code:$editedCampaign[0][0]->address.','.$editedCampaign[0][0]->city.','.$editedCampaign[0][0]->state_country.','.$editedCampaign[0][0]->zip_code;
+                }
+                else{
+                                        $campaignContacts['campaign_location'] = 'online'; 
+                }
+                $campaignContacts['campaign_start_date'] = $campaignSchedule[0][0]->gmt_start_date;
+                $campaignContacts['campaign_end_date'] = $campaignSchedule[0][0]->gmt_end_date;
                 //creating Campaign And contacts Relation here
-                $this->createRelationBwCampaignAndContacts($campaignId, $campaignContacts, $campBucketIds, $loggedInUser);
+                $this->createRelationBwCampaignAndContacts($campaignId, $campaignContacts, $campBucketIds, $loggedInUser,$objCompany);
             }
             if(isset($createdCampaign[0][0]->ceos_file)){
                 $data['ceos_file'] = !empty($createdCampaign[0][0]->ceos_file)?$createdCampaign[0][0]->ceos_file:'';
@@ -1253,7 +1372,7 @@ class PostGateway {
             $totalCount         = $campaigns->count();
             foreach($campaigns as $k=>$v){
                 $campaign['id'] = $v[0]->getID();
-                $postsRes       = $this->neoPostRepository->getCampaignPosts($campaign['id']);
+                $postsRes       = $this->neoPostRepository->getCampaignPosts($campaign['id'],'','');
                 $vacancies      = 0;
                 foreach($postsRes as $posts){
                     $postDetails = $this->referralsGateway->formPostDetailsArray($posts[0]);
@@ -1308,8 +1427,11 @@ class PostGateway {
         
         $data = $campSchedule = $scheduleRes = $postAry = $bucketAry = array();
         $loggedInUser   = $this->referralsGateway->getLoggedInUser();
+        $this->neoLoggedInUserDetails   = $this->neoUserRepository->getNodeByEmailId($loggedInUser->emailid);
+        $userId = $this->neoLoggedInUserDetails->id;
         $companyCode    = !empty($input['company_code'])?$input['company_code']:'';
         $campaignId     = !empty($input['campaign_id'])?$input['campaign_id']:'';
+        $refCode        = MyEncrypt::encrypt_blowfish($campaignId.'_'.$userId,Config::get('constants.MINTMESH_ENCCODE'));
         $campRes        = $this->neoPostRepository->getCampaignById($campaignId);
         if($campRes){
             //form response details here
@@ -1317,6 +1439,7 @@ class PostGateway {
             $returnData['campaign_type']    = $campRes->campaign_type;
             $returnData['total_vacancies']  = $campRes->total_vacancies;
             $returnData['location_type']    = $campRes->location_type;
+            $returnData['camp_ref']         = $refCode;
             if(!empty($campRes->ceos_file)){
             $filesAry[0] = $campRes->ceos_file;
             }
@@ -1354,7 +1477,7 @@ class PostGateway {
                 $campSchedule[] = $schedule; 
             }
             //get Campaign Posts here
-            $postsRes   = $this->neoPostRepository->getCampaignPosts($campaignId);
+            $postsRes   = $this->neoPostRepository->getCampaignPosts($campaignId,'','');
             $vacancies = 0;
             foreach($postsRes as $posts){
                 $post = array();
@@ -1443,11 +1566,11 @@ class PostGateway {
         if(!empty($input['filter'])){
             $filter = explode(',', $input['filter']);
             $ReferralsRes   = $this->neoPostRepository->getCompanyAllReferrals($emailId, $companyCode, $search, $page,$filter);
-
+            $totalReferralsRes   = $this->neoPostRepository->getCompanyAllReferrals($emailId, $companyCode, $search, '',$filter);
         }else{
             $ReferralsRes   = $this->neoPostRepository->getCompanyAllReferrals($emailId, $companyCode, $search, $page,'');
+            $totalReferralsRes   = $this->neoPostRepository->getCompanyAllReferrals($emailId, $companyCode, $search, '','');
         }
-        $totalReferralsRes   = $this->neoPostRepository->getCompanyAllReferrals($emailId, $companyCode, '', '','');
         $totalRec       = !empty($ReferralsRes)?$ReferralsRes->count():'';
         $totalRecords       = !empty($totalReferralsRes)?$totalReferralsRes->count():'';
         if($ReferralsRes){
@@ -1471,7 +1594,7 @@ class PostGateway {
                 if($relation->one_way_status != 'UNSOLICITED'){
                 $record['service_name']     = $post->service_name;
                 }else{
-                  $record['service_name']   = 'NOT TAGGED';  
+                  $record['service_name']   = 'Not Tagged';  
                 }
                 $record['one_way_status']   = $relation->one_way_status;
                 $record['resume_path']      = $relation->resume_path;
@@ -1483,11 +1606,12 @@ class PostGateway {
                 $nonMMUser    = new \stdClass();
                 if(!empty($user->emailid) && !empty($relation->referred_by)){
                     $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($user->emailid);
-                    if(empty($neoUserDetails['firstname']) || empty($neoUserDetails['fullname'])){
+//                    print_r($neoUserDetails).exit;
+                    if(empty($neoUserDetails['firstname']) && empty($neoUserDetails['fullname'])){
                         $nonMMUser    = $this->contactsRepository->getImportRelationDetailsByEmail($relation->referred_by, $user->emailid);
                         $referralName = !empty($nonMMUser->fullname)?$nonMMUser->fullname:!empty($nonMMUser->firstname)?$nonMMUser->firstname: "The contact";
                     }else{
-                        $referralName = $neoUserDetails['fullname'];
+                        $referralName = !empty($neoUserDetails['fullname'])?$neoUserDetails['fullname']:$neoUserDetails['firstname'];
                     } 
                 }  else {
                     if(empty($user->firstname) && !empty($relation->referred_by)){
@@ -1497,7 +1621,7 @@ class PostGateway {
                 }
                 $nodeByEmail = $this->neoUserRepository->getNodeByEmailId($relation->referred_by);
                 $record['fullname']    = !empty($referralName)?$referralName:'The contact';
-                $record['referred_by_name'] = $nodeByEmail['fullname'];
+                $record['referred_by_name'] = !empty($nodeByEmail['fullname'])?$nodeByEmail['fullname']:$nodeByEmail['firstname'];
                 $returnData[] = $record;
             }
 //            $returnData[] = array('total_records'=>$totalRec); 
@@ -1641,7 +1765,8 @@ class PostGateway {
         $companyDetails     = $this->neoPostRepository->getPostCompany($post_id);
         $input['post_id'] = $post_id;
         $postStatus = $this->job2->getPost($input);
-        $data = array("post_id" => $input['post_id'],"reference_id"=>$referred_by_id,"emailid" => $userDetails->emailid,"post_status"=>$postStatus->status,"company_logo"=>$companyDetails->logo,"company_name"=>$companyDetails->name);
+        $companyLogo = !empty($companyDetails->logo)?$companyDetails->logo:'';
+        $data = array("post_id" => $input['post_id'],"reference_id"=>$referred_by_id,"emailid" => $userDetails->emailid,"post_status"=>$postStatus->status,"company_logo"=>$companyLogo,"company_name"=>$companyDetails->name);
         }else{
             $data = array();
         }
@@ -1656,6 +1781,7 @@ class PostGateway {
         $resJobsList    = $refAry = $returnData =  $data = array();
         $referenceId    = isset($input['reference_id'])?$input['reference_id']:'';
         $page           = !empty($input['page_no']) ? $input['page_no'] : 0;
+        $search_for     = !empty($input['search']) ? $input['search'] : 0;
         if(!empty($referenceId)){
             $refId          = MyEncrypt::decrypt_blowfish($referenceId, Config::get('constants.MINTMESH_ENCCODE'));
             $refAry         = array_map('intval', explode('_', $refId));
@@ -1663,9 +1789,8 @@ class PostGateway {
             $refById        = isset($refAry[1])?$refAry[1]:0;
             $checkRelation  = $this->neoPostRepository->checkIncludedRelation($post_id, $refById);
             $companyCode    = !empty($checkRelation->company_code)?$checkRelation->company_code:'';
-            
             if($companyCode){
-                $resJobsList      = $this->neoPostRepository->getApplyJobsList($companyCode, $page);
+                $resJobsList      = $this->neoPostRepository->getApplyJobsList($companyCode, $refById,$page,$search_for);
                 foreach ($resJobsList as $result){
                     $record         = array();
                     $postRes        = $result[0];//post details 
@@ -1683,14 +1808,21 @@ class PostGateway {
                     $record['location']         = $postRes->service_location;
                     $record['job_description']  = $postRes->job_description;
                     $record['status']           = $postRes->status;
+                    $record['post_type']        = $postRes->post_type;
                     $record['ref_code']         = MyEncrypt::encrypt_blowfish($postId.'_'.$refById,Config::get('constants.MINTMESH_ENCCODE'));
                     
                     $returnData[] = $record; 
                 }
+                if($returnData){
                 $data = array("jobs_list" => array_values($returnData),'count'=>$jobsListCount, 'company_name'=>$compName,'company_logo' => $compLogo);
                 $responseCode   = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
                 $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_jobs_list.success')));
+                }else{
+                    $responseCode   = self::ERROR_RESPONSE_CODE;
+                    $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+                    $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_jobs_list.no_jobs')));
+                }
             } else {
                 $responseCode   = self::ERROR_RESPONSE_CODE;
                 $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
@@ -1730,7 +1862,7 @@ class PostGateway {
             $neoInput['service']            = $input['job_description'];
             $neoInput['position_id']        = !empty($input['position_id']) ? $input['position_id'] : "";
             $neoInput['requistion_id']      = !empty($input['requistion_id']) ? $input['requistion_id'] : "";
-            $neoInput['no_of_vacancies']    = !empty($input['vacancy']) ? $input['vacancy'] :0;
+            $neoInput['no_of_vacancies']    = $input['vacancy'];
             $neoInput['service_period']     = $input['job_period'];
             $neoInput['service_type']       = $input['job_type'];
             $neoInput['free_service']       = 1;
@@ -1741,7 +1873,7 @@ class PostGateway {
             $neoInput['skills']             =  $this->userGateway->getSkillsFromJobTitle($neoInput['service_name'], $neoInput['job_description']);
             $neoInput['status']             = Config::get('constants.POST.STATUSES.ACTIVE');
             $neoInput['created_by']         = $emailId;
-            $neoInput['post_from_campaign'] = 1;          
+            $neoInput['post_type']          = 'campaign';          
             $relationAttrs['created_at']    = date("Y-m-d H:i:s");
             $relationAttrs['company_name']  = $input['company_name'];
             $relationAttrs['company_code']  = $input['company_code'];
@@ -1796,7 +1928,7 @@ class PostGateway {
             $refId          = MyEncrypt::decrypt_blowfish($referenceId, Config::get('constants.MINTMESH_ENCCODE'));
             $refAry         = array_map('intval', explode('_', $refId));
             $post_id        = isset($refAry[0])?$refAry[0]:0;  
-            $refById        = isset($refAry[1])?$refAry[1]:0;
+            $refById        = isset($refAry[1])?$refAry[1]:0;          
             $checkRelation  = $this->neoPostRepository->checkIncludedRelation($post_id, $refById);
             if($checkRelation){
                 $postDetails      = $this->neoPostRepository->getPosts($post_id);
@@ -1809,6 +1941,7 @@ class PostGateway {
                 $record['location']         = $postDetails->service_location;
                 $record['job_description']  = $postDetails->job_description;
                 $record['status']           = $postDetails->status;
+                $record['post_type']        = $postDetails->post_type;
                 $record['job_function']     = $postResult['job_function_name'];
                 $record['rewards']          = $this->getPostRewards($postId);
                 $record['ref_code']         = MyEncrypt::encrypt_blowfish($postId.'_'.$refById,Config::get('constants.MINTMESH_ENCCODE'));
@@ -1829,6 +1962,260 @@ class PostGateway {
             $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job_details.failure')));
         }
         
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+    }
+    
+    public function campaignJobsList($input){
+            $returnData = $data = array();
+            $checkRelation  = $this->neoPostRepository->checkCampaignUserRelation($input);
+            $userDetails    = $this->neoEnterpriseRepository->getNodeById($input['reference_id']);
+            $companyCode    = !empty($checkRelation->company_code)?$checkRelation->company_code:'';
+            $page           = !empty($input['page_no']) ? $input['page_no'] : 0;
+            $search_for     = !empty($input['search']) ? $input['search'] : 0;
+            if($companyCode){
+                $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+                $companyLogo = !empty($companyDetails[0]->logo)?$companyDetails[0]->logo:'';
+                $campaignDetails = $this->neoPostRepository->getCampaignById($input['campaign_id']);
+                $campaignSchedule = $this->neoPostRepository->getCampaignSchedule($input['campaign_id']);  
+                $startDate = $this->appEncodeDecode->UserTimezone($campaignSchedule[0][0]->gmt_start_date,$input['time_zone']); 
+                $endDate = $this->appEncodeDecode->UserTimezone($campaignSchedule[0][0]->gmt_end_date,$input['time_zone']); 
+                $start_date = \Carbon\Carbon::parse($startDate)->format('dS M Y');
+                $end_date = \Carbon\Carbon::parse($endDate)->format('dS M Y');
+                $start_time = \Carbon\Carbon::parse($startDate)->format('h:i A');
+                $end_time = \Carbon\Carbon::parse($endDate)->format('h:i A');
+                if($campaignDetails->location_type == 'onsite'){
+                    $campaignLocation = $campaignDetails->address.','.$campaignDetails->city.','.$campaignDetails->state.','.$campaignDetails->country.','.$campaignDetails->zip_code;
+                }else{
+                    $campaignLocation = 'online';
+                }
+                $campaignJobsList      = $this->neoPostRepository->getCampaignPosts($input['campaign_id'],$page,$search_for);
+                foreach ($campaignJobsList as $result){
+                    $record         = array();
+                    $postRes        = $result[0];//post details 
+                    $postDetails    = $this->referralsGateway->formPostDetailsArray($postRes);
+                    $postId   = $postRes->getID();
+//                    //form the return jobs list here
+                    $record['reference_id']         = $input['reference_id'];
+                    $record['job_name']         = $postRes->service_name;
+                    $record['experience']       = $postDetails['experience_range_name'];
+                    $record['vacancies']        = $postRes->no_of_vacancies;
+                    $record['location']         = $postRes->service_location;
+                    $record['job_description']  = $postRes->job_description;
+                    $record['status']           = $postRes->status;
+                    $record['post_type']        = $postRes->post_type;
+                    $record['post_id']          = $postId;
+                    $record['ref_code']         = MyEncrypt::encrypt_blowfish($postId.'_'.$record['reference_id'],Config::get('constants.MINTMESH_ENCCODE'));
+                      $returnData[] = $record; 
+                }
+                if($returnData){
+                $data = array("campaign_jobs_list" => array_values($returnData),"campaign_name" => $campaignDetails->campaign_name,"campaign_type" => $campaignDetails->campaign_type, "campaign_location" => $campaignLocation,"campaign_start_date" => $start_date,"campaign_start_time" => $start_time,"campaign_end_date"=>$end_date,"campaign_end_time" => $end_time,"company_name" =>$companyDetails[0]->name,"company_logo"=>$companyLogo,"user_emailid"=>$userDetails->emailid,"count"=>count($campaignJobsList));
+                $responseCode   = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_jobs_list.success')));
+                }else{
+                    $responseCode   = self::ERROR_RESPONSE_CODE;
+                    $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+                    $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_jobs_list.no_jobs')));
+                }
+            } else {
+                $responseCode   = self::ERROR_RESPONSE_CODE;
+                $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+                $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_jobs_list.failure')));
+            }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+    }
+    
+    public function getJobsList($input){
+        
+        $listCount      = $jobsCount = $unreadCount = 0;
+        $compName       = '';
+        $companyCode    = $input['company_code'];
+        $page           = !empty($input['page_no'])?$input['page_no']:0;
+        $search         = !empty($input['search'])?$input['search']:0;
+        $resJobsList    = $refAry = $returnData =  $data = $companyDetails = $jobsListAry = array();
+        #get logged in user details here
+        $this->user     = $this->getLoggedInEnterpriseUser();
+        $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($this->user->emailid);
+        $userEmailId    = $neoUserDetails->emailid;
+        $userCountry    = $neoUserDetails->phone_country_name;
+        if(!empty($companyCode)){
+            #get company details here
+            $companyData    = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+            $companyData    = isset($companyData[0])?$companyData[0]:0;
+            $companyDetails['company_name']  = !empty($companyData->name)?$companyData->name:'';//company name  
+            $companyDetails['company_logo']  = !empty($companyData->logo)?$companyData->logo:'';//company logo 
+            #user rewards details
+            $companyDetails['points']        = 0;  
+            $companyDetails['rewards']       = 0;  
+            $companyDetails['currency_type'] = 1;
+            #get jobs list with company code
+            $jobsListAry    = $this->neoPostRepository->getJobsList($userEmailId, $companyCode, $page, $search);
+           
+            if(!empty($jobsListAry->count())){
+                $listCount = $jobsListAry->count();
+
+                foreach ($jobsListAry as $value) {
+
+                    $record   = $rewards = $postRewards = $vacancies = array();
+                    $jobsList = !empty($value[0]['post'])?$value[0]['post']:'';
+                    $jobRel   = !empty($value[0]['rel'])?$value[0]['rel']:'';
+                    #check result set non empty
+                    if(!empty($jobsList) && !empty($jobRel)){
+                        #separate campaigns and post here
+                        if(!empty($jobsList->campaign_name)){
+                            $campaignJobs = array();
+                            #campaigns list 
+                            $campaignId = $jobsList->getID();
+                            $record['campaign_id']          = $campaignId;
+                            $record['post_type']            = 'campaign';
+                            $record['campaign_name']        = $jobsList->campaign_name;//'designers campaign';
+                            $record['campaign_type']        = $jobsList->campaign_type;//'2-4 Years Exp';
+                            $record['campaign_date']        = $jobsList->created_at;//'2016-11-30 12:56:14';
+                            #get campaign location
+                            if($jobsList->location_type == 'online'){
+                                $record['campaign_location'] = 'online'; 
+                            }else{
+                                $location = $jobsList->address.', '.$jobsList->city.', '.$jobsList->state.', '.$jobsList->country.', '.$jobsList->zip_code;
+                                $record['campaign_location'] = str_replace(', ,', ',', $location);//remove double commas
+                            }
+                            #get campaign job title here
+                            $postsRes = $this->neoPostRepository->getCampaignPosts($campaignId);
+
+                            if(!empty($postsRes->count())){
+                                $jobsCount+= $postsRes->count();
+                                foreach($postsRes as $posts){
+                                    $postDetails    = $this->referralsGateway->formPostDetailsArray($posts[0]);
+                                    $campaignJobs[] = !empty($postDetails['service_name'])?$postDetails['service_name']:'';
+                                }
+                            }
+                            $record['campaign_jobs']  = $campaignJobs;//array('ios developer','android developer','php developer');
+                            $postRead                       = !empty($jobRel->post_read_status)?1:0;
+                            $record['campaign_read_status'] = $postRead; 
+                            $unreadCount+=empty($postRead)?1:0;
+
+                        }  else {
+                            #jobs list
+                            $postId                     = $jobsList->getID();
+                            $record['post_id']          = $postId;
+                            $record['post_type']        = $jobsList->post_type;//'external';
+                            $record['job_name']         = $jobsList->service_name;//'IOS DEVELOPER';
+                            $record['job_location']     = $jobsList->service_location;//'bangalore, karnataka, india';
+                            $record['job_date']         = $jobsList->created_at;//'2016-12-28 12:26:42'; 
+                            #get experience range name
+                            $record['job_experience']   = $this->referralsRepository->getExperienceRangeNameForPost($postId);
+                            #get the post reward details here
+                            $postRewards                = $this->referralsGateway->getPostRewards($postId, $userCountry, $isEnterprise=1);
+                            $record['rewards']          = $postRewards;
+                            $postRead                   = !empty($jobRel->post_read_status)?1:0;
+                            $record['post_read_status'] = $postRead; 
+                            $unreadCount+=empty($postRead)?1:0;
+                            $jobsCount+=1;
+
+                        }
+                     $returnData[] = $record;
+                    }
+                }
+
+                $data = array('company_details'=>$companyDetails, "jobs_list" => array_values($returnData),"unread_count" => $unreadCount, "jobs_count" => $jobsCount, "total_count" => $listCount);
+                $responseCode   = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job_details.success')));
+            } 
+            else {
+                $responseCode   = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job_details.no_jobs')));
+            }
+        } else {
+            $responseCode   = self::ERROR_RESPONSE_CODE;
+            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job_details.failure')));
+        }
+        
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+    }
+    
+     public function decryptCampaignRef($input){
+       $data = array();
+       if(!empty($input['ref']) && isset($input['ref'])){
+        $mail_parse_ref = isset($input['ref'])?MyEncrypt::decrypt_blowfish($input['ref'],Config::get('constants.MINTMESH_ENCCODE')):0;
+        $mail_parse_ref_val = array_map('intval',explode('_',$mail_parse_ref));	
+	$campaign_id = isset($mail_parse_ref_val[0])?$mail_parse_ref_val[0]:0;
+        $referred_by_id = isset($mail_parse_ref_val[1])?$mail_parse_ref_val[1]:0;
+        if($campaign_id != 0 && $referred_by_id != 0){
+        $userDetails = $this->neoEnterpriseRepository->getNodeById($referred_by_id);
+        $companyDetails     = $this->neoPostRepository->getCampaignCompany($campaign_id);
+        $input['campaign_id'] = $campaign_id;
+        $campaignStatus = $this->neoPostRepository->getCampaignById($input['campaign_id']);
+        $companyLogo = !empty($companyDetails->logo)?$companyDetails->logo:'';
+        $data = array("campaign_id" => $input['campaign_id'],"reference_id"=>$referred_by_id,"emailid" => $userDetails->emailid,"campaign_status"=>$campaignStatus->status,"company_logo"=>$companyLogo,"company_name"=>$companyDetails->name);
+        }else{
+            $data = array();
+        }
+        return $data;
+       }
+    }
+    
+     public function getJobDetails($input){
+        
+        $postId     =  $input['post_id'];
+        $returnData =  $data = $referrals = $record = $referralsAry = array();
+        #get logged in user details here
+        $this->user     = $this->getLoggedInEnterpriseUser();
+        $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($this->user->emailid);
+        $userEmailId    = $neoUserDetails->emailid;
+        #get job Details by post id here
+        $postResultAry = $this->referralsRepository->getPostDetails($postId, $userEmailId);
+        if(!empty($postResultAry[0]) && !empty($postResultAry[0][0])){
+            
+            $jobData  = $postDetails = $this->referralsGateway->formPostDetailsArray($postResultAry[0][0]);
+            $record['job_name']         = $jobData['service_name'];
+            $record['job_location']     = $jobData['service_location'];
+            $record['job_experience']   = $jobData['experience_range_name'];
+            $record['job_function']     = $jobData['job_function_name'];
+            $record['job_industry']     = $jobData['industry_name'];
+            $record['employment_type']  = $jobData['employment_type_name'];
+            $record['job_vacancies']    = $jobData['no_of_vacancies'];
+            $record['position_id']      = $jobData['position_id'];
+            $record['job_description']  = $jobData['job_description'];
+            $record['company_name']     = !empty($jobData['company'])?$jobData['company']:'';
+            
+            $returnData['job_details']  = $record;
+            
+            $referrals['ref_name']        = 'Paul';
+            $referrals['ref_dp']          = '';
+            $referrals['is_mmuser']       = 1;
+            $referrals['ref_phone']       = '';
+            $referrals['ref_email']       = 'paul@gmail.com';
+            $referrals['ref_status']      = 'pending';
+            $referrals['ref_designation'] = 'IOS developer';
+            
+            //$referralsAry[]    = $referrals;
+            
+            $referrals['ref_name']        = 'Smith Flaa';
+            $referrals['ref_dp']          = '';
+            $referrals['is_mmuser']       = 0;
+            $referrals['is_mmuser']       = 0;
+            $referrals['ref_phone']       = '919494887755';
+            $referrals['ref_email']       = '';
+            $referrals['ref_status']      = 'accepted';
+            $referrals['ref_designation'] = 'php developer';
+            //$referralsAry[]    = $referrals;
+            $returnData['referrals']    = $referralsAry;
+            
+
+            //$referredByDetails = $this->neoPostRepository->jobReferralDetails($input);
+            //print_r($referredByDetails).exit;
+        
+            $data = $returnData;
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.referrals.success')));
+        } else {
+            $responseCode   = self::ERROR_RESPONSE_CODE;
+            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.referrals.no_post')));
+        }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
 }

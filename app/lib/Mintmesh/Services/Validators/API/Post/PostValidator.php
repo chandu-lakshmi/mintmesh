@@ -69,10 +69,21 @@ class PostValidator extends Validator {
             'job_description' => 'required',
             'job_period'      => 'required',
             'job_type'        => 'required',
+            'vacancy'         =>  'required|between:1,10'
         ),
         'add_bucket_contacts_to_post'  => array(
             'post_id'        => 'required',
             'bucket_id'      => 'required'
+        ),
+        'get_jobs_list'  => array(
+           'company_code'    => 'required' 
+        ),
+        'campaign_jobs_list' => array(
+            'campaign_id'    => 'required',
+            'reference_id'   => 'required'
+        ),
+        'get_job_details' => array(
+            'post_id'        => 'required'
         )
     );
 

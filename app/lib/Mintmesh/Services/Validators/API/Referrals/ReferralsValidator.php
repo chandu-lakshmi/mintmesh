@@ -53,8 +53,8 @@ class ReferralsValidator extends Validator {
         'get_referrals_cash' => array(
             'payment_reason'=>'required'  
         ),
-        'get_campaigns' => array(
-           
+        'get_campaign_details' => array(
+           'campaign_id'=>'required'
         )  
         );
     

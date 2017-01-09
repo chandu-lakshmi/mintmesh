@@ -11,7 +11,10 @@
                            <tr height="36px"><td>&nbsp;</td></tr>
                            <tr>
                                 <td align="center">
+                                    <?php if(!empty($company_logo)){ ?>
                                     <img width="160" src="<?php echo $company_logo ; ?>" alt="company-logo" style="display:block;width:62px;">
+                                     <?php }else {
+                                     echo $company_name; }?>
                                 </td>
                             </tr>
                             <tr height="36px"><td style="border-bottom:1px solid #cccccc">&nbsp;</td></tr>
@@ -101,19 +104,22 @@
                                     <table cellspacing="0" cellpadding="0" width="100%" >
                                         <tr>
                                             <td align="left">
-                                                <a href="<?php echo $apply_link ; ?>"><span style="font-size: 13px;padding: 9px 13px;display: inline-block;background: #238260;color: #fff;border-radius: 2px;outline:none;cursor:pointer;">APPLY</span></a>
-                                                <a href="<?php echo $refer_link ; ?>"><span style="font-size: 13px;padding: 8px 12px;display: inline-block;border: 1px solid  #238260;color: #238260;border-radius: 2px;outline:none;cursor:pointer;margin-left:10px">REFER</span></a>
+                                                <?php if($post_type == 'internal'){ ; ?>
+                                                <a href="<?php echo $apply_link ; ?>"><span style="font-size: 13px;padding: 9px 13px;display: inline-block;background: #238260;color: #fff;border-radius: 2px;outline:none;cursor:pointer;">APPLY</span></a><?php } ?>
+                                               <?php if($post_type == 'external'){ ; ?>
+                                                <a href="<?php echo $refer_link ; ?>"><span style="font-size: 13px;padding: 8px 12px;display: inline-block;border: 1px solid  #238260;color: #238260;border-radius: 2px;outline:none;cursor:pointer;margin-left:10px">REFER</span></a><?php } ?>
                                             </td>
                                             <td align="right"><a href="<?php echo $view_jobs_link ; ?>"><span style="font-size: 13px;padding: 8px 12px;display: inline-block;color: #252525;border-radius: 2px;outline:none;cursor:pointer;border:1px solid #252525">VIEW ALL JOBS</span></a></td></tr>
                                     </table>
                                 </td>
-                            <tr>
-                                <td style="padding-top:30px">You can also attach your resume and send an email by clicking on the link below <a href="mailto:<?php echo $reply_emailid; ?>" target="_top"><?php echo $reply_emailid; ?></a></td> 
+<!--                            <tr>
+                                <td style="padding-top:30px">You can also attach your resume and send an email by clicking on the link below <a href="mailto:<?php // cho $reply_emailid; ?>" target="_top"><?php // echo $reply_emailid; ?></a></td> 
+                            </tr>-->
                             </tr>
-                            </tr>
+                            <?php if($post_type == 'external'){ ; ?>
                             <tr height="40px"><td style="border-bottom:1px solid #cccccc">&nbsp;</td></tr>
                             <tr height="22px"><td></td></tr>
-                            <tr><td align="center">Refer friend for future openings here ? &nbsp;<a href="<?php echo $drop_cv_link ; ?>"><span style="font-size: 14px;padding: 2px 10px;display: inline-block;color: #252525;border-radius: 2px;outline:none;cursor:pointer;border:1px solid #252525">Upload CV</span></a></td></tr>
+                            <tr><td align="center">Refer friend for future openings here  &nbsp;<a href="<?php echo $drop_cv_link ; ?>"><span style="font-size: 14px;padding: 2px 10px;display: inline-block;color: #252525;border-radius: 2px;outline:none;cursor:pointer;border:1px solid #252525">Upload CV</span></a></td></tr><?php } ?>
                             <tr height="32px"><td></td></tr>
                        </table>
                     </td>

@@ -98,8 +98,8 @@ class ReferralsGateway {
         }
         
         //validation on campaign details
-        public function validateGetCampaigns($input) {
-            return $this->doValidation('get_campaigns', 'MINTMESH.user.valid');
+        public function validateGetCampaignDetails($input) {
+            return $this->doValidation('get_campaign_details', 'MINTMESH.user.valid');
         }
         
         public function validateServiceSeekReferralInput($input)
@@ -2122,7 +2122,7 @@ class ReferralsGateway {
             
         }
     
-    public function getPostRewards($postId='', $userCountry='') {
+    public function getPostRewards($postId='', $userCountry='', $isEnterprise=0) {
         $aryRewards  = $rewards  = array();
         $tot_points  = $tot_cash = 0;
         $postRewards = $this->neoPostRepository->getPostRewards($postId);
@@ -2151,7 +2151,7 @@ class ReferralsGateway {
                } else if($rewards['rewards_type'] == 'points'){
                     $tot_points += $rewards['rewards_value'];
                } else {
-                    $tot_points += 50;
+                    $tot_points += ($isEnterprise)?0:50;//default 50 points
                }
                $aryRewards[$relRewardsMode] = $rewards;
             } 
@@ -2176,42 +2176,42 @@ class ReferralsGateway {
                 $schedule['end_on_time']    = $value->end_time;
                 $campSchedule[] = $schedule; 
             }
-            
         #get Campaign Posts here
         $postsRes   = $this->neoPostRepository->getCampaignPosts($campaignId);
             $vacancies = 0;
+            $jobs_count = $postsRes->count();
             foreach($postsRes as $posts){
                 $post = array();
                 $postDetails = $this->formPostDetailsArray($posts[0]);
-                $post['post_id']        = $postDetails['post_id'];
-                $post['service_name']   = $postDetails['service_name'];
+                $post['post_id']            = $postDetails['post_id'];
+                $post['service_name']       = $postDetails['service_name'];
+                $post['experience_range']   = $postDetails['experience_range_name'];
+                $post['service_location']   = $postDetails['service_location'];
+                $post['created_at']         = $postDetails['created_at'];
                 $postAry[] = $post;
                 $vacancies += !empty($postDetails['no_of_vacancies'])?$postDetails['no_of_vacancies']:'';
             }
             $returnData['schedule']         = $campSchedule;
             $returnData['jobs']             = $postAry;
+            $returnData['jobs_count']       = $jobs_count;
             $returnData['total_vacancies']  = $vacancies;
         return $returnData;
     }
     
     
-    public function getCampaigns($input=array()) {
+    public function getCampaignDetails($input) {
         #variable declaration
-        $campCount      = 0;
-        $campaignsAry   = $campReturn = $campResult = $viewCampRes = array();
+        $campaignsAry   = $viewCampRes = $data = $campAry = array();
+        $campaignId     = $input['campaign_id'];
         #get Logged In User Details  
         $this->user     = $this->getLoggedInUser();
         $this->neoUser  = $this->neoUserRepository->getNodeByEmailId($this->user->emailid) ;
         $userEmail      = $this->neoUser->emailid ;
         #get campaign result here
-        $campaignsAry = $this->referralsRepository->getCampaigns($userEmail);
-        
-        foreach ($campaignsAry as $value) {
-            $campAry    = array();
-            $campaign   = $value[0];
-            $campaignId = '';
+        $campaignsAry = $this->referralsRepository->getCampaigns($userEmail, $campaignId);
+        if(!empty($campaignsAry)){
+            $campaign   = $campaignsAry;
             #form return campaign Details here
-            $campaignId = $campaign->getID();
             $campAry['campaign_id']     = $campaignId;
             $campAry['campaign_name']   = $campaign->campaign_name;
             $campAry['campaign_type']   = $campaign->campaign_type;
@@ -2224,13 +2224,14 @@ class ReferralsGateway {
                 $location['country']    = $campaign->country;
                 $location['city']       = $campaign->city;
                 $location['zip_code']   = $campaign->zip_code;
-                $campAry['location']    = $location;
+                $campAry['location']    = str_replace(',,', ',', $location);
             }
             #get campaign schedule and posts details
             $viewCampRes = $this->viewCampaign($campaignId);
             $campAry['created_at']  = $campaign->created_at;
             $campAry['schedule']    = $viewCampRes['schedule'];
             $campAry['posts']       = $viewCampRes['jobs'];
+            $campAry['posts_count'] = $viewCampRes['jobs_count'];
             #get company details here
             $companyCode    = $campaign->company_code;
             $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
@@ -2241,15 +2242,8 @@ class ReferralsGateway {
             $campAry['emp_file']    = $campaign->emp_file;
             $campAry['cmp_logo']    = $companyLogo;
             $campAry['cmp_name']    = $companyName;
-
-            $campReturn[] = $campAry;
-            $campCount += 1;
-        }
-        $camp_count  = $campCount;
-        $campResult  = array('campaigns'=>$campReturn,'camp_count'=>$camp_count);
-        
-        if(!empty($campResult)){
-            $data    = $campResult;
+            #return data here    
+            $data    = array('campaign_details'=>$campAry);
             $message = array('msg' => array(Lang::get('MINTMESH.campaigns.success')));
         } else { 
             $message = array('msg' => array(Lang::get('MINTMESH.campaigns.no_campaigns')));
