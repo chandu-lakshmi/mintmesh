@@ -231,7 +231,8 @@ class job2 extends Command {
     }
     
      public function createUser($emailid,$neoInput){
-        $queryString = "CREATE (u:User) SET u.emailid='".$emailid."',u.firstname='".$neoInput['referral_name']."',u.fullname='".$neoInput['referral_name']."' ";
+        $email = $this->appEncodeDecode->filterString(strtolower($emailid));
+        $queryString = "CREATE (u:User) SET u.emailid='".$email."',u.firstname='".$neoInput['referral_name']."',u.fullname='".$neoInput['referral_name']."' ";
         if(!empty($neoInput['phone_no']) && isset($neoInput['phone_no'])){
         $queryString .= ",u.phone_no='".$neoInput['phone_no']."' ";
         }

@@ -388,9 +388,13 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
         return $result;
     }
     
-    public function getReferralDetails($postId='') {
+    public function getReferralDetails($postId='', $filterLimit='') {
         if(!empty($postId)){
-            $queryString = "MATCH (u)-[r:GOT_REFERRED]->(p:Post{status:'ACTIVE'}) where ID(p)=".$postId."  return u,r,p order by r.created_at desc  ";
+            $queryString = "MATCH (u)-[r:GOT_REFERRED]->(p:Post{status:'ACTIVE'}) where ID(p)=".$postId."  ";
+            if(!empty($filterLimit)){
+                $queryString.= " and r.created_at >= '".$filterLimit."' ";
+            }
+            $queryString.= "  return u,r,p order by r.created_at desc ";
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();   
         }

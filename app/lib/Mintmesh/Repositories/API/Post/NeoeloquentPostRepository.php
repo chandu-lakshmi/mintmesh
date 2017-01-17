@@ -125,7 +125,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
                     $queryString .= "match (u:User {emailid:'" . $email . "'})";
                 }
                 $queryString .= "-[r:POSTED]-(p:Post)-[:POSTED_FOR]-(:Company{companyCode:'" . $company_code . "'})
-                         where p.service_name =~ '(?i).*". $search .".*' or p.service_location =~ '(?i).*". $search .".*' ";
+                         where (p.service_name =~ '(?i).*". $search .".*' or p.service_location =~ '(?i).*". $search .".*') ";
             } 
             else {
                 if($permission == '1' && $postby == '0'){    
@@ -137,14 +137,19 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
 
             }
             if (isset($type) && $type != '2') {
-                $queryString .= "where p.free_service='" . $type . "' ";
+                if(!empty($search)){
+                    $queryString .= "and ";
+                }else{
+                    $queryString .= "where ";
+                }
+                $queryString .= "p.free_service='" . $type . "' ";
             }
             $queryString .= "return p,count(p) as listCount,count(distinct(u)) ORDER BY p.created_at DESC";
 
             if (!empty($limit) && !($limit < 0)) {
                 $queryString.=" skip " . $skip . " limit " . self::LIMIT;
             } 
-            //echo $queryString;exit;
+//            echo $queryString;exit;
             $query = new CypherQuery($this->client, $queryString);
             return $result = $query->getResultSet();
         } else {
@@ -172,7 +177,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
                 $skip = $limit - 10;
             }
 
-            $queryString = "match (u)-[r:GOT_REFERRED]->(p:Post) where ID(p)=" . $input['post_id'] . " ";
+            $queryString = "match (u)-[r:GOT_REFERRED]->(p:Post) where ID(p)=" . $input['post_id'] . " and r.one_way_status <> 'UNSOLICITED'";
             if(!empty($input['status'])){
                 $queryString .= "and r.one_way_status='".$input['status']."' ";
             }
@@ -423,12 +428,12 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
             $queryString = rtrim($queryString, ",");
             $queryString.="}";
         }
-        $queryString.="]->(p) return c";
+        $queryString.="]->(p) return p";
         $query = new CypherQuery($this->client, $queryString);
         return $result = $query->getResultSet();
     }
     
-    public function campaignsList($email='',$input='',$page = 0,$permission='') {
+     public function campaignsList($email='',$input='',$page = 0,$permission='',$filters = '') {
         if(!empty($email)){
             $skip = $limit = 0;
             if (!empty($page)) {
@@ -446,71 +451,98 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
                 $queryString .= ",created_by:'".$email."'";
             }
             $queryString .= "})";
-            if($input['mass_recruitment'] == 'true' || $input['militery_veterans'] == 'true' || $input['campus_hires'] == 'true' || !empty($input['location']) || $input['open'] == 'true' || $input['close'] == 'true'){
-                $queryString .= " where"; 
-            }
-            if($input['mass_recruitment'] == 'true' || $input['militery_veterans'] == 'true' || $input['campus_hires'] == 'true'){
-                $queryString .= " (";
-            }
-            if(isset($input['mass_recruitment']) && !empty($input['mass_recruitment']) && $input['mass_recruitment'] == 'true'){
-                $queryString .= "c.campaign_type='Mass Recruitment'";
-            }
-            if(isset($input['militery_veterans']) && !empty($input['militery_veterans']) && $input['militery_veterans'] == 'true'){
-                if($input['mass_recruitment'] == 'true'){
-                 $queryString .= " or";
+            if(isset($filters) && !empty($filters)){
+               $queryString .= " where ("; 
+                if(in_array("Mass Recruitment",$filters)){
+               $queryString .= "c.campaign_type='Mass Recruitment' "; 
+               }
+               if(in_array("Military Veterans",$filters)){
+                if(in_array("Mass Recruitment",$filters)){
+                    $queryString .= "or ";}
+                    $queryString .= "c.campaign_type='Military Veterans' "; 
                 }
-                $queryString .= " c.campaign_type='Military Veterans'";
-            }
-            if(isset($input['campus_hires']) && !empty($input['campus_hires']) && $input['campus_hires'] == 'true'){
-                if($input['mass_recruitment'] == 'true' || $input['militery_veterans'] == 'true'){
-                    $queryString .= " or";
+                if(in_array("Campus Hires",$filters)){
+                if(in_array("Mass Recruitment",$filters) || in_array("Military Veterans",$filters)){
+                    $queryString .= "or ";}
+                    $queryString .= "c.campaign_type='Campus Hires' "; 
                 }
-                $queryString .= " c.campaign_type='Campus Hires'";
-            }
-            if($input['mass_recruitment'] == 'true' || $input['militery_veterans'] == 'true' || $input['campus_hires'] == 'true'){
+                if(in_array("Open",$filters)){
+                if(in_array("Mass Recruitment",$filters) || in_array("Military Veterans",$filters) || in_array("Campus Hires",$filters)){
+                    $queryString .= "or ";}
+                    $queryString .= "c.status='ACTIVE' "; 
+                }
+                if(in_array("Close",$filters)){
+                if(in_array("Mass Recruitment",$filters) || in_array("Military Veterans",$filters) || in_array("Campus Hires",$filters) || in_array("Open",$filters)){
+                    $queryString .= "or ";}
+                    $queryString .= "c.status='CLOSED' "; 
+                }
                 $queryString .= ")";
             }
-            if((isset($input['open']) && $input['open'] == 'true') || (isset($input['close']) && $input['close'] == 'true')){
-                if($input['mass_recruitment'] == 'true' || $input['militery_veterans'] == 'true' || $input['campus_hires'] == 'true'){
-                    $queryString .= " and";
-                }
-                                    $queryString .= " (";
-                if($input['open'] == 'true'){
-                    $queryString .= "c.status='ACTIVE'";
-                }if($input['close'] == 'true'){
-                    if($input['open'] == 'true'){
-                        $queryString .= "or ";
-                }
-                    $queryString .= "c.status='CLOSED'";
-                 }
-                $queryString .= ")";
-
-            }
-            if(isset($input['location']) && !empty($input['location'])){
-                $open = 0;//and condition open or not
-                foreach($input['location'] as $key=>$value){
-                    if(isset($value) && !empty($value)){  
-                        
-                        if($input['mass_recruitment'] == 'true' || $input['militery_veterans'] == 'true' || $input['campus_hires'] == 'true' || $input['open'] == 'true' || $input['close'] == 'true')
-                        {
-                            if($key == '0'){
-                                $queryString .= " and (";
-                                $open = 1;
-                                }else{
-                                    $queryString .= " or ";
-                            }
-                        }
-                        else if($key != '0')
-                        {
-                            $queryString .= " or ";
-                        }
-                    $queryString .= " c.country='".$value."'";
-                    }
-                 }
-                 if($open){
-                    $queryString .= ")";
-                 }
-            }
+//            if($input['mass_recruitment'] == 'true' || $input['militery_veterans'] == 'true' || $input['campus_hires'] == 'true' || !empty($input['location']) || $input['open'] == 'true' || $input['close'] == 'true'){
+//                $queryString .= " where"; 
+//            }
+//            if($input['mass_recruitment'] == 'true' || $input['militery_veterans'] == 'true' || $input['campus_hires'] == 'true'){
+//                $queryString .= " (";
+//            }
+//            if(isset($input['mass_recruitment']) && !empty($input['mass_recruitment']) && $input['mass_recruitment'] == 'true'){
+//                $queryString .= "c.campaign_type='Mass Recruitment'";
+//            }
+//            if(isset($input['militery_veterans']) && !empty($input['militery_veterans']) && $input['militery_veterans'] == 'true'){
+//                if($input['mass_recruitment'] == 'true'){
+//                 $queryString .= " or";
+//                }
+//                $queryString .= " c.campaign_type='Military Veterans'";
+//            }
+//            if(isset($input['campus_hires']) && !empty($input['campus_hires']) && $input['campus_hires'] == 'true'){
+//                if($input['mass_recruitment'] == 'true' || $input['militery_veterans'] == 'true'){
+//                    $queryString .= " or";
+//                }
+//                $queryString .= " c.campaign_type='Campus Hires'";
+//            }
+//            if($input['mass_recruitment'] == 'true' || $input['militery_veterans'] == 'true' || $input['campus_hires'] == 'true'){
+//                $queryString .= ")";
+//            }
+//            if((isset($input['open']) && $input['open'] == 'true') || (isset($input['close']) && $input['close'] == 'true')){
+//                if($input['mass_recruitment'] == 'true' || $input['militery_veterans'] == 'true' || $input['campus_hires'] == 'true'){
+//                    $queryString .= " and";
+//                }
+//                                    $queryString .= " (";
+//                if($input['open'] == 'true'){
+//                    $queryString .= "c.status='ACTIVE'";
+//                }if($input['close'] == 'true'){
+//                    if($input['open'] == 'true'){
+//                        $queryString .= "or ";
+//                }
+//                    $queryString .= "c.status='CLOSED'";
+//                 }
+//                $queryString .= ")";
+//
+//            }
+//            if(isset($input['location']) && !empty($input['location'])){
+//                $open = 0;//and condition open or not
+//                foreach($input['location'] as $key=>$value){
+//                    if(isset($value) && !empty($value)){  
+//                        
+//                        if($input['mass_recruitment'] == 'true' || $input['militery_veterans'] == 'true' || $input['campus_hires'] == 'true' || $input['open'] == 'true' || $input['close'] == 'true')
+//                        {
+//                            if($key == '0'){
+//                                $queryString .= " and (";
+//                                $open = 1;
+//                                }else{
+//                                    $queryString .= " or ";
+//                            }
+//                        }
+//                        else if($key != '0')
+//                        {
+//                            $queryString .= " or ";
+//                        }
+//                    $queryString .= " c.country='".$value."'";
+//                    }
+//                 }
+//                 if($open){
+//                    $queryString .= ")";
+//                 }
+//            }
             $queryString .= " return c, count(distinct(c)) as total_count ORDER BY c.created_at DESC";
             if (!empty($limit) && !($limit < 0)) {
                 $queryString.=" skip " . $skip . " limit " . self::LIMIT;
@@ -521,7 +553,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         else{
             return false;
         }
-    }
+    } 
     
     public function createCampaignContactsRelation($relationAttrs = array(), $campaignId='', $contactId='') {
         $queryString = "Match (u:User),(c:Campaign)
@@ -736,11 +768,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
               $queryString .= ") ";
            }
            if(!empty($filters)){
-               if(!empty($search)){
-                   $queryString .= "or (";
-               }else{
-                   $queryString .= "and (";
-               }
+               $queryString .= "and (";
            if(in_array("Accepted",$filters)){
                $queryString .= "r.awaiting_action_status='ACCEPTED' "; 
            }
@@ -762,7 +790,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
            if(in_array("Offered",$filters)){
                if(in_array("Accepted",$filters) || in_array("Declined",$filters) || in_array("Unsolicited",$filters) || in_array("Interviewed",$filters)){
                $queryString .= "or ";}
-               $queryString .= "r.awaiting_action_status='OFFERMADE' "; 
+               $queryString .= "(r.awaiting_action_status='OFFERMADE' or r.awaiting_action_status='OFFERED') "; 
            }
            if(in_array("Hired",$filters)){
                if(in_array("Accepted",$filters) || in_array("Declined",$filters) || in_array("Unsolicited",$filters) || in_array("Interviewed",$filters) || in_array("Offered",$filters)){
@@ -796,7 +824,11 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
                     $queryString = rtrim($queryString, ",");
                     $queryString.="}";
                     }
-                    $queryString.="]->(p) set p.total_referral_count = p.total_referral_count + 1,r.resume_parsed=0";
+                    $queryString .= "]->(p) set ";
+                    if($neoInput['one_way_status'] != 'UNSOLICITED'){
+                    $queryString.="p.total_referral_count = p.total_referral_count + 1,";
+                    }
+                    $queryString .= "r.resume_parsed=0";
                     if($neoInput['one_way_status'] == 'UNSOLICITED'){
                         $queryString .= ",p.unsolicited_count = p.unsolicited_count + 1";
                     }

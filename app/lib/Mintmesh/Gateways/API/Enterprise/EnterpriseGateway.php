@@ -1264,13 +1264,15 @@ class EnterpriseGateway {
         $requestType = !empty($input['request_type'])?$input['request_type']:'';
         
         if($filterLimit == 360){
-            $year = date('Y');
-            $filterLimit = date('Y-m-d H:i:s', mktime(0, 0, 0, 1, 1, $year)); //current year first month    
+            //$year = date('Y');
+            //$filterLimit = date('Y-m-d H:i:s', mktime(0, 0, 0, 1, 1, $year)); //current year first month    
+            $filterLimit = date('Y-m-d H:i:s', strtotime('-1 year'));    
         } elseif ($filterLimit == 30) {
             $filterLimit = date('Y-m-d H:i:s', strtotime('-1 month'));
         } else {
             $filterLimit = date('Y-m-d H:i:s', strtotime('-1 week'));
         }
+
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId      = !empty($companyDetails[0])?$companyDetails[0]->id:0;
             
@@ -1416,12 +1418,12 @@ class EnterpriseGateway {
     public function getCompanyUserPostReferrals($userEmailId, $companyCode, $filterLimit){
         
         $return = $returnDetails = $referralDetails = $returnReferralDetails = array();
-        $postDetails = $this->neoEnterpriseRepository->getCompanyUserPostReferrals($userEmailId, $companyCode, $filterLimit);
+        $postDetails = $this->neoEnterpriseRepository->getCompanyUserPostReferrals($userEmailId, $companyCode);
         if(!empty($postDetails)){
             
             foreach($postDetails as $post){
                 $postDetails     = $this->referralsGateway->formPostDetailsArray($post[0]);
-                $referralDetails = $this->neoEnterpriseRepository->getReferralDetails($postDetails['post_id']);
+                $referralDetails = $this->neoEnterpriseRepository->getReferralDetails($postDetails['post_id'], $filterLimit);
                 
                 if(!empty($referralDetails)){
                     
@@ -1819,7 +1821,7 @@ class EnterpriseGateway {
         $inputParams['bucket_id']    = $input['bucket_id'];
         $inputParams['firstname']    = !empty($input['firstname'])?$input['firstname']:'';      
         $inputParams['lastname']     = !empty($input['lastname'])?$input['lastname']:'';      
-        $inputParams['emailid']      = !empty($input['emailid'])?$input['emailid']:'';      
+        $inputParams['emailid']      = !empty($input['emailid'])?$this->appEncodeDecode->filterString(strtolower($input['emailid'])):'';      
         $inputParams['phone']        = !empty($input['phone'])?$input['phone']:'';      
         $inputParams['status']       = !empty($input['status'])?$input['status']:'unknown';  
         $inputParams['employeeid']   = !empty($input['other_id'])?$input['other_id']:'';      
@@ -1832,7 +1834,7 @@ class EnterpriseGateway {
         $neoInput['firstname']   = $input['firstname'];
         $neoInput['lastname']    = $input['lastname'];
         $neoInput['phone']       = !empty($input['phone'])?$input['phone']:'';          
-        $neoInput['emailid']     = $input['emailid'];
+        $neoInput['emailid']     = $this->appEncodeDecode->filterString(strtolower($input['emailid']));
         $neoInput['employeeid']  = !empty($input['other_id'])?$input['other_id']:'';
         $neoInput['status']      = !empty($input['status'])?$input['status']:'unknown';  
         $checkContact = $this->enterpriseRepository->checkContact($inputParams);

@@ -456,6 +456,7 @@ class PostGateway {
         $dataSet['emailbody']           = 'just testing';
         $dataSet['send_company_name']   = $emailData['company_name'];
         $dataSet['reply_to']            = $emailData['reply_to'];
+        $dataSet['app_id']              = '730971373717257';
         #form job details here
         $dataSet['looking_for']         = $posts->service_name;//'Senior UI/UX Designer';
         $dataSet['job_function']        = $postDetails['job_function_name'];//'Design';
@@ -494,7 +495,7 @@ class PostGateway {
         $dataSet['free_service']= $freeService;
         $dataSet['discovery']   = $discovery;
         $dataSet['referral']    = $referral;
-        
+        $dataSet['job_details_link']    = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/job-details?ref=" . $refCode."";
         #redirect email links
         $dataSet['apply_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/candidate-details?ref=" . $refCode."";
         $dataSet['refer_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/referral-details?ref=" . $refCode."&flag=0&jc=0";
@@ -622,6 +623,7 @@ class PostGateway {
                 $pendingCount   = $referralCount - ($acceptedCount + $declinedCount + $unsolicitedCount);
 
                 $returnPosts['location']    = $postDetails['service_location'];
+                $returnPosts['post_type']   = $postDetails['post_type'];
                 $returnPosts['job_title']   = $postDetails['service_name'];
                 $returnPosts['created_at']  = $postDetails['created_at'];
                 $returnPosts['position_id'] = $postDetails['position_id'];
@@ -664,7 +666,8 @@ class PostGateway {
     }
 
     public function jobreferralDetails($input) {
-         
+        $this->loggedinEnterpriseUserDetails = $this->getLoggedInEnterpriseUser();
+        $company = $this->enterpriseRepository->getUserCompanyMap($this->loggedinEnterpriseUserDetails->id);
         $page   = !empty($input['page_no']) ? $input['page_no'] : 0;
         $status = !empty($input['status'])?$input['status']:'';
         //get job Referral Details here
@@ -716,8 +719,10 @@ class PostGateway {
                      $returnReferralDetails['designation'] = '';
                      unset($returnReferralDetails['dp_image']);
                 }
-                
+                $referrerDetails = $this->enterpriseRepository->getContactByEmailId($postRelDetails['referred_by'],$company->company_id);
+                $referrerName = $referrerDetails[0]->firstname.' '.$referrerDetails[0]->lastname;
                 $neoReferrerDetails = $this->neoUserRepository->getNodeByEmailId($postRelDetails['referred_by']);
+                $neoReferrerName = !empty($neoReferrerDetails['fullname'])?$neoReferrerDetails['fullname']:$neoReferrerDetails['firstname'];
                 if ($neoReferrerDetails['completed_experience'] == '1') {
                     $title = $this->neoPostRepository->getJobTitle($neoReferrerDetails['emailid']);
                     foreach ($title as $t) {
@@ -737,7 +742,7 @@ class PostGateway {
                 $returnReferralDetails['resume_path']           = !empty($postRelDetails['resume_path'])?$postRelDetails['resume_path']:$cvPath;
                 $returnReferralDetails['resume_original_name']  = $postRelDetails['resume_original_name'];
                 $returnReferralDetails['relation_count']        = $postRelDetails['relation_count'];
-                $returnReferralDetails['referred_by_name']      = !empty($neoReferrerDetails['fullname'])?$neoReferrerDetails['fullname']:$neoReferrerDetails['firstname'];
+                $returnReferralDetails['referred_by_name']      = !empty($referrerName)?$referrerName:$neoReferrerName;
                 $returnReferralDetails['referred_by_dp_image']  = $neoReferrerDetails['dp_renamed_name'];
                 $returnReferralDetails['confidence_score']      = !empty($postRelDetails['overall_score'])?$postRelDetails['overall_score']:0;
                 $returnReferralDetails['name']                  = !empty($referralName)?$referralName:'The contact';
@@ -1203,6 +1208,8 @@ class PostGateway {
         $objCompany     = new \stdClass();
         $postCampaign   = $postContacts = $campaignContacts = $campaign = $createdCampaign = $campSchedule = $data = array();
         $loggedInUser   = $this->referralsGateway->getLoggedInUser();
+        $this->neoLoggedInUserDetails   = $this->neoUserRepository->getNodeByEmailId($loggedInUser->emailid);
+        $userId = $this->neoLoggedInUserDetails->id;
         $company        = $this->enterpriseRepository->getUserCompanyMap($loggedInUser['id']);
         $companyId      = $company->company_id;
         $companyCode    = $company->code;
@@ -1225,6 +1232,8 @@ class PostGateway {
             $campaign['zip_code']       = !empty($input['zip_code'])?$input['zip_code']:'';
             $campaign['state']  = !empty($input['state'])?$input['state']:'';
             $campaign['country']  = !empty($input['country'])?$input['country']:'';
+            $campaign['latitude']  = !empty($input['latitude'])?$input['latitude']:'';
+            $campaign['longitude']  = !empty($input['longitude'])?$input['longitude']:'';
         }else{
             //$campaign['campaign_url']   = $input['campaign_url'];//if online
         }    
@@ -1266,6 +1275,26 @@ class PostGateway {
             $createdCampaign = $this->neoPostRepository->createCampaignAndCompanyRelation($companyCode, $campaign, $userEmailId);
             if (isset($createdCampaign[0]) && isset($createdCampaign[0][0])) {
                 $campaignId = $createdCampaign[0][0]->getID(); 
+                $data['campaign_name']    = $createdCampaign[0][0]->campaign_name;
+                $data['campaign_type']    = $createdCampaign[0][0]->campaign_type;
+                $data['total_vacancies']  = $createdCampaign[0][0]->total_vacancies;
+                $data['location_type']    = $createdCampaign[0][0]->location_type;
+                $data['camp_ref']         = MyEncrypt::encrypt_blowfish($campaignId.'_'.$userId,Config::get('constants.MINTMESH_ENCCODE'));;
+                if(!empty($createdCampaign[0][0]->latitude)){
+                    $data['latitude'] = $createdCampaign[0][0]->latitude;
+                }
+                if(!empty($createdCampaign[0][0]->longitude)){
+                    $data['longitude'] = $createdCampaign[0][0]->longitude;
+                }
+                if(strtolower($data['location_type']) == 'onsite'){
+                $location = array();
+                $location['address']          = $createdCampaign[0][0]->address;
+                $location['state']            = $createdCampaign[0][0]->state;
+                $location['country']          = $createdCampaign[0][0]->country;
+                $location['city']             = $createdCampaign[0][0]->city;
+                $location['zip_code']         = $createdCampaign[0][0]->zip_code;
+                $data['location'] = $location;
+            }
             }
         }
         //checking if campaign created or not
@@ -1284,13 +1313,29 @@ class PostGateway {
                         $gmtend_date = $schedule['end_on_date']." " .$schedule['end_on_time'];
                         $scheduleAttrs['gmt_end_date'] = $this->appEncodeDecode->UserTimezoneGmt($gmtend_date,$input['time_zone']); 
                         $scheduleAttrs['company_code'] = $companyCode;
+                        
                         if(!empty($scheduleId)){
                             //update Campaign Schedule here
                             $campaignSchedule = $this->neoPostRepository->updateCampaignScheduleRelation($scheduleId, $campaignId, $scheduleAttrs, $userEmailId);
                         }  else {
                             //create Campaign Schedule here
                             $campaignSchedule = $this->neoPostRepository->createCampaignScheduleRelation($campaignId, $scheduleAttrs, $userEmailId);
-                        }
+                            foreach ($campaignSchedule as $k => $value){
+                                $value = $value[0];
+                                $schedule['schedule_id']    = $value->getID();
+                                $gmtstart_date = $value->start_date." " .$value->start_time;
+                                $gmt_start_on_date = $this->appEncodeDecode->UserTimezone($gmtstart_date,$input['time_zone']);
+                                $schedule['gmt_start_on_date'] = !empty($gmt_start_on_date)?$gmt_start_on_date:'';
+                                $gmtend_date = $value->end_date." " .$value->end_time;
+                                $gmt_end_on_date = $this->appEncodeDecode->UserTimezone($gmtend_date,$input['time_zone']);
+                                $schedule['gmt_end_on_date'] = !empty($gmt_end_on_date)?$gmt_end_on_date:'';
+                                $schedule['start_on_date']  = date('Y-m-d', strtotime($value->start_date));
+                                $schedule['start_on_time']  = $value->start_time;
+                                $schedule['end_on_date']    = date('Y-m-d', strtotime($value->end_date));
+                                $schedule['end_on_time']    = $value->end_time;
+                                $campSchedule[] = $schedule; 
+                            }
+                            }
                     }
             }
             //checking if user selected at least one job or not
@@ -1308,7 +1353,19 @@ class PostGateway {
                         $postContacts['company_code'] = $companyCode;
                         $this->createRelationBwPostAndContacts($postId, $postContacts, $campBucketIds, $loggedInUser, $objCompany);
                     }
-                }
+                     $vacancies = 0;
+                     foreach($postCampaignRes as $posts){
+                        $post = array();
+                        $postDetails = $this->referralsGateway->formPostDetailsArray($posts[0]);
+                        $post['post_id'] = $postDetails['post_id'];
+                        $post['name'] = $postDetails['service_name'];
+                        $post['no_of_vacancies'] = $postDetails['no_of_vacancies'];
+                        $postAry[] = $post;
+                        $vacancies += !empty($postDetails['no_of_vacancies'])?$postDetails['no_of_vacancies']:'';;
+                        }
+                        $data['total_vacancies'] = $vacancies;
+                    }
+
             }
             //checking if user selected at least one bucket or not
             if(!empty($campBucketIds)){
@@ -1343,6 +1400,17 @@ class PostGateway {
             if(isset($editedCampaign[0][0]->emp_file)){
                 $data['emp_file'] = !empty($editedCampaign[0][0]->emp_file)?$editedCampaign[0][0]->emp_file:'';
             }
+            foreach($campBucketIds as $buckets){
+                $bucket = '';
+                $bucket = (int)$buckets[0];
+                $bucketAry[] = $bucket;
+            }
+            $data['bucket_ids']         = $bucketAry;
+            $data['schedule']     = $campSchedule;
+            $data['job_details']   = $postAry;
+            if($requestType == 'edit'){
+                $data = array(); 
+            }
             $responseCode   = self::SUCCESS_RESPONSE_CODE;
             $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
             $responseMessage= array('msg' => array(Lang::get('MINTMESH.campaign.success')));
@@ -1366,10 +1434,15 @@ class PostGateway {
         $input['company_code']  = $company->code;
         $checkPermissions       = $this->enterpriseRepository->getUserPermissions($this->loggedinUserDetails->group_id, $input);
         $permission             = !empty($checkPermissions['run_campaign'])?$checkPermissions['run_campaign']:0;
-        $campaigns              = $this->neoPostRepository->campaignsList($this->neoLoggedInUserDetails->emailid, $input, $page, $permission);
-        
+         if(!empty($input['filter'])){
+            $filter = explode(',', $input['filter']);
+            $campaigns              = $this->neoPostRepository->campaignsList($this->neoLoggedInUserDetails->emailid, $input, $page, $permission,$filter);
+         }else{
+             $campaigns              = $this->neoPostRepository->campaignsList($this->neoLoggedInUserDetails->emailid, $input, $page, $permission,'');
+         }
+         $totalCampaigns              = $this->neoPostRepository->campaignsList($this->neoLoggedInUserDetails->emailid, $input, '', $permission,'');
         if(!empty(count($campaigns))){
-            $totalCount         = $campaigns->count();
+            $totalCount         = $totalCampaigns->count();
             foreach($campaigns as $k=>$v){
                 $campaign['id'] = $v[0]->getID();
                 $postsRes       = $this->neoPostRepository->getCampaignPosts($campaign['id'],'','');
@@ -1448,6 +1521,12 @@ class PostGateway {
             }
             if(!empty($campRes->ceos_file) || !empty($campRes->emp_file)){
             $returnData['files'] = $filesAry;
+            }
+            if(!empty($campRes->latitude)){
+            $returnData['latitude'] = $campRes->latitude;
+            }
+            if(!empty($campRes->longitude)){
+            $returnData['longitude'] = $campRes->longitude;
             }
             //location Details here
             if(strtolower($returnData['location_type']) == 'onsite'){
@@ -1578,12 +1657,13 @@ class PostGateway {
                 $record     = array();
                 $post       = $result[0];//post details
                 $user       = $result[1];//user details
-                if(!empty($user->phone) && isset($user->phone)){
-                    $record['referred_by_phone']= 1;
-                    $record['from_user'] = $user->phone;
-                }else{
-                    $record['referred_by_phone']= 0;
+                if(!empty($user->emailid) && isset($user->emailid)){
+                     $record['referred_by_phone']= 0;
                     $record['from_user'] = $result[1]->emailid;
+                   
+                }else{
+                     $record['referred_by_phone']= 1;
+                    $record['from_user'] = $user->phone;
                 }
                 $relation   = $result[2];//relation details
                 #form the referrals here

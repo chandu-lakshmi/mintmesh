@@ -30,7 +30,7 @@
 		<span style="font-weight:bold;font-size:26px;margin-top:50px;display:inline-block;border-left:2px solid #CCCCCC;padding-left:14px;margin-left:14px;">Referral Reward Program</span>
 	</div>
 	<div style="font-size:16px;">
-		<p style="margin-top:50px;font-weight:600;">Hello <?php echo ucfirst($name) ; ?>,</p>
+		<p style="margin-top:50px;font-weight:600;">Hello <?php echo ucfirst($name) ;?>,</p>
                 <p> <?php echo $emailbody; ?></p>
 <!--		<p>We bring these powerful referral platform to you. Please download the App and Signup.</p>
 		<p style="line-height:20px;">We are excited to have you be a part of our success here at <?php echo $company_name; ?>.</p>-->
@@ -43,11 +43,7 @@
 	<div style="font-size:16px;line-height:10px;">
 		<p>Thanks,</p>
 		<p><?php echo $fromName; ?>,</p>
-		<p><?php echo $company_name; ?>,</p>
-		<p>Sent via MintMesh Enterprise.</p>
-	</div>
-	<div style="margin-left:10px;margin-top:30px;">
-		<img src="<?php echo $public_url ; ?>images/logo.svg" width="120" style="display:inline-block;">
+		<p><?php echo $company_name; ?>.</p>
 	</div>
 </div>
 </body>

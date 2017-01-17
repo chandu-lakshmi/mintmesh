@@ -29,7 +29,7 @@
                 	</td>
                 </tr>
                 <tr>
-                    <td width="600px" style="background:url('public/images/campaign_bg.jpg') no-repeat center center/cover">
+                    <td width="600px" style="background:url('<?php echo $public_url ; ?>images/campaign-bg.jpg') no-repeat center center/cover">
                        	<table cellspacing="0" cellpadding="0" width="100%">
                            	<tr>
                            		<td width="28px">&nbsp;</td>
@@ -46,11 +46,11 @@
 										<tr height="20px"><td>&nbsp;</td></tr>
                                         <tr style="font-size: 22px;color:#999999">
                                         	<td width="47%" style="border-bottom: 1px solid #ededed;padding-bottom:10px">
-                                        		<img width="30px" src="public/images/cal_icon.png" alt="calendar" style="width:30px"><span style="vertical-align: middle;margin-left: 10px">Time</span>
+                                        		<img width="30px" src="<?php echo $public_url ;?>images/calender.svg" alt="calendar" style="width:30px"><span style="vertical-align: middle;margin-left: 10px">Time</span>
                                         	</td>
                                         	<td width="6%">&nbsp;</td>
                                         	<td width="47%" style="border-bottom: 1px solid #ededed;padding-bottom:10px">
-                                        		<img width="20px" src="public/images/location_icon.png" alt="location" style="width:20px"><span style="vertical-align: middle;margin-left: 10px">Location</span>
+                                        		<img width="20px" src="<?php echo $public_url ;?>images/location.svg" alt="location" style="width:20px"><span style="vertical-align: middle;margin-left: 10px">Location</span>
                                         	</td>
                                         </tr>
 	                                </table>
@@ -86,7 +86,7 @@
                 						<tr height="20px"><td>&nbsp;</td></tr>
                 						<tr>
                 							<td>
-                								<a href="<?php echo $view_jobs_link; ?>"><span style="font-size: 13px;padding: 8px 12px;display: inline-block;border: 1px solid  #238260;color: #238260;border-radius: 2px;outline:none">
+                								<a href="<?php echo $view_jobs_link; ?>"><span style="font-size: 13px;padding: 8px 12px;display: inline-block;border: 1px solid  #238260;border-radius: 2px;outline:none;background: #238260;color: #fff">
                 									REFER
                 								</span></a>
                 							</td>
@@ -110,14 +110,15 @@
                 						<tr><td style="color: #999999;margin-bottom:3px;display:block">Share Campaign</td></tr>
                 						<tr>
                 							<td>
-                								<a href="https://www.facebook.com/dialog/feed?app_id=<?php echo $app_id; ?>&display=popup&amp;caption=<?php echo $campaign_name; ?>&picture=<?php echo !empty($company_logo)?$company_logo:''; ?>&link=<?php echo $view_jobs_link; ?>&redirect_uri=<?php echo $view_jobs_link; ?>"><img src="public/images/f_social.png" alt="fb" width="35px" style="width:35px;margin-right:5px"></a>
-                								<a href="https://www.linkedin.com/shareArticle?mini=true&url=<?php echo $view_jobs_link; ?>&title=<?php echo $campaign_name; ?>,<?php echo $campaign_type; ?>&summary=starts on<?php echo $campaign_start_date; ?>&source=<?php echo $company_name; ?>"><img src="public/images/in_social.png" alt="linkedin" width="35px" style="width:35px;margin-right:5px"></a>
-                								<a href="https://twitter.com/intent/tweet?text=<?php echo $campaign_name; ?>&url=<?php echo $view_jobs_link; ?>&hashtags=<?php echo $campaign_type; ?>&via=<?php echo $company_name; ?>&related="><img src="public/images/t_social.png" alt="twitter" width="35px" style="width:35px;margin-right:5px"></a>
-                								<a href="https://plus.google.com/share?url=<?php echo $view_jobs_link; ?>"><img src="public/images/g_social.png" alt="g+" width="35px" style="width:35px"></a>
+                								<a href="https://www.facebook.com/dialog/feed?app_id=<?php echo $app_id; ?>&display=popup&amp;caption=<?php echo $campaign_name; ?>&picture=<?php echo !empty($company_logo)?$company_logo:''; ?>&link=<?php echo $view_jobs_link; ?>&redirect_uri=<?php echo $view_jobs_link; ?>"><img src="<?php echo $public_url ;?>images/f_social.png" alt="fb" width="35px" style="width:35px;margin-right:5px"></a>
+                								<a href="https://www.linkedin.com/shareArticle?mini=true&url=<?php echo $view_jobs_link; ?>&title=<?php echo $campaign_name; ?>,<?php echo $campaign_type; ?>&summary=starts on<?php echo $campaign_start_date; ?>&source=<?php echo $company_name; ?>"><img src="<?php echo $public_url ;?>images/in_social.png" alt="linkedin" width="35px" style="width:35px;margin-right:5px"></a>
+                								<a href="https://twitter.com/intent/tweet?text=<?php echo $campaign_name; ?>&url=<?php echo $view_jobs_link; ?>&hashtags=<?php echo $campaign_type; ?>&via=<?php echo $company_name; ?>&related="><img src="<?php echo $public_url ;?>images/t_social.png" alt="twitter" width="35px" style="width:35px;margin-right:5px"></a>
+                								<a href="https://plus.google.com/share?url=<?php echo $view_jobs_link; ?>"><img src="<?php echo $public_url ;?>images/g_social.png" alt="g+" width="35px" style="width:35px"></a>
                 							</td>
                 						</tr>
                 						<tr height="40px"><td>&nbsp;</td></tr>
                 					</table>
+                                                    
                 				</td>
                 				<td width="28px;">&nbsp;</td>
                 			</tr>		

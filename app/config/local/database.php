@@ -22,24 +22,24 @@ return array(
 
 		'mysql' => array(
 			'driver'    => 'mysql',
-			'host'      => '127.0.0.1',
-			'database'  => 'mintmesh',
-			'username'  => 'root',
-			'password'  => '',
+			'host'      => '192.168.1.103',
+			'database'  => 'mintmesh2',
+			'username'  => 'mintmesh',
+			'password'  => 'm!ntm35h',
 			'charset'   => 'utf8',
 			'collation' => 'utf8_unicode_ci',
 			'prefix'    => '',
 		),
 		'neo4j' => array (
             'driver' => 'neo4j',
-            'host'   => '127.0.0.1',//127.0.0.1
+            'host'   => '192.168.1.103',//127.0.0.1
             'port'   => '7474',
             'username' => 'neo4j',
             /* 
             | Password for using sample DB "admin" 
 			| Password for using realtime DB "mintmesh"
             */
-            'password' => 'mintmesh'//mintmesh
+            'password' => 'm!ntm35h'//mintmesh
         ),
 
 	),

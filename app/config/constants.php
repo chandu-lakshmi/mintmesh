@@ -13,7 +13,7 @@ return [
     'USER_EXPIRY_HR'=>240,
     'MNT_VERSION'=>"v1",
     'MNT_FROM_NAME'=>'Mintmesh',
-    'MM_ENTERPRISE_URL'=>'http://202.63.105.85/mmenterprise',
+    'MM_ENTERPRISE_URL'=>'http://202.63.105.85/mmenterprise_9',
     'MNT_DEEP_LINK_IOS'=>'mintmeshstg://',
     'MNT_DEEP_LINK_ANDROID'=>'http://202.63.105.85/mintmesh/',
     'DP_PATH' => '/uploads/ProfilePics',

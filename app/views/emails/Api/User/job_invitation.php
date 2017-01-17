@@ -107,19 +107,38 @@
                                                 <?php if($post_type == 'internal'){ ; ?>
                                                 <a href="<?php echo $apply_link ; ?>"><span style="font-size: 13px;padding: 9px 13px;display: inline-block;background: #238260;color: #fff;border-radius: 2px;outline:none;cursor:pointer;">APPLY</span></a><?php } ?>
                                                <?php if($post_type == 'external'){ ; ?>
-                                                <a href="<?php echo $refer_link ; ?>"><span style="font-size: 13px;padding: 8px 12px;display: inline-block;border: 1px solid  #238260;color: #238260;border-radius: 2px;outline:none;cursor:pointer;margin-left:10px">REFER</span></a><?php } ?>
+                                                <a href="<?php echo $refer_link ; ?>"><span style="font-size: 13px;padding: 8px 12px;display: inline-block;border: 1px solid  #238260;border-radius: 2px;outline:none;cursor:pointer;margin-left:10px;background: #238260;color: #fff">REFER</span></a><?php } ?>
                                             </td>
-                                            <td align="right"><a href="<?php echo $view_jobs_link ; ?>"><span style="font-size: 13px;padding: 8px 12px;display: inline-block;color: #252525;border-radius: 2px;outline:none;cursor:pointer;border:1px solid #252525">VIEW ALL JOBS</span></a></td></tr>
+                                            <td align="right" style="padding-right:20px"><a href="<?php echo $view_jobs_link ; ?>"><span style="font-size: 13px;padding: 8px 12px;display: inline-block;border-radius: 2px;outline:none;cursor:pointer;border:1px solid #252525;background: #238260;color: #fff;">VIEW ALL JOBS</span></a></td></tr>
                                     </table>
                                 </td>
 <!--                            <tr>
                                 <td style="padding-top:30px">You can also attach your resume and send an email by clicking on the link below <a href="mailto:<?php // cho $reply_emailid; ?>" target="_top"><?php // echo $reply_emailid; ?></a></td> 
                             </tr>-->
                             </tr>
-                            <?php if($post_type == 'external'){ ; ?>
+                					
+<!--                       </td>
+                    </tr>-->
+                    <?php if($post_type == 'external'){ ; ?>
+                        <tr height="40px"><td style="border-bottom:1px solid #cccccc ">&nbsp;</td></tr>
+                        <tr height="20px"><td>&nbsp;</td></tr>
+                        <tr><td style="color:#939393 ">Share Job</td></tr>
+                        <tr>
+                            <td>
+                                <table>
+                                    <tr style="padding-top:10px;display:inline-block">
+                                        <td style="padding-right:15px"><a href="https://www.facebook.com/dialog/feed?app_id=<?php echo $app_id; ?>&display=popup&amp;caption=<?php echo $looking_for; ?>&picture=<?php echo !empty($company_logo)?$company_logo:''; ?>&link=<?php echo $job_details_link; ?>&redirect_uri=<?php echo $job_details_link; ?>" style="cursor:pointer"><img src="<?php echo $public_url ;?>images/f_social.png" height="40px" width="40px" alt="fb"></a></td>
+                                        <td style="padding-right:15px"><a href="https://www.linkedin.com/shareArticle?mini=true&url=<?php echo $job_details_link; ?>&title=<?php echo $looking_for; ?>,Location: <?php echo $location; ?>&summary=<?php echo $job_description; ?>&source=<?php echo $company_name; ?>" style="cursor:pointer"><img src="<?php echo $public_url ;?>images/in_social.png" height="40px" width="40px" alt="linkedin"></a></td>
+                                        <td style="padding-right:15px"><a href="https://twitter.com/intent/tweet?text=<?php echo $looking_for; ?>,Location: <?php echo $location; ?>&url=<?php echo $job_details_link; ?>&hashtags=&via=<?php echo $company_name; ?>&related=" style="cursor:pointer"><img src="<?php echo $public_url ;?>images/t_social.png" height="40px" width="40px" alt="twitter"></a></td>
+                                        <td style="padding-right:15px"><a href="https://plus.google.com/share?url=<?php echo $job_details_link; ?>" style="cursor:pointer"><img src="<?php echo $public_url ;?>images/g_social.png" height="40px" width="40px" alt="g+"></a></td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                        <tr>
                             <tr height="40px"><td style="border-bottom:1px solid #cccccc">&nbsp;</td></tr>
                             <tr height="22px"><td></td></tr>
-                            <tr><td align="center">Refer friend for future openings here  &nbsp;<a href="<?php echo $drop_cv_link ; ?>"><span style="font-size: 14px;padding: 2px 10px;display: inline-block;color: #252525;border-radius: 2px;outline:none;cursor:pointer;border:1px solid #252525">Upload CV</span></a></td></tr><?php } ?>
+                            <tr><td align="center">Upload a friend’s resume for future openings  &nbsp;<a href="<?php echo $drop_cv_link ; ?>"><span style="font-size: 14px;padding: 2px 10px;display: inline-block;border-radius: 2px;outline:none;cursor:pointer;border:1px solid #252525;background: #238260;color: #fff;">Upload CV</span></a></td></tr><?php } ?>
                             <tr height="32px"><td></td></tr>
                        </table>
                     </td>
