@@ -466,18 +466,28 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
                     $queryString .= "or ";}
                     $queryString .= "c.campaign_type='Campus Hires' "; 
                 }
+                $queryString .= ") ";
+                if(in_array("Open",$filters) || in_array("Close",$filters)){
+                    
                 if(in_array("Open",$filters)){
                 if(in_array("Mass Recruitment",$filters) || in_array("Military Veterans",$filters) || in_array("Campus Hires",$filters)){
-                    $queryString .= "or ";}
-                    $queryString .= "c.status='ACTIVE' "; 
+                    $queryString .= "and ";}
+                    $queryString .= "(c.status='ACTIVE' "; 
                 }
                 if(in_array("Close",$filters)){
-                if(in_array("Mass Recruitment",$filters) || in_array("Military Veterans",$filters) || in_array("Campus Hires",$filters) || in_array("Open",$filters)){
-                    $queryString .= "or ";}
-                    $queryString .= "c.status='CLOSED' "; 
+                if(in_array("Mass Recruitment",$filters) || in_array("Military Veterans",$filters) || in_array("Campus Hires",$filters)){
+                    if(in_array("Open",$filters)){
+                        $queryString .= "or ";
+                    }else{
+                    $queryString .= "and (";
+                    }
+                    }
+                    $queryString .= "c.status='CLOSED'"; 
                 }
                 $queryString .= ")";
-            }
+                }
+            }             
+
 //            if($input['mass_recruitment'] == 'true' || $input['militery_veterans'] == 'true' || $input['campus_hires'] == 'true' || !empty($input['location']) || $input['open'] == 'true' || $input['close'] == 'true'){
 //                $queryString .= " where"; 
 //            }
@@ -924,13 +934,20 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         $queryString = "MATCH (c:Campaign)-[:CAMPAIGN_CONTACT]->(n:User) where ID(c)=".$input['campaign_id']." and ID(n)=".$input['reference_id']." return c";
         $query  = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
-        if($result){
+        if($result->count() != 0){
             return $result[0][0];
         }else{
+            $queryString = "MATCH (u:User)-[:CREATED]->(c:Company)-[:COMPANY_CREATED_CAMPAIGN]->(n:Campaign) where ID(n)=".$input['campaign_id']." and ID(u)=".$input['reference_id']." return n";
+            $query  = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if($result->count() != 0){
+                return $result[0][0];
+            }else{
             return false;
         }
+        }
     }
-    
+      
     public function getJobsList($userEmailId='', $companyCode='',$page=0, $search = '') {
         
         $skip = $limit = 0;
@@ -970,6 +987,17 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         return false;
         }else{
             return true;
+        }
+    }
+    
+    public function getPostCampaign($postId='') {
+        $queryString = "MATCH (c:Campaign)-[:CAMPAIGN_POST]->(p:Post) where ID(p)=".$postId." return c";
+        $query  = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();
+        if($result){
+            return $result[0][0];
+        }else{
+            return false;
         }
     }
 }

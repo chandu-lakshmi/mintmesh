@@ -1397,5 +1397,24 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             
             return $returnPercent;
         }
+        
+        public function getPostAndMyReferralDetails($postId=0, $userEmailID ='')
+        {
+            $result = array();
+            if (!empty($postId) && !empty($userEmailID))
+            {                   
+                $queryString = "MATCH (u:User:Mintmesh)-[i:INCLUDED]-(p:Post)
+                                WHERE  ID(p)=".$postId." and u.emailid='".$userEmailID."'
+                                OPTIONAL MATCH (p)<-[r:GOT_REFERRED]-(n)
+                                WHERE r.referred_by='".$userEmailID."' 
+                                and ('Mintmesh' IN labels(n) OR  'NonMintmesh' IN labels(n) OR 'User' IN labels(n))
+                                set i.post_read_status =1
+                                RETURN p,r,n,labels(n)" ;
+                $query = new CypherQuery($this->client, $queryString);
+                $resultSet = $query->getResultSet();
+                $result = $resultSet;
+            }
+            return $result;
+        }
 }
 ?>

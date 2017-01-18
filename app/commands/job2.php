@@ -245,7 +245,19 @@ class job2 extends Command {
     public function checkRel($neoInput){
         $queryString = "MATCH (p:Post)-[r:INCLUDED]->(u:User) where ID(p)=".$neoInput['post_id']." and ID(u)=".$neoInput['referred_by_id']." return r,u";
         $query = new CypherQuery($this->client, $queryString);
-        return $result = $query->getResultSet();
+        $result = $query->getResultSet();
+        if($result->count() != 0){
+            return $result;
+        }else{
+            $queryString = "MATCH (u:User)-[r:POSTED]->(p:Post) where ID(p)=".$neoInput['post_id']." and ID(u)=".$neoInput['referred_by_id']." return r,u";
+            $query  = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if($result->count() != 0){
+                return $result;
+            }else{
+            return false;
+        }
+        }
     }
 
     private function parseFile($target_file,$imageFileType){

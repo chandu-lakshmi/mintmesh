@@ -497,7 +497,7 @@ class PostGateway {
         $dataSet['referral']    = $referral;
         $dataSet['job_details_link']    = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/job-details?ref=" . $refCode."";
         #redirect email links
-        $dataSet['apply_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/candidate-details?ref=" . $refCode."";
+        $dataSet['apply_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/candidate-details?ref=" . $refCode."&flag=0&jc=0";
         $dataSet['refer_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/referral-details?ref=" . $refCode."&flag=0&jc=0";
         $dataSet['view_jobs_link']      = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/all-jobs?ref=" . $refCode."";
         $dataSet['drop_cv_link']        = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/referral-details?ref=" . $refCode."&flag=1&jc=0";
@@ -554,7 +554,13 @@ class PostGateway {
                 $hiredCount     = !empty($postDetails['referral_hired_count']) ? $postDetails['referral_hired_count'] : 0;
                 $unsolicitedCount     = !empty($postDetails['unsolicited_count']) ? $postDetails['unsolicited_count'] : 0;
                 $pendingCount   = $referralCount - ($acceptedCount + $declinedCount + $unsolicitedCount);
-                $returnPosts['post_type']       = $postDetails['post_type'];
+                $returnPosts['post_type']  = $postDetails['post_type'];
+////
+//                if($returnPosts['post_type'] == 'campaign'){
+//                    $campaignName = $this->neoPostRepository->getPostCampaign($postDetails['post_id']);
+////                    print_r($campaignName).exit;
+//                    $returnPosts['campaign_name'] = $campaignName->campaign_name;
+//                }
                 $returnPosts['id']          = $postDetails['post_id'];
                 $returnPosts['location']    = $postDetails['service_location'];
                 $returnPosts['job_title']   = $postDetails['service_name'];
@@ -683,12 +689,18 @@ class PostGateway {
                 $nonMMUser    = new \stdClass();
                 
                 if(!empty($userDetails['emailid']) && !empty($postRelDetails['referred_by'])){
+                    $uDetails = $this->enterpriseRepository->getContactByEmailId($userDetails['emailid'],$company->company_id);
+                    if(!empty($uDetails)){
+                         $userName = $uDetails[0]->firstname.' '.$uDetails[0]->lastname;
+                    }
                     $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($userDetails['emailid']);
+                    $neoReferralName = !empty($neoUserDetails['fullname'])?$neoUserDetails['fullname']:$neoUserDetails['firstname'];
+//                    $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($userDetails['emailid']);
                     if(empty($userDetails['firstname']) && empty($userDetails['fullname'])){
                           $nonMMUser    = $this->contactsRepository->getImportRelationDetailsByEmail($postRelDetails['referred_by'], $userDetails['emailid']);
                           $referralName = !empty($nonMMUser->fullname)?$nonMMUser->fullname:!empty($nonMMUser->firstname)?$nonMMUser->firstname: "The contact";
                     }else{
-                          $referralName = $neoUserDetails['fullname'];
+                          $referralName = !empty($userName)?$userName:$neoReferralName;
                     }
 
                     $returnReferralDetails['from_user']         = $neoUserDetails['emailid'];
@@ -1437,10 +1449,13 @@ class PostGateway {
          if(!empty($input['filter'])){
             $filter = explode(',', $input['filter']);
             $campaigns              = $this->neoPostRepository->campaignsList($this->neoLoggedInUserDetails->emailid, $input, $page, $permission,$filter);
+            $totalCampaigns              = $this->neoPostRepository->campaignsList($this->neoLoggedInUserDetails->emailid, $input, '', $permission,$filter);
+
          }else{
              $campaigns              = $this->neoPostRepository->campaignsList($this->neoLoggedInUserDetails->emailid, $input, $page, $permission,'');
+             $totalCampaigns              = $this->neoPostRepository->campaignsList($this->neoLoggedInUserDetails->emailid, $input, '', $permission,'');
+
          }
-         $totalCampaigns              = $this->neoPostRepository->campaignsList($this->neoLoggedInUserDetails->emailid, $input, '', $permission,'');
         if(!empty(count($campaigns))){
             $totalCount         = $totalCampaigns->count();
             foreach($campaigns as $k=>$v){
@@ -1637,6 +1652,7 @@ class PostGateway {
         
         $data = $ReferralsRes  = $returnData = array();
         $loggedInUser   = $this->referralsGateway->getLoggedInUser();
+        $company = $this->enterpriseRepository->getUserCompanyMap($loggedInUser->id);
         $emailId        = $loggedInUser->id;
         $page           = !empty($input['page_no']) ? $input['page_no'] : 0;
         $search         = !empty($input['search']) ? $input['search']:'';
@@ -1685,13 +1701,17 @@ class PostGateway {
                 $referralName = '';
                 $nonMMUser    = new \stdClass();
                 if(!empty($user->emailid) && !empty($relation->referred_by)){
+                    $userDetails = $this->enterpriseRepository->getContactByEmailId($user->emailid,$company->company_id);
+                    if(!empty($userDetails)){
+                         $userName = $userDetails[0]->firstname.' '.$userDetails[0]->lastname;
+                    }
                     $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($user->emailid);
-//                    print_r($neoUserDetails).exit;
+                    $neoReferralName = !empty($neoUserDetails['fullname'])?$neoUserDetails['fullname']:$neoUserDetails['firstname'];
                     if(empty($neoUserDetails['firstname']) && empty($neoUserDetails['fullname'])){
                         $nonMMUser    = $this->contactsRepository->getImportRelationDetailsByEmail($relation->referred_by, $user->emailid);
                         $referralName = !empty($nonMMUser->fullname)?$nonMMUser->fullname:!empty($nonMMUser->firstname)?$nonMMUser->firstname: "The contact";
                     }else{
-                        $referralName = !empty($neoUserDetails['fullname'])?$neoUserDetails['fullname']:$neoUserDetails['firstname'];
+                        $referralName = !empty($userName)?$userName:$neoReferralName;
                     } 
                 }  else {
                     if(empty($user->firstname) && !empty($relation->referred_by)){
@@ -1699,9 +1719,13 @@ class PostGateway {
                         $referralName  = !empty($nonMMUser->fullname)?$nonMMUser->fullname:!empty($nonMMUser->firstname)?$nonMMUser->firstname: "The contact";
                     }
                 }
-                $nodeByEmail = $this->neoUserRepository->getNodeByEmailId($relation->referred_by);
+                $referrerDetails = $this->enterpriseRepository->getContactByEmailId($relation->referred_by,$company->company_id);
+                $referrerName = $referrerDetails[0]->firstname.' '.$referrerDetails[0]->lastname;
+                $neoReferrerDetails = $this->neoUserRepository->getNodeByEmailId($relation->referred_by);
+                $neoReferrerName = !empty($neoReferrerDetails['fullname'])?$neoReferrerDetails['fullname']:$neoReferrerDetails['firstname'];
+//                $nodeByEmail = $this->neoUserRepository->getNodeByEmailId($relation->referred_by);
                 $record['fullname']    = !empty($referralName)?$referralName:'The contact';
-                $record['referred_by_name'] = !empty($nodeByEmail['fullname'])?$nodeByEmail['fullname']:$nodeByEmail['firstname'];
+                $record['referred_by_name'] = !empty($referrerName)?$referrerName:$neoReferrerName;
                 $returnData[] = $record;
             }
 //            $returnData[] = array('total_records'=>$totalRec); 
@@ -1867,8 +1891,10 @@ class PostGateway {
             $refAry         = array_map('intval', explode('_', $refId));
             $post_id        = isset($refAry[0])?$refAry[0]:0;  
             $refById        = isset($refAry[1])?$refAry[1]:0;
-            $checkRelation  = $this->neoPostRepository->checkIncludedRelation($post_id, $refById);
-            $companyCode    = !empty($checkRelation->company_code)?$checkRelation->company_code:'';
+            $neoInput['post_id'] = $post_id;
+            $neoInput['referred_by_id'] = $refById;
+            $checkRelation  = $this->job2->checkRel($neoInput);
+            $companyCode    = !empty($checkRelation[0][0]->company_code)?$checkRelation[0][0]->company_code:'';
             if($companyCode){
                 $resJobsList      = $this->neoPostRepository->getApplyJobsList($companyCode, $refById,$page,$search_for);
                 foreach ($resJobsList as $result){
@@ -2008,8 +2034,10 @@ class PostGateway {
             $refId          = MyEncrypt::decrypt_blowfish($referenceId, Config::get('constants.MINTMESH_ENCCODE'));
             $refAry         = array_map('intval', explode('_', $refId));
             $post_id        = isset($refAry[0])?$refAry[0]:0;  
-            $refById        = isset($refAry[1])?$refAry[1]:0;          
-            $checkRelation  = $this->neoPostRepository->checkIncludedRelation($post_id, $refById);
+            $refById        = isset($refAry[1])?$refAry[1]:0;  
+            $neoInput['post_id'] = $post_id;
+            $neoInput['referred_by_id'] = $refById;
+            $checkRelation  = $this->job2->checkRel($neoInput);
             if($checkRelation){
                 $postDetails      = $this->neoPostRepository->getPosts($post_id);
                 $postResult = $this->referralsGateway->formPostDetailsArray($postDetails);
@@ -2049,7 +2077,7 @@ class PostGateway {
             $returnData = $data = array();
             $checkRelation  = $this->neoPostRepository->checkCampaignUserRelation($input);
             $userDetails    = $this->neoEnterpriseRepository->getNodeById($input['reference_id']);
-            $companyCode    = !empty($checkRelation->company_code)?$checkRelation->company_code:'';
+            $companyCode    = !empty($checkRelation->company_code)?$checkRelation->company_code:$userCompany;
             $page           = !empty($input['page_no']) ? $input['page_no'] : 0;
             $search_for     = !empty($input['search']) ? $input['search'] : 0;
             if($companyCode){
@@ -2237,7 +2265,7 @@ class PostGateway {
     }
     
      public function getJobDetails($input){
-        
+       
         $postId     =  $input['post_id'];
         $returnData =  $data = $referrals = $record = $referralsAry = array();
         #get logged in user details here
@@ -2245,10 +2273,13 @@ class PostGateway {
         $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($this->user->emailid);
         $userEmailId    = $neoUserDetails->emailid;
         #get job Details by post id here
-        $postResultAry = $this->referralsRepository->getPostDetails($postId, $userEmailId);
+        //$postResultAry = $this->referralsRepository->getPostDetails($postId, $userEmailId);
+        $postResultAry = $this->referralsRepository->getPostAndMyReferralDetails($postId, $userEmailId);
+        
         if(!empty($postResultAry[0]) && !empty($postResultAry[0][0])){
             
             $jobData  = $postDetails = $this->referralsGateway->formPostDetailsArray($postResultAry[0][0]);
+            $record['post_id']          = $jobData['post_id'];
             $record['job_name']         = $jobData['service_name'];
             $record['job_location']     = $jobData['service_location'];
             $record['job_experience']   = $jobData['experience_range_name'];
@@ -2261,32 +2292,80 @@ class PostGateway {
             $record['company_name']     = !empty($jobData['company'])?$jobData['company']:'';
             
             $returnData['job_details']  = $record;
-            
-            $referrals['ref_name']        = 'Paul';
-            $referrals['ref_dp']          = '';
-            $referrals['is_mmuser']       = 1;
-            $referrals['ref_phone']       = '';
-            $referrals['ref_email']       = 'paul@gmail.com';
-            $referrals['ref_status']      = 'pending';
-            $referrals['ref_designation'] = 'IOS developer';
-            
-            //$referralsAry[]    = $referrals;
-            
-            $referrals['ref_name']        = 'Smith Flaa';
-            $referrals['ref_dp']          = '';
-            $referrals['is_mmuser']       = 0;
-            $referrals['is_mmuser']       = 0;
-            $referrals['ref_phone']       = '919494887755';
-            $referrals['ref_email']       = '';
-            $referrals['ref_status']      = 'accepted';
-            $referrals['ref_designation'] = 'php developer';
-            //$referralsAry[]    = $referrals;
-            $returnData['referrals']    = $referralsAry;
-            
+            #get post referral details here
+            if(!empty($postResultAry[0][1]) && !empty($postResultAry[0][2])){   
+             
+                foreach ($postResultAry as $value){
+                    #get referral properties
+                    $nonMMUser  = $referral = array();
+                    $relObj     = !empty($value[1])?$value[1]:'';
+                    $valObj     = !empty($value[2])?$value[2]:'';
+                    $nonMMlabel = !empty($value[3][0])?$value[3][0]:'';
+                    $MMlabel    = !empty($value[3][1])?$value[3][1]:'';
+                    #variable declaration here
+                    $referral["is_mintmesh"]     =  $referral['is_self_referred']  = $isNonMintmesh = 0;
+                    $referral['ref_status']      = 'PENDING';
+                    $referral['ref_designation'] = '';
+                    $defaultName = Lang::get('MINTMESH.user.non_mintmesh_user_name');
 
-            //$referredByDetails = $this->neoPostRepository->jobReferralDetails($input);
-            //print_r($referredByDetails).exit;
-        
+                    $referral['ref_id']    = $relObj->getId();
+                    $refPhone   = !empty($valObj->phone)?$valObj->phone:'';
+                    $refEmail   = !empty($valObj->emailid)?$valObj->emailid:'';
+                    $referral['ref_phone'] = $refPhone;
+                    $referral['ref_email'] = $refEmail;
+                    $referral['ref_dp']    = !empty($valObj->dp_renamed_name)?$valObj->dp_renamed_name:'';
+                    $referral['ref_dp']    = !empty($valObj->dp_renamed_name)?$valObj->dp_renamed_name:'';
+                    $referral['rel_count'] = !empty($relObj->relation_count)?$relObj->relation_count:'';
+                    $referral['from_user'] = !empty($relObj->referred_for)?$relObj->referred_for:'';
+                    $referral['referred_by'] = !empty($relObj->referred_by)?$relObj->referred_by:'';
+                    #get referral profession name
+                    if (!empty($valObj->profession)){
+                        $referral['ref_designation'] = $this->userRepository->getProfessionName($valObj->profession);
+                    }
+                    #get referral status
+                    if (!empty($relObj->one_way_status)){
+                        #if one way status accepted
+                        if ($relObj->one_way_status == 'ACCEPTED'){
+                            $referral['ref_status'] = !empty($relObj->completed_status)?$relObj->completed_status:'PENDING';
+                        } else {
+                            $referral['ref_status'] = $relObj->one_way_status;
+                        }
+                    }
+                    #add label if non mintmesh
+                    if ($nonMMlabel =='NonMintmesh'){
+                        $isNonMintmesh = 1 ;
+                        $referral["user_referred_by"]  = 'phone' ;
+                        $referral['referred_by_phone'] = 1 ;
+                        $nonMMUser = $this->contactsRepository->getImportRelationDetailsByPhone($userEmailId, $refPhone);
+                    }else if ($MMlabel =='Mintmesh'){
+                        $referral["is_mintmesh"] = 1 ;
+                    }else{
+                        $isNonMintmesh = 1 ;
+                        $referral["user_referred_by"] = 'emailid' ;
+                        $nonMMUser = $this->contactsRepository->getImportRelationDetailsByEmail($userEmailId, $refEmail);
+                    }
+                    #form user name details for non mintmesh contacts
+                    if (!empty($nonMMUser) || !empty($isNonMintmesh)){
+                        if (!empty($nonMMUser->fullname)){
+                            $nonMMUser->fullname = trim($nonMMUser->fullname);
+                        }
+                        $referral['firstname'] = !empty($nonMMUser->firstname)?$nonMMUser->firstname:$defaultName;
+                        $referral['lastname']  = !empty($nonMMUser->lastname)?$nonMMUser->lastname:$defaultName;
+                        $referral['fullname']  = !empty($nonMMUser->fullname)?$nonMMUser->fullname:$defaultName;
+                    } else {
+                        $referral['firstname'] = !empty($valObj->firstname)?$valObj->firstname:$defaultName;
+                        $referral['lastname']  = !empty($valObj->lastname)?$valObj->lastname:$defaultName;
+                        $referral['fullname']  = !empty($valObj->fullname)?$valObj->fullname:$defaultName;
+                    }
+                    #check if self referred
+                    if ($refEmail == $userEmailId){
+                        $referral['is_self_referred'] = 1;
+                        $self_referred = 1 ;
+                    }
+                $referralsAry[] = $referral;
+                }
+            }
+            $returnData['referrals'] = $referralsAry;
             $data = $returnData;
             $responseCode   = self::SUCCESS_RESPONSE_CODE;
             $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
