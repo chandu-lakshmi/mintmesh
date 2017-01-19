@@ -1418,7 +1418,7 @@ class EnterpriseGateway {
     public function getCompanyUserPostReferrals($userEmailId, $companyCode, $filterLimit){
         
         $return = $returnDetails = $referralDetails = $returnReferralDetails = array();
-        $postDetails = $this->neoEnterpriseRepository->getCompanyUserPostReferrals($userEmailId, $companyCode);
+        $postDetails = $this->neoEnterpriseRepository->getCompanyUserPostReferrals($userEmailId);
         if(!empty($postDetails)){
             
             foreach($postDetails as $post){
@@ -1469,13 +1469,13 @@ class EnterpriseGateway {
           
         $returnDetails  = $return = $referralDetails = $returnHiresDetails = array();
         $filterLimit    = empty($filterLimit)?date('Y-m-d H:i:s', strtotime('-1 month')):$filterLimit;//default 30 days
-        $postDetails    = $this->neoEnterpriseRepository->getCompanyUserPostReferrals($userEmailId, $companyCode, $filterLimit);
+        $postDetails    = $this->neoEnterpriseRepository->getCompanyUserPostReferrals($userEmailId);
         if(!empty($postDetails)){
             
             foreach($postDetails as $post){
                 $PostRewards     = array(); 
                 $postDetails     = $this->referralsGateway->formPostDetailsArray($post[0]);
-                $referralDetails = $this->neoEnterpriseRepository->getReferralDetails($postDetails['post_id']);
+                $referralDetails = $this->neoEnterpriseRepository->getReferralDetails($postDetails['post_id'], $filterLimit);
                 $PostRewards     = $this->getPostRewards($postDetails['post_id']);
                 if(!empty($referralDetails)){
                     

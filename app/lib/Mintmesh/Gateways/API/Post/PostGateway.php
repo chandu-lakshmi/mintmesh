@@ -495,12 +495,12 @@ class PostGateway {
         $dataSet['free_service']= $freeService;
         $dataSet['discovery']   = $discovery;
         $dataSet['referral']    = $referral;
-        $dataSet['job_details_link']    = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/job-details?ref=" . $refCode."";
+        $dataSet['job_details_link']    = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/job-details/share?ref=" . $refCode."";
         #redirect email links
-        $dataSet['apply_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/candidate-details?ref=" . $refCode."&flag=0&jc=0";
-        $dataSet['refer_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/referral-details?ref=" . $refCode."&flag=0&jc=0";
-        $dataSet['view_jobs_link']      = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/all-jobs?ref=" . $refCode."";
-        $dataSet['drop_cv_link']        = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/referral-details?ref=" . $refCode."&flag=1&jc=0";
+        $dataSet['apply_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/candidate-details/web?ref=" . $refCode."&flag=0&jc=0";
+        $dataSet['refer_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/referral-details/web?ref=" . $refCode."&flag=0&jc=0";
+        $dataSet['view_jobs_link']      = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/all-jobs/web?ref=" . $refCode."";
+        $dataSet['drop_cv_link']        = Config::get('constants.MM_ENTERPRISE_URL') . "/email-parser/referral-details/web?ref=" . $refCode."&flag=1&jc=0";
         #set email required params
         $this->userEmailManager->templatePath   = Lang::get('MINTMESH.email_template_paths.contacts_job_invitation');
         $this->userEmailManager->emailId        = $emailData['to_emailid'];//target email id
@@ -531,7 +531,6 @@ class PostGateway {
     }
 
     public function jobsList($input) {
-
         $totalCount = 0;
         $this->loggedinEnterpriseUserDetails = $this->getLoggedInEnterpriseUser();
         $this->neoLoggedInEnterpriseUserDetails = $this->neoEnterpriseRepository->getNodeByEmailId($this->loggedinEnterpriseUserDetails->emailid);
@@ -554,13 +553,14 @@ class PostGateway {
                 $hiredCount     = !empty($postDetails['referral_hired_count']) ? $postDetails['referral_hired_count'] : 0;
                 $unsolicitedCount     = !empty($postDetails['unsolicited_count']) ? $postDetails['unsolicited_count'] : 0;
                 $pendingCount   = $referralCount - ($acceptedCount + $declinedCount + $unsolicitedCount);
+                if(($postDetails['post_type']) == 'campaign'){
+                   $campaignName = $this->neoPostRepository->getPostCampaign($postDetails['post_id']);
+                    $returnPosts['campaign_name'] = $campaignName->campaign_name;
+                }
+                else{
+                    $returnPosts['campaign_name'] = '';
+                }
                 $returnPosts['post_type']  = $postDetails['post_type'];
-////
-//                if($returnPosts['post_type'] == 'campaign'){
-//                    $campaignName = $this->neoPostRepository->getPostCampaign($postDetails['post_id']);
-////                    print_r($campaignName).exit;
-//                    $returnPosts['campaign_name'] = $campaignName->campaign_name;
-//                }
                 $returnPosts['id']          = $postDetails['post_id'];
                 $returnPosts['location']    = $postDetails['service_location'];
                 $returnPosts['job_title']   = $postDetails['service_name'];
@@ -1879,7 +1879,6 @@ class PostGateway {
     }
     
     public function applyJobsList($input){
-        
         $jobsListCount  = 0;
         $compName       = '';
         $resJobsList    = $refAry = $returnData =  $data = array();
@@ -1896,7 +1895,7 @@ class PostGateway {
             $checkRelation  = $this->job2->checkRel($neoInput);
             $companyCode    = !empty($checkRelation[0][0]->company_code)?$checkRelation[0][0]->company_code:'';
             if($companyCode){
-                $resJobsList      = $this->neoPostRepository->getApplyJobsList($companyCode, $refById,$page,$search_for);
+                $resJobsList      = $this->neoPostRepository->getApplyJobsList($companyCode, $refById,$page,$search_for,$input);
                 foreach ($resJobsList as $result){
                     $record         = array();
                     $postRes        = $result[0];//post details 
@@ -2179,6 +2178,7 @@ class PostGateway {
                             $record['campaign_name']        = $jobsList->campaign_name;//'designers campaign';
                             $record['campaign_type']        = $jobsList->campaign_type;//'2-4 Years Exp';
                             $record['campaign_date']        = $jobsList->created_at;//'2016-11-30 12:56:14';
+                            $record['created_by']           = $jobsList->created_by;
                             #get campaign location
                             if($jobsList->location_type == 'online'){
                                 $record['campaign_location'] = 'online'; 
@@ -2209,6 +2209,7 @@ class PostGateway {
                             $record['job_name']         = $jobsList->service_name;//'IOS DEVELOPER';
                             $record['job_location']     = $jobsList->service_location;//'bangalore, karnataka, india';
                             $record['job_date']         = $jobsList->created_at;//'2016-12-28 12:26:42'; 
+                            $record['created_by']       = $jobsList->created_by;
                             #get experience range name
                             $record['job_experience']   = $this->referralsRepository->getExperienceRangeNameForPost($postId);
                             #get the post reward details here
@@ -2289,6 +2290,7 @@ class PostGateway {
             $record['job_vacancies']    = $jobData['no_of_vacancies'];
             $record['position_id']      = $jobData['position_id'];
             $record['job_description']  = $jobData['job_description'];
+            $record['created_by']       = $jobData['created_by'];
             $record['company_name']     = !empty($jobData['company'])?$jobData['company']:'';
             
             $returnData['job_details']  = $record;

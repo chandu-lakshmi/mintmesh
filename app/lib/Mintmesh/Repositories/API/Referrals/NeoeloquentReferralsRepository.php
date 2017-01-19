@@ -1256,19 +1256,20 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             $resumeJSON = $this->getResumeString($initialValues['relation']['RESUME_JSON']);
             
             // calculate confidence score based on job function
-            $job_function_confidentScore = round($this->confidentScore($initialValues['post']['job_function'],$resumeJSON),2);
+            $job_function_confidentScore = round($this->confidentScore($initialValues['post']['job_function'],$resumeJSON, "jobfunction"),2);
             // calcuate confident score based on industry
-            $industry_confidentScore = round($this->confidentScore($initialValues['post']['Industry'],$resumeJSON),2);
+            $industry_confidentScore = round($this->confidentScore($initialValues['post']['Industry'],$resumeJSON, "industry"),2);
             // calcuate confident score based on location
             $location_confidentScore = round($this->confidentScore_location($initialValues['post']['location'],$resumeJSON), 2);
             // calculate confident score based on skills
             $skills_confidentScore = round($this->confidentScore_skills($initialValues['post']['skills'],$resumeJSON), 2);
             
-            $overall_score = round(($job_function_confidentScore + $industry_confidentScore + $location_confidentScore + $skills_confidentScore)/4, 2);
+            $overall_score = round((($job_function_confidentScore + $industry_confidentScore + $location_confidentScore + $skills_confidentScore)/10)*100, 2);
             //echo "\nJF_% - ".$job_function_confidentScore;
             //echo "\nIndustry_% - ".$industry_confidentScore;
             //echo "\nLocation_% - ".$location_confidentScore;
             //echo "\nSkills_% - ".$skills_confidentScore;
+            //echo "\nOverall_% - ".$overall_score;
             // updating the relation with confident score
             $queryString = "MATCH (p:Post)-[r:".Config::get('constants.REFERRALS.GOT_REFERRED')."]-(u) WHERE Id(r)=$relationID SET r.job_function_score = ".$job_function_confidentScore.", r.industry_score = ".$industry_confidentScore.", r.service_location_score = ".$location_confidentScore.", r.skills_score = ".$skills_confidentScore.", r.overall_score = ".$overall_score." return r";
             //echo "\n".$queryString;
@@ -1286,11 +1287,14 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             return $resumeString;
         }
         
-        public function confidentScore($searchKey, $resumeJSON) {
+        public function confidentScore($searchKey, $resumeJSON, $type) {
             $returnPercent = 0;
             $pattern = ""; $string = "";
             // explode searchKey for multiple values
             //echo "\n".$searchKey;
+            if(empty($searchKey)) {
+                return $returnPercent;
+            }
             $string = explode("/", $searchKey);
             if(count($string) > 1) {
                 foreach($string as $data) {
@@ -1302,11 +1306,11 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                             preg_match($pattern, $resumeJSON, $matches, PREG_OFFSET_CAPTURE);
                             //print_r($matches);
                             if(count($matches) > 0){
-                                $returnPercent += 50;
+                                $returnPercent += (100 / count($str));
                                 //echo "\n1 - ".$returnPercent."\n";
                             }
                         }
-                        $returnPercent = $returnPercent / count($str);
+                        //$returnPercent = $returnPercent / count($str);
                         //echo "\n2 - ".$returnPercent."\n";
                     } else {
                         //echo "\n".$data;
@@ -1330,11 +1334,22 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 }
             }
             
+            if ($type == "jobfunction") {
+                // Jobfunction confident score 10 % weightage
+                $returnPercent = ($returnPercent * 1) / 100;
+            } else {
+                // Industry confident score 15% weightage
+                $returnPercent = ($returnPercent * 1.5) / 100;
+            }
+
             return $returnPercent;
         }
         
         public function confidentScore_location($searchLocation, $resumeJSON) {
             $returnPercent = 0;
+            if(empty($searchLocation)) {
+                return $returnPercent;
+            }
             if($searchLocation != "Anywhere") {
                 $locationString = explode(",",$searchLocation);
                 if(count($locationString)>1) {
@@ -1345,11 +1360,11 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                         preg_match($pattern, $resumeJSON, $matches, PREG_OFFSET_CAPTURE);
                         //print_r($matches);
                         if(count($matches) > 0){
-                            $returnPercent += 100;
+                            $returnPercent += 100/count($locationString);
                             //echo "\n5 - ".$returnPercent."\n";
                         }
                     }
-                    $returnPercent = $returnPercent / count($locationString);
+                    //$returnPercent = $returnPercent / count($locationString);
                     //echo "\n6 - ".$returnPercent."\n";
                 } else {
                     //echo "\n".$searchLocation;
@@ -1364,19 +1379,23 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             } else {
                 $returnPercent = 100;
             }
+            // Location confident score 5% weightage
+            $locationWeightage = ($returnPercent * 0.05) / 100;
             
-            return $returnPercent;
+            return $locationWeightage;
         }
         
         function confidentScore_skills($skills, $resumeJSON) {
             $returnPercent = 0;
+            if(empty($skills)) {
+                return $returnPercent;
+            }
             $string = explode(",",$skills);
             if(count($string) > 1) {
                 foreach($string as $skill){
                     $skill = preg_quote(trim($skill));
                     $pattern = "/\b$skill\b/i";
                     preg_match($pattern, $resumeJSON, $matches, PREG_OFFSET_CAPTURE);
-                    print_r($matches);
                     if(count($matches) > 0) {
                         $returnPercent += 100;
                     }
@@ -1395,7 +1414,10 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 }
             }
             
-            return $returnPercent;
+            // skills confident score 70% weightage
+            $skillsWeightage = ($returnPercent * 7) / 100 ;
+            
+            return $skillsWeightage;
         }
         
         public function getPostAndMyReferralDetails($postId=0, $userEmailID ='')

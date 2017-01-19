@@ -868,7 +868,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
        return $return;
     }
     
-    public function getApplyJobsList($companyCode='',$refById='', $page=0,$search = '') {
+    public function getApplyJobsList($companyCode='',$refById='', $page=0,$search = '',$input='') {
         $return = array();
         $skip   = $limit = 0;
         if (!empty($page)){
@@ -876,11 +876,17 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
             $skip  = $limit - 10 ;
         }
         $queryString = "MATCH (c:Company)<-[:POSTED_FOR]-(p:Post)-[:INCLUDED]->(u:User) where c.companyCode = '".$companyCode."' and ID(u)=".$refById." and p.post_type <> 'campaign' ";
+        if(!empty($input['share']) && $input['share'] == 1){
+            $queryString .= "and p.post_type <> 'internal' ";
+        }
             if(!empty($search)){
                 $queryString .= "and (p.service_name =~ '(?i).*". $search .".*' or p.service_location =~ '(?i).*". $search .".*') ";
             }
             $queryString .= "WITH count(p) AS cnt
                         MATCH (c:Company)<-[:POSTED_FOR]-(p:Post)-[:INCLUDED]->(u:User) where c.companyCode = '".$companyCode."' and ID(u)=".$refById." and p.post_type <> 'campaign' ";
+            if(!empty($input['share']) && $input['share'] == 1){
+            $queryString .= "and p.post_type <> 'internal' ";
+            }
             if(!empty($search)){
                 $queryString .= "and (p.service_name =~ '(?i).*". $search .".*' or p.service_location =~ '(?i).*". $search .".*') ";
             }

@@ -363,12 +363,9 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
     }
     
     
-    public function getCompanyUserPostReferrals($email='', $filterLimit='',$filterLimit='') {
+    public function getCompanyUserPostReferrals($email='') {
         if(!empty($email)){
-        $queryString = "MATCH (u:User)-[r:POSTED]->(p:Post) where u.emailid='".$email."' ";
-        if(!empty($filterLimit)){
-            $queryString.= " and p.created_at >= '".$filterLimit."' ";
-        } 
+        $queryString = "MATCH (u:User)-[r:POSTED]->(p:Post) where u.emailid='".$email."' "; 
         $queryString.= "return p order by p.created_at desc ";
         $query = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();   
