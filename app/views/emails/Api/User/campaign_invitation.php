@@ -86,7 +86,7 @@
                 						<tr height="20px"><td>&nbsp;</td></tr>
                 						<tr>
                 							<td>
-                								<a href="<?php echo $view_jobs_link; ?>"><span style="font-size: 13px;padding: 8px 12px;display: inline-block;border: 1px solid  #238260;border-radius: 2px;outline:none;background: #238260;color: #fff">
+                								<a href="<?php echo $view_jobs_link_web; ?>"><span style="font-size: 13px;padding: 8px 12px;display: inline-block;border: 1px solid  #238260;border-radius: 2px;outline:none;background: #238260;color: #fff">
                 									REFER
                 								</span></a>
                 							</td>

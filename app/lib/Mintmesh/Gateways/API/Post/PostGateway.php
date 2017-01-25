@@ -14,6 +14,8 @@ use Mintmesh\Repositories\API\Enterprise\EnterpriseRepository;
 use Mintmesh\Repositories\API\SocialContacts\ContactsRepository;
 use Mintmesh\Repositories\API\User\UserRepository;
 use Mintmesh\Repositories\API\Enterprise\NeoEnterpriseRepository;
+use Mintmesh\Repositories\API\Payment\PaymentRepository;
+use Mintmesh\Gateways\API\Payment\PaymentGateway;
 use Mintmesh\Repositories\API\User\NeoUserRepository;
 use Mintmesh\Repositories\API\Post\NeoPostRepository;
 use Mintmesh\Gateways\API\User\UserGateway;
@@ -46,8 +48,8 @@ class PostGateway {
     const ERROR_RESPONSE_CODE = 403;
     const ERROR_RESPONSE_MESSAGE = 'error';
 
-    protected $enterpriseRepository, $commonFormatter, $authorizer, $appEncodeDecode, $neoEnterpriseRepository, $userFileUploader,$job2;
-    protected $createdNeoUser, $postValidator, $referralsRepository, $enterpriseGateway, $userGateway, $contactsRepository, $userEmailManager;
+    protected $enterpriseRepository, $commonFormatter, $authorizer, $appEncodeDecode, $neoEnterpriseRepository, $userFileUploader,$job2,$paymentRepository;
+    protected $createdNeoUser, $postValidator, $referralsRepository, $enterpriseGateway, $userGateway, $contactsRepository, $userEmailManager,$paymentGateway;
 
     public function __construct(NeoPostRepository $neoPostRepository, 
                                 UserRepository $userRepository, 
@@ -55,7 +57,9 @@ class PostGateway {
                                 UserGateway $userGateway, 
                                 UserController $userController, 
                                 ReferralsGateway $referralsGateway, 
-                                EnterpriseGateway $enterpriseGateway, 
+                                EnterpriseGateway $enterpriseGateway,
+                                PaymentRepository $paymentRepository,
+                                PaymentGateway $paymentGateway,
                                 Authorizer $authorizer, 
                                 CommonFormatter $commonFormatter, 
                                 APPEncode $appEncodeDecode, 
@@ -76,6 +80,8 @@ class PostGateway {
         $this->neoUserRepository = $neoUserRepository;
         $this->referralsRepository = $referralsRepository;
         $this->userGateway = $userGateway;
+        $this->paymentRepository = $paymentRepository ;
+        $this->paymentGateway = $paymentGateway ;
         $this->referralsGateway = $referralsGateway;
         $this->enterpriseGateway = $enterpriseGateway;
         $this->authorizer = $authorizer;
@@ -805,7 +811,9 @@ class PostGateway {
     }
 
     public function processJob($input) {
+        
         $objCompany = new \stdClass();
+        $one_way_status = FALSE;
         $returnReferralDetails = $data = array();
         $this->loggedinEnterpriseUserDetails    = $this->getLoggedInEnterpriseUser();
         $this->neoLoggedInEnterpriseUserDetails = $this->neoEnterpriseRepository->getNodeByEmailId($this->loggedinEnterpriseUserDetails->emailid);
@@ -821,15 +829,123 @@ class PostGateway {
         $userEmail = $this->neoLoggedInEnterpriseUserDetails->emailid;
         $phoneNumberReferred = !empty($input['referred_by_phone']) ? 1 : 0;
         $checkCandidate = $this->neoPostRepository->checkCandidate($referral,$postId);
-        if(isset($checkCandidate[0]) && isset($checkCandidate[0][0])){
+//        if(isset($checkCandidate[0]) && isset($checkCandidate[0][0])){
         $result = $this->neoPostRepository->statusDetails($postId, $referredBy, $referral, $status, $postWay, $relationCount, $phoneNumberReferred);
+        
         if (count($result)) {
 
             if ($status != 'DECLINED') {
-                //if(!empty($result[0][0]) && !empty($result[0][0]->free_service)){//free service
 
-                $relationId = !empty($result[0][1]) ? $result[0][1]->getID() : 0;
-                $is_self_referred = ($referral == $referredBy) ? 1 : 0;
+                $relationId         = !empty($result[0][1]) ? $result[0][1]->getID() : 0;
+                $is_self_referred   = ($referral == $referredBy) ? 1 : 0;
+                $one_way_status     = !empty($result[0][1]->one_way_status)?$result[0][1]->one_way_status:false;
+                $relReferredBy      = !empty($result[0][1])?$result[0][1]->referred_by:'';
+                
+               if($status =='ACCEPTED'){
+                    if(!empty($result[0][0]) && empty($result[0][0]->free_service)){
+                       //free service
+                    
+                        $postRewards = $this->getPostRewards($postId);
+                        foreach ($postRewards as $value) {
+                            
+                            $rewardsName  = !empty($value['rewards_name'])?$value['rewards_name']:'';
+                            $rewardsType  = !empty($value['rewards_type'])?$value['rewards_type']:'';
+                            $rewardsValue = !empty($value['rewards_value'])?$value['rewards_value']:0;
+                            if($rewardsName  =='Discovery'){
+                                
+                                if($rewardsType =='paid')//if($rewardsType =='points')
+                                {
+                                    $rewardsType = !empty($value['currency_type'])?$value['currency_type']:1;
+                                    $relReferredBy;
+                                    //update user cash
+                                    $transactionInput = array();
+                                    $transactionInput['from_user']              = $this->appEncodeDecode->filterString(strtolower($userEmail));
+                                    $transactionInput['to_user']                = $this->appEncodeDecode->filterString(strtolower($relReferredBy)); 
+                                    $transactionInput['for_user']               = $this->appEncodeDecode->filterString(strtolower($referral)); 
+                                    $transactionInput['amount']                 = $rewardsValue;
+                                    $transactionInput['payment_reason']         = 1;
+                                    $transactionInput['payment_type']           = $rewardsType;
+                                    $transactionInput['mm_transaction_id']      = $t_id = $this->paymentGateway->generateTansactionId($input['referred_by']);
+                                    $transactionInput['comission_percentage']   = 0;
+                                    $transactionInput['payed_for_id']           = $postId;
+                                    $transactionInput['relation_id']            = !empty($result[0][1])?$result[0][1]->getID():0;
+                                    $transactionInput['status']                 = Config::get('constants.PAYMENTS.STATUSES.SUCCESS');
+                                    $payment_transaction                        = $this->paymentRepository->insertTransaction($transactionInput);
+                                    
+                                    
+                                    //get user country 
+                                    $userDetails = $this->neoUserRepository->getNodeByEmailId($relReferredBy) ;
+                                    $userPhoneCountry  = !empty($userDetails->phone_country_name)?$userDetails->phone_country_name:'';
+                                    $amount = $rewardsValue;
+                                    $convertedAmount = 0;
+                                    if(!empty($userPhoneCountry)){
+                                        if (strtolower($userPhoneCountry) =="india")//if india
+                                        {
+                                            if ($rewardsType == 1)//if dollar then convert 
+                                            {
+                                                //change from dollar to rs
+                                                $rsRate = Config::get('constants.PAYMENTS.CONVERSION_RATES.USD_TO_INR');
+                                                $convertedAmount = $this->paymentGateway->convertUSDToINR($amount);
+                                            }
+                                            else
+                                            {
+                                                $convertedAmount = $amount ;
+                                            }
+                                        }
+                                        else //if USA
+                                        {
+                                            //get balance cash info
+                                            if ($rewardsType == 2)//if dollar then convert 
+                                            {
+                                                //change from rs to USD
+
+                                                $usdRate = Config::get('constants.PAYMENTS.CONVERSION_RATES.INR_TO_USD');
+                                                $convertedAmount = $this->paymentGateway->convertINRToUSD($amount);
+                                            }
+                                            else
+                                            {
+                                                $convertedAmount = $amount ;
+                                            }
+                                        }
+                                        
+
+                                        //get balance cash info
+                                        $balanceCashInfo = $this->paymentRepository->getbalanceCashInfo($relReferredBy);
+
+                                        if (!empty($balanceCashInfo))
+                                        {
+                                            //edit balance cash info
+                                            $balanceCash = $convertedAmount+$balanceCashInfo->balance_cash ;
+                                            $bid = $balanceCashInfo->id ;
+                                            $inp = array();
+                                            $inp['balance_cash'] = $balanceCash ;
+                                            $u = $this->paymentRepository->editBalanceCash($bid, $inp);
+                                        }
+                                        else //insert balance cash info
+                                        {
+                                            $sqlUser = $this->userRepository->getUserByEmail($relReferredBy);
+                                            //insert balance cash info
+                                            $inp = array();
+                                            $inp['user_id'] = !empty($sqlUser->id)?$sqlUser->id:0;
+                                            $inp['user_email'] = $relReferredBy ;
+                                            $inp['balance_cash'] = $convertedAmount ;
+                                            $inp['currency'] = ($rewardsType == 1)?'USD':'INR';
+                                            $i = $this->paymentRepository->insertBalanceCash($inp);
+                                        }
+                                    }
+
+                                } else if($rewardsType == 'points')
+                                {
+                                    //update user points
+                                    $this->userRepository->logLevel(1, $relReferredBy, $userEmail, $referral, $rewardsValue);
+                                }
+
+                            }
+
+                        }
+
+                    }
+               }
 
                 $postUpdateStatus = $this->referralsRepository->updatePostPaymentStatus($relationId, '', $is_self_referred, $userEmail);
                 //send notification to the person who referred to the post
@@ -843,7 +959,7 @@ class PostGateway {
                 }
                 $referred_by_neo_user = $this->neoUserRepository->getNodeByEmailId($referredBy);
                 //add credits
-                $this->userRepository->logLevel(3, $referredBy, $userEmail, $referral, Config::get('constants.POINTS.SEEK_REFERRAL'));
+                //$this->userRepository->logLevel(3, $referredBy, $userEmail, $referral, Config::get('constants.POINTS.SEEK_REFERRAL'));
 
                 if ($referral == $referredBy) {
                     //send notification to via person
@@ -856,6 +972,7 @@ class PostGateway {
                     //send battle card to u1 containing u3 details
                     $this->userGateway->sendNotification($referred_by_details, $referred_by_neo_user, $this->loggedinEnterpriseUserDetails->emailid, 20, array('extra_info' => $postId), array('other_user' => $referral), 1);
                 }
+                
                 //}
             } else {
                 $notificationId = ($referral == $referredBy) ? 25 : 15; //indicates referral declined notify to P2
@@ -863,13 +980,14 @@ class PostGateway {
             //send notification
             $this->userGateway->sendNotification($this->loggedinEnterpriseUserDetails, $objCompany, $referredBy, $notificationId, array('extra_info' => $postId), array('other_user' => $referral), $parse);
             $message = array('msg' => array(Lang::get('MINTMESH.referrals.success')));
+            $data = array("one_way_status" => $one_way_status);
         } else {
             $message = array('msg' => array(Lang::get('MINTMESH.referrals.no_post')));
         }
-        }else{
-            $message = array('msg' => array(Lang::get('MINTMESH.referrals.invalid_post')));
-        }
-        return $this->commonFormatter->formatResponse(200, "success", $message, array("one_way_status" => $result[0][1]->one_way_status));
+//        }else{
+//            $message = array('msg' => array(Lang::get('MINTMESH.referrals.invalid_post')));
+//        }
+        return $this->commonFormatter->formatResponse(200, "success", $message, $data);
     }
     
     public function awaitingAction($input) {
@@ -1209,7 +1327,8 @@ class PostGateway {
         $dataSet['company_logo']        = $emailData['company_logo'];
         $dataSet['app_id']              = '730971373717257';
         #redirect email links
-          $dataSet['view_jobs_link']      = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns?ref=" . $refCode."";
+          $dataSet['view_jobs_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/share?ref=" . $refCode."";
+          $dataSet['view_jobs_link_web']      = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/web?ref=" . $refCode."";
         #set email required params
         $this->userEmailManager->templatePath   = Lang::get('MINTMESH.email_template_paths.contacts_campaign_invitation');
         $this->userEmailManager->emailId        = $emailData['to_emailid'];//target email id
@@ -2182,18 +2301,21 @@ class PostGateway {
             $companyData    = isset($companyData[0])?$companyData[0]:0;
             $companyDetails['company_name']  = !empty($companyData->name)?$companyData->name:'';//company name  
             $companyDetails['company_logo']  = !empty($companyData->logo)?$companyData->logo:'';//company logo 
+            
+            //$levelsInfo      = $this->userRepository->getCurrentLevelInfo($userEmailId);
+            $creditResult    = $this->userRepository->getCreditsCount($userEmailId);
+            $referralCashRes = $this->paymentRepository->getPaymentTotalCash($userEmailId,1);
             #user rewards details
-            $companyDetails['points']        = 0;  
-            $companyDetails['rewards']       = 0;  
+            //$companyDetails['points']        = !empty($levelsInfo[0]->points)?$levelsInfo[0]->points:0;  
+            $companyDetails['points']        = !empty($creditResult[0]->credits)?$creditResult[0]->credits:0;  
+            $companyDetails['rewards']       = !empty($referralCashRes[0]->total_cash)?$referralCashRes[0]->total_cash:0;    
             $companyDetails['currency_type'] = 1;
             #get jobs list with company code
             $jobsListAry    = $this->neoPostRepository->getJobsList($userEmailId, $companyCode, $page, $search);
            
             if(!empty($jobsListAry->count())){
                 $listCount = $jobsListAry->count();
-
                 foreach ($jobsListAry as $value) {
-
                     $record   = $rewards = $postRewards = $vacancies = array();
                     $jobsList = !empty($value[0]['post'])?$value[0]['post']:'';
                     $jobRel   = !empty($value[0]['rel'])?$value[0]['rel']:'';
@@ -2231,11 +2353,9 @@ class PostGateway {
                             $postRead                       = !empty($jobRel->post_read_status)?1:0;
                             $record['campaign_read_status'] = $postRead; 
 
-                            $record['social_campaign_share'] = 'http://202.63.105.85/mmenterprise/email/all-campaigns?ref=03c7b0dca8cbd52466f31b58e5a83d104ecd64ad08fcf8f9'; 
-                            
                             $refId      = $campaignId.'_'.$neoUserId;
                             $refCode    = MyEncrypt::encrypt_blowfish($refId, $encodeString);
-                            $record['social_campaign_share'] = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns?ref=" . $refCode.""; 
+                            $record['social_campaign_share'] = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/share?ref=" . $refCode.""; 
                             $unreadCount+=empty($postRead)?1:0;
 
                         }  else {
@@ -2255,7 +2375,6 @@ class PostGateway {
                             $postRead                   = !empty($jobRel->post_read_status)?1:0;
                             $record['post_read_status'] = $postRead; 
 
-                            $record['social_job_share'] = 'http://202.63.105.85/mmenterprise/email/all-jobs?ref=4a6b93ddfecc9e4d8c1d5fbe2dc56968fe5cd2edf78eff79&amp;flag=0&amp;jc=0';
                             $refId      = $postId.'_'.$neoUserId;
                             $refCode    = MyEncrypt::encrypt_blowfish($refId, $encodeString);
                             $record['social_job_share'] = Config::get('constants.MM_ENTERPRISE_URL') . "/email/job-details/share?ref=" . $refCode."";; 
@@ -2267,7 +2386,6 @@ class PostGateway {
                      $returnData[] = $record;
                     }
                 }
-
                 $data = array('company_details'=>$companyDetails, "jobs_list" => array_values($returnData),"unread_count" => $unreadCount, "jobs_count" => $jobsCount, "total_count" => $listCount);
                 $responseCode   = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;

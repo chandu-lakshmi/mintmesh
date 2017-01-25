@@ -897,6 +897,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
             $limit = $page*10 ;
             $skip  = $limit - 10 ;
         }
+        $search = $this->appEncodeDecode->filterString($search);
         $queryString = "MATCH (c:Company)<-[:POSTED_FOR]-(p:Post)-[:INCLUDED]->(u:User) where c.companyCode = '".$companyCode."' and ID(u)=".$refById." and p.post_type <> 'campaign' ";
         if(!empty($input['share']) && $input['share'] == 1){
             $queryString .= "and p.post_type <> 'internal' ";

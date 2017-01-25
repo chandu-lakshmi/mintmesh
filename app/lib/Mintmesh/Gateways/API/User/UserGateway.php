@@ -4948,7 +4948,7 @@ class UserGateway {
                     }else if($note->note_type == 'post_one_way_notify'){
 
                         $noteAry['from_user']       = $note->from_email;
-                        $noteAry['referral']        = $otherEmail;
+                        $noteAry['referral']        = ($forMintmesh)?$otherEmail:$otherPhone;
                         $noteAry['referred_by']     = $emailId;
                         $noteAry['relation_count']  = 1;
                     }
