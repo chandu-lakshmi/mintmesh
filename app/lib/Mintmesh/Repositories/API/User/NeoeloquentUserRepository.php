@@ -1517,9 +1517,27 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
               return $returnArray ;
           }
           
-          
+        public function getPost($postId) {
+            $return = array();
+            $queryString = "match (p:Post) where ID(p)=".$postId." return p";
+            $query  = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();         
+            if (isset($result[0]) && isset($result[0][0])){
+                $return = $result[0][0];
+            }
+           return $return;
+        }
         
-        
-		 
+        public function getCampaign($postId) {
+            $return = array();
+            $queryString = "match (c:Campaign) where ID(c)=".$postId." return c";
+            $query  = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();         
+            if (isset($result[0]) && isset($result[0][0])){
+                $return = $result[0][0];
+            }
+           return $return;
+        }
+          	 
 }
 ?>

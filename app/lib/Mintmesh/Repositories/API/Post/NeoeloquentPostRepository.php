@@ -452,11 +452,14 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
             }
             $queryString .= "})";
             if(isset($filters) && !empty($filters)){
-               $queryString .= " where ("; 
+               $queryString .= " where "; 
+               if(in_array("Mass Recruitment",$filters) || in_array("Military Veterans",$filters) || in_array("Campus Hires",$filters)){
+                   $queryString .= "("; 
+               }
                 if(in_array("Mass Recruitment",$filters)){
                $queryString .= "c.campaign_type='Mass Recruitment' "; 
                }
-               if(in_array("Military Veterans",$filters)){
+                if(in_array("Military Veterans",$filters)){
                 if(in_array("Mass Recruitment",$filters)){
                     $queryString .= "or ";}
                     $queryString .= "c.campaign_type='Military Veterans' "; 
@@ -466,7 +469,9 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
                     $queryString .= "or ";}
                     $queryString .= "c.campaign_type='Campus Hires' "; 
                 }
+                if(in_array("Mass Recruitment",$filters) || in_array("Military Veterans",$filters) || in_array("Campus Hires",$filters)){
                 $queryString .= ") ";
+                }
                 if(in_array("Open",$filters) || in_array("Close",$filters)){
                     
                 if(in_array("Open",$filters)){
@@ -481,6 +486,11 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
                     }else{
                     $queryString .= "and (";
                     }
+                    }
+                    else if(in_array("Open",$filters)){
+                    $queryString .= "or "; 
+                    }else{
+                        $queryString .= "( "; 
                     }
                     $queryString .= "c.status='CLOSED'"; 
                 }
@@ -704,6 +714,13 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         }
     }
     
+     public function checkCandidate($emailid='',$postId=0) {
+        $queryString = "MATCH (u:User)-[r:GOT_REFERRED]->(p:Post) where u.emailid='".$emailid."' and ID(p)=".$postId." return r";
+        $query = new CypherQuery($this->client, $queryString);
+         $result = $query->getResultSet();
+         return $result;
+    }
+    
     public function checkUserNodeExist($emailid){
         $queryString = "MATCH (u:User) where u.emailid='".$emailid."' return u.emailid";
         $query = new CypherQuery($this->client, $queryString);
@@ -770,10 +787,15 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
            $queryString = "MATCH (c:Company)<-[:POSTED_FOR]-(p:Post)<-[r:GOT_REFERRED]-(u) where c.companyCode='".$companyCode."' ";
            if (!empty($search)){
               $queryString.=" and (p.service_name =~ '(?i).*". $search .".*' ";
-              if($search[0] == 'a'){
-                  $queryString .= "or r.awaiting_action_status =~ '(?i).*". $search .".*'";
+//              if($search == 'accepted' || $search[0] == 'i' || $search[0] == 'o' || $search[0] == 'h'){
+//                  $queryString .= "or r.awaiting_action_status =~ '(?i).*". $search .".*'";
+//              }else{
+//                  $queryString .= "or r.one_way_status =~ '(?i).*". $search .".*'";                  
+//              }
+              if($search[0] == 'd' || $search[0] == 'u'){
+                  $queryString .= "or r.one_way_status =~ '(?i).*". $search .".*'";    
               }else{
-                  $queryString .= "or r.one_way_status =~ '(?i).*". $search .".*'";
+                  $queryString .= "or r.awaiting_action_status =~ '(?i).*". $search .".*'";
               }
               $queryString .= ") ";
            }
@@ -1000,11 +1022,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         $queryString = "MATCH (c:Campaign)-[:CAMPAIGN_POST]->(p:Post) where ID(p)=".$postId." return c";
         $query  = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
-        if($result){
-            return $result[0][0];
-        }else{
-            return false;
-        }
+        return $result; 
     }
 }
 

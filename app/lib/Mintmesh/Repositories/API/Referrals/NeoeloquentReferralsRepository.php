@@ -1030,7 +1030,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                  $queryString = "match  (p:Post) where ID(p)=".$postId." return p.service_name";
                  $query = new CypherQuery($this->client, $queryString);
                  $result = $query->getResultSet();
-                 if (!empty($result)){
+                 if (!empty($result[0]) && !empty($result[0][0])){
                      $postName = $result[0][0];
                  }
              }
@@ -1438,5 +1438,6 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             }
             return $result;
         }
+        
 }
 ?>

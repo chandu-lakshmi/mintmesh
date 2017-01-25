@@ -39,7 +39,8 @@ return array(
                 "create_success_login_fail"=>"User Created Successfully but Login Fail Please login manually",
                 "uploaded_large_file"=>"Uploaded file size is too large",
                 "invalid_file_format"=>"Uploaded file format not allowed",
-                "no_resume"=>"Please upload a resume"
+                "no_resume"=>"Please upload a resume",
+                'invalid_acess'=>'Invalid access code'
                 
             ),
          "referrals"=>array(
@@ -57,7 +58,8 @@ return array(
              "no_referrals"=>"You have not referred any of your contacts for this post",
              "no_result"=>"No Result Found",
              "invalid_input"=>"Invalid Input",
-             "no_import"=>"You have not imported this contact, please try importing first"
+             "no_import"=>"You have not imported this contact, please try importing first",
+             "invalid_post"=>"Invalid post id"
          ),
          "login"=>array(
                 "login_valid"   => "Successfully Validated",
@@ -200,14 +202,16 @@ return array(
                 '23'=>'has referred ownself to your request',
                 '24'=>'accepted your self referral', 
                 '25'=>'has turned down your self referral',
-                '27'=>'is looking for'),
+                '27'=>'is looking for',
+                '28'=>'is looking for camp'),
             "extra_texts"=>array(
                 '10'=>'for your request',
                 '11'=>'for a service',
                 '12'=>'for this request',
                 '22'=>'for this service',
                 '23'=>'for your request', 
-                '27'=>'. Checkout the Refer page.')
+                '27'=>'. Checkout the Refer page.', 
+                '28'=>'. Checkout the camp page.')
          ),
          "get_requests"=>array(
              "success"=>"Successfully Listed"
@@ -333,7 +337,7 @@ return array(
             "valid"   => "Successfully Validated",
             "success" => "Successfully Done",
             "error" => "Failed To Process",
-            "no_posts" => "No Posts Found",
+            "no_posts" => "No Posts Found"
        ) ,
         "campaign"=>array(
             "success" => "Successfully Done",

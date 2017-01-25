@@ -281,6 +281,9 @@ class EnterpriseGateway {
         if (empty($userCount)) {
             $responseMessage = $responseCode = $responseStatus = "";
             $responseData = array();
+            $accessCode = $this->enterpriseRepository->getAccessCode($input);
+            if(!empty($accessCode))
+            {
             $input['is_enterprise'] = 1;
 
             // creating company random code
@@ -307,6 +310,7 @@ class EnterpriseGateway {
                 if (!empty($createdCompany)) {
                     //Mapping user and company entry in mysql DB 
                     $data = $this->enterpriseRepository->companyUserMapping($createdUser->id, $createdCompany->id, $randomCode);
+                    $updateAccessCode = $this->enterpriseRepository->updateAccessCodeTable($input,$createdCompany->id);
                 }
                 if (!empty($neoEnterpriseCompany) && !empty($neoEnterpriseUser)) {
                     //Creating relation between user and company in neo4j
@@ -358,6 +362,10 @@ class EnterpriseGateway {
 
             $message = array('msg' => array($responseMessage));
             return $this->commonFormatter->formatResponse($responseCode, $responseStatus, $message, $responseData);
+            }else{
+            $message = array('msg' => array(Lang::get('MINTMESH.user.invalid_acess')));
+            return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array());
+            }
         } else {
             $message = array('msg' => array(Lang::get('MINTMESH.sms.user_exist')));
             return $this->commonFormatter->formatResponse(self::ERROR_RESPONSE_CODE, self::ERROR_RESPONSE_MESSAGE, $message, array());

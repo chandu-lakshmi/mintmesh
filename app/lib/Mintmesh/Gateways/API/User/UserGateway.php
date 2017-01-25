@@ -74,7 +74,7 @@ class UserGateway {
                 $this->contactsGateway = $contactsGateway ;
                 $this->contactsRepository = $contactsRepository ;
                 $this->notificationsTypes = array('3','4','5','6','10','11','12','13','14','15','17','18','19','20','22');
-                $this->extraTextsNotes = array('10','11','12','22','27') ;
+                $this->extraTextsNotes = array('10','11','12','22','27','28') ;
                 $this->infoTypes = array('experience', 'education', 'certification');
                 $this->directProfileRedirections = array('2','12','14');
                 $this->declines = array('15','16');
@@ -87,7 +87,7 @@ class UserGateway {
                 $this->you_are = array('recruiter'=>4, 'salaried_professional'=>1, 'self_employed'=>2, 'professional_service_provider'=>3, 'student'=>5, 'retired_professional'=>7, 'homemaker'=>6);
                 $this->notificationFromP2 = array(10,11,20);
                 $this->notificationToP2 = array(12,15);
-                $this->newServiceNotifications = array(27);
+                $this->newServiceNotifications = array(27,28);
                 $this->allowedResumeExtensions = array(
                                 'doc',
                                 'docx',
@@ -4854,6 +4854,127 @@ class UserGateway {
             //$matchesAry = array_unique($matchesAry, SORT_REGULAR);
             $return =  implode(', ', $matchesAry);
             return $return;
+        }
+        
+        /* 
+         * get notifications related to a user
+         */
+        public function getBellNotifications($input)
+        {
+            $notifications = $returnNote = array();
+            $page       = !empty($input['page'])?$input['page']:0;
+            $noteType   = !empty($input['notification_type'])?$input['notification_type']:'';
+            $defaultName =Lang::get('MINTMESH.user.non_mintmesh_user_name');
+            $user       = $this->getLoggedInUser();
+            $emailId    = $user->emailid;
+            $userDetails = $this->neoUserRepository->getNodeByEmailId($user->emailid);
+            
+            $notifications = $this->userRepository->getBellNotifications($emailId, $noteType, $page);
+            //print_r($notifications).exit;
+            if (!empty($notifications)){
+                   
+                foreach ($notifications as $note)
+                {
+                    $noteAry = $fromUser = $otherUser = array();
+                    
+                    $fromEmail   = !empty($note->from_email)?$note->from_email:'';
+                    $otherPhone  = !empty($note->other_phone)?$note->other_phone:'';
+                    $otherEmail  = !empty($note->other_email)?$note->other_email:'';
+                    $forMintmesh = !empty($note->for_mintmesh)?$note->for_mintmesh:0;
+                    $nTypeId     = !empty($note->notifications_types_id)?$note->notifications_types_id:0;
+                    
+                    if($fromEmail){
+                        $fromUser = $this->neoUserRepository->getNodeByEmailId($fromEmail);
+                    }
+                    #i.e refred non mintmesh user
+                    if (!empty($forMintmesh) && !empty($otherPhone)){
+                        $otherUser = $otherEmailDetails = $this->neoUserRepository->getNonMintmeshUserDetails($otherPhone) ;
+                        
+                    }else{
+                        $otherUser = $otherEmailDetails = $this->neoUserRepository->getNodeByEmailId($otherEmail) ;
+
+                    }
+                    #i.e non mintmesh with only emailid
+                    if (!empty($otherEmail))
+                    {
+                        $otherUserRel = $this->contactsRepository->getImportRelationDetailsByEmail($emailId, $otherEmail);
+                    }else if (!empty($otherPhone)){
+                        $otherUserRel = $this->contactsRepository->getImportRelationDetailsByPhone($emailId, $otherPhone);
+                    }
+                   
+                    $thirdName = $thirdFirstName = $thirdLastName = $extra_msg = '';
+                    $thirdName = !empty($otherUserRel->fullname)?$otherUserRel->fullname:'' ;
+                    $fName = !empty($otherPhone)?str_replace("-","",$otherPhone):$otherEmail;
+                    $checkFName = $fName." ".$fName;
+                    if (empty(trim($thirdName)) || $thirdName == $checkFName)//if name is empty try to get the name from the import relation
+                    {
+                        $thirdName      = !empty($otherUserRel->fullname)?$otherUserRel->fullname:$defaultName;
+                        $thirdFirstName = !empty($otherUserRel->firstname)?$otherUserRel->firstname:$defaultName;
+                        $thirdLastName  = !empty($otherUserRel->lastname)?$otherUserRel->lastname:"";
+                    }
+                    $serviceName = $serviceId = '';
+                    
+                    # get service name for the request
+                    $serviceId = !empty($note->extra_info)?$note->extra_info:'';
+
+                    if($note->note_type == 'new_service' && !empty($serviceId)){
+
+                        $postDetails  = $this->neoUserRepository->getPost($serviceId);
+                        $noteAry['job_id']          = $serviceId;
+                        $noteAry['service_name']    = !empty($postDetails->service_name)?$postDetails->service_name:'';
+                        $noteAry['created_by']      = !empty($postDetails->created_by)?$postDetails->created_by:'';
+                        $noteAry['created_at']      = !empty($postDetails->created_at)?$postDetails->created_at:'';
+
+                        $extra_msg   = $extra_msg.Lang::get('MINTMESH.notifications.extra_texts.'.$nTypeId) ;
+                        $serviceName = !empty($note->other_message)?$note->other_message:'';
+                        $serviceName = trim($serviceName);
+                        $extra_msg=$extra_msg.$serviceName;
+
+                    } else if($note->note_type == 'new_campaign' && !empty($serviceId)){
+
+                        $postDetails  = $this->neoUserRepository->getCampaign($serviceId);
+                        $noteAry['campaign_id']     = $serviceId;
+                        $noteAry['campaign_name']   = !empty($postDetails->campaign_name)?$postDetails->campaign_name:'';
+                        $noteAry['created_by']      = !empty($postDetails->created_by)?$postDetails->created_by:'';
+                        $noteAry['created_at']      = !empty($postDetails->created_at)?$postDetails->created_at:'';
+
+                        $extra_msg   = $extra_msg.Lang::get('MINTMESH.notifications.extra_texts.'.$nTypeId) ;
+                        $serviceName = !empty($note->other_message)?$note->other_message:'';
+                        $serviceName = trim($serviceName);
+                        $extra_msg=$extra_msg.$serviceName;
+                    } else if($note->note_type == 'accept_connect'){
+                        $noteAry['other_email']   = $otherEmail;
+
+                    }else if($note->note_type == 'post_one_way_notify'){
+
+                        $noteAry['from_user']       = $note->from_email;
+                        $noteAry['referral']        = $otherEmail;
+                        $noteAry['referred_by']     = $emailId;
+                        $noteAry['relation_count']  = 1;
+                    }
+  
+                    $noteAry['other_name']   = $thirdName;
+                    $noteAry['push_id']      = $note->id;
+                    //$noteAry['message']      = $note->other_message;
+                    $noteAry['note_type']    = $note->note_type;                    
+                    $noteAry['notification'] = $fromUser->fullname." ".$note->message." ".$thirdName." ".$extra_msg;
+                    $noteAry['notify_time']  = $note->created_at ;
+                    $noteAry['read_status']  = 1;
+
+                    $returnNote[] = $noteAry;
+                }
+                        
+                $data = array("notifications"=>$returnNote, "unread_count"=>0) ;
+                $responseCode   = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseMessage= array('msg' => array(Lang::get('MINTMESH.notifications.success')));
+            } else {
+                $data = array();
+                $responseCode   = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseMessage= array('msg' => array(Lang::get('MINTMESH.notifications.no_notifications')));
+            }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
         }
         
         public function snsTest()

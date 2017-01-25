@@ -718,4 +718,41 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
             return $result1 = DB::update($sql1);
         }
     }
+    
+    public function getBellNotifications($emailId, $notification_type=0, $page=0, $isNotificationCount=0)
+        {
+            $resultAry = array();
+            if ($emailId){ 
+                $start = $end = 0;
+                if (!empty($page))
+                {
+                    $end = $page-1 ;
+                    $start = $end*10 ;
+                }
+                $sql = "select nl.*, nt.name as note_type from notifications_logs nl
+                         JOIN
+                         (
+                            SELECT  MAX(id) id
+                            FROM    notifications_logs
+                            WHERE   to_email = '".$emailId."'
+                            GROUP   BY from_email,notifications_types_id,message,to_email,
+                            
+                            CASE WHEN extra_info IS NULL THEN 1
+                            ELSE extra_info END,
+                            CASE WHEN other_email IS NULL THEN 1
+                            ELSE other_email END,
+                            CASE WHEN other_phone IS NULL THEN 1
+                            ELSE other_phone END
+                         ) b ON nl.id = b.id  
+                         left join notifications_types nt on nt.id = nl.notifications_types_id where 1 and nl.notifications_types_id IN (1,2,12,15,27,28) order by nl.id desc";
+               //echo $sql ; exit;
+               if (!empty($page))
+                {
+                    $sql.=" limit ".$start.",10" ;
+                }
+                $result = DB::select($sql);
+                $resultAry = $result;
+            }
+           return $resultAry; 
+        }
 }

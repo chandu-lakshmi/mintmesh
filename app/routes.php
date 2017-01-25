@@ -430,3 +430,91 @@ Route::group(array('prefix' => 'v3', 'before' => 'oauth'), function() {
      // get user connections
        Route::post("user/get_user_connections", "API\User\UserController@getUserConnections");  
 });
+
+/*
+|--------------------------------------------------------------------------
+| Enterprise API's 
+|--------------------------------------------------------------------------
+|
+| 
+|
+*/
+
+//for user login & registration with out oAuth
+Route::group(array('prefix' => 'v1/ent'), function() {
+    //Enterprise Mintmesh user registration
+    Route::post("user/create", "API\EnterpriseApp\EnterpriseAppController@create");
+    //Enterprise Mintmesh user login
+    Route::post("user/login", "API\EnterpriseApp\EnterpriseAppController@login");
+    Route::post("user/special_login", "API\EnterpriseApp\EnterpriseAppController@special_login");
+    //Mintmesh user forgot password
+    Route::post("user/forgot_password", "API\EnterpriseApp\EnterpriseAppController@forgotPassword");
+    //get skills,v2 should be used
+    Route::post("get_skills", "API\EnterpriseApp\EnterpriseAppController@getSkills"); 
+    //get job functions list
+    Route::get("get_job_functions", "API\EnterpriseApp\EnterpriseAppController@getJobFunctions");
+    //get industries list
+    Route::get("get_industries", "API\EnterpriseApp\EnterpriseAppController@getIndustries");
+    //get country codes list
+    Route::get("country_codes", "API\EnterpriseApp\EnterpriseAppController@countryCodes");
+    Route::post("user/reset_password", "API\EnterpriseApp\EnterpriseAppController@resetPassword");
+    //check email existance
+    Route::post("checkEmailExistance", "API\EnterpriseApp\EnterpriseAppController@checkEmailExistance");
+    // Mintmesh user email validation
+    Route::get("user/activate/{code}", "API\EnterpriseApp\EnterpriseAppController@activateAccount");
+    //check phone existance
+    Route::post("checkPhoneExistance", "API\EnterpriseApp\EnterpriseAppController@checkPhoneExistance");
+});
+Route::group(array('prefix' => 'v1/ent', 'before' => 'oauth'), function() {
+    //logout
+    Route::post("user/logout", "API\EnterpriseApp\EnterpriseAppController@logout");
+    //import contacts
+    Route::post("user/import_contacts", "API\EnterpriseApp\EnterpriseAppController@importContacts");
+    //set connection request between two users
+    Route::post("user/request_connect", "API\EnterpriseApp\EnterpriseAppController@connectUserRequest");
+    //sending invitation
+    Route::post("user/invite_people", "API\EnterpriseApp\EnterpriseAppController@sendInvitation");
+    //sms
+    Route::post("send_sms", "API\EnterpriseApp\EnterpriseAppController@sendSMS");
+    //get connected users
+    Route::post("user/get_connected_users", "API\EnterpriseApp\EnterpriseAppController@getConnectedAndMMUsers");
+    //request reference
+    Route::post("user/request_reference", "API\EnterpriseApp\EnterpriseAppController@requestReference");
+    //get user details by emailid
+    Route::post("user/get_profile_by_emailid", "API\EnterpriseApp\EnterpriseAppController@getUserDetailsByEmail");
+    //disconnect a user
+    Route::post("user/disconnect_user", "API\EnterpriseApp\EnterpriseAppController@disConnectUsers");
+    //get profile details
+    Route::post("user/get_profile", "API\EnterpriseApp\EnterpriseAppController@getUserProfile");
+    //edit user profile
+    Route::post("user/edit_profile", "API\EnterpriseApp\EnterpriseAppController@editProfile"); 
+    //posting job from campaigns
+    Route::post("enterprise/get_jobs_list", "API\EnterpriseApp\EnterpriseAppController@getJobsList"); 
+    //get levels info
+    Route::post("user/get_levels_info", "API\EnterpriseApp\EnterpriseAppController@getLevelsInfo");  
+    //get specific level info
+    Route::post("user/get_specific_level_info", "API\EnterpriseApp\EnterpriseAppController@getSpecificLevelInfo");
+    Route::post("referral/get_referrals_cash", "API\EnterpriseApp\EnterpriseAppController@getReferralsCash");
+    //close notification
+    Route::post("user/close_notification", "API\EnterpriseApp\EnterpriseAppController@closeNotification");
+    //get notifications
+    Route::post("user/get_notifications", "API\EnterpriseApp\EnterpriseAppController@getBellNotifications");
+    Route::post("referral/refer_contact", "API\EnterpriseApp\EnterpriseAppController@referContact");
+    //get professions for provider service provider
+    Route::post("get_professions", "API\EnterpriseApp\EnterpriseAppController@getProfessions");
+    //company details for enterprise
+    Route::post("enterprise/view_company_details", "API\EnterpriseApp\EnterpriseAppController@viewCompanyDetails");
+    //change user password
+    Route::post("user/change_password", "API\EnterpriseApp\EnterpriseAppController@changePassword");
+    Route::post("referral/get_post_status_details", "API\EnterpriseApp\EnterpriseAppController@getPostStatusDetails");
+    //you are values
+    Route::post("get_you_are_values", "API\EnterpriseApp\EnterpriseAppController@getYouAreValues");
+    //get campaigns
+    Route::post("referral/get_campaign_details", "API\EnterpriseApp\EnterpriseAppController@getCampaignDetails");
+    //get job details
+    Route::post("enterprise/get_job_details", "API\EnterpriseApp\EnterpriseAppController@getJobDetails");    
+    //services
+    Route::post("get_services", "API\EnterpriseApp\EnterpriseAppController@getServices");
+    
+    Route::post("referral/get_my_referral_contacts", "API\EnterpriseApp\EnterpriseAppController@getMyReferralContacts");
+});

@@ -375,7 +375,9 @@ class ReferralsGateway {
                 $pushData['includedList'] = $includedList;
                 $pushData['excludedList'] = $excludedList;
                 $pushData['service_type'] = $input['service_type'];
-                $pushData['service_location'] = $neoInput['service_location'];
+                $pushData['service_location']   = $neoInput['service_location'];
+                $pushData['notification_type']  = 27;
+                $pushData['service_name']       = $neoInput['service'];
                 Queue::push('Mintmesh\Services\Queues\NewPostReferralQueue', $pushData, 'Notification');
                 //$this->sendPushNotificationsForPosts($serviceId, $this->loggedinUserDetails,$this->neoLoggedInUserDetails, $includedList, $excludedList, $input['service_type'], $neoInput['service_location']);
                 
@@ -826,12 +828,24 @@ class ReferralsGateway {
                 $return['post_id'] = $postId ;
                 #get industry name
                 $return['industry_name'] = $this->referralsRepository->getIndustryNameForPost($postId);
+                if(empty($return['industry_name'])) {
+                   $return['industry_name'] = $postResult->industry;
+                }
                 #get job function name
                 $return['job_function_name'] = $this->referralsRepository->getJobFunctionNameForPost($postId);
+                if(empty($return['job_function_name'])) {
+                   $return['job_function_name'] = $postResult->job_function;
+                }
                 #get experience range name
                 $return['experience_range_name'] = $this->referralsRepository->getExperienceRangeNameForPost($postId);
+                if(empty($return['experience_range_name'])) {
+                   $return['experience_range_name'] = $postResult->experience_range;
+                }
                 #get employment type name
                 $return['employment_type_name'] = $this->referralsRepository->getEmploymentTypeNameForPost($postId);
+                if(empty($return['employment_type_name'])) {
+                   $return['employment_type_name'] = $postResult->employment_type;
+                }
                 return $return ;
             }
             else
@@ -1926,21 +1940,21 @@ class ReferralsGateway {
         /*
          * send push notifications to the contacts when ever a new request is posted
          */
-        public function sendPushNotificationsForPosts($serviceId=0, $fromUser=array(), $neofromUser=array(), $includedList=array(), $excludedList=array(), $serviceType='global', $serviceLocation=''){
+        public function sendPushNotificationsForPosts($serviceId=0, $fromUser=array(), $neofromUser=array(), $includedList=array(), $excludedList=array(), $serviceType='global', $serviceLocation='', $notification_type=0, $serviceName=''){
             if (!empty($fromUser) && !empty($serviceId)){
                 $fromUser = (object) $fromUser;
                 $neofromUser = (object) $neofromUser;
                 #check if included list is set or not so that the notification will be sent to only included list
                 if (!empty($includedList)){
                     foreach ($includedList as $receiverEmailId){
-                        $this->userGateway->sendNotification($fromUser, $neofromUser, $receiverEmailId, 27, array('extra_info'=>$serviceId), array(),1, 0);
+                        $this->userGateway->sendNotification($fromUser, $neofromUser, $receiverEmailId, $notification_type, array('extra_info'=>$serviceId, 'other_message'=>$serviceName), array(),1, 0);
                     }
                 }else{
                     $contactsListResult = $this->referralsRepository->getMyConnectionForNewPostPush($fromUser->emailid, $serviceType, $serviceLocation, $excludedList);
                     if (!empty($contactsListResult)){
                         foreach ($contactsListResult as $contact){
                             if ($contact[0] != $fromUser->emailid){//if not me
-                                $this->userGateway->sendNotification($fromUser, $neofromUser, $contact[0], 27, array('extra_info'=>$serviceId), array(),1, 0);
+                                $this->userGateway->sendNotification($fromUser, $neofromUser, $contact[0], $notification_type, array('extra_info'=>$serviceId, 'other_message'=>$serviceName), array(),1, 0);
                             }
                         }
                     }

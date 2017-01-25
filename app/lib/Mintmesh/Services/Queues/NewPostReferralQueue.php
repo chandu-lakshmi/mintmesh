@@ -13,7 +13,7 @@ class NewPostReferralQueue {
     }
     public function fire($job, $jobData)
     {
-        $this->referralsGateway->sendPushNotificationsForPosts($jobData['serviceId'], $jobData['loggedinUserDetails'],$jobData['neoLoggedInUserDetails'], $jobData['includedList'], $jobData['excludedList'], $jobData['service_type'], $jobData['service_location']);
+        $this->referralsGateway->sendPushNotificationsForPosts($jobData['serviceId'], $jobData['loggedinUserDetails'],$jobData['neoLoggedInUserDetails'], $jobData['includedList'], $jobData['excludedList'], $jobData['service_type'], $jobData['service_location'], $jobData['notification_type'], $jobData['service_name']);
         $job->delete();
     }
 

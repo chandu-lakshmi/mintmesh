@@ -36,7 +36,7 @@
                     </tr>
                     <tr>
                         <td style="text-align: center;padding: 20px 0">
-                            <img src="<?php echo $public_url ; ?>images/email-template-icon.svg" alt="mail-icon">
+                            <img src="<?php echo $public_url ; ?>images/Email-icon.png" alt="mail-icon">
                         </td>
                     </tr>
                     <tr>

@@ -14,3 +14,5 @@ Artisan::add(new job1);
 Artisan::add(new job2);
 Artisan::add(new job3);
 Artisan::add(new parserJob);
+Artisan::add(new testJob);
+Artisan::add(new hcmJob);

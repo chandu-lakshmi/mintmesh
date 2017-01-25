@@ -872,5 +872,15 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             return DB::table('contacts')  
             ->where('id', '=', $id)->get();
     }
-     
+    
+    public function getAccessCode($input) {
+        return DB::table('company_access')  
+            ->where('access_code', '=', $input['lic_no'])
+            ->where('status', '=','0')->get();
+    }
+    
+    public function updateAccessCodeTable($input,$companyId) {
+         $sql = "update company_access set status='1',company_id='".$companyId."' where access_code='".$input['lic_no']."'";
+         return $result = DB::statement($sql);
+    }
 }
