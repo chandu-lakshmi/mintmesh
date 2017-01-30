@@ -450,6 +450,7 @@ class EnterpriseGateway {
 //            $input['company_logo'] = $renamedFileName;
 //            $responseData['company_logo'] = $renamedFileName;
 //        }
+        $input['description'] = !empty($input['description'])?$this->appEncodeDecode->filterString($input['description']):'';
         if (isset($input['logo_image']) && !empty($input['logo_image'])) {
             //upload the file
             $this->userFileUploader->source =  $input['logo_image'];
@@ -1668,7 +1669,8 @@ class EnterpriseGateway {
         $userEmailId    = $this->loggedinUserDetails->emailid;
         $userId         = $this->loggedinUserDetails->id;
         $companyCode    = !empty($input['company_code'])?$input['company_code']:0;
-        $bucketName     = !empty($input['bucket_name'])?$input['bucket_name']:'';
+        $bucket     = !empty($input['bucket_name'])?$input['bucket_name']:'';
+        $bucketName = $this->appEncodeDecode->filterString($bucket);
         // get the logged in user company details with company code here
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId      = !empty($companyDetails[0]->id)?$companyDetails[0]->id:0; 

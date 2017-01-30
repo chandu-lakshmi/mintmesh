@@ -146,7 +146,7 @@ class IntegrationManager {
         $hcmJobId       = $jobId;
         $companyId      = $companyId;
         $bucketId       = 1;
-        $fromId = $postId = 0;
+        $fromId = $postId = $inviteCount = 0;
         $companyDetails = $this->getCompanyDetails($companyId);
         $companyDetails = $companyDetails[0];
         $companyName    = $companyDetails->name;//'company68';
@@ -176,7 +176,12 @@ class IntegrationManager {
                 $neoInput['service_scope']      = "find_candidate";
                 $neoInput['service_from_web']   = 1;
                 if(empty($neoInput['employment_type'])) {
-                    $neoInput['employment_type']    = 'PERMANENT';
+                    $cfTime ='';  
+                    if(!empty($neoInput['classification_time'])){
+                       $cfTime = $neoInput['classification_time'];
+                       unset($neoInput['classification_time']);
+                    }
+                    $neoInput['employment_type']    = 'PERMANENT'.$cfTime;
                 }
                 $neoInput['service_period']     = 'immediate';
                 $neoInput['service_type']       = 'global';
@@ -227,6 +232,7 @@ class IntegrationManager {
                     $createdrelation = $this->createPostAndCompanyRelation($postId, $relationAttrs['company_code'], $postCompanyrelationAttrs);
                 }
                 $neoCompanyBucketContacts = $this->getImportContactsList($params);
+                $inviteCount = !empty($neoCompanyBucketContacts['total_records'][0]->total_count)?$neoCompanyBucketContacts['total_records'][0]->total_count:0;
                 foreach ($neoCompanyBucketContacts['Contacts_list'] as $contact => $contacts) {
                     $pushData = array();
                     if($contacts->status != 'Separated'){
@@ -241,6 +247,7 @@ class IntegrationManager {
                         Queue::push('Mintmesh\Services\Queues\CreateEnterprisePostContactsRelation', $pushData, 'default');
                     }
                 }
+                $this->updatePostInviteCount($postId, $inviteCount);
             }
         }
         return true;
@@ -318,6 +325,16 @@ class IntegrationManager {
                 $result['total_records'] = DB::select("select FOUND_ROWS() as total_count");
             return $result;
     }
+    
+    public function updatePostInviteCount($jobid = "", $invitecount = "") {
+           if (!empty($jobid)) {
+               $queryString = "match (p:Post) where ID(p)=" . $jobid . " set p.invited_count=" .$invitecount. " return p";
+               $query = new CypherQuery($this->client, $queryString);
+               return $result = $query->getResultSet();
+           } else {
+               return false;
+           }
+       }
 
     public function updateLastProcessedTime($company_hcm_job_id, $companyJobDetail) {
         $last_processed_at = $companyJobDetail->next_process_at;

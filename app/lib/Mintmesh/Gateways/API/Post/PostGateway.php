@@ -646,7 +646,8 @@ class PostGateway {
                 $returnPosts['created_at']  = $postDetails['created_at'];
                 $returnPosts['position_id'] = $postDetails['position_id'];
                 $returnPosts['status']      = $postDetails['status'];
-                if($postDetails['created_by'] == $this->loggedinEnterpriseUserDetails->emailid || $checkPermissions['close_jobs'] == '1'){
+                $closeJobs = !empty($checkPermissions['close_jobs'])?$checkPermissions['close_jobs']:'';
+                if($postDetails['created_by'] == $this->loggedinEnterpriseUserDetails->emailid || $closeJobs == '1'){
                     $returnPosts['is_close']     = '1';
                 }else{
                     $returnPosts['is_close']     = '0';
@@ -1534,8 +1535,11 @@ class PostGateway {
                 $campaignContacts['company_logo']    = $company->logo;
                 $campaignContacts['campaign_name'] = !empty($createdCampaign[0][0]->campaign_name)?$createdCampaign[0][0]->campaign_name:$editedCampaign[0][0]->campaign_name; 
                 $campaignContacts['campaign_type'] = !empty($createdCampaign[0][0]->campaign_type)?$createdCampaign[0][0]->campaign_type:$editedCampaign[0][0]->campaign_type; 
-                if((isset($createdCampaign[0][0]) && $createdCampaign[0][0]->location_type === 'onsite') || (isset($editedCampaign[0][0]) && $editedCampaign[0][0]->location_type === 'onsite')){
-                   $campaignContacts['campaign_location'] = !empty($createdCampaign[0][0])?$createdCampaign[0][0]->address.','.$createdCampaign[0][0]->city.','.$createdCampaign[0][0]->state.','.$createdCampaign[0][0]->country.','.$createdCampaign[0][0]->zip_code:$editedCampaign[0][0]->address.','.$editedCampaign[0][0]->city.','.$editedCampaign[0][0]->state.','.$editedCampaign[0][0]->country.','.$editedCampaign[0][0]->zip_code;
+                if((isset($createdCampaign[0][0]) && $createdCampaign[0][0]->location_type === 'onsite')){
+                    
+                   $campaignContacts['campaign_location'] = !empty($createdCampaign[0][0]->zip_code)?$createdCampaign[0][0]->address.','.$createdCampaign[0][0]->city.','.$createdCampaign[0][0]->zip_code.','.$createdCampaign[0][0]->state.','.$createdCampaign[0][0]->country:$createdCampaign[0][0]->address.','.$createdCampaign[0][0]->city.','.$createdCampaign[0][0]->state.','.$createdCampaign[0][0]->country;
+                }else if(isset($editedCampaign[0][0]) && $editedCampaign[0][0]->location_type === 'onsite'){
+                    $campaignContacts['campaign_location'] = !empty($editedCampaign[0][0]->zip_code)?$editedCampaign[0][0]->address.','.$editedCampaign[0][0]->city.','.$editedCampaign[0][0]->zip_code.','.$editedCampaign[0][0]->state.','.$editedCampaign[0][0]->country:$editedCampaign[0][0]->address.','.$editedCampaign[0][0]->city.','.$editedCampaign[0][0]->state.','.$editedCampaign[0][0]->country;
                 }
                 else{
                                         $campaignContacts['campaign_location'] = 'online'; 
@@ -2432,12 +2436,18 @@ class PostGateway {
      public function getJobDetails($input){
        
         $postId     =  $input['post_id'];
-        $returnData =  $data = $referrals = $record = $referralsAry = array();
+        $returnData =  $data = $referrals = $record = $referralsAry = $companyAry = $returnCompany = array();
         #get logged in user details here
         $this->user     = $this->getLoggedInEnterpriseUser();
         $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($this->user->emailid);
         $userEmailId    = $neoUserDetails->emailid;
         $userCountry    = $neoUserDetails->phone_country_name;
+        #get company Details
+        $companyAry = $this->neoEnterpriseRepository->connectedCompanyDetails($userEmailId);
+        $returnCompany['company_name'] = !empty($companyAry->name)?$companyAry->name:'';
+        $returnCompany['company_logo'] = !empty($companyAry->logo)?$companyAry->logo:'';
+        $returnCompany['company_code'] = !empty($companyAry->companyCode)?$companyAry->companyCode:0;
+        $returnData['company_details'] = $returnCompany;
         #get job Details by post id here
         //$postResultAry = $this->referralsRepository->getPostDetails($postId, $userEmailId);
         $postResultAry = $this->referralsRepository->getPostAndMyReferralDetails($postId, $userEmailId);
@@ -2447,6 +2457,7 @@ class PostGateway {
             $jobData  = $postDetails = $this->referralsGateway->formPostDetailsArray($postResultAry[0][0]);
             $record['post_id']          = $jobData['post_id'];
             $record['job_name']         = $jobData['service_name'];
+            $record['job_type']         = $jobData['post_type'];
             $record['job_location']     = $jobData['service_location'];
             $record['job_experience']   = $jobData['experience_range_name'];
             $record['job_function']     = $jobData['job_function_name'];

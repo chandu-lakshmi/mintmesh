@@ -10,6 +10,7 @@
 
 use Mintmesh\Repositories\API\User\UserRepository;
 use Mintmesh\Repositories\API\User\NeoUserRepository;
+use Mintmesh\Repositories\API\Enterprise\EnterpriseRepository;
 use Mintmesh\Repositories\API\Enterprise\NeoEnterpriseRepository;
 use Mintmesh\Repositories\API\Referrals\ReferralsRepository;
 use Mintmesh\Repositories\API\Payment\PaymentRepository;
@@ -44,7 +45,7 @@ class UserGateway {
     protected $userFileUploader,$declines, $refer_nots, $deleteUserTypes;
     protected $commonFormatter, $postNotifications, $other_status_diferrent, $referralsRepository, $notificationFromP2, $notificationToP2,$newServiceNotifications;
     protected $loggedinUserDetails,$notificationsTypes,$extraTextsNotes,$directProfileRedirections,$infoTypes,$referFlowTypes ;
-    protected $allowedResumeExtensions, $resumeMaxSize ;
+    protected $allowedResumeExtensions, $resumeMaxSize ,$enterpriseRepository;
     public function __construct(UserRepository $userRepository,
                                     NeoUserRepository $neoUserRepository,
                                     Authorizer $authorizer,
@@ -58,6 +59,7 @@ class UserGateway {
                                     ContactsGateway $contactsGateway,
                                     ContactsRepository $contactsRepository,
                                     ParserManager $parserManager,
+                                    EnterpriseRepository $enterpriseRepository,
                                     NeoEnterpriseRepository $neoEnterpriseRepository) {
 		$this->userRepository = $userRepository;
                 $this->neoUserRepository = $neoUserRepository;
@@ -66,6 +68,7 @@ class UserGateway {
                 $this->userValidator = $userValidator;
                 $this->userEmailManager = $userEmailManager ;
                 $this->neoEnterpriseRepository = $neoEnterpriseRepository;
+                $this->enterpriseRepository = $enterpriseRepository;
                 $this->commonFormatter = $commonFormatter ;
                 $this->paymentRepository = $paymentRepository ;
                 $this->appEncodeDecode = $appEncodeDecode ;
@@ -4916,12 +4919,13 @@ class UserGateway {
                     
                     # get service name for the request
                     $serviceId = !empty($note->extra_info)?$note->extra_info:'';
-
                     if($note->note_type == 'new_service' && !empty($serviceId)){
-
+                        #new job notification
                         $postDetails  = $this->neoUserRepository->getPost($serviceId);
+                       // print_r($postDetails).exit;
                         $noteAry['job_id']          = $serviceId;
                         $noteAry['service_name']    = !empty($postDetails->service_name)?$postDetails->service_name:'';
+                        $noteAry['company_name']    = !empty($postDetails->company)?$postDetails->company:'';
                         $noteAry['created_by']      = !empty($postDetails->created_by)?$postDetails->created_by:'';
                         $noteAry['created_at']      = !empty($postDetails->created_at)?$postDetails->created_at:'';
 
@@ -4931,22 +4935,32 @@ class UserGateway {
                         $extra_msg=$extra_msg.$serviceName;
 
                     } else if($note->note_type == 'new_campaign' && !empty($serviceId)){
-
+                        #new campaign notification
                         $postDetails  = $this->neoUserRepository->getCampaign($serviceId);
+                        //print_r($postDetails).exit;
                         $noteAry['campaign_id']     = $serviceId;
                         $noteAry['campaign_name']   = !empty($postDetails->campaign_name)?$postDetails->campaign_name:'';
+                        $noteAry['campaign_type']   = !empty($postDetails->campaign_type)?$postDetails->campaign_type:'';
                         $noteAry['created_by']      = !empty($postDetails->created_by)?$postDetails->created_by:'';
                         $noteAry['created_at']      = !empty($postDetails->created_at)?$postDetails->created_at:'';
-
+                        $companyCode                = !empty($postDetails->company_code)?$postDetails->company_code:'';
+                        #get company details here
+                        if($companyCode){
+                            $companyData    = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+                            $companyData    = isset($companyData[0])?$companyData[0]:0;
+                            $noteAry['company_name']  = !empty($companyData->name)?$companyData->name:'';//company name  
+                            $noteAry['company_logo']  = !empty($companyData->logo)?$companyData->logo:'';//company logo 
+                        }
                         $extra_msg   = $extra_msg.Lang::get('MINTMESH.notifications.extra_texts.'.$nTypeId) ;
                         $serviceName = !empty($note->other_message)?$note->other_message:'';
                         $serviceName = trim($serviceName);
                         $extra_msg=$extra_msg.$serviceName;
                     } else if($note->note_type == 'accept_connect'){
+                        #accept connect notification
                         $noteAry['other_email']   = $otherEmail;
 
                     }else if($note->note_type == 'post_one_way_notify' && !empty($serviceId)){
-
+                        #referral accept notification
                         $noteAry['from_user']       = $note->from_email;
                         $noteAry['referral']        = ($forMintmesh)?$otherEmail:$otherPhone;
                         $noteAry['referred_by']     = $emailId;

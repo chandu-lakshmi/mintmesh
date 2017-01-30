@@ -61,7 +61,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
            $companyProfile = array(
                         "name"          => $this->appEncodeDecode->filterString($input['company']),
                         "industry"      => !empty($input['industry'])?$input['industry']:0,
-                        "description"   => !empty($input['description'])?$input['description']:'',
+                        "description"   => $input['description'],
 //                        "description"   => !empty($input['description'])?$this->appEncodeDecode->filterString($input['description']):'',
                         "website"       => !empty($input['website'])?$input['website']:'',
                         "employees_no"  => !empty($input['number_of_employees'])?$input['number_of_employees']:'',
@@ -194,8 +194,9 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                     $employeeId  = !empty($val['employee_idother_id'])?$val['employee_idother_id']:'';
                     $cellPhone   = !empty($val['cell_phone'])?$val['cell_phone']:'';
                     $status      = !empty($val['status'])?$val['status']:'unknown';
+                    $lastName      = !empty($val['last_name'])?$val['last_name']:'';
                      
-                    if(!empty($val['first_name'])&&!empty($val['last_name'])&&filter_var($val['email_id'], FILTER_VALIDATE_EMAIL))
+                    if(!empty($val['first_name']) &&filter_var($val['email_id'], FILTER_VALIDATE_EMAIL))
                     {                    
                         $firstName = $this->appEncodeDecode->filterString($val['first_name']);
                         $lastName  = $this->appEncodeDecode->filterString($val['last_name']);
