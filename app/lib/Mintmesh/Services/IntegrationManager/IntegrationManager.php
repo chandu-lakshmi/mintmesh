@@ -7,16 +7,19 @@ use Everyman\Neo4j\Query\ResultSet;
 use Everyman\Neo4j\Client as NeoClient;
 use Everyman\Neo4j\Cypher\Query as CypherQuery;
 use Guzzle\Http\Client as guzzleClient;
+use Guzzle\Http\Exception\ClientErrorResponseException;
 use DB,Config,Queue,Lang;
 
 class IntegrationManager {
     protected  $db_user, $db_pwd, $client, $appEncodeDecode, $db_host, $db_port;
     protected  $userRepository, $guzzleClient;
+    public $requestParams = array();
     const SUCCESS_RESPONSE_CODE = 200;
     const API_END_POINT = 'API_END_POINT';
     const DCNAME = 'DCNAME';
     const USERNAME = 'USERNAME';
     const PASSWORD = 'PASSWORD';
+    const API_LOCAL_URL = 'https://apisalesdemo8.successfactors.com/odata/v2/JobRequisitionLocale';
 
     public function __construct() {
                 $this->db_user = Config::get('database.connections.neo4j.username');
@@ -109,27 +112,14 @@ class IntegrationManager {
         $JobDetails              = $this->getJobDetail($companyJobDetail->hcm_jobs_id);
         $companyJobConfigDetails = $this->getCompanyJobConfigs($JobDetails->hcm_id, $companyJobDetail->company_id);
         $requestParams           = $this->composeRequestParams($JobDetails, $companyJobDetail, $companyJobConfigDetails);
-
-        // do request to hcm endpoints
-        $endPoint = $requestParams[self::API_END_POINT];
+        
         //$endPoint = 'https://apisalesdemo8.successfactors.com:443/odata/v2/JobRequisition?$format=json&$select=jobCode,function,location,industry,jobGrade,positionNumber,jobReqId,numberOpenings,classificationType,currency&$filter=lastModifiedDateTime ge datetime\'2016-11-22T17:19:28\'';
-        
-        $username = $requestParams[self::USERNAME];
-        $password = $requestParams[self::PASSWORD];
-        
-        $request = $this->guzzleClient->get($endPoint);
-        
-        $request->setAuth($username, $password);
-        $response = $request->send();
-
-
-        if($response->isSuccessful() && $response->getStatusCode() == self::SUCCESS_RESPONSE_CODE) {
-            $this->processResponseData($response->getBody(), $companyJobDetail->hcm_jobs_id, $companyJobDetail->company_id);
-            $this->updateLastProcessedTime($company_hcm_job_id, $companyJobDetail);
-            exit;
-        } else {
-            echo $response->getInfo();
-        }
+        //$endPoint = 'https://apisalesdemo8.successfactors.com/odata/v2/JobRequisitionLocale(1683)?%24format=json';
+        //$requestParams[self::API_END_POINT] = $endPoint;
+        $this->requestParams = $requestParams;
+        $return = $this->doRequest($requestParams);
+        $this->processResponseData($return, $companyJobDetail->hcm_jobs_id, $companyJobDetail->company_id);
+        $this->updateLastProcessedTime($company_hcm_job_id, $companyJobDetail);
     }
 
     public function processResponseData($responseBody, $jobId, $companyId) {
@@ -153,9 +143,9 @@ class IntegrationManager {
     
      public function createJob($dataAry, $companyId, $jobId) {
          
-        $hcmJobId = $jobId;
-        $companyId = $companyId;
-        $bucketId = 1;
+        $hcmJobId       = $jobId;
+        $companyId      = $companyId;
+        $bucketId       = 1;
         $fromId = $postId = 0;
         $companyDetails = $this->getCompanyDetails($companyId);
         $companyDetails = $companyDetails[0];
@@ -200,12 +190,30 @@ class IntegrationManager {
                 $neoInput['skills']             = '';
                 $neoInput['status']             = Config::get('constants.POST.STATUSES.ACTIVE');
                 $neoInput['created_by']         = $userEmailId;
+                $neoInput['bucket_id']         = $bucketId;
                 $neoInput['post_type']          = 'external';
                 $relationAttrs['created_at']    = date("Y-m-d H:i:s");
                 $relationAttrs['company_name']  = $companyName;
                 $relationAttrs['company_code']  = $companyCode;
-                //print_r($neoInput).exit;
-
+                #get the extra information
+                $reqId = $neoInput['requistion_id'];
+                if(!empty($reqId)){
+                    $response = ''; 
+                    $endPoint       = self::API_LOCAL_URL.'?$format=json&$filter=jobReqId eq '.$reqId;
+                    $requestParams  = $this->requestParams;
+                    //$endPoint = 'https://apisalesdemo8.successfactors.com/odata/v2/JobRequisitionLocale?$format=json&$filter=jobReqId eq 1682';
+                    $requestParams[self::API_END_POINT] = $endPoint;
+                    
+                    $response       = $this->doRequest($requestParams);
+                    $responseAry    = json_decode($response,TRUE);
+                    //print_r($responseAry).exit;
+                    if(isset($responseAry['d']) && isset($responseAry['d']['results']) && isset($responseAry['d']['results'][0])){
+                        $localAry = $responseAry['d']['results'][0];
+                        $neoInput['service_name']    = !empty($localAry['jobTitle'])?$localAry['jobTitle']:!empty($localAry['externalTitle'])?$localAry['externalTitle']:'';
+                        $neoInput['job_description'] = !empty($localAry['jobDescription'])?$localAry['jobDescription']:!empty($localAry['externalJobDescription'])?$localAry['externalJobDescription']:'';
+                    }
+                }
+                
                 $createdPost = $this->createPostAndUserRelation($fromId, $neoInput, $relationAttrs);
                 if (isset($createdPost[0]) && isset($createdPost[0][0])) {
                     $postId = $createdPost[0][0]->getID();
@@ -321,6 +329,29 @@ class IntegrationManager {
         
         \Log::info("SF JobId $company_hcm_job_id for Company $companyJobDetail->company_id Processed at $companyJobDetail->last_processed_at Successfully");
         return true;
+    }
+    
+    public function doRequest($requestParams) {
+        // do request to hcm endpoints
+        $endPoint = $requestParams[self::API_END_POINT];
+        $username = $requestParams[self::USERNAME];
+        $password = $requestParams[self::PASSWORD];
+        \Log::info("SF Endpoint hit : $endPoint");
+        $request = $this->guzzleClient->get($endPoint);
+        
+        $request->setAuth($username, $password);
+        
+        try {
+            $response = $request->send();
+            if($response->isSuccessful() && $response->getStatusCode() == self::SUCCESS_RESPONSE_CODE) {
+                return $response->getBody();
+            } else {
+                \Log::info("Error while getting response : $response->getInfo()");
+            }
+        } catch (ClientErrorResponseException $exception) {
+            $responseBody = $exception->getResponse()->getBody(true);
+        }
+
     }
 
 }

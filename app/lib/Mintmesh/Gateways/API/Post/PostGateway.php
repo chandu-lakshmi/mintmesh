@@ -351,8 +351,9 @@ class PostGateway {
                             $notifyData['excludedList']     = $excludedList;
                             $notifyData['service_type']     = '';
                             $notifyData['service_location'] = '';
-                            $pushData['notification_type']  = 27;
-                            $pushData['service_name']       = $neoInput['service_name'];
+                            $notifyData['notification_type']  = 27;
+                            $notifyData['service_name']       = $neoInput['service_name'];
+                            //$this->referralsGateway->sendPushNotificationsForPosts($notifyData['serviceId'], $notifyData['loggedinUserDetails'],$notifyData['neoLoggedInUserDetails'], $notifyData['includedList'], $notifyData['excludedList'], $notifyData['service_type'], $notifyData['service_location'], $notifyData['notification_type'], $notifyData['service_name']);
                             Queue::push('Mintmesh\Services\Queues\NewPostReferralQueue', $notifyData, 'Notification');
 
                             #send email notifications to all the contacts
@@ -1254,7 +1255,8 @@ class PostGateway {
                 $notifyData['service_type']     = '';
                 $notifyData['service_location'] = '';
                 $notifyData['notification_type'] = 28;
-                $pushData['service_name']        = $input['campaign_name'];
+                $notifyData['service_name']      = $input['campaign_name'];
+                //$this->referralsGateway->sendPushNotificationsForPosts($notifyData['serviceId'], $notifyData['loggedinUserDetails'],$notifyData['neoLoggedInUserDetails'], $notifyData['includedList'], $notifyData['excludedList'], $notifyData['service_type'], $notifyData['service_location'], $notifyData['notification_type'], $notifyData['service_name']);
                 Queue::push('Mintmesh\Services\Queues\NewPostReferralQueue', $notifyData, 'Notification');    
                 }
             }
@@ -1797,6 +1799,7 @@ class PostGateway {
         $loggedInUser   = $this->referralsGateway->getLoggedInUser();
         $company = $this->enterpriseRepository->getUserCompanyMap($loggedInUser->id);
         $emailId        = $loggedInUser->id;
+        $input['time_zone'] = !empty($input['time_zone'])?$input['time_zone']:0;
         $page           = !empty($input['page_no']) ? $input['page_no'] : 0;
         $search         = !empty($input['search']) ? $input['search']:'';
         $company        = $this->enterpriseRepository->getUserCompanyMap($loggedInUser->id);
@@ -1838,7 +1841,7 @@ class PostGateway {
                 $record['one_way_status']   = $relation->one_way_status;
                 $record['resume_path']      = $relation->resume_path;
                 $record['resume_name']      = $relation->resume_original_name;
-                $record['created_at']       = $relation->created_at;
+                $record['created_at']       = $this->appEncodeDecode->UserTimezone($relation->created_at,$input['time_zone']); 
                 $record['awt_status']       = $relation->awaiting_action_status;
                 #get the user details here
                 $referralName = '';
@@ -2434,6 +2437,7 @@ class PostGateway {
         $this->user     = $this->getLoggedInEnterpriseUser();
         $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($this->user->emailid);
         $userEmailId    = $neoUserDetails->emailid;
+        $userCountry    = $neoUserDetails->phone_country_name;
         #get job Details by post id here
         //$postResultAry = $this->referralsRepository->getPostDetails($postId, $userEmailId);
         $postResultAry = $this->referralsRepository->getPostAndMyReferralDetails($postId, $userEmailId);
@@ -2452,7 +2456,11 @@ class PostGateway {
             $record['position_id']      = $jobData['position_id'];
             $record['job_description']  = $jobData['job_description'];
             $record['created_by']       = $jobData['created_by'];
+            $record['created_at']       = $jobData['created_at'];
             $record['company_name']     = !empty($jobData['company'])?$jobData['company']:'';
+            #get the post reward details here
+            $postRewards                = $this->referralsGateway->getPostRewards($postId, $userCountry, $isEnterprise=1);
+            $record['rewards']          = $postRewards;
             
             $returnData['job_details']  = $record;
             #get post referral details here

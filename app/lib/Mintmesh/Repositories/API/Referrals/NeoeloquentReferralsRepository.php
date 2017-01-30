@@ -813,7 +813,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
         {
             $referredUser = $this->appEncodeDecode->filterString(strtolower($referredUser));
             $queryString = "MATCH (u:NonMintmesh),(p:Post),(u1:User:Mintmesh{emailid:'".$referred_by."'})
-                            WHERE u.phone = '".$referredUser."' and ID(p)=".$postId."
+                            WHERE u.phone = '".$referredUser."' and ID(p)=".$postId." 
                              and (u1)-[:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."]->(u)
                              and p.status='".Config::get('constants.REFERRALS.STATUSES.ACTIVE')."' 
                             CREATE (u)-[r:".Config::get('constants.REFERRALS.GOT_REFERRED')." ";
@@ -828,7 +828,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 $queryString.="}";
             }
             $queryString.="]->(p) set p.total_referral_count = p.total_referral_count + 1 , r.resume_parsed =0 return count(p)" ;
-            
+            //echo $queryString;exit;
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             if (isset($result[0]) && isset($result[0][0]))

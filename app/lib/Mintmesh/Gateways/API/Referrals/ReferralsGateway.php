@@ -1967,6 +1967,7 @@ class ReferralsGateway {
          */
         public function referContactV2($input)
         {
+            
             $referNonMintmesh = $nonMintmeshPhoneRefer = 0;
             $uploadedByP2=0;
             $p3CvOriginalName = "";
@@ -2003,17 +2004,18 @@ class ReferralsGateway {
                    //$message = array('msg'=>array(Lang::get('MINTMESH.referrals.already_referred')));
                    //return $this->commonFormatter->formatResponse(406, "error", $message, array()) ;
                }
+               
                if (!empty($input['refer_non_mm_email']) && !empty($input['referring'])){//non mintmesh and refer 
-
+                   
                    if (!empty($input['referring_phone_no'])){//create node for this and relate
-                       //check if phone number contact exist
+                       
                        $nonMintmeshContactExist = $this->contactsRepository->getNonMintmeshContact($input['referring']);
                        $phoneContactInput = $phoneContactRelationInput = array();
                        $phoneContactInput['firstname'] = $phoneContactInput['lastname'] = $phoneContactInput['fullname'] = "";
                        $phoneContactRelationInput['firstname'] = !empty($input['referring_user_firstname'])?$this->appEncodeDecode->filterString($input['referring_user_firstname']):'';
                        $phoneContactRelationInput['lastname'] = !empty($input['referring_user_lastname'])?$this->appEncodeDecode->filterString($input['referring_user_lastname']):'';
                        $phoneContactRelationInput['fullname'] = $phoneContactRelationInput['firstname']." ".$phoneContactRelationInput['lastname'];
-                       $input['referring'] = $phoneContactInput['phone'] = !empty($input['referring'])?$this->appEncodeDecode->formatphoneNumbers($input['referring']):'';
+                       $phoneContactInput['phone'] = !empty($input['referring'])?$this->appEncodeDecode->formatphoneNumbers($input['referring']):'';
                         if (!empty($nonMintmeshContactExist)){
                            //create import relation
                            $relationCreated = $this->contactsRepository->relateContacts($this->neoLoggedInUserDetails , $nonMintmeshContactExist[0] , $phoneContactRelationInput, 1);
@@ -2022,7 +2024,7 @@ class ReferralsGateway {
                        }
                        //send sms invitation to p3
                        $smsInput=array();
-                       $smsInput['numbers'] = json_encode(array($input['referring']));
+                       $smsInput['numbers'] = json_encode(array($phoneContactInput['phone']));
                        $otherUserDetails = $this->neoUserRepository->getNodeByEmailId($input['refer_to']) ;
                        $smsInput['other_name'] = !empty($otherUserDetails->fullname)?$otherUserDetails->fullname:"";
                        $smsInput['sms_type']=3;
@@ -2068,7 +2070,6 @@ class ReferralsGateway {
                }else{
                    $result = $this->referralsRepository->referContact($userEmail, $input['refer_to'], $input['referring'], $input['post_id'], $relationAttrs);
                }
-               
                if (!empty($result))
                {
 //                  if self referrence

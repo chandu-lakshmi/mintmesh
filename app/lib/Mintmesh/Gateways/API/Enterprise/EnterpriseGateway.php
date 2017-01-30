@@ -426,30 +426,30 @@ class EnterpriseGateway {
     public function updateCompanyProfile($input) {
         $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser();
         $responseCode = $responseMsg = $responseMessage = $responseData = "";
-        if (isset($input['images']) && !empty($input['images'])) {
-
-            $images = $input['images'];
-            foreach ($images as $val) {
-                $val = $this->createFileObject($val);
-                $originalFileName = $val->getClientOriginalName();
-                //upload the file
-                $this->userFileUploader->source = $val;
-                $this->userFileUploader->destination = Config::get('constants.S3BUCKET_COMPANY_IMAGES');
-                $renamedFileName = $this->userFileUploader->uploadToS3();
-                $val = $renamedFileName;
-                $responseData['images'][] = $val;
-            }
-        }
-        if (isset($input['company_logo']) && !empty($input['company_logo'])) {
-            $fileName = $this->createFileObject($input['company_logo']);
-            $originalFileName = $fileName->getClientOriginalName();
-            //upload the file
-            $this->userFileUploader->source = $fileName;
-            $this->userFileUploader->destination = Config::get('constants.S3BUCKET_COMPANY_LOGO');
-            $renamedFileName = $this->userFileUploader->uploadToS3();
-            $input['company_logo'] = $renamedFileName;
-            $responseData['company_logo'] = $renamedFileName;
-        }
+//        if (isset($input['images']) && !empty($input['images'])) {
+//
+//            $images = $input['images'];
+//            foreach ($images as $val) {
+//                $val = $this->createFileObject($val);
+//                $originalFileName = $val->getClientOriginalName();
+//                //upload the file
+//                $this->userFileUploader->source = $val;
+//                $this->userFileUploader->destination = Config::get('constants.S3BUCKET_COMPANY_IMAGES');
+//                $renamedFileName = $this->userFileUploader->uploadToS3();
+//                $val = $renamedFileName;
+//                $responseData['images'][] = $val;
+//            }
+//        }
+//        if (isset($input['company_logo']) && !empty($input['company_logo'])) {
+//            $fileName = $this->createFileObject($input['company_logo']);
+//            $originalFileName = $fileName->getClientOriginalName();
+//            //upload the file
+//            $this->userFileUploader->source = $fileName;
+//            $this->userFileUploader->destination = Config::get('constants.S3BUCKET_COMPANY_LOGO');
+//            $renamedFileName = $this->userFileUploader->uploadToS3();
+//            $input['company_logo'] = $renamedFileName;
+//            $responseData['company_logo'] = $renamedFileName;
+//        }
         if (isset($input['logo_image']) && !empty($input['logo_image'])) {
             //upload the file
             $this->userFileUploader->source =  $input['logo_image'];
@@ -1268,6 +1268,7 @@ class EnterpriseGateway {
         $userEmailId = $this->loggedinUserDetails->emailid;
         $userId      = $this->loggedinUserDetails->id;
         $companyCode = $input['company_code'];
+        $input['time_zone'] = !empty($input['time_zone'])?$input['time_zone']:0;
         $filterLimit = !empty($input['filter_limit'])?$input['filter_limit']:'';
         $requestType = !empty($input['request_type'])?$input['request_type']:'';
         
@@ -1289,17 +1290,17 @@ class EnterpriseGateway {
                     $data = $this->getCompanyUserPostProgress($userEmailId, $userId, $companyCode, $companyId, $filterLimit);
                     break;
                 case 'REFERRALS':
-                    $data = $this->getCompanyUserPostReferrals($userEmailId, $companyCode, $filterLimit);
+                    $data = $this->getCompanyUserPostReferrals($userEmailId, $companyCode, $filterLimit,$input,$companyId);
                     break;
                 case 'HIRED':
-                    $data = $this->getCompanyUserPostHires($userEmailId, $companyCode, $filterLimit);
+                    $data = $this->getCompanyUserPostHires($userEmailId, $companyCode, $filterLimit,$companyId);
                     break;
                 default:
                     $postCounts     = $this->getCompanyUserPostCounts($userEmailId, $companyCode);
                     $postProgress   = $this->getCompanyUserPostProgress($userEmailId, $userId, $companyCode, $companyId);
-                    $postReferrals  = $this->getCompanyUserPostReferrals($userEmailId, $companyCode, $filterLimit);
-                    $postHires      = $this->getCompanyUserPostHires($userEmailId, $companyCode);
-                    $topReferrals   = $this->getCompanyUserTopReferrals($userEmailId, $companyCode);
+                    $postReferrals  = $this->getCompanyUserPostReferrals($userEmailId, $companyCode, $filterLimit,$input,$companyId);
+                    $postHires      = $this->getCompanyUserPostHires($userEmailId, $companyCode,$filterLimit,$companyId);
+                    $topReferrals   = $this->getCompanyUserTopReferrals($userEmailId, $companyCode,$companyId);
                     $aryOne   = array_merge($postCounts, $postProgress);
                     $aryTwo   = array_merge($postReferrals, $postHires);
                     $aryThree = array_merge($aryOne, $aryTwo);
@@ -1423,7 +1424,7 @@ class EnterpriseGateway {
         return $return;
     }
     
-    public function getCompanyUserPostReferrals($userEmailId, $companyCode, $filterLimit){
+    public function getCompanyUserPostReferrals($userEmailId, $companyCode, $filterLimit,$input,$companyId){
         
         $return = $returnDetails = $referralDetails = $returnReferralDetails = array();
         $postDetails = $this->neoEnterpriseRepository->getCompanyUserPostReferrals($userEmailId);
@@ -1455,14 +1456,19 @@ class EnterpriseGateway {
                         }  else {
                               $referralName = $userDetails['fullname'];
                         }
-                        $neoReferredByDetails = $this->neoUserRepository->getNodeByEmailId($postRelDetails['referred_by']);
+                        $referrerDetails = $this->enterpriseRepository->getContactByEmailId($postRelDetails['referred_by'],$companyId);
+                        if(!empty($referrerDetails)){
+                        $referrerName = $referrerDetails[0]->firstname.' '.$referrerDetails[0]->lastname;}
+                        $neoReferrerDetails = $this->neoUserRepository->getNodeByEmailId($postRelDetails['referred_by']);
+                        $neoReferrerName = !empty($neoReferrerDetails['fullname'])?$neoReferrerDetails['fullname']:$neoReferrerDetails['firstname'];
                         $returnDetails['job_title']      = $postDetails['service_name'];
                         $returnDetails['status']         = $postRelDetails['one_way_status'];
-                        $returnDetails['created_at']     = \Carbon\Carbon::createFromTimeStamp(strtotime($postRelDetails['created_at']))->diffForHumans();
+                        $createdAt = $this->appEncodeDecode->UserTimezone($postRelDetails['created_at'],$input['time_zone']); 
+                        $returnDetails['created_at']     = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
                         $returnDetails['referral']       = !empty($referralName)?$referralName:'The contact';
                         $returnDetails['referral_img']   = !empty($userDetails['dp_renamed_name'])?$userDetails['dp_renamed_name']:'';
-                        $returnDetails['referred_by']    = !empty($neoReferredByDetails['fullname'])?$neoReferredByDetails['fullname']:$neoReferredByDetails['firstname'];
-                        $returnDetails['referred_by_img']= $neoReferredByDetails['dp_renamed_name'];
+                        $returnDetails['referred_by']    = !empty($referrerName)?$referrerName:$neoReferrerName;
+                        $returnDetails['referred_by_img']= $neoReferrerDetails['dp_renamed_name'];
                         $returnDetails['service_cost']   = !empty($postDetails['service_cost'])?$postDetails['service_cost']:0;
                         
                         $returnReferralDetails[]    = $returnDetails;
@@ -1473,7 +1479,7 @@ class EnterpriseGateway {
         return $return = array('post_referrals' =>$returnReferralDetails);
     }
     
-    public function getCompanyUserPostHires($userEmailId, $companyCode, $filterLimit=''){
+    public function getCompanyUserPostHires($userEmailId, $companyCode, $filterLimit='',$companyId=''){
           
         $returnDetails  = $return = $referralDetails = $returnHiresDetails = array();
         $filterLimit    = empty($filterLimit)?date('Y-m-d H:i:s', strtotime('-1 month')):$filterLimit;//default 30 days
@@ -1510,14 +1516,18 @@ class EnterpriseGateway {
                             }  else {
                                   $referralName = $userDetails['fullname'];
                             }
+                            $referrerDetails = $this->enterpriseRepository->getContactByEmailId($postRelDetails['referred_by'],$companyId);
+                            if(!empty($referrerDetails)){
+                            $referrerName = $referrerDetails[0]->firstname.' '.$referrerDetails[0]->lastname;}
                             $neoReferredByDetails = $this->neoUserRepository->getNodeByEmailId($postRelDetails['referred_by']);
+                            $neoReferrerName = !empty($neoReferredByDetails['fullname'])?$neoReferredByDetails['fullname']:$neoReferredByDetails['firstname'];
                         
                             $returnDetails['job_title']      =  $postDetails['service_name'];
                             $returnDetails['status']         =  $postRelDetails['one_way_status'];
                             $returnDetails['created_at']     =  \Carbon\Carbon::createFromTimeStamp(strtotime($postRelDetails['created_at']))->diffForHumans();
                             $returnDetails['referral']       =  !empty($referralName)?$referralName:'The contact';
                             $returnDetails['referral_img']   =  !empty($userDetails['dp_renamed_name'])?$userDetails['dp_renamed_name']:'';
-                            $returnDetails['referred_by']    =  !empty($neoReferredByDetails['fullname'])?$neoReferredByDetails['fullname']:$neoReferredByDetails['firstname'];
+                            $returnDetails['referred_by']    =  !empty($referrerName)?$referrerName:$neoReferrerName;
                             $returnDetails['referred_by_img']=  $neoReferredByDetails['dp_renamed_name'];
                             $returnDetails['free_service']   =  !empty($postDetails['free_service'])?$postDetails['free_service']:'0';
                             $returnDetails['rewards']        =  $PostRewards;
@@ -1531,7 +1541,7 @@ class EnterpriseGateway {
         return $return = array('post_hires' =>$returnHiresDetails);
     }
     
-    public function getCompanyUserTopReferrals($userEmailId, $companyCode){
+    public function getCompanyUserTopReferrals($userEmailId, $companyCode,$companyId){
            
         $returnTopReferrals = $topReferrals = array();
         $topReferrals = $this->neoEnterpriseRepository->getCompanyUserTopReferrals($userEmailId);//get the top referrals list here
@@ -1541,6 +1551,12 @@ class EnterpriseGateway {
                 $designation = '';
                 $referralsCount  = $referral[1];    
                 $referralUser    = $referral[2]; 
+                $referrerDetails = $this->enterpriseRepository->getContactByEmailId($referralUser->emailid,$companyId);
+                if(!empty($referrerDetails)){
+                $referrerName = $referrerDetails[0]->firstname.' '.$referrerDetails[0]->lastname;}
+                $neoReferredByDetails = $this->neoUserRepository->getNodeByEmailId($referralUser->emailid);
+                $neoReferrerName = !empty($neoReferredByDetails['fullname'])?$neoReferredByDetails['fullname']:$neoReferredByDetails['firstname'];
+                        
                 //get user designation here
                 if (!empty($referralUser) && $referralUser->completed_experience == '1'){
                     $result = $this->neoEnterpriseRepository->getDesignation($referralUser->emailid);
@@ -1551,7 +1567,8 @@ class EnterpriseGateway {
                     }
                 } 
                 //set the return response here
-                $record['name']     = !empty($referralUser->fullname)?$referralUser->fullname:'';
+                $record['name']     = !empty($referrerName)?$referrerName:$neoReferrerName;
+//                $record['name']     = !empty($referralUser->fullname)?$referralUser->fullname:'';
                 $record['image']    = !empty($referralUser->dp_renamed_name)?$referralUser->dp_renamed_name:'';
                 $record['designation'] = !empty($designation)?$designation:'';
                 $record['count']       = $referralsCount;
