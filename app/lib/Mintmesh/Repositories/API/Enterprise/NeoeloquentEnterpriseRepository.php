@@ -387,7 +387,7 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
     
     public function getReferralDetails($postId='', $filterLimit='') {
         if(!empty($postId)){
-            $queryString = "MATCH (u)-[r:GOT_REFERRED]->(p:Post) where ID(p)=".$postId."  ";
+            $queryString = "MATCH (u)-[r:GOT_REFERRED]->(p:Post) where ID(p)=".$postId." and r.one_way_status<>'UNSOLICITED' ";
             if(!empty($filterLimit)){
                 $queryString.= " and r.created_at >= '".$filterLimit."' ";
             }

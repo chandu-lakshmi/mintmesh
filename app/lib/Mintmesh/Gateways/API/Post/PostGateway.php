@@ -2455,6 +2455,7 @@ class PostGateway {
         if(!empty($postResultAry[0]) && !empty($postResultAry[0][0])){
             
             $jobData  = $postDetails = $this->referralsGateway->formPostDetailsArray($postResultAry[0][0]);
+            
             $record['post_id']          = $jobData['post_id'];
             $record['job_name']         = $jobData['service_name'];
             $record['job_type']         = $jobData['post_type'];
@@ -2465,7 +2466,7 @@ class PostGateway {
             $record['employment_type']  = $jobData['employment_type_name'];
             $record['job_vacancies']    = $jobData['no_of_vacancies'];
             $record['position_id']      = $jobData['position_id'];
-            $record['job_description']  = $jobData['job_description'];
+            $record['job_description']  = strip_tags($jobData['job_description'],0);
             $record['created_by']       = $jobData['created_by'];
             $record['created_at']       = $jobData['created_at'];
             $record['company_name']     = !empty($jobData['company'])?$jobData['company']:'';

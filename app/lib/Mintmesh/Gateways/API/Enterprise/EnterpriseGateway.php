@@ -2213,9 +2213,12 @@ class EnterpriseGateway {
        //check if expiry time is valid
        if (strtotime($expiryTime) > strtotime(gmdate('Y-m-d H:i:s'))) {
            $postDetails['expired'] = (int)'0';
-       }else{
+       }
+       else{
            $postDetails['expired'] = (int)'1';
        }
+       }else{
+            $postDetails['expired'] = (int)'0';
        }
        $postDetails['user_id'] = $neoUsers->mysql_id;
        $postDetails['emailid'] = $neoUsers->emailid;
@@ -2570,7 +2573,7 @@ class EnterpriseGateway {
           );
          $this->userRepository->logEmail($emailLog);
         //update code in users table
-         $inputdata = array('user_id' => $userDetails['firstname'],
+         $inputdata = array('user_id' => $userDetails['id'],
                     'resetactivationcode' => $code);
          if (!empty($email_sent)) {
             $this->userRepository->updateUserresetpwdcode($inputdata);
