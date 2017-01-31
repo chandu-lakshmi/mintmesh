@@ -2050,7 +2050,7 @@ class ReferralsGateway {
                $relationAttrs = array();
                $relationAttrs['referred_by'] = strtolower($userEmail) ;
                $relationAttrs['referred_for'] = strtolower($input['refer_to']) ;
-               $relationAttrs['created_at'] = date("Y-m-d H:i:s") ;
+               $relationAttrs['created_at'] = gmdate("Y-m-d H:i:s") ;
                $relationAttrs['status'] = Config::get('constants.REFERRALS.STATUSES.PENDING') ;
                $relationAttrs['one_way_status']=Config::get('constants.REFERRALS.STATUSES.PENDING') ;
                if (!empty($input['message']))
