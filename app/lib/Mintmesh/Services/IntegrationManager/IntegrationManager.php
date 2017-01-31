@@ -8,6 +8,7 @@ use Everyman\Neo4j\Client as NeoClient;
 use Everyman\Neo4j\Cypher\Query as CypherQuery;
 use Guzzle\Http\Client as guzzleClient;
 use Guzzle\Http\Exception\ClientErrorResponseException;
+use lib\Parser\MyEncrypt;
 use DB,Config,Queue,Lang;
 
 class IntegrationManager {
@@ -97,12 +98,12 @@ class IntegrationManager {
         }
 
         // converting last processed datetime to UTC timezone
-        $lastprocessedDate = gmdate("Y-m-d\TH:i:s", strtotime($companyJobDetail->last_processed_at));
+         $lastprocessedDate = gmdate("Y-m-d\TH:i:s\Z", strtotime($companyJobDetail->last_processed_at));
 
         $returnRequestData[self::API_END_POINT]  = $returnRequestData[self::DCNAME].$JobDetails->job_endpoint.$JobDetails->job_additional_params;
         $returnRequestData[self::API_END_POINT] .= '&$select='.$JobDetails->job_params;
-        $returnRequestData[self::API_END_POINT] .= '&$filter=lastModifiedDateTime ge datetime\''.$lastprocessedDate.'\'';
-
+        $returnRequestData[self::API_END_POINT] .= '&$filter=lastModifiedDateTime ge datetimeoffset\''.$lastprocessedDate.'\'';
+                                                    
         return $returnRequestData;
     }
 
@@ -147,13 +148,17 @@ class IntegrationManager {
         $companyId      = $companyId;
         $bucketId       = 1;
         $fromId = $postId = $inviteCount = 0;
+        $dfText = 'See Job Description';
         $companyDetails = $this->getCompanyDetails($companyId);
         $companyDetails = $companyDetails[0];
         $companyName    = $companyDetails->name;//'company68';
         $companyCode    = $companyDetails->code;//510632;
+        $companyLogo    = $companyDetails->logo;//510632;
         $userDetails    = $this->getUserDetails($companyDetails->created_by);
         $userDetails    = $userDetails[0];
         $userEmailId    = !empty($userDetails->emailid)?$userDetails->emailid:'';//'gopi68@mintmesh.com';
+        $userFirstname  = !empty($userDetails->firstname)?$userDetails->firstname:'';//'gopi68@mintmesh.com';
+         
         $notificationMsg = Lang::get('MINTMESH.notifications.messages.27');
         $params['company_code']  = $companyCode;
         $params['bucket_id']     = $bucketId;
@@ -195,8 +200,13 @@ class IntegrationManager {
                 $neoInput['skills']             = '';
                 $neoInput['status']             = Config::get('constants.POST.STATUSES.ACTIVE');
                 $neoInput['created_by']         = $userEmailId;
-                $neoInput['bucket_id']         = $bucketId;
+                $neoInput['bucket_id']          = $bucketId;
                 $neoInput['post_type']          = 'external';
+                
+                $neoInput['job_function']       = (!empty($neoInput['job_function']) && !filter_var($neoInput['job_function'], FILTER_VALIDATE_INT))?$neoInput['job_function']:$dfText;
+                $neoInput['experience_range']   = !empty($neoInput['experience_range'])?$neoInput['experience_range']:$dfText;
+                $neoInput['industry']           = !empty($neoInput['industry'])?$neoInput['industry']:$dfText;
+                
                 $relationAttrs['created_at']    = date("Y-m-d H:i:s");
                 $relationAttrs['company_name']  = $companyName;
                 $relationAttrs['company_code']  = $companyCode;
@@ -218,36 +228,75 @@ class IntegrationManager {
                         $neoInput['job_description'] = !empty($localAry['jobDescription'])?$localAry['jobDescription']:!empty($localAry['externalJobDescription'])?$localAry['externalJobDescription']:'';
                     }
                 }
-                
+                //print_r($neoInput).exit;
                 $createdPost = $this->createPostAndUserRelation($fromId, $neoInput, $relationAttrs);
                 if (isset($createdPost[0]) && isset($createdPost[0][0])) {
                     $postId = $createdPost[0][0]->getID();
                 } else {
                     $postId = 0;
                 }
-                #map post and company
-                $postCompanyrelationAttrs['created_at']     = gmdate("Y-m-d H:i:s");
-                $postCompanyrelationAttrs['user_emailid']   = $userEmailId;
-                if (!empty($relationAttrs['company_code'])) {
-                    $createdrelation = $this->createPostAndCompanyRelation($postId, $relationAttrs['company_code'], $postCompanyrelationAttrs);
-                }
-                $neoCompanyBucketContacts = $this->getImportContactsList($params);
-                $inviteCount = !empty($neoCompanyBucketContacts['total_records'][0]->total_count)?$neoCompanyBucketContacts['total_records'][0]->total_count:0;
-                foreach ($neoCompanyBucketContacts['Contacts_list'] as $contact => $contacts) {
-                    $pushData = array();
-                    if($contacts->status != 'Separated'){
-
-                        #creating included Relation between Post and Contacts 
-                        $pushData['postId']         = $postId;
-                        $pushData['bucket_id']      = $params['bucket_id'];
-                        $pushData['contact_emailid']= $contacts->emailid;
-                        $pushData['company_code']   = $params['company_code'];
-                        $pushData['user_emailid']   = $userEmailId;
-                        $pushData['notification_msg'] = $notificationMsg;
-                        Queue::push('Mintmesh\Services\Queues\CreateEnterprisePostContactsRelation', $pushData, 'default');
+                if(!empty($postId)){
+                    #map post and Rewards
+                    $rewardsAttrs = array();
+                    $rewardsAttrs['post_id']        = $postId;
+                    $rewardsAttrs['rewards_type']   = 'free';
+                    $rewardsAttrs['type']           = 'discovery';
+                    $rewardsAttrs['currency_type']  = 1;
+                    $rewardsAttrs['rewards_value']  = 0;
+                    $rewardsAttrs['created_at']     = gmdate("Y-m-d H:i:s");
+                    $rewardsAttrs['created_by']     = $userEmailId;
+                    $createdRewards = $this->createRewardsAndPostRelation($postId, $rewardsAttrs); 
+                    #map post and company
+                    $postCompanyrelationAttrs['created_at']     = gmdate("Y-m-d H:i:s");
+                    $postCompanyrelationAttrs['user_emailid']   = $userEmailId;
+                    if (!empty($relationAttrs['company_code'])) {
+                        $createdrelation = $this->createPostAndCompanyRelation($postId, $relationAttrs['company_code'], $postCompanyrelationAttrs);
                     }
-                }
-                $this->updatePostInviteCount($postId, $inviteCount);
+                    #for reply emailid 
+                    $replyToName = Config::get('constants.MINTMESH_SUPPORT.REFERRER_NAME');
+                    $replyToHost = Config::get('constants.MINTMESH_SUPPORT.REFERRER_HOST');
+                    
+                    $neoCompanyBucketContacts = $this->getImportContactsList($params);
+                    //$inviteCount = !empty($neoCompanyBucketContacts['total_records'][0]->total_count)?$neoCompanyBucketContacts['total_records'][0]->total_count:0;
+                    foreach ($neoCompanyBucketContacts['Contacts_list'] as $contact => $contacts) {
+                        $pushData = array();
+                        if($contacts->status != 'Separated'){
+
+                            #creating included Relation between Post and Contacts 
+                            $pushData['postId']             = $postId;
+                            $pushData['bucket_id']          = $params['bucket_id'];
+                            $pushData['contact_emailid']    = $contacts->emailid;
+                            $pushData['company_code']       = $params['company_code'];
+                            $pushData['user_emailid']       = $userEmailId;
+                            $pushData['notification_msg']   = $notificationMsg;
+                            Queue::push('Mintmesh\Services\Queues\CreateEnterprisePostContactsRelation', $pushData, 'default');
+                            
+                            #send email notifications to all the contacts
+                            $refId      = $refCode = 0;
+                            $emailData  = array();
+                            $refId      = $this->getUserNodeIdByEmailId($contacts->emailid);
+                            $refCode                        = MyEncrypt::encrypt_blowfish($postId.'_'.$refId,Config::get('constants.MINTMESH_ENCCODE'));
+                            $replyToData                    = '+ref='.$refCode;
+                            $emailData['company_name']      = $companyName;
+                            $emailData['company_code']      = $companyCode;
+                            $emailData['post_id']           = $postId;
+                            $emailData['post_type']         = $neoInput['post_type'];
+                            $emailData['company_logo']      = $companyLogo;
+                            $emailData['to_firstname']      = $contacts->firstname;
+                            $emailData['to_lastname']       = $contacts->lastname;
+                            $emailData['to_emailid']        = $contacts->emailid;
+                            $emailData['from_userid']       = $fromId;
+                            $emailData['from_emailid']      = $userEmailId;
+                            $emailData['from_firstname']    = $userFirstname;
+                            $emailData['ip_address']        = '192.168.1.1';
+                            $emailData['ref_code']          = $refCode;
+                            $emailData['reply_to']          = $replyToName.$replyToData.$replyToHost;
+                          Queue::push('Mintmesh\Services\Queues\SendJobPostEmailToContactsQueue', $emailData, 'Notification');
+                          $inviteCount+=1;
+                        }
+                    }
+                    $this->updatePostInviteCount($postId, $inviteCount);
+                }    
             }
         }
         return true;
@@ -327,13 +376,48 @@ class IntegrationManager {
     }
     
     public function updatePostInviteCount($jobid = "", $invitecount = "") {
-           if (!empty($jobid)) {
-               $queryString = "match (p:Post) where ID(p)=" . $jobid . " set p.invited_count=" .$invitecount. " return p";
-               $query = new CypherQuery($this->client, $queryString);
-               return $result = $query->getResultSet();
-           } else {
-               return false;
-           }
+        if (!empty($jobid)) {
+            $queryString = "match (p:Post) where ID(p)=" . $jobid . " set p.invited_count=" .$invitecount. " return p";
+            $query = new CypherQuery($this->client, $queryString);
+            return $result = $query->getResultSet();
+        } else {
+            return false;
+        }
+    }
+    
+    public function createRewardsAndPostRelation($postId, $rewardsAttrs = array()){ 
+         
+        $result = array();
+        $rewardsType = !empty($rewardsAttrs['type'])?$rewardsAttrs['type']:'free';
+        $queryString = "MATCH (p:Post) WHERE ID(p)= " . $postId . " CREATE (n:Rewards ";
+        if (!empty($rewardsAttrs)) {
+            $queryString.="{";
+            foreach ($rewardsAttrs as $k => $v) {
+                $value =$k . ":'" . $this->appEncodeDecode->filterString($v) . "',";
+                if ($k == 'post_id' || $k == 'currency_type')
+                    $value = str_replace("'", "", $value);
+                
+                $queryString.=$value;
+            }
+            $queryString = rtrim($queryString, ",");
+            $queryString.="}";
+        }
+        $queryString.=")<-[:" . Config::get('constants.RELATIONS_TYPES.POST_REWARDS') . " {rewards_mode: '".$rewardsType."' } ]-(p) return p";
+        $query  = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();
+        return $result;
+    } 
+    
+    public function getUserNodeIdByEmailId($emailId ='') {
+            $nodeId = 0;
+            $emailId = $this->appEncodeDecode->filterString($emailId);
+            $queryString = "MATCH (u:User) where u.emailid='".$emailId."'  return ID(u)";
+            $query  = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();   
+            if (isset($result[0]) && isset($result[0][0])) {
+                    $nodeId = $result[0][0];
+                }
+        return  $nodeId;   
        }
 
     public function updateLastProcessedTime($company_hcm_job_id, $companyJobDetail) {
