@@ -2375,7 +2375,8 @@ class PostGateway {
                             $record['job_date']         = $jobsList->created_at;//'2016-12-28 12:26:42'; 
                             $record['created_by']       = $jobsList->created_by;
                             #get experience range name
-                            $record['job_experience']   = $this->referralsRepository->getExperienceRangeNameForPost($postId);
+                            $jobExperience = $this->referralsRepository->getExperienceRangeNameForPost($postId);
+                            $record['job_experience']   = !empty($jobExperience)?$jobExperience:$jobsList->experience_range;
                             #get the post reward details here
                             $postRewards                = $this->referralsGateway->getPostRewards($postId, $userCountry, $isEnterprise=1);
                             $record['rewards']          = $postRewards;
@@ -2455,6 +2456,8 @@ class PostGateway {
         if(!empty($postResultAry[0]) && !empty($postResultAry[0][0])){
             
             $jobData  = $postDetails = $this->referralsGateway->formPostDetailsArray($postResultAry[0][0]);
+            $jobDesc = $jobData['job_description'];
+            $jobDesc = trim(preg_replace('/ +/', ' ', preg_replace('/[^A-Za-z0-9 ]/', ' ', urldecode(html_entity_decode(strip_tags($jobDesc))))));
             
             $record['post_id']          = $jobData['post_id'];
             $record['job_name']         = $jobData['service_name'];
@@ -2466,7 +2469,7 @@ class PostGateway {
             $record['employment_type']  = $jobData['employment_type_name'];
             $record['job_vacancies']    = $jobData['no_of_vacancies'];
             $record['position_id']      = $jobData['position_id'];
-            $record['job_description']  = strip_tags($jobData['job_description'],0);
+            $record['job_description']  = $jobDesc;
             $record['created_by']       = $jobData['created_by'];
             $record['created_at']       = $jobData['created_at'];
             $record['company_name']     = !empty($jobData['company'])?$jobData['company']:'';

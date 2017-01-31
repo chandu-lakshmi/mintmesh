@@ -184,6 +184,7 @@ class IntegrationManager {
                     $cfTime ='';  
                     if(!empty($neoInput['classification_time'])){
                        $cfTime = $neoInput['classification_time'];
+                       $cfTime = ', '.$cfTime;
                        unset($neoInput['classification_time']);
                     }
                     $neoInput['employment_type']    = 'PERMANENT'.$cfTime;
