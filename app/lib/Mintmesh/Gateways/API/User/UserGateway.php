@@ -21,6 +21,7 @@ use Mintmesh\Services\ResponseFormatter\API\CommonFormatter ;
 use LucaDegasperi\OAuth2Server\Authorizer;
 use Mintmesh\Services\APPEncode\APPEncode ;
 use Mintmesh\Gateways\API\SocialContacts\ContactsGateway;
+use Mintmesh\Repositories\API\Post\NeoPostRepository;
 use Mintmesh\Repositories\API\SocialContacts\ContactsRepository;
 use Illuminate\Support\Facades\Hash;
 use GuzzleHttp\Client;
@@ -45,7 +46,7 @@ class UserGateway {
     protected $userFileUploader,$declines, $refer_nots, $deleteUserTypes;
     protected $commonFormatter, $postNotifications, $other_status_diferrent, $referralsRepository, $notificationFromP2, $notificationToP2,$newServiceNotifications;
     protected $loggedinUserDetails,$notificationsTypes,$extraTextsNotes,$directProfileRedirections,$infoTypes,$referFlowTypes ;
-    protected $allowedResumeExtensions, $resumeMaxSize ,$enterpriseRepository;
+    protected $allowedResumeExtensions, $resumeMaxSize, $enterpriseRepository, $neoPostRepository;
     public function __construct(UserRepository $userRepository,
                                     NeoUserRepository $neoUserRepository,
                                     Authorizer $authorizer,
@@ -60,6 +61,7 @@ class UserGateway {
                                     ContactsRepository $contactsRepository,
                                     ParserManager $parserManager,
                                     EnterpriseRepository $enterpriseRepository,
+                                    NeoPostRepository $neoPostRepository,
                                     NeoEnterpriseRepository $neoEnterpriseRepository) {
 		$this->userRepository = $userRepository;
                 $this->neoUserRepository = $neoUserRepository;
@@ -75,6 +77,7 @@ class UserGateway {
                 $this->referralsRepository = $referralsRepository ;
                 $this->userFileUploader = $userFileUploader ;
                 $this->contactsGateway = $contactsGateway ;
+                $this->neoPostRepository = $neoPostRepository;
                 $this->contactsRepository = $contactsRepository ;
                 $this->notificationsTypes = array('3','4','5','6','10','11','12','13','14','15','17','18','19','20','22');
                 $this->extraTextsNotes = array('10','11','12','22','27','28') ;
@@ -4864,22 +4867,22 @@ class UserGateway {
          */
         public function getBellNotifications($input)
         {
-            $notifications = $returnNote = array();
-            $page       = !empty($input['page'])?$input['page']:0;
-            $noteType   = !empty($input['notification_type'])?$input['notification_type']:'';
-            $defaultName =Lang::get('MINTMESH.user.non_mintmesh_user_name');
-            $user       = $this->getLoggedInUser();
-            $emailId    = $user->emailid;
-            $userDetails = $this->neoUserRepository->getNodeByEmailId($user->emailid);
+            $notifications  = $returnNote = array();
+            $page           = !empty($input['page'])?$input['page']:0;
+            $noteType       = !empty($input['notification_type'])?$input['notification_type']:'';
+            $defaultName    = Lang::get('MINTMESH.user.non_mintmesh_user_name');
+            $user           = $this->getLoggedInUser();
+            $emailId        = $user->emailid;
             
-            $notifications = $this->userRepository->getBellNotifications($emailId, $noteType, $page);
-            //print_r($notifications).exit;
+            $userDetails    = $this->neoUserRepository->getNodeByEmailId($user->emailid);
+            $notifications  = $this->userRepository->getBellNotifications($emailId, $noteType, $page);
+            
             if (!empty($notifications)){
                    
                 foreach ($notifications as $note)
                 {
-                    $noteAry = $fromUser = $otherUser = array();
-                    
+                    $dpImage = '';
+                    $fromUser    = $noteAry = $otherUser = array();
                     $fromEmail   = !empty($note->from_email)?$note->from_email:'';
                     $otherPhone  = !empty($note->other_phone)?$note->other_phone:'';
                     $otherEmail  = !empty($note->other_email)?$note->other_email:'';
@@ -4905,9 +4908,9 @@ class UserGateway {
                         $otherUserRel = $this->contactsRepository->getImportRelationDetailsByPhone($emailId, $otherPhone);
                     }
                    
-                    $thirdName = $thirdFirstName = $thirdLastName = $extra_msg = '';
-                    $thirdName = !empty($otherUserRel->fullname)?$otherUserRel->fullname:'' ;
-                    $fName = !empty($otherPhone)?str_replace("-","",$otherPhone):$otherEmail;
+                    $thirdName  = $thirdFirstName = $thirdLastName = $extra_msg = '';
+                    $thirdName  = !empty($otherUserRel->fullname)?$otherUserRel->fullname:'' ;
+                    $fName      = !empty($otherPhone)?str_replace("-","",$otherPhone):$otherEmail;
                     $checkFName = $fName." ".$fName;
                     if (empty(trim($thirdName)) || $thirdName == $checkFName)//if name is empty try to get the name from the import relation
                     {
@@ -4922,22 +4925,26 @@ class UserGateway {
                     if($note->note_type == 'new_service' && !empty($serviceId)){
                         #new job notification
                         $postDetails  = $this->neoUserRepository->getPost($serviceId);
-                       // print_r($postDetails).exit;
+                       
                         $noteAry['job_id']          = $serviceId;
                         $noteAry['service_name']    = !empty($postDetails->service_name)?$postDetails->service_name:'';
                         $noteAry['company_name']    = !empty($postDetails->company)?$postDetails->company:'';
                         $noteAry['created_by']      = !empty($postDetails->created_by)?$postDetails->created_by:'';
                         $noteAry['created_at']      = !empty($postDetails->created_at)?$postDetails->created_at:'';
+                        #get company details here
+                        $companyData = $this->neoEnterpriseRepository->connectedCompanyDetails($noteAry['created_by']);
 
                         $extra_msg   = $extra_msg.Lang::get('MINTMESH.notifications.extra_texts.'.$nTypeId) ;
                         $serviceName = !empty($note->other_message)?$note->other_message:'';
                         $serviceName = trim($serviceName);
-                        $extra_msg=$extra_msg.$serviceName;
+                        $extra_msg   = $extra_msg.$serviceName;
+                        $noteAry['notification'] = $fromUser->fullname." ".$note->message." ".$thirdName." ".$extra_msg;
+                        $noteAry['dp_image']     = !empty($companyData->logo)?$companyData->logo:'';
 
                     } else if($note->note_type == 'new_campaign' && !empty($serviceId)){
                         #new campaign notification
                         $postDetails  = $this->neoUserRepository->getCampaign($serviceId);
-                        //print_r($postDetails).exit;
+                        
                         $noteAry['campaign_id']     = $serviceId;
                         $noteAry['campaign_name']   = !empty($postDetails->campaign_name)?$postDetails->campaign_name:'';
                         $noteAry['campaign_type']   = !empty($postDetails->campaign_type)?$postDetails->campaign_type:'';
@@ -4949,17 +4956,25 @@ class UserGateway {
                             $companyData    = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
                             $companyData    = isset($companyData[0])?$companyData[0]:0;
                             $noteAry['company_name']  = !empty($companyData->name)?$companyData->name:'';//company name  
-                            $noteAry['company_logo']  = !empty($companyData->logo)?$companyData->logo:'';//company logo 
+                            $dpImage  = !empty($companyData->logo)?$companyData->logo:'';//company logo 
                         }
                         $extra_msg   = $extra_msg.Lang::get('MINTMESH.notifications.extra_texts.'.$nTypeId) ;
                         $serviceName = !empty($note->other_message)?$note->other_message:'';
                         $serviceName = trim($serviceName);
-                        $extra_msg=$extra_msg.$serviceName;
-                    } else if($note->note_type == 'accept_connect'){
-                        #accept connect notification
-                        $noteAry['other_email']   = $otherEmail;
-
+                        $extra_msg   = $extra_msg.$serviceName;
+                        $noteAry['notification'] = $fromUser->fullname." ".$note->message." ".$thirdName." ".$extra_msg; 
+                        $noteAry['dp_image']     = $dpImage;
+                   
                     }else if($note->note_type == 'post_one_way_notify' && !empty($serviceId)){
+                        #get company details here
+                        $companyDetails = $this->neoPostRepository->getPostCompany($serviceId);
+                        if(!empty($companyDetails)){
+                            $dpImage    = !empty($companyDetails->logo)?$companyDetails->logo:'';
+                            $fullName   = !empty($companyDetails->name)?$companyDetails->name:'';
+                        }else{
+                            $dpImage    = !empty($fromUser->dp_renamed_name)?$fromUser->dp_renamed_name:'';
+                            $fullName   = $fromUser->fullname;
+                        }
                         #referral accept notification
                         $noteAry['from_user']       = $note->from_email;
                         $noteAry['referral']        = ($forMintmesh)?$otherEmail:$otherPhone;
@@ -4967,15 +4982,20 @@ class UserGateway {
                         $noteAry['relation_count']  = 1;
                         $noteAry['post_id']         = $serviceId;
                         $noteAry['referred_by_phone']  = ($forMintmesh)?0:1;
+                        $noteAry['notification'] = $fullName." ".$note->message." ".$thirdName." ".$extra_msg;
+                        $noteAry['dp_image']     = $dpImage;
+                    } else if($note->note_type == 'accept_connect'){
+                        #accept connect notification
+                        $noteAry['other_email']   = $otherEmail;
+                        $noteAry['notification']  = $fromUser->fullname." ".$note->message." ".$thirdName." ".$extra_msg;
+                        $noteAry['dp_image']      = '';    
                     }
-  
+                    
                     $noteAry['other_name']   = $thirdName;
                     $noteAry['push_id']      = $note->id;
-                    //$noteAry['message']      = $note->other_message;
                     $noteAry['note_type']    = $note->note_type;                    
-                    $noteAry['notification'] = $fromUser->fullname." ".$note->message." ".$thirdName." ".$extra_msg;
-                    $noteAry['notify_time']  = $note->created_at ;
-                    $noteAry['read_status']  = 1;
+                    $noteAry['notify_time']  = $note->created_at;
+                    $noteAry['read_status']  = $note->status;
 
                     $returnNote[] = $noteAry;
                 }

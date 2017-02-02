@@ -1420,11 +1420,19 @@ class PostGateway {
                 $campaign['ceos_file'] = $input['ceos_pitch_s3'];
             }
             if(isset($input['employees_pitch_s3']) && !empty($input['employees_pitch_s3'])){
+                $campaign['emp_file'] = $input['employees_pitch_s3'];
+            }
+            if(isset($input['ceos_pitch_s3_name']) && !empty($input['ceos_pitch_s3_name'])){
+                $campaign['ceos_name'] = $input['ceos_pitch_s3'];
+            }
+            if(isset($input['employees_pitch_s3_name']) && !empty($input['employees_pitch_s3_name'])){
                 $campaign['emp_name'] = $input['employees_pitch_s3'];
             }
-        if($requestType == 'edit'){
+        if($requestType == 'edit'){            
             $campaign['ceos_name'] = !empty($campaign['ceos_name'])?$campaign['ceos_name']:'';
+            $campaign['ceos_file'] = !empty($campaign['ceos_file'])?$campaign['ceos_file']:'';
             $campaign['emp_name'] = !empty($campaign['emp_name'])?$campaign['emp_name']:'';
+            $campaign['emp_file'] = !empty($campaign['emp_file'])?$campaign['emp_file']:'';
       
             //updating Campaign details here
            $editedCampaign = $this->neoPostRepository->editCampaignAndCompanyRelation($companyCode, $campaignId, $campaign, $userEmailId);
@@ -1666,6 +1674,7 @@ class PostGateway {
         $loggedInUser   = $this->referralsGateway->getLoggedInUser();
         $this->neoLoggedInUserDetails   = $this->neoUserRepository->getNodeByEmailId($loggedInUser->emailid);
         $userId = $this->neoLoggedInUserDetails->id;
+        $input['time_zone'] = !empty($input['time_zone'])?$input['time_zone']:0;
         $companyCode    = !empty($input['company_code'])?$input['company_code']:'';
         $campaignId     = !empty($input['campaign_id'])?$input['campaign_id']:'';
         $refCode        = MyEncrypt::encrypt_blowfish($campaignId.'_'.$userId,Config::get('constants.MINTMESH_ENCCODE'));
@@ -1677,11 +1686,22 @@ class PostGateway {
             $returnData['total_vacancies']  = $campRes->total_vacancies;
             $returnData['location_type']    = $campRes->location_type;
             $returnData['camp_ref']         = $refCode;
+            if($campRes->location_type == 'ACTIVE'){
+               $returnData['status'] = 'OPEN'; 
+            }else{
+                    $returnData['status'] = 'CLOSED'; 
+            }
             if(!empty($campRes->ceos_file)){
-            $filesAry[0] = $campRes->ceos_file;
+            $filesAry[] = $campRes->ceos_file;
+            }
+            if(!empty($campRes->ceos_name)){
+            $filesAry[] = $campRes->ceos_name;
             }
             if(!empty($campRes->emp_file)){
-            $filesAry[1]  = $campRes->emp_file;
+            $filesAry[]  = $campRes->emp_file;
+            }
+            if(!empty($campRes->emp_name)){
+            $filesAry[]  = $campRes->emp_file;
             }
             if(!empty($campRes->ceos_file) || !empty($campRes->emp_file)){
             $returnData['files'] = $filesAry;
@@ -1697,7 +1717,7 @@ class PostGateway {
                 $location = array();
                 $location['address']          = $campRes->address;
                 $location['state']            = $campRes->state;
-                $location['country']            = $campRes->country;
+                $location['country']          = $campRes->country;
                 $location['city']             = $campRes->city;
                 $location['zip_code']         = $campRes->zip_code;
                 $returnData['location'] = $location;
@@ -1713,6 +1733,12 @@ class PostGateway {
                 $gmtend_date = $value->end_date." " .$value->end_time;
                 $gmt_end_on_date = $this->appEncodeDecode->UserTimezone($gmtend_date,$input['time_zone']);
                 $schedule['gmt_end_on_date'] = !empty($gmt_end_on_date)?$gmt_end_on_date:'';
+                $currentDate = gmdate("Y-m-d H:i:s");
+                if($value->gmt_end_date < $currentDate ){
+                    $schedule['status']    = 'CLOSED';
+                }else{
+                     $schedule['status']    = 'OPEN';
+                }
                 $schedule['start_on_date']  = date('Y/m/d', strtotime($value->start_date));
                 $schedule['start_on_time']  = $value->start_time;
                 $schedule['end_on_date']    = date('Y/m/d', strtotime($value->end_date));
@@ -2022,8 +2048,24 @@ class PostGateway {
         $companyDetails     = $this->neoPostRepository->getPostCompany($post_id);
         $input['post_id'] = $post_id;
         $postStatus = $this->job2->getPost($input);
+        $postDetails    = $this->referralsGateway->formPostDetailsArray($postStatus);
         $companyLogo = !empty($companyDetails->logo)?$companyDetails->logo:'';
-        $data = array("post_id" => $input['post_id'],"reference_id"=>$referred_by_id,"emailid" => $userDetails->emailid,"post_status"=>$postStatus->status,"company_logo"=>$companyLogo,"company_name"=>$companyDetails->name);
+        if(!empty($input['all_jobs']) && isset($input['all_jobs'])){
+        if($input['all_jobs'] == 0){
+        $jobTitle = $companyDetails->name .' looking for '.$postStatus->looking_for;
+        $jobDescription = 'Experience: '.$postDetails['experience_range_name'].', Location: '.$postStatus->service_location;
+         $url = Config::get('constants.MM_ENTERPRISE_URL') . "/email/job-details/share?ref=" . $input['ref']."";
+
+        }else{
+            $jobTitle = 'These jobs are available in '.$companyDetails->name;
+            $jobDescription = $postStatus->looking_for;
+            $url = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-jobs/share?ref=" . $input['ref']."";
+
+        }
+        }else{
+            $jobTitle = $jobDescription = $url = '';
+        }
+        $data = array("post_id" => $input['post_id'],"reference_id"=>$referred_by_id,"emailid" => $userDetails->emailid,"post_status"=>$postStatus->status,"company_logo"=>$companyLogo,"company_name"=>$companyDetails->name,"title"=>$jobTitle,"description" => $jobDescription,"url"=>$url);
         }else{
             $data = array();
         }
@@ -2294,6 +2336,7 @@ class PostGateway {
         $search         = !empty($input['search'])?$input['search']:0;
         $resJobsList    = $refAry = $returnData =  $data = $companyDetails = $jobsListAry = array();
         $encodeString   = Config::get('constants.MINTMESH_ENCCODE');
+        $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
         #get logged in user details here
         $this->user     = $this->getLoggedInEnterpriseUser();
         $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($this->user->emailid);
@@ -2362,7 +2405,7 @@ class PostGateway {
 
                             $refId      = $campaignId.'_'.$neoUserId;
                             $refCode    = MyEncrypt::encrypt_blowfish($refId, $encodeString);
-                            $record['social_campaign_share'] = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/share?ref=" . $refCode.""; 
+                            $record['social_campaign_share'] = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
                             $unreadCount+=empty($postRead)?1:0;
 
                         }  else {
@@ -2385,7 +2428,7 @@ class PostGateway {
 
                             $refId      = $postId.'_'.$neoUserId;
                             $refCode    = MyEncrypt::encrypt_blowfish($refId, $encodeString);
-                            $record['social_job_share'] = Config::get('constants.MM_ENTERPRISE_URL') . "/email/job-details/share?ref=" . $refCode."";; 
+                            $record['social_job_share'] = $enterpriseUrl . "/email/job-details/share?ref=" . $refCode."";; 
 
                             $unreadCount+=empty($postRead)?1:0;
                             $jobsCount+=1;
@@ -2425,8 +2468,12 @@ class PostGateway {
         $companyDetails     = $this->neoPostRepository->getCampaignCompany($campaign_id);
         $input['campaign_id'] = $campaign_id;
         $campaignStatus = $this->neoPostRepository->getCampaignById($input['campaign_id']);
+        $scheduleTimes = $this->neoPostRepository->getCampaignSchedule($input['campaign_id']);
         $companyLogo = !empty($companyDetails->logo)?$companyDetails->logo:'';
-        $data = array("campaign_id" => $input['campaign_id'],"reference_id"=>$referred_by_id,"emailid" => $userDetails->emailid,"campaign_status"=>$campaignStatus->status,"company_logo"=>$companyLogo,"company_name"=>$companyDetails->name);
+        $campaignTitle = 'Here is a campaign at '.$companyDetails->name.' for '.$campaignStatus->campaign_name;
+        $campaignDescription = 'Start date: '.$scheduleTimes[0][0]->start_date.' and End date: '.$scheduleTimes[0][0]->end_date;
+        $url = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/share?ref=" . $input['ref']."";
+        $data = array("campaign_id" => $input['campaign_id'],"reference_id"=>$referred_by_id,"emailid" => $userDetails->emailid,"campaign_status"=>$campaignStatus->status,"company_logo"=>$companyLogo,"company_name"=>$companyDetails->name,"title"=>$campaignTitle,"description"=>$campaignDescription,"url" => $url);
         }else{
             $data = array();
         }
@@ -2438,10 +2485,13 @@ class PostGateway {
        
         $postId     =  $input['post_id'];
         $returnData =  $data = $referrals = $record = $referralsAry = $companyAry = $returnCompany = array();
+        $encodeString   = Config::get('constants.MINTMESH_ENCCODE');
+        $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
         #get logged in user details here
         $this->user     = $this->getLoggedInEnterpriseUser();
         $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($this->user->emailid);
         $userEmailId    = $neoUserDetails->emailid;
+        $neoUserId      = $neoUserDetails->id;
         $userCountry    = $neoUserDetails->phone_country_name;
         #get company Details
         $companyAry = $this->neoEnterpriseRepository->connectedCompanyDetails($userEmailId);
@@ -2473,6 +2523,10 @@ class PostGateway {
             $record['created_by']       = $jobData['created_by'];
             $record['created_at']       = $jobData['created_at'];
             $record['company_name']     = !empty($jobData['company'])?$jobData['company']:'';
+            #social job share link
+            $refId      = $postId.'_'.$neoUserId;
+            $refCode    = MyEncrypt::encrypt_blowfish($refId, $encodeString);
+            $record['social_job_share'] = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode."";
             #get the post reward details here
             $postRewards                = $this->referralsGateway->getPostRewards($postId, $userCountry, $isEnterprise=1);
             $record['rewards']          = $postRewards;

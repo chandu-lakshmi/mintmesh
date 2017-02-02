@@ -716,6 +716,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
     
      public function checkCandidate($emailid='',$postId=0) {
         $queryString = "MATCH (u:User)-[r:GOT_REFERRED]->(p:Post) where u.emailid='".$emailid."' and ID(p)=".$postId." return r";
+        //echo $queryString;exit;
         $query = new CypherQuery($this->client, $queryString);
          $result = $query->getResultSet();
          return $result;
@@ -927,14 +928,14 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
     }
     
     public function getPostCompany($postId=''){
+        $return = FALSE;
         $queryString = "MATCH (p:Post)-[:POSTED_FOR]->(c:Company) where ID(p)=".$postId." return c";
         $query  = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
-        if($result){
-            return $result[0][0];
-        }else{
-            return false;
+        if (isset($result[0]) && isset($result[0][0])){
+            $return = $result[0][0];
         }
+       return $return;
     }
     
     public function getBucketForPost($postId=''){

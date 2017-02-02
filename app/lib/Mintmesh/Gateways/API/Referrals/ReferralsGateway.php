@@ -25,6 +25,7 @@ use Mintmesh\Services\APPEncode\APPEncode ;
 use Mintmesh\Services\Emails\API\User\UserEmailManager ;
 use Mintmesh\Repositories\API\SocialContacts\ContactsRepository;
 use Mintmesh\Gateways\API\SMS\SMSGateway;
+use lib\Parser\MyEncrypt;
 use Lang;
 use Config;
 use Log, Queue;
@@ -2218,19 +2219,36 @@ class ReferralsGateway {
         #variable declaration
         $campaignsAry   = $viewCampRes = $data = $campAry = array();
         $campaignId     = $input['campaign_id'];
+        $encodeString   = Config::get('constants.MINTMESH_ENCCODE');
+        $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
         #get Logged In User Details  
         $this->user     = $this->getLoggedInUser();
         $this->neoUser  = $this->neoUserRepository->getNodeByEmailId($this->user->emailid) ;
-        $userEmail      = $this->neoUser->emailid ;
+        $userEmail      = $this->neoUser->emailid;
+        $neoUserId      = $this->neoUser->id;
         #get campaign result here
         $campaignsAry = $this->referralsRepository->getCampaigns($userEmail, $campaignId);
         if(!empty($campaignsAry)){
             $campaign   = $campaignsAry;
+            #get company details here
+            $companyCode    = $campaign->company_code;
+            $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+            $companyLogo    = !empty($companyDetails[0])?$companyDetails[0]->logo:0;
+            $companyName    = !empty($companyDetails[0])?$companyDetails[0]->name:'';
             #form return campaign Details here
             $campAry['campaign_id']     = $campaignId;
             $campAry['campaign_name']   = $campaign->campaign_name;
             $campAry['campaign_type']   = $campaign->campaign_type;
             $campAry['location_type']   = $campaign->location_type;
+            #attachment details form here
+            $campAry['ceos_file']   = $campaign->ceos_file;
+            $campAry['emp_file']    = $campaign->emp_file;
+            $campAry['cmp_logo']    = $companyLogo;
+            $campAry['cmp_name']    = $companyName;
+            #get campaign schedule and posts details
+            $viewCampRes = $this->viewCampaign($campaignId);
+            $campAry['created_at']  = $campaign->created_at;
+            $campAry['posts_count'] = $viewCampRes['jobs_count'];
             #form location Details here
             if(strtolower($campAry['location_type']) == 'onsite'){
                 $location = array();
@@ -2241,22 +2259,12 @@ class ReferralsGateway {
                 $location['zip_code']   = $campaign->zip_code;
                 $campAry['location']    = str_replace(',,', ',', $location);
             }
-            #get campaign schedule and posts details
-            $viewCampRes = $this->viewCampaign($campaignId);
-            $campAry['created_at']  = $campaign->created_at;
             $campAry['schedule']    = $viewCampRes['schedule'];
             $campAry['posts']       = $viewCampRes['jobs'];
-            $campAry['posts_count'] = $viewCampRes['jobs_count'];
-            #get company details here
-            $companyCode    = $campaign->company_code;
-            $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
-            $companyLogo    = !empty($companyDetails[0])?$companyDetails[0]->logo:0;
-            $companyName    = !empty($companyDetails[0])?$companyDetails[0]->name:'';
-            #attachment details form here
-            $campAry['ceos_file']   = $campaign->ceos_file;
-            $campAry['emp_file']    = $campaign->emp_file;
-            $campAry['cmp_logo']    = $companyLogo;
-            $campAry['cmp_name']    = $companyName;
+            #social campaign share link
+            $refId      = $campaignId.'_'.$neoUserId;
+            $refCode    = MyEncrypt::encrypt_blowfish($refId, $encodeString);
+            $campAry['social_campaign_share'] = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode."";
             #return data here    
             $data    = array('campaign_details'=>$campAry);
             $message = array('msg' => array(Lang::get('MINTMESH.campaigns.success')));
