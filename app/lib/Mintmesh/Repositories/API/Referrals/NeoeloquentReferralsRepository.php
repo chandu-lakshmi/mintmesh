@@ -1438,6 +1438,29 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             }
             return $result;
         }
+    public function getAllMyReferrals($userEmail='', $companyCode='', $page=0){
+        $return = array();
+        if(!empty($userEmail) && !empty($companyCode)){
+            
+            $skip   = $limit = 0;
+            if (!empty($page)){
+                $limit = $page*10 ;
+                $skip  = $limit - 10 ;
+            }
+            
+            $queryString = "match (u)-[r:GOT_REFERRED]->(p:Post)-[r1:POSTED_FOR]->(c:Company) 
+                            where r.referred_by='".$userEmail."' and c.companyCode='".$companyCode."'
+                            return p,r1,c order by r.created_at desc";
+            //echo $queryString;exit;
+            if (!empty($limit) && !($limit < 0))
+            {
+                $queryString.=" skip ".$skip." limit ".self::LIMIT ;
+            }
+            $query  = new CypherQuery($this->client, $queryString);
+            $return = $query->getResultSet();
+        }    
+       return $return;
+    }    
         
 }
 ?>

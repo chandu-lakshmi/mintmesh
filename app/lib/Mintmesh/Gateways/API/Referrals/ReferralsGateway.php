@@ -2274,5 +2274,52 @@ class ReferralsGateway {
         
         return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data);
     }
+    
+    public function getAllMyReferrals($input) {
+        #variable declaration
+        $referralsAry   = $companyDetails = $refAry = $returnAry = $data = array();
+        $companyCode    = $input['company_code'];
+        $page           = !empty($input['page_no'])?$input['page_no']:0;
+        $companyLogo    = '';
+        #get Logged In User Details  
+        $this->user     = $this->getLoggedInUser();
+        $this->neoUser  = $this->neoUserRepository->getNodeByEmailId($this->user->emailid) ;
+        $userEmail      = $this->neoUser->emailid;
+        $neoUserId      = $this->neoUser->id;
+        $userCountry    = $this->neoUser->phone_country_name;
+        #get campaign result here
+        $referralsAry = $this->referralsRepository->getAllMyReferrals($userEmail, $companyCode, $page);
+        
+        if(!empty($referralsAry)){
+            #get company details here
+            if(isset($referralsAry[0]) && isset($referralsAry[0][2])){
+                $companyDetails = $referralsAry[1][2];
+                $companyLogo    =  !empty($companyDetails->logo)?$companyDetails->logo:'';
+            }
+            $companyAry['company_logo'] = $companyLogo;
+            #get referral post details
+            foreach ($referralsAry as $value) {
+               $refAry = array();
+               $value  = isset($value[0])?$value[0]:'';
+               $postId = !empty($value->getID())?$value->getID():'';
+               
+               $refAry['post_id']       = $postId;
+               $refAry['post_name']     = !empty($value->service_name)?$value->service_name:'';
+               $refAry['location']      = !empty($value->service_location)?$value->service_location:'';
+               $refAry['created_at']    = !empty($value->created_at)?$value->created_at:'';
+               #get the post reward details here
+               $postRewards             = $this->getPostRewards($postId, $userCountry, $isEnterprise=1);
+               $refAry['rewards']       = $postRewards;
+               
+               $returnAry[] = $refAry;
+            }
+            #return data here    
+            $data    = array('company_details'=>$companyAry, 'referral_details'=>$returnAry);
+            $message = array('msg' => array(Lang::get('MINTMESH.referrals.success')));
+        } else { 
+            $message = array('msg' => array(Lang::get('MINTMESH.referral_details.no_referrals')));
+        }
+        return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data);
+    }
 }
 ?>

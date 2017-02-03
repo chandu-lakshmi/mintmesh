@@ -433,6 +433,7 @@ class EnterpriseAppController extends \BaseController {
          * 
          * POST/get_jobs_list
          * @param string $access_token the access token of enterprise user
+         * @param string $company_code the company code of enterprise user
 	 * @return Response
 	 */
         public function getJobsList()
@@ -929,6 +930,29 @@ class EnterpriseAppController extends \BaseController {
             $validation = $this->referralsGateway->verifyreferralContacts($inputUserData);
             if($validation['status'] == 'success') {
                 $response = $this->referralsGateway->getMyReferralContacts($inputUserData);
+                return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+        }
+        /**
+	 * get all my referral posts
+         * 
+         * POST/get_all_my_referrals
+         * 
+         * @param string $access_token The Access token of a user
+         * @param string $company_code the company code of enterprise user
+	 * @return Response
+	 */
+        public function getAllMyReferrals()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->PostGateway->validateGetJobsListInput($inputUserData);
+            if($validation['status'] == 'success') {
+                $response = $this->referralsGateway->getAllMyReferrals($inputUserData);
                 return \Response::json($response);
             } else {
                     // returning validation failure

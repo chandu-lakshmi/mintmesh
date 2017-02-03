@@ -189,7 +189,7 @@ return array(
                 '8'=>'has parked this request in the "No" Zone', 
                 '9'=>'has parked this request in the "No" Zone',
                 '10'=>'has referred','11'=>'would like to refer you to',
-                '12'=>'accepted your referral of',
+                '12'=>'is accepted your referral for',
                 '13'=>'has accepted a service of you referred by',
                 '14'=>'has accepted a service of',
                 '15'=>'has turned down your referral of',
@@ -203,15 +203,15 @@ return array(
                 '24'=>'accepted your self referral', 
                 '25'=>'has turned down your self referral',
                 '27'=>'is looking for',
-                '28'=>'is looking for camp'),
+                '28'=>'has launched a'),
             "extra_texts"=>array(
                 '10'=>'for your request',
                 '11'=>'for a service',
                 '12'=>'for this request',
                 '22'=>'for this service',
                 '23'=>'for your request', 
-                '27'=>'. Checkout the Refer page.', 
-                '28'=>'. Checkout the camp page.')
+                '27'=>' please check out the Refer page.', 
+                '28'=>' event for jobs. Check out the refer page.')
          ),
          "get_requests"=>array(
              "success"=>"Successfully Listed"

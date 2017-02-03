@@ -1400,33 +1400,29 @@ class PostGateway {
         $campaign['company_code'] = $companyCode;
         $campaign['status']       = Config::get('constants.POST.STATUSES.ACTIVE');
          //upload the file
-         if (isset($input['ceos_pitch_file']) && !empty($input['ceos_pitch_file'])) {
+         if (isset($input['ceos_file_name']) && !empty($input['ceos_file_name'])) {
                 //upload the file
-                $this->userFileUploader->source =  $input['ceos_pitch_file'];
+                $this->userFileUploader->source =  $input['ceos_file_name'];
                 $this->userFileUploader->destination = Config::get('constants.S3BUCKET_CAMPAIGN_IMAGES');
-                $renamedFileName = $this->userFileUploader->uploadToS3BySource($input['ceos_pitch_file']);
+                $renamedFileName = $this->userFileUploader->uploadToS3BySource($input['ceos_file_name']);
                 $campaign['ceos_file'] = $renamedFileName;
-                $campaign['ceos_name'] = $input['ceos_pitch_name'];
+                $campaign['ceos_name'] = !empty($input['ceos_org_name'])?$input['ceos_org_name']:'';
             }
-            if (isset($input['employees_pitch_file']) && !empty($input['employees_pitch_file'])) {
+            if (isset($input['emp_file_name']) && !empty($input['emp_file_name'])) {
                 //upload the file
-                $this->userFileUploader->source =  $input['employees_pitch_file'];
+                $this->userFileUploader->source =  $input['emp_file_name'];
                 $this->userFileUploader->destination = Config::get('constants.S3BUCKET_CAMPAIGN_IMAGES');
-                $renamedFileName = $this->userFileUploader->uploadToS3BySource($input['employees_pitch_file']);
+                $renamedFileName = $this->userFileUploader->uploadToS3BySource($input['emp_file_name']);
                 $campaign['emp_file'] = $renamedFileName;
-                $campaign['emp_name'] = $input['employees_pitch_name'];
+                $campaign['emp_name'] = !empty($input['emp_org_name'])?$input['emp_org_name']:'';
             }
-            if(isset($input['ceos_pitch_s3']) && !empty($input['ceos_pitch_s3'])){
-                $campaign['ceos_file'] = $input['ceos_pitch_s3'];
+            if(isset($input['ceos_file_name_s3']) && !empty($input['ceos_file_name_s3'])){
+                $campaign['ceos_file'] = $input['ceos_file_name_s3'];
+                $campaign['ceos_name'] = !empty($input['ceos_org_name_s3'])?$input['ceos_org_name_s3']:'';
             }
-            if(isset($input['employees_pitch_s3']) && !empty($input['employees_pitch_s3'])){
-                $campaign['emp_file'] = $input['employees_pitch_s3'];
-            }
-            if(isset($input['ceos_pitch_s3_name']) && !empty($input['ceos_pitch_s3_name'])){
-                $campaign['ceos_name'] = $input['ceos_pitch_s3'];
-            }
-            if(isset($input['employees_pitch_s3_name']) && !empty($input['employees_pitch_s3_name'])){
-                $campaign['emp_name'] = $input['employees_pitch_s3'];
+            if(isset($input['emp_file_name_s3']) && !empty($input['emp_file_name_s3'])){
+                $campaign['emp_file'] = $input['emp_file_name_s3'];
+                $campaign['emp_name'] = !empty($input['emp_org_name_s3'])?$input['emp_org_name_s3']:'';
             }
         if($requestType == 'edit'){            
             $campaign['ceos_name'] = !empty($campaign['ceos_name'])?$campaign['ceos_name']:'';
@@ -1670,7 +1666,7 @@ class PostGateway {
     
     public function viewCampaign($input) {
         
-        $data = $campSchedule = $scheduleRes = $postAry = $bucketAry = array();
+        $data = $campSchedule = $scheduleRes = $postAry = $bucketAry  = array();
         $loggedInUser   = $this->referralsGateway->getLoggedInUser();
         $this->neoLoggedInUserDetails   = $this->neoUserRepository->getNodeByEmailId($loggedInUser->emailid);
         $userId = $this->neoLoggedInUserDetails->id;
@@ -1691,19 +1687,11 @@ class PostGateway {
             }else{
                     $returnData['status'] = 'CLOSED'; 
             }
-            if(!empty($campRes->ceos_file)){
-            $filesAry[] = $campRes->ceos_file;
-            }
-            if(!empty($campRes->ceos_name)){
-            $filesAry[] = $campRes->ceos_name;
-            }
-            if(!empty($campRes->emp_file)){
-            $filesAry[]  = $campRes->emp_file;
-            }
-            if(!empty($campRes->emp_name)){
-            $filesAry[]  = $campRes->emp_file;
-            }
-            if(!empty($campRes->ceos_file) || !empty($campRes->emp_file)){
+            $filesAry[0]['ceos_file_name'] = !empty($campRes->ceos_file)?$campRes->ceos_file:'';  
+            $filesAry[0]['ceos_org_name'] = !empty($campRes->ceos_name)?$campRes->ceos_name:'';
+            $filesAry[1]['emp_file_name'] = !empty($campRes->emp_file)?$campRes->emp_file:'';  
+            $filesAry[1]['emp_org_name'] = !empty($campRes->emp_name)?$campRes->emp_name:'';
+            if((!empty($campRes->ceos_file) && !empty($campRes->ceos_name)) || (!empty($campRes->emp_file) && !empty($campRes->emp_name))){
             $returnData['files'] = $filesAry;
             }
             if(!empty($campRes->latitude)){
@@ -2038,6 +2026,7 @@ class PostGateway {
     
     public function decryptRef($input){
        $data = array();
+       $input['all_jobs'] = !empty($input['all_jobs'])?$input['all_jobs']:'';
        if(!empty($input['ref']) && isset($input['ref'])){
         $mail_parse_ref = isset($input['ref'])?MyEncrypt::decrypt_blowfish($input['ref'],Config::get('constants.MINTMESH_ENCCODE')):0;
         $mail_parse_ref_val = array_map('intval',explode('_',$mail_parse_ref));	
@@ -2050,19 +2039,18 @@ class PostGateway {
         $postStatus = $this->job2->getPost($input);
         $postDetails    = $this->referralsGateway->formPostDetailsArray($postStatus);
         $companyLogo = !empty($companyDetails->logo)?$companyDetails->logo:'';
-        if(!empty($input['all_jobs']) && isset($input['all_jobs'])){
         if($input['all_jobs'] == 0){
         $jobTitle = $companyDetails->name .' looking for '.$postStatus->looking_for;
         $jobDescription = 'Experience: '.$postDetails['experience_range_name'].', Location: '.$postStatus->service_location;
          $url = Config::get('constants.MM_ENTERPRISE_URL') . "/email/job-details/share?ref=" . $input['ref']."";
 
-        }else{
+        }else if($input['all_jobs'] == 1){
             $jobTitle = 'These jobs are available in '.$companyDetails->name;
             $jobDescription = $postStatus->looking_for;
             $url = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-jobs/share?ref=" . $input['ref']."";
 
         }
-        }else{
+        else{
             $jobTitle = $jobDescription = $url = '';
         }
         $data = array("post_id" => $input['post_id'],"reference_id"=>$referred_by_id,"emailid" => $userDetails->emailid,"post_status"=>$postStatus->status,"company_logo"=>$companyLogo,"company_name"=>$companyDetails->name,"title"=>$jobTitle,"description" => $jobDescription,"url"=>$url);
