@@ -1450,7 +1450,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             
             $queryString = "match (u)-[r:GOT_REFERRED]->(p:Post)-[r1:POSTED_FOR]->(c:Company) 
                             where r.referred_by='".$userEmail."' and c.companyCode='".$companyCode."'
-                            return p,r1,c order by r.created_at desc";
+                            return distinct(p),r1,c order by p.created_at desc";
             //echo $queryString;exit;
             if (!empty($limit) && !($limit < 0))
             {

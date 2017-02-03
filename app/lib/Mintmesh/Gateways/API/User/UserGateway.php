@@ -359,6 +359,8 @@ class UserGateway {
                     $neoInput['location'] = $input['location'];
                 }
                 $neoInput['login_source']       = $input['login_source'];
+                $osType   =  $deep_link_type    = !empty($input['os_type'])?$input['os_type']:'';
+                $neoInput['os_type']  = $osType;
                 //check for existing node in neo4j
                 $neoUser =  $this->neoUserRepository->getNodeByEmailId($input['emailid']) ;
                 if (empty($neoUser)) {
@@ -370,7 +372,7 @@ class UserGateway {
                     $updatedNeoUser =  $this->neoUserRepository->updateUser($neoInput) ;}
                 }
                 $deviceToken = $input['deviceToken'] ;
-                $this->neoUserRepository->mapToDevice($deviceToken, $input['emailid']) ;
+                $this->neoUserRepository->mapToDevice($deviceToken, $input['emailid'], $osType) ;
 
 
                 if (!empty($createdUser)) {
@@ -408,7 +410,6 @@ class UserGateway {
                     $this->userEmailManager->emailId = $input['emailid'];
                     $dataSet = array();
                     $dataSet['name'] = $input['firstname'];
-                    $deep_link_type = !empty($input['os_type'])?$input['os_type']:'';
                     $deep_link = $this->getDeepLinkScheme($deep_link_type);
                     $dataSet['desktop_link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/user/activate/".$activationCode ;
                     $appLink = $deep_link.Config::get('constants.MNT_VERSION')."/user/activate/".$activationCode ;
@@ -851,7 +852,8 @@ class UserGateway {
                 }
                 //create a relation for device token
                 $deviceToken = $inputUserData['deviceToken'] ;
-                $this->neoUserRepository->mapToDevice($deviceToken, $inputUserData['username']) ;
+                $osType      = !empty($input['os_type'])?$input['os_type']:'';
+                $this->neoUserRepository->mapToDevice($deviceToken, $inputUserData['username'], $osType) ;
                 if($remaning_days->days != 0 || ($remaning_days->status && $remaning_days->emailverified)) {
                     // returning success message
                     $message = array('msg'=>array(Lang::get('MINTMESH.login.login_success')));
@@ -921,7 +923,8 @@ class UserGateway {
                             }
                             //create a relation for device token
                             $deviceToken = $input['deviceToken'] ;
-                            $this->neoUserRepository->mapToDevice($deviceToken, $input['emailid']) ;
+                            $osType      = !empty($input['os_type'])?$input['os_type']:'';
+                            $this->neoUserRepository->mapToDevice($deviceToken, $input['emailid'], $osType) ;
                             // returning success message
                             $message = array('msg'=>array(Lang::get('MINTMESH.login.login_success')));
                             return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $oauthResult) ;
@@ -1747,7 +1750,10 @@ class UserGateway {
             $returnArray['connectedCompaniesCount'] = count($companiesCount);
             //get company Details
             $companyDetailsAry= $this->neoEnterpriseRepository->connectedCompanyDetails($loggedinUserDetails->emailid);
-            $returnArray['connected_company_code'] = !empty($companyDetailsAry->companyCode)?$companyDetailsAry->companyCode:0;
+            $returnArray['connected_company_code'] = $companyCode = !empty($companyDetailsAry->companyCode)?$companyDetailsAry->companyCode:0;
+            //get my all referrals count
+            $referralsAry = $this->referralsRepository->getAllMyReferrals($loggedinUserDetails->emailid, $companyCode);
+            $returnArray['referrals_count'] = !empty($referralsAry)?$referralsAry->count():0;
             
             return $returnArray ;
         }

@@ -20,10 +20,12 @@ class testJob extends Command {
         #IOS
         //$platformArn = "arn:aws:sns:us-west-2:548244693820:app/APNS_SANDBOX/MintMeshDev";
         #Android
-        $platformArn = "arn:aws:sns:us-west-2:548244693820:app/GCM/MintMeshEnterpriseAndroidDev";
+        //$platformArn = "arn:aws:sns:us-west-2:548244693820:app/GCM/MintMeshEnterpriseAndroidDev";//stg
+        $platformArn = "arn:aws:sns:us-west-2:548244693820:app/GCM/MintmeshAndroid202ENV";//202
         $message = 'Amazon SNS Mobile Push message for Hi Gopi.';
         //$deviceToken = '61a6357045a769455b6ca6f98687d286a4d9e1e846360bbf2372f9d6cdf0c318';
-        $deviceToken = 'fF1ZYr8H09g:APA91bFFzhzWDvQ5ulaOienV7KI66TCqZNSTH1FzU70vuzQiyo0wEE3UrBnO0iqZcLscOoSMnTI_eMvhljKorC6Dji5t8jN2pRC-wUxSdsvT8RaWFp3csuDSeRIXVsS-PZqPP7Tc15t7';
+        //$deviceToken = 'fF1ZYr8H09g:APA91bFFzhzWDvQ5ulaOienV7KI66TCqZNSTH1FzU70vuzQiyo0wEE3UrBnO0iqZcLscOoSMnTI_eMvhljKorC6Dji5t8jN2pRC-wUxSdsvT8RaWFp3csuDSeRIXVsS-PZqPP7Tc15t7';
+        $deviceToken = 'APA91bHfl1g2EsVZr2qMPbK-_W-pZguSffYZx1tWRHNlKZxb4nQOQYIl5V7kxMvXzQU2Lm5fD3sOprCWlUWqmKzUMVOcdndqTvH2qutRc5mxtZxUcHJ3mxS5QpCVVFSLotXwRrTKdpzxNIpNw8rD0WYUkjoNusamIg';
         
         $res = $this->notification->createPlatformEndpoint($deviceToken, $platformArn);
         //print_r($res).exit;
