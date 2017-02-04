@@ -4971,7 +4971,7 @@ class UserGateway {
                         $noteAry['notification']    = $noteAry['company_name']." ".$note->message." ".$noteAry['campaign_type'].$extra_msg;
                         $noteAry['dp_image']        = $dpImage;
                    
-                    }else if(($note->note_type == 'post_one_way_notify' || $note->note_type == 'post_declined') && !empty($serviceId)){
+                    }else if(($note->note_type == 'post_one_way_notify' || $note->note_type == 'post_declined'|| $note->note_type == 'post_one_way_self_notify'|| $note->note_type == 'post_declined_self') && !empty($serviceId)){
                         #get company details here
                         $companyDetails = $this->neoPostRepository->getPostCompany($serviceId);
                         $postDetails    = $this->neoUserRepository->getPost($serviceId);
@@ -4996,9 +4996,18 @@ class UserGateway {
                         $noteAry['notification']  = $fromUser->fullname." ".$note->message." ".$thirdName." ".$extra_msg;
                         $noteAry['dp_image']      = '';    
                     }
+                    
+                    if($note->note_type == 'post_one_way_self_notify'){
+                        $noteType = 'post_one_way_notify';
+                    }  else if($note->note_type == 'post_declined_self'){
+                         $noteType = 'post_declined';
+                    }else {
+                        $noteType = $note->note_type;
+                    }  
+                    
                     $noteAry['other_name']   = $thirdName;
                     $noteAry['push_id']      = $note->id;
-                    $noteAry['note_type']    = $note->note_type;                    
+                    $noteAry['note_type']    = $noteType;                    
                     $noteAry['notify_time']  = $note->created_at;
                     $noteAry['read_status']  = $note->status;
 

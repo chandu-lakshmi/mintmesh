@@ -1197,8 +1197,8 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             $result = array();
             if (!empty($userEmail) && !empty($campaignId)){                 
                $userEmail   = $this->appEncodeDecode->filterString(strtolower($userEmail));
-               $queryString = "MATCH (u:User)<-[r:CAMPAIGN_CONTACT]-(c:Campaign{status:'ACTIVE'}) 
-                               where ID(c)=".$campaignId." and u.emailid='".$userEmail."' set r.post_read_status =1
+               $queryString = "MATCH (u:User),(c:Campaign{status:'ACTIVE'}) 
+                               where ID(c)=".$campaignId." and u.emailid='".$userEmail."' 
                                RETURN distinct(c)";
                //echo $queryString;exit;
                $query       = new CypherQuery($this->client, $queryString);
@@ -1425,12 +1425,11 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             $result = array();
             if (!empty($postId) && !empty($userEmailID))
             {                   
-                $queryString = "MATCH (u:User:Mintmesh)-[i:INCLUDED]-(p:Post)
+                $queryString = "MATCH (u:User:Mintmesh),(p:Post)
                                 WHERE  ID(p)=".$postId." and u.emailid='".$userEmailID."'
                                 OPTIONAL MATCH (p)<-[r:GOT_REFERRED]-(n)
                                 WHERE r.referred_by='".$userEmailID."' 
                                 and ('Mintmesh' IN labels(n) OR  'NonMintmesh' IN labels(n) OR 'User' IN labels(n))
-                                set i.post_read_status =1
                                 RETURN p,r,n,labels(n)" ;
                 $query = new CypherQuery($this->client, $queryString);
                 $resultSet = $query->getResultSet();

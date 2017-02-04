@@ -2352,6 +2352,7 @@ class PostGateway {
             $jobsListAry    = $this->neoPostRepository->getJobsList($userEmailId, $companyCode, $page, $search);
            
             if(!empty($jobsListAry->count())){
+                $jobsCount = $this->neoPostRepository->getCompanyJobsCount($userEmailId, $companyCode);
                 $listCount = $jobsListAry->count();
                 foreach ($jobsListAry as $value) {
                     $record   = $rewards = $postRewards = $vacancies = array();
@@ -2381,14 +2382,14 @@ class PostGateway {
                             $postsRes = $this->neoPostRepository->getCampaignPosts($campaignId);
 
                             if(!empty($postsRes->count())){
-                                $jobsCount+= $postsRes->count();
+                                //$jobsCount+= $postsRes->count();
                                 foreach($postsRes as $posts){
                                     $postDetails    = $this->referralsGateway->formPostDetailsArray($posts[0]);
                                     $campaignJobs[] = !empty($postDetails['service_name'])?$postDetails['service_name']:'';
                                 }
                             }
                             $record['campaign_jobs']  = $campaignJobs;//array('ios developer','android developer','php developer');
-                            $postRead                       = !empty($jobRel->post_read_status)?1:0;
+                            $postRead                       = 1;//!empty($jobRel->post_read_status)?1:0;
                             $record['campaign_read_status'] = $postRead; 
 
                             $refId      = $campaignId.'_'.$neoUserId;
@@ -2411,7 +2412,7 @@ class PostGateway {
                             #get the post reward details here
                             $postRewards                = $this->referralsGateway->getPostRewards($postId, $userCountry, $isEnterprise=1);
                             $record['rewards']          = $postRewards;
-                            $postRead                   = !empty($jobRel->post_read_status)?1:0;
+                            $postRead                   = 1;//!empty($jobRel->post_read_status)?1:0;
                             $record['post_read_status'] = $postRead; 
 
                             $refId      = $postId.'_'.$neoUserId;
@@ -2419,11 +2420,12 @@ class PostGateway {
                             $record['social_job_share'] = $enterpriseUrl . "/email/job-details/share?ref=" . $refCode."";; 
 
                             $unreadCount+=empty($postRead)?1:0;
-                            $jobsCount+=1;
+                            //$jobsCount+=1;
 
                         }
                      $returnData[] = $record;
                     }
+                    
                 }
                 $data = array('company_details'=>$companyDetails, "jobs_list" => array_values($returnData),"unread_count" => $unreadCount, "jobs_count" => $jobsCount, "total_count" => $listCount);
                 $responseCode   = self::SUCCESS_RESPONSE_CODE;

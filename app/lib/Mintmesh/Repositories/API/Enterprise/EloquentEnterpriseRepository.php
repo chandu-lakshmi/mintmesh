@@ -884,4 +884,13 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
          $sql = "update company_access set status='1',company_id='".$companyId."' where access_code='".$input['lic_no']."'";
          return $result = DB::statement($sql);
     }
+    
+    public function appDownloadCount($companyId) {
+         $sql = "select count(*) as count from contacts where company_id='".$companyId."' and status='Active' and emailid IN (select emailid from users)";
+         return $result = DB::SELECT($sql);
+    }
+    public function appActiveContactsCount($companyId) {
+         $sql = "select count(*) as count from contacts where company_id='".$companyId."' and status='Active' ";
+         return $result = DB::SELECT($sql);
+    }
 }

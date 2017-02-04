@@ -987,10 +987,10 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         }
         
         if(!empty($userEmailId)){
-        $queryString = "MATCH (u:User:Mintmesh{emailid:'".$userEmailId."'})-[r:INCLUDED]-(p:Post{status:'ACTIVE'})-[:POSTED_FOR]-(Company{companyCode:'".$companyCode."'})
+        $queryString = "MATCH (u:User:Mintmesh{emailid:'".$userEmailId."'})-[r:CONNECTED_TO_COMPANY]-(Company{companyCode:'".$companyCode."'})-[:POSTED_FOR]-(p:Post{status:'ACTIVE'})
                         WHERE  p.post_type <>'campaign'
                         WITH collect({post:p,rel:r}) as posts 
-                        OPTIONAL MATCH (u:User:Mintmesh{emailid:'".$userEmailId."'})-[r:CAMPAIGN_CONTACT]-(p:Campaign{status:'ACTIVE', company_code:'".$companyCode."'})
+                        OPTIONAL MATCH (u:User:Mintmesh{emailid:'".$userEmailId."'})-[r:CONNECTED_TO_COMPANY]-(Company{companyCode:'".$companyCode."'})-[COMPANY_CREATED_CMPAIGN]-(p:Campaign{status:'ACTIVE'})
                         WITH posts + collect({post:p,rel:r}) as rows
                         UNWIND rows as row
                         RETURN row ORDER BY row.post.created_at DESC";
@@ -998,7 +998,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         {
             $queryString.=" skip ".$skip." limit ".self::LIMIT ;
         }
-        //echo $queryString;exit;
+       // echo $queryString;exit;
         $query  = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
             if($result)
@@ -1025,6 +1025,19 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         $query  = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
         return $result; 
+    }
+    
+    public function getCompanyJobsCount($emailId='',$companyCode='') {
+        $return = 0;
+        if(!empty($emailId) && !empty($companyCode)){
+            $queryString = "MATCH (u:User:Mintmesh{emailid:'".$emailId."'})-[r:CONNECTED_TO_COMPANY]-(Company{companyCode:'".$companyCode."'})-[:POSTED_FOR]-(p:Post{status:'ACTIVE'}) return count(p)";
+            $query  = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if(isset($result[0]) && isset($result[0][0])){
+                $return = $result[0][0];
+            }
+        }
+        return $return; 
     }
 }
 

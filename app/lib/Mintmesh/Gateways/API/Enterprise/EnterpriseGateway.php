@@ -1355,14 +1355,16 @@ class EnterpriseGateway {
     
     public function getCompanyUserPostProgress($userEmailId, $userId, $companyCode, $companyId, $filterLimit=''){
         $return = $response = array();
-        $rewardsCount = $contactsCount = $jobsReachCount = 0;
+        $rewardsCount = $contactsCount = $jobsReachCount = $companyInvitedCount = 0;
         $filterLimit    = empty($filterLimit)?date('Y-m-d H:i:s', strtotime('-1 month')):$filterLimit;//default 30 days
         //CONTACTS ENGAGEMENT
-        $companyInvitedCount = $this->enterpriseRepository->companyInvitedCount($userId, $companyId, $filterLimit);
-        $downloadedCount     = $this->enterpriseRepository->companyInvitedCount($userId, $companyId, $filterLimit, TRUE);
+        //$companyInvitedCount = $this->enterpriseRepository->companyInvitedCount($userId, $companyId, $filterLimit);
+        //$downloadedCount     = $this->enterpriseRepository->companyInvitedCount($userId, $companyId, $filterLimit, TRUE);
+        $downloadedCount     = $this->enterpriseRepository->appDownloadCount($companyId);
+        $companyInvitedCount = $this->enterpriseRepository->appActiveContactsCount($companyId);
         
-        $companyInvitedCount = !empty($companyInvitedCount[0]->count)?$companyInvitedCount[0]->count:0;
         $downloadedCount     = !empty($downloadedCount[0]->count)?$downloadedCount[0]->count:0;
+        $companyInvitedCount = !empty($companyInvitedCount[0]->count)?$companyInvitedCount[0]->count:0;
         //CONTACTS ENGAGEMENT COUNT
         if(!empty($companyInvitedCount)){
             $contactsCount = round((($downloadedCount/$companyInvitedCount)*100),2);

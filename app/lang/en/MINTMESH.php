@@ -200,8 +200,8 @@ return array(
                 '20'=>'has shared details of',
                 '22'=>'does not want to be referred to',
                 '23'=>'has referred ownself to your request',
-                '24'=>'accepted your self referral', 
-                '25'=>'has turned down your self referral',
+                '24'=>'accepted your self referral of', 
+                '25'=>'has turned down your self referral of',
                 '27'=>'is looking for',
                 '28'=>'has launched a'),
             "extra_texts"=>array(
