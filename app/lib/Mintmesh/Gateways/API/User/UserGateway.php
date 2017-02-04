@@ -2953,8 +2953,7 @@ class UserGateway {
                             {
                                 $pushData = array();
                                 $pushData['emailid']        = $email;
-                                //$pushData['deviceToken']    = 'APA91bGTrlarVZrzPhwjJTxWFdkqvjLoSnA4rb8k9ll0MFLDrO7XJ_z2Xa_9pXpJGZaP9IhayQh0JZxCkJs0dvjPIV7y4pdV-SpN8xzrFd0zA7cwhUhuMROcyLnOEc9qcCYsFBRj0pW0GR4463nkAnwXN-djrgnblQ';
-                                $pushData['deviceToken']  = $deviceDetails['deviceToken'];
+                                $pushData['deviceToken']    = $deviceDetails['deviceToken'];
                                 $pushData['EndpointArn']    = !empty($deviceDetails['endpointArn'])?$deviceDetails['endpointArn']:'';
                                 $pushData['os_type']        = !empty($deviceDetails['os_type'])?$deviceDetails['os_type']:'';
                                 $pushData['data']           = $data;

@@ -2347,7 +2347,7 @@ class PostGateway {
             //$companyDetails['points']        = !empty($levelsInfo[0]->points)?$levelsInfo[0]->points:0;  
             $companyDetails['points']        = !empty($creditResult[0]->credits)?$creditResult[0]->credits:0;  
             $companyDetails['rewards']       = !empty($referralCashRes[0]->total_cash)?$referralCashRes[0]->total_cash:0;    
-            $companyDetails['currency_type'] = 1;
+            $companyDetails['currency_type'] = (strtolower($userCountry) =="india")?2:1;
             #get jobs list with company code
             $jobsListAry    = $this->neoPostRepository->getJobsList($userEmailId, $companyCode, $page, $search);
            
