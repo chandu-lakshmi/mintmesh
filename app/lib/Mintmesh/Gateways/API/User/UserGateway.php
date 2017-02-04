@@ -2946,14 +2946,19 @@ class UserGateway {
                                     $badge = 1;
                                 }
                             }
-                            $data = array("alert" => $msg,"emailid"=>$fromUser->emailid, "push_id"=>$t->id, "push_type"=>$notificationType, "badge"=>$badge);
+                            //$data = array("alert" => $msg,"emailid"=>$fromUser->emailid, "push_id"=>$t->id, "push_type"=>$notificationType, "badge"=>$badge);
+                            $data = '{"GCM": "{ \"data\": { \"Message\": \"'.$msg.'\", \"emailid\": \"'.$fromUser->emailid.'\" }, \"push_id\": \"'.$t->id.'\" }, \"push_type\": \"'.$notificationType.'\" },\"badge\": \"'.$badge.'\" } }"}';
                             // Push to Query
                             if (!empty($deviceDetails))
                             {
                                 $pushData = array();
-                                $pushData['deviceToken']=$deviceDetails['deviceToken'];
-                                $pushData['parse_data']=$data;
-                                Queue::push('Mintmesh\Services\Queues\ParseQueue', $pushData, 'Notification');
+                                $pushData['emailid']        = $email;
+                                //$pushData['deviceToken']    = 'APA91bGTrlarVZrzPhwjJTxWFdkqvjLoSnA4rb8k9ll0MFLDrO7XJ_z2Xa_9pXpJGZaP9IhayQh0JZxCkJs0dvjPIV7y4pdV-SpN8xzrFd0zA7cwhUhuMROcyLnOEc9qcCYsFBRj0pW0GR4463nkAnwXN-djrgnblQ';
+                                $pushData['deviceToken']  = $deviceDetails['deviceToken'];
+                                $pushData['EndpointArn']    = !empty($deviceDetails['endpointArn'])?$deviceDetails['endpointArn']:'';
+                                $pushData['os_type']        = !empty($deviceDetails['os_type'])?$deviceDetails['os_type']:'';
+                                $pushData['data']           = $data;
+                                Queue::push('Mintmesh\Services\Queues\PushNotificationQueue', $pushData, 'Notification');
                                 
                             }
                         }

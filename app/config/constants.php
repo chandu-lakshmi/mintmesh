@@ -13,7 +13,7 @@ return [
     'USER_EXPIRY_HR'=>240,
     'MNT_VERSION'=>"v1",
     'MNT_FROM_NAME'=>'Mintmesh',
-    'MM_ENTERPRISE_URL'=>'http://202.63.105.85/mmenterprise_9',
+    'MM_ENTERPRISE_URL'=>'http://202.63.105.85/mmenterprise',
     'MNT_DEEP_LINK_IOS'=>'mintmeshstg://',
     'MNT_DEEP_LINK_ANDROID'=>'http://202.63.105.85/mintmesh/',
     'DP_PATH' => '/uploads/ProfilePics',
@@ -23,6 +23,8 @@ return [
     'GOOGLE_CONTACTS_URL'=>'https://www.google.com/m8/feeds/contacts/default/full?alt=json&max-results=10000',
     'ANDROID'=>'android',
     'IOS'=>'ios',
+    'PLATFORM_ARN_ANDROID'=>'arn:aws:sns:us-west-2:548244693820:app/GCM/MintMeshEnterpriseAndroidDev',
+    'PLATFORM_ARN_IOS'=>'ios',
     'INVITE_SINGLE'=>false,
     'INVITE_EMAIL'=>'mintmeshapp@gmail.com',
     'MNT_PUBLIC_URL'=>'https://staging.mintmesh.com/public/',//mintmesh public folder url

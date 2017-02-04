@@ -33,6 +33,7 @@ class NotificationManager {
         try {
             $res = $this->getInstance()->publish(array(
                 'Message'   => $message,
+                'MessageStructure' => 'json',
                 'TargetArn' => $EndpointArn
             ));
         } catch (Exception $e) {

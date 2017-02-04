@@ -1538,6 +1538,17 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
             }
            return $return;
         }
+        
+        public function updateDeviceEndpointArn($emailId='',$deviceToken='',$endpointArn='') {
+            $result = array();
+           if(!empty($emailId) && !empty($deviceToken) && !empty($endpointArn)){
+                $queryString = "MATCH (u:User:Mintmesh)-[:MAPPED_TO]-(d:Device) where u.emailid='".$emailId."' and d.deviceToken ='".$deviceToken."'
+                                set d.endpointArn = '".$endpointArn."' return d";
+                $query  = new CypherQuery($this->client, $queryString);
+                $result = $query->getResultSet();
+           }
+           return $result;
+        }
           	 
 }
 ?>
