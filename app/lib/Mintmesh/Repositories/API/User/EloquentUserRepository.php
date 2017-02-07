@@ -357,6 +357,13 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
             return $result ;
         }
         
+        public function getNotificationTypeById($id=0)
+        {
+            $sql = "select name from notifications_types where id='".$id."'";
+            $result = DB::select($sql);
+            return $result ;
+        }
+        
         public function updateUserresetpwdcode($input)
         {
             $sql = "update users set resetactivationcode='".$input['resetactivationcode']."' where id='".$input['user_id']."'";
@@ -744,7 +751,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                             CASE WHEN other_phone IS NULL THEN 1
                             ELSE other_phone END
                          ) b ON nl.id = b.id  
-                         left join notifications_types nt on nt.id = nl.notifications_types_id where 1 and nl.notifications_types_id IN (1,2,12,15,24,25,27,28) order by nl.id desc";
+                         left join notifications_types nt on nt.id = nl.notifications_types_id where 1 and nl.notifications_types_id IN (12,15,24,25,27,28) order by nl.id desc";
                //echo $sql ; exit;
                if (!empty($page))
                 {

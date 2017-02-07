@@ -2293,7 +2293,7 @@ class ReferralsGateway {
         if(!empty($referralsAry)){
             #get company details here
             if(isset($referralsAry[0]) && isset($referralsAry[0][2])){
-                $companyDetails = $referralsAry[1][2];
+                $companyDetails = $referralsAry[0][2];
                 $companyLogo    =  !empty($companyDetails->logo)?$companyDetails->logo:'';
             }
             $companyAry['company_logo'] = $companyLogo;

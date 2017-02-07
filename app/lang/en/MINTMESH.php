@@ -189,7 +189,7 @@ return array(
                 '8'=>'has parked this request in the "No" Zone', 
                 '9'=>'has parked this request in the "No" Zone',
                 '10'=>'has referred','11'=>'would like to refer you to',
-                '12'=>'is accepted your referral for',
+                '12'=>'has accepted your referral for',
                 '13'=>'has accepted a service of you referred by',
                 '14'=>'has accepted a service of',
                 '15'=>'has turned down your referral of',

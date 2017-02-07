@@ -80,6 +80,7 @@ class UserGateway {
                 $this->neoPostRepository = $neoPostRepository;
                 $this->contactsRepository = $contactsRepository ;
                 $this->notificationsTypes = array('3','4','5','6','10','11','12','13','14','15','17','18','19','20','22');
+                $this->enterpriseNotificationsTypes = array(12,15,24,25,27,28);
                 $this->extraTextsNotes = array('10','11','12','22','27','28') ;
                 $this->infoTypes = array('experience', 'education', 'certification');
                 $this->directProfileRedirections = array('2','12','14');
@@ -2819,7 +2820,7 @@ class UserGateway {
         
         public function sendNotification($fromUser, $neofromUser, $email, $notificationType = 0, $extraInserts = array(), $otherInfoParams = array(),$parse=1, $nonMintmesh=0)
         {
-            $userDeviceResults = array();
+            $userDeviceResults = $data = array();
             if (!empty($parse))//send if direct notification
             {
                 if (!empty($email) && !empty($neofromUser))
@@ -2946,8 +2947,67 @@ class UserGateway {
                                     $badge = 1;
                                 }
                             }
+                            #enterprise push notification
+                            $serviceId = !empty($extraInserts['extra_info'])?$extraInserts['extra_info']:0;
+                            if (in_array($notificationType, $this->enterpriseNotificationsTypes) && !empty($serviceId))
+                            {   
+                                
+                                $message = $from_user = $referral = $referred_by = $relation_count = $referred_by_phone = $notification = '';
+                                $noteMsg = Lang::get('MINTMESH.notifications.messages.'.$notificationType);
+                                $noteTypes  = $this->userRepository->getNotificationTypeById($notificationType);
+                                $noteType   = !empty($note_types[0]->name)?$note_types[0]->name:'';
+                                
+                                if($notificationType == 27){
+                                    $companyDetails = $this->neoPostRepository->getPostCompany($serviceId); 
+                                    $extra_msg      = Lang::get('MINTMESH.notifications.extra_texts.'.$notificationType) ; 
+                                    $postDetails    = $this->neoUserRepository->getPost($serviceId);
+                                    $serviceName    = !empty($postDetails->service_name)?$postDetails->service_name:'';
+                                    $companyName    = !empty($postDetails->company)?$postDetails->company:'';
+                                    $message        = $companyName." ".$noteMsg." ".$serviceName.$extra_msg;
+                                    
+                                }else if($notificationType == 28){
+
+                                    $campDetails  = $this->neoUserRepository->getCampaign($serviceId);
+                                    $companyCode  = !empty($campDetails->company_code)?$campDetails->company_code:'';
+                                    #get company details here
+                                    if($companyCode){
+                                        $companyData    = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+                                        $companyData    = isset($companyData[0])?$companyData[0]:0;
+                                        $companyName    = !empty($companyData->name)?$companyData->name:'';//company name  
+                                    }
+                                    $serviceName    = !empty($note->other_message)?trim($note->other_message):'';
+                                    $message        = $companyName." ".$noteMsg." ".$campaignType.$extra_msg;
+                                    
+                                } else {
+                                    #get company details here
+                                    $postDetails    = $this->neoUserRepository->getPost($serviceId);
+                                    $serviceName    = !empty($postDetails->service_name)?$postDetails->service_name:'';
+                                    $companyDetails = $this->neoPostRepository->getPostCompany($serviceId);    
+                                    $companyName    = !empty($companyDetails->name)?$companyDetails->name:'';
+                                    #referral accept notification
+                                    $from_user       = $fromUser->emailid;
+                                    $referral        = ($is_mintmesh)?$other_email:$other_phone;
+                                    $referred_by     = $neofromUser->emailid;
+                                    $relation_count  = 1;
+                                    $message         = $companyName." ".$noteMsg." ".$serviceName;
+                                    $referred_by_phone  = ($is_mintmesh)?0:1;
+                                    
+                                }
+                                $data = array(
+                                    "message"           => $message,
+                                    "from_user"         => $from_user,  
+                                    "id"                => $serviceId, 
+                                    "referral"          => $referral, 
+                                    "referred_by"       => $referred_by,
+                                    "relation_count"    => $relation_count,
+                                    "referred_by_phone" => $referred_by_phone,
+                                    "note_type"         => $noteType 
+                                    );
+                                    
+                            }
+                              \Log::info("<<<<<<<<<<<<<<<< In data  >>>>>>>>>>>>>".print_r($data,1));
                             //$data = array("alert" => $msg,"emailid"=>$fromUser->emailid, "push_id"=>$t->id, "push_type"=>$notificationType, "badge"=>$badge);
-                            $data = '{"GCM": "{ \"data\": { \"Message\": \"'.$msg.'\", \"emailid\": \"'.$fromUser->emailid.'\" }, \"push_id\": \"'.$t->id.'\" }, \"push_type\": \"'.$notificationType.'\" },\"badge\": \"'.$badge.'\" } }"}';
+                            
                             // Push to Query
                             if (!empty($deviceDetails))
                             {
@@ -4997,17 +5057,9 @@ class UserGateway {
                         $noteAry['dp_image']      = '';    
                     }
                     
-                    if($note->note_type == 'post_one_way_self_notify'){
-                        $noteType = 'post_one_way_notify';
-                    }  else if($note->note_type == 'post_declined_self'){
-                         $noteType = 'post_declined';
-                    }else {
-                        $noteType = $note->note_type;
-                    }  
-                    
                     $noteAry['other_name']   = $thirdName;
                     $noteAry['push_id']      = $note->id;
-                    $noteAry['note_type']    = $noteType;                    
+                    $noteAry['note_type']    = $note->note_type;                    
                     $noteAry['notify_time']  = $note->created_at;
                     $noteAry['read_status']  = $note->status;
 
