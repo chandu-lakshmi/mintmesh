@@ -15,10 +15,10 @@ class EloquentPaymentRepository extends BaseRepository implements PaymentReposit
         }
         public function insertTransaction($input)
         {
-            $sql = "insert into payment_transactions (`from_user`,`to_user`,`for_user`,`amount`,`comission_percentage`,`payment_type`,`payment_reason`,`service_id`,`status`,`ip_address`,`mm_transaction_id`,`relation_id`)" ;
+            $sql = "insert into payment_transactions (`from_user`,`to_user`,`for_user`,`amount`,`comission_percentage`,`payment_type`,`payment_reason`,`service_id`,`status`,`ip_address`,`mm_transaction_id`,`relation_id`,`last_modified_at`)" ;
             $sql.=" values('".$input['from_user']."','".$input['to_user']."',
                             '".$input['for_user']."',".$input['amount'].",'".$input['comission_percentage']."',".$input['payment_type'].",".$input['payment_reason']."
-                                ,'".$input['payed_for_id']."','".$input['status']."','".$_SERVER['REMOTE_ADDR']."','".$input['mm_transaction_id']."','".$input['relation_id']."')" ;
+                                ,'".$input['payed_for_id']."','".$input['status']."','".$_SERVER['REMOTE_ADDR']."','".$input['mm_transaction_id']."','".$input['relation_id']."','".date('Y-m-d H:i:s')."')" ;
             //echo $sql ; exit;
             return $result = DB::statement($sql);
             //return DB::getPdo()->lastInsertId();
@@ -259,7 +259,7 @@ class EloquentPaymentRepository extends BaseRepository implements PaymentReposit
         {
             if (!empty($postId) && !empty($relationId))
             {
-                $sql = "update payment_transactions set status='".Config::get('constants.PAYMENTS.STATUSES.CANCELLED')."'
+                $sql = "update payment_transactions set status='".Config::get('constants.PAYMENTS.STATUSES.CANCELLED')."',last_modified_at='".date('Y-m-d H:i:s')."' 
                          where REPLACE(service_id,',','')=".$postId." and REPLACE(relation_id,',','')=".$relationId." and "
                         . " status IN('".Config::get('constants.PAYMENTS.STATUSES.PENDING')."')";
                 return $result = DB::statement($sql);

@@ -1753,6 +1753,8 @@ class UserGateway {
             //get company Details
             $companyDetailsAry= $this->neoEnterpriseRepository->connectedCompanyDetails($loggedinUserDetails->emailid);
             $returnArray['connected_company_code'] = $companyCode = !empty($companyDetailsAry->companyCode)?$companyDetailsAry->companyCode:0;
+            $returnArray['connected_company_name'] = $companyCode = !empty($companyDetailsAry->name)?$companyDetailsAry->name:0;
+            $returnArray['connected_company_logo'] = $companyCode = !empty($companyDetailsAry->logo)?$companyDetailsAry->logo:0;
             //get my all referrals count
             $referralsAry = $this->referralsRepository->getAllMyReferrals($loggedinUserDetails->emailid, $companyCode);
             $returnArray['referrals_count'] = !empty($referralsAry)?$referralsAry->count():0;
