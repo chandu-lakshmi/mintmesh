@@ -15,7 +15,7 @@ class PushNotificationQueue {
     public function fire($job, $jobData)
     { 
        \Log::info("<<<<<<<<<<<<<<<< In kj fire >>>>>>>>>>>>>".print_r($jobData,1));
-        $platformArn    = '';
+        $platformArn    = $message = '';
         $data           = $jobData['data'];
         $emailId        = $jobData['emailid'];
         $osType         = $jobData['os_type'];
@@ -29,7 +29,7 @@ class PushNotificationQueue {
         }
        
         #check Platform Endpoint already created or not
-        if(!empty($jobData['deviceToken']) && empty($jobData['platformArn']) && !empty($platformArn)){
+       if(!empty($jobData['deviceToken']) && empty($jobData['platformArn']) && !empty($platformArn)){
 
             #create Platform Endpoint
             $deviceToken = $jobData['deviceToken'];
@@ -41,9 +41,9 @@ class PushNotificationQueue {
             $endpointArn = $jobData['EndpointArn'];
         }
         
-        if(!empty($platformArn)){
+        if(!empty($endpointArn) && !empty($message)){
             #publish Push Notification here
-            \Log::info("<<<<<<<<<<<<<<<< In kj Notification here >>>>>>>>>>>>>".print_r($message,1));
+            \Log::info("<<<<<<<<<<<<<<<< In kj Notification message here >>>>>>>>>>>>>".print_r($message,1));
             \Log::info("<<<<<<<<<<<<<<<< In kj Notification here end point >>>>>>>>>>>>>".print_r($endpointArn,1));
             $this->notificationManager->publishJson($message, $endpointArn);
         }

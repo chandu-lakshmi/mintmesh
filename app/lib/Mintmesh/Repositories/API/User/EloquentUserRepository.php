@@ -726,9 +726,10 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
         }
     }
     
-    public function getBellNotifications($emailId, $notification_type=0, $page=0, $isNotificationCount=0)
+    public function getBellNotifications($emailId, $isNotificationCount=0, $page=0)
         {
             $resultAry = array();
+            $status = !empty($isNotificationCount)?' and nl.status ="1" ':'';
             if ($emailId){ 
                 $start = $end = 0;
                 if (!empty($page))
@@ -751,12 +752,13 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                             CASE WHEN other_phone IS NULL THEN 1
                             ELSE other_phone END
                          ) b ON nl.id = b.id  
-                         left join notifications_types nt on nt.id = nl.notifications_types_id where 1 and nl.notifications_types_id IN (12,15,24,25,27,28) order by nl.id desc";
-               //echo $sql ; exit;
+                         left join notifications_types nt on nt.id = nl.notifications_types_id where 1  ".$status." and nl.notifications_types_id IN (12,15,24,25,27,28) order by nl.id desc";
+               
                if (!empty($page))
                 {
                     $sql.=" limit ".$start.",10" ;
                 }
+                //echo $sql ; exit;
                 $result = DB::select($sql);
                 $resultAry = $result;
             }

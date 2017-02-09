@@ -853,7 +853,7 @@ class UserGateway {
                 }
                 //create a relation for device token
                 $deviceToken = $inputUserData['deviceToken'] ;
-                $osType      = !empty($input['os_type'])?$input['os_type']:'';
+                $osType      = !empty($inputUserData['os_type'])?$inputUserData['os_type']:'';
                 $this->neoUserRepository->mapToDevice($deviceToken, $inputUserData['username'], $osType) ;
                 if($remaning_days->days != 0 || ($remaning_days->status && $remaning_days->emailverified)) {
                     // returning success message
@@ -1703,7 +1703,8 @@ class UserGateway {
             $battle_cards_count = $battle_cards_count + Config::get('constants.ADD_BATTLE_CARDS_COUNT');//adding battle cards count
             $returnArray['battle_cards_count']= ($profilePercentage < 100)?$battle_cards_count+1:$battle_cards_count;
             $badgeResult = $this->userRepository->getNotificationsCount($loggedinUserDetails, 'all');
-            $returnArray['notifications_count']= !(empty($badgeResult))?$badgeResult:0;
+            //$returnArray['notifications_count']= !(empty($badgeResult))?$badgeResult:0;
+            $returnArray['notifications_count']= $this->getBellNotificationCount($loggedinUserDetails->emailid);;
             $requestsCount = $this->neoUserRepository->getMyRequestsCount($loggedinUserDetails->emailid);
             $returnArray['requests_count']= !(empty($requestsCount))?$requestsCount:0;
             //credits count
@@ -2955,7 +2956,7 @@ class UserGateway {
                                 $message = $from_user = $referral = $referred_by = $relation_count = $referred_by_phone = $notification = '';
                                 $noteMsg = Lang::get('MINTMESH.notifications.messages.'.$notificationType);
                                 $noteTypes  = $this->userRepository->getNotificationTypeById($notificationType);
-                                $noteType   = !empty($note_types[0]->name)?$note_types[0]->name:'';
+                                $noteType   = !empty($noteTypes[0]->name)?$noteTypes[0]->name:'';
                                 
                                 if($notificationType == 27){
                                     $companyDetails = $this->neoPostRepository->getPostCompany($serviceId); 
@@ -2968,7 +2969,9 @@ class UserGateway {
                                 }else if($notificationType == 28){
 
                                     $campDetails  = $this->neoUserRepository->getCampaign($serviceId);
+                                    $extra_msg      = Lang::get('MINTMESH.notifications.extra_texts.'.$notificationType) ; 
                                     $companyCode  = !empty($campDetails->company_code)?$campDetails->company_code:'';
+                                    $campaignType = !empty($campDetails->campaign_type)?$campDetails->campaign_type:'';
                                     #get company details here
                                     if($companyCode){
                                         $companyData    = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
@@ -2979,15 +2982,17 @@ class UserGateway {
                                     $message        = $companyName." ".$noteMsg." ".$campaignType.$extra_msg;
                                     
                                 } else {
+                                    
                                     #get company details here
                                     $postDetails    = $this->neoUserRepository->getPost($serviceId);
                                     $serviceName    = !empty($postDetails->service_name)?$postDetails->service_name:'';
                                     $companyDetails = $this->neoPostRepository->getPostCompany($serviceId);    
                                     $companyName    = !empty($companyDetails->name)?$companyDetails->name:'';
+                                    $emailId        = !empty($userDetails['emailid'])?$userDetails['emailid']:"";
                                     #referral accept notification
                                     $from_user       = $fromUser->emailid;
                                     $referral        = ($is_mintmesh)?$other_email:$other_phone;
-                                    $referred_by     = $neofromUser->emailid;
+                                    $referred_by     = $emailId;
                                     $relation_count  = 1;
                                     $message         = $companyName." ".$noteMsg." ".$serviceName;
                                     $referred_by_phone  = ($is_mintmesh)?0:1;
@@ -3005,7 +3010,7 @@ class UserGateway {
                                     );
                                     
                             }
-                              \Log::info("<<<<<<<<<<<<<<<< In data  >>>>>>>>>>>>>".print_r($data,1));
+                              \Log::info("<<<<<<<<<<<<<<<< In data userGateway  >>>>>>>>>>>>>".print_r($data,1));
                             //$data = array("alert" => $msg,"emailid"=>$fromUser->emailid, "push_id"=>$t->id, "push_type"=>$notificationType, "badge"=>$badge);
                             
                             // Push to Query
@@ -3812,7 +3817,8 @@ class UserGateway {
             {
                 $notificationDetails = $this->userRepository->getPushDetails($input['push_id']);
                 $this->userRepository->closeNotification($input, $notificationDetails);
-                $notifications_count = $this->userRepository->getNotificationsCount($loggedinUserDetails, 'all');
+                //$notifications_count = $this->userRepository->getNotificationsCount($loggedinUserDetails, 'all');
+                $notifications_count = $this->getBellNotificationCount($loggedinUserDetails->emailid);//for enterprise
                 $battle_cards_count = $this->userRepository->getNotificationsCount($loggedinUserDetails, 'request_connect');
                 if ($input['request_type'] == 'decline')
                 {
@@ -4943,10 +4949,10 @@ class UserGateway {
             $defaultName    = Lang::get('MINTMESH.user.non_mintmesh_user_name');
             $user           = $this->getLoggedInUser();
             $emailId        = $user->emailid;
-            
+            $count = FALSE;
             $userDetails    = $this->neoUserRepository->getNodeByEmailId($user->emailid);
-            $notifications  = $this->userRepository->getBellNotifications($emailId, $noteType, $page);
-            
+            $unreadCount    = $this->getBellNotificationCount($emailId);
+            $notifications  = $this->userRepository->getBellNotifications($emailId, $count, $page);
             if (!empty($notifications)){
                    
                 foreach ($notifications as $note)
@@ -5066,7 +5072,7 @@ class UserGateway {
                     $returnNote[] = $noteAry;
                 }
                         
-                $data = array("notifications"=>$returnNote, "unread_count"=>0) ;
+                $data = array("notifications"=>$returnNote, "unread_count"=>$unreadCount) ;
                 $responseCode   = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
                 $responseMessage= array('msg' => array(Lang::get('MINTMESH.notifications.success')));
@@ -5079,9 +5085,11 @@ class UserGateway {
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
         }
         
-        public function snsTest()
+        public function getBellNotificationCount($emailId)
         {   
-           print_r($this->userFileUploader->sns()); 
+           $count = 1; 
+           $notificationsCount  = $this->userRepository->getBellNotifications($emailId, $count);
+           return count($notificationsCount);   
         }
 
 }

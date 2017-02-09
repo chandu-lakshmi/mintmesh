@@ -40,7 +40,7 @@ return array(
                 "uploaded_large_file"=>"Uploaded file size is too large",
                 "invalid_file_format"=>"Uploaded file format not allowed",
                 "no_resume"=>"Please upload a resume",
-                'invalid_acess'=>'Invalid licence number'
+                'invalid_acess'=>'Invalid license number'
                 
             ),
          "referrals"=>array(

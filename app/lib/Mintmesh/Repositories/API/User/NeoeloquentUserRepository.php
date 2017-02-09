@@ -186,7 +186,7 @@ class NeoeloquentUserRepository extends BaseRepository implements NeoUserReposit
                 $query2 = "MATCH (d:Device { deviceToken: '".$deviceToken."' })-[r]-() set r.status=0 return r" ;
                 $query = new CypherQuery($this->client, $query2);
                 $deleteResult2 = $query->getResultSet();
-                $queryString = "MATCH (u:User:Mintmesh) WHERE u.emailid='".$emailId."' MERGE (d:Device{deviceToken:'".$deviceToken."', os_type:'".$osType."'}) CREATE unique (u)-[r:".Config::get('constants.RELATIONS_TYPES.MAPPED_TO')."]->(d)  set r.created_at='".date("Y-m-d H:i:s")."',r.status=1";
+                $queryString = "MATCH (u:User:Mintmesh) WHERE u.emailid='".$emailId."' MERGE (d:Device{deviceToken:'".$deviceToken."'}) CREATE unique (u)-[r:".Config::get('constants.RELATIONS_TYPES.MAPPED_TO')."]->(d)  set d.os_type='".$osType."', r.created_at='".date("Y-m-d H:i:s")."',r.status=1";
                 $query = new CypherQuery($this->client, $queryString);
                 return $result = $query->getResultSet();
             }

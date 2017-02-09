@@ -1197,7 +1197,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             $result = array();
             if (!empty($userEmail) && !empty($campaignId)){                 
                $userEmail   = $this->appEncodeDecode->filterString(strtolower($userEmail));
-               $queryString = "MATCH (u:User),(c:Campaign{status:'ACTIVE'}) 
+               $queryString = "MATCH (u:User),(c:Campaign) 
                                where ID(c)=".$campaignId." and u.emailid='".$userEmail."' 
                                RETURN distinct(c)";
                //echo $queryString;exit;

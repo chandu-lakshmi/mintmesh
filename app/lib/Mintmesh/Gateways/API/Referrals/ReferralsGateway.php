@@ -1365,8 +1365,15 @@ class ReferralsGateway {
                     $returnArray['points_awarded'] = Config::get('constants.POINTS.SEEK_REFERRAL') ;
                     //post details from web
                     $returnArray["service_from_web"] = !empty($result[0][2]->service_from_web)?$result[0][2]->service_from_web:0;
-                    $returnArray["company_logo"] = !empty($result[0][2]->company_logo)?$result[0][2]->company_logo:"";
-                    $returnArray["company_name"] = !empty($result[0][2]->company)?$result[0][2]->company:"";
+                    #get company details here
+                    if(isset($input['post_id'])){
+                        $companyDetails = $this->neoPostRepository->getPostCompany($input['post_id']); 
+                    }
+                    $companyLogo    = !empty($companyDetails->logo)?$companyDetails->logo:'';
+                    $companyName    = !empty($companyDetails->name)?$companyDetails->name:'';
+                    $returnArray["company_logo"] = $companyLogo;
+                    $returnArray["company_name"] = $companyName;
+                    
                     if ($isReferredUser)//p3 is veiwing it
                     {
                         if (isset($returnArray['bestfit_message']))
