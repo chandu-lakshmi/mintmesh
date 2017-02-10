@@ -2516,7 +2516,7 @@ class PostGateway {
             #social job share link
             $refId      = $postId.'_'.$neoUserId;
             $refCode    = MyEncrypt::encrypt_blowfish($refId, $encodeString);
-            $record['social_job_share'] = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode."";
+            $record['social_job_share'] = $enterpriseUrl . "/email/job-details/share?ref=" . $refCode."";
             #get the post reward details here
             $postRewards                = $this->referralsGateway->getPostRewards($postId, $userCountry, $isEnterprise=1);
             $record['rewards']          = $postRewards;
