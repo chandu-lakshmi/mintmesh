@@ -8,6 +8,7 @@ use Everyman\Neo4j\Client as NeoClient;
 use Everyman\Neo4j\Cypher\Query as CypherQuery;
 use Guzzle\Http\Client as guzzleClient;
 use Guzzle\Http\Exception\ClientErrorResponseException;
+use GuzzleHttp\Message\ResponseInterface;
 use lib\Parser\MyEncrypt;
 use DB,Config,Queue,Lang;
 
@@ -203,6 +204,7 @@ class IntegrationManager {
                 $neoInput['created_by']         = $userEmailId;
                 $neoInput['bucket_id']          = $bucketId;
                 $neoInput['post_type']          = 'external';
+                $neoInput['hcm_type']           = 'success factors';
                 
                 $neoInput['job_function']       = (!empty($neoInput['job_function']) && !filter_var($neoInput['job_function'], FILTER_VALIDATE_INT))?$neoInput['job_function']:$dfText;
                 $neoInput['experience_range']   = !empty($neoInput['experience_range'])?$neoInput['experience_range']:$dfText;
@@ -386,6 +388,15 @@ class IntegrationManager {
         }
     }
     
+    public function addSFCandidateIdToUserNode($userNodeId='', $candidateId='') {
+        if (!empty($userNodeId) && !empty($candidateId)) {
+            $queryString = "match (u:User) where ID(u)=" . $userNodeId . " set u.sf_candidate_id =".$candidateId."  return u";
+            $query = new CypherQuery($this->client, $queryString);
+            return $result = $query->getResultSet();
+        } 
+        return TRUE;
+    }
+    
     public function createRewardsAndPostRelation($postId, $rewardsAttrs = array()){ 
          
         $result = array();
@@ -455,6 +466,127 @@ class IntegrationManager {
         }
 
     }
+    
+    public function doPost($data, $endPoint) {
+        
+        $requestParams  = $this->requestParams;
+        #do post to hcm endpoints
+        $endPoint = $requestParams[self::DCNAME].$endPoint;
+        $username = $requestParams[self::USERNAME];
+        $password = $requestParams[self::PASSWORD];
+        \Log::info("SF Endpoint hit : $endPoint"); 
 
+        $data    = json_encode($data);
+        //print_r($data).exit;
+        $request = $this->guzzleClient->post($endPoint, array('accept'=> 'application/json','Content-Type'=> 'application/json; charset=utf-8'),array());
+        $request->setAuth($username, $password);
+        $request->setBody($data);
+
+        try {
+            $response = $request->send();  
+            if($response->isSuccessful() && $response->getStatusCode() == 201) {
+                $return  = $response->getBody();
+                return json_decode($return,TRUE);
+            } else {
+                \Log::info("Error while getting response :". $response->getInfo());
+            }
+        } catch (ServerErrorResponseException $exception) {
+            $responseBody = $exception->getResponse()->getBody(true);
+        }
+
+    }
+    
+    public function jobReqForwardCandidates($jobReqId, $candidateId) {
+
+        $data = array(
+            "jobReqId"      => $jobReqId,
+            "candidateId"   => $candidateId,
+            "status"        => "Forwarded"
+        );
+        $endPoint = 'v2/JobReqFwdCandidates?$format=JSON';
+        return  $this->doPost($data, $endPoint); 
+    }
+    
+    public function addAttachment($userDetails, $relation, $candidateId) {
+        
+        $contents   = '';
+        $resumePath = !empty($relation->resume_path)?$relation->resume_path:'';
+        $fileName   = !empty($relation->resume_original_name)?$relation->resume_original_name:'';
+        
+        if(!empty($resumePath)){
+          //$fileName   = pathinfo($resumePath);
+            $contents   = base64_encode(file_get_contents($resumePath));
+        }
+        $data = array(
+            "userId"        => "admin", 
+            "externalId"    => $candidateId,    
+            "fileName"      => $fileName,
+            "module"        => "CDP", 
+            "description"   => "des1", 
+            "fileContent"   => $contents, 
+            "viewable"      => true, 
+            "deletable"     => false 
+        );
+        $endPoint = 'v2/Attachment?$format=JSON';
+        return $this->doPost($data, $endPoint); 
+    }
+    
+    public function createCandidate($userDetails){
+      
+        $firstName  = !empty($userDetails->firstname)?$userDetails->firstname:'The contact';
+        $lastName   = !empty($userDetails->lastname)?$userDetails->lastname:'The contact';
+        $emailId    = !empty($userDetails->emailid)?$userDetails->emailid:'';
+        $phone      = !empty($userDetails->phone_no)?$userDetails->phone_no:'';
+        $country    = 'Us';
+        
+        $data = array(
+            'firstName'     => $firstName,
+            'lastName'      => $lastName,
+            'country'       => $country,
+            'cellPhone'     => $phone,
+            'primaryEmail'  => $emailId
+        );
+        
+        $endPoint = 'v2/Candidate?$format=JSON';
+        return $this->doPost($data, $endPoint); 
+    }
+    
+    public function processHcmJobReferral($jobDetails, $userDetails, $relation){
+        
+        $company_hcm_job_id      = 1;
+        $companyJobDetail        = $this->getCompanyHcmJobbyId($company_hcm_job_id);
+        $JobDetails              = $this->getJobDetail($companyJobDetail->hcm_jobs_id);
+        $companyJobConfigDetails = $this->getCompanyJobConfigs($JobDetails->hcm_id, $companyJobDetail->company_id);
+        $requestParams           = $this->composeRequestParams($JobDetails, $companyJobDetail, $companyJobConfigDetails);
+        $this->requestParams     = $requestParams;
+        #get job requisition id, success factors candidate id and user node Id from job&user details
+        $jobReqId       = !empty($jobDetails->requistion_id)?$jobDetails->requistion_id:'';
+        $userNodeId     = !empty($userDetails->getID())?$userDetails->getID():'';
+        $sfCandidateId  = !empty($userDetails->sf_candidate_id)?$userDetails->sf_candidate_id:'';
+        
+        if(!empty($jobReqId)){
+            #create candidate here
+            if(empty($sfCandidateId)){
+                $candidateAry   = $this->createCandidate($userDetails);
+                \Log::info("SF create Candidate hit :". print_r($candidateAry)); 
+                if(isset($candidateAry['d']) && isset($candidateAry['d']['candidateId'])){
+                    $candidateId = $candidateAry['d']['candidateId'];
+                    $this->addSFCandidateIdToUserNode($userNodeId, $candidateId);
+                }
+            } else {
+                $candidateId = $sfCandidateId;
+            }  
+            #tagging candidates here 
+            if(!empty($candidateId)){
+                #tagging candidate to job requisition here
+                $jobReqAry   = $this->jobReqForwardCandidates($jobReqId, $candidateId);
+                \Log::info("SF job Req Forward Candidates hit :". print_r($jobReqAry));
+                #attaching resume to candidate here
+                $attachmentAry   = $this->addAttachment($userDetails, $relation, $candidateId);
+                \Log::info("SF add Attachment hit :". print_r($attachmentAry)); 
+            }
+        }    
+    }
+    
 }
 

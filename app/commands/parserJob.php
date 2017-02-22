@@ -11,6 +11,7 @@ use Everyman\Neo4j\Client as NeoClient;
 use Everyman\Neo4j\Cypher\Query as CypherQuery;
 use Mintmesh\Services\FileUploader\API\User\UserFileUploader;
 use Mintmesh\Services\Parser\ParserManager;
+use Mintmesh\Services\IntegrationManager\IntegrationManager;
 
 class parserJob extends Command {
      protected $neoEnterpriseUser,$neoPostRepository, $db_user, $db_pwd, $client, $appEncodeDecode, $db_host, $db_port;
@@ -39,6 +40,7 @@ class parserJob extends Command {
                 $this->userFileUploader = new UserFileUploader;
                 $this->appEncodeDecode = new APPEncode();
                 $this->Parser = new ParserManager;
+                $this->integrationManager = new IntegrationManager();
     }
     
     /**
@@ -53,9 +55,18 @@ class parserJob extends Command {
 	$dir_str    = implode('/',$dir_array);
         $directory  = $dir_str.'/uploads/s3_resumes/';
         $result     = $this->getParseList();
+        //print_r($result).exit;
         if(!empty($result)){
             foreach($result as $value){
-               $relation     = $value[0];//relation details
+               $relation        = !empty($value[0])?$value[0]:array();//relation details
+               $jobDetails      = !empty($value[1])?$value[1]:array();//post details
+               $userDetails     = !empty($value[2])?$value[2]:array();//user details
+               #check if referral job is hcm job or not
+               if($jobDetails->hcm_type == 'success factors'){
+                //echo 'success factors';
+                $this->integrationManager->processHcmJobReferral($jobDetails, $userDetails, $relation);
+                //$this->processHcmJobReferralQueue($jobDetails, $userDetails, $relation);
+               } 
                $status       = 1;
                $relationId   = $relation->getID();
                #update status here
@@ -75,6 +86,7 @@ class parserJob extends Command {
     
     public function getParseList() {
             $return = array();
+            //$queryString = "MATCH (u)-[r:GOT_REFERRED]->(p:Post)  return r,p,u order by r.created_at desc LIMIT 1";
             $queryString = "MATCH (u)-[r:GOT_REFERRED]->(p:Post) where r.resume_parsed=0 return r LIMIT 1";
             $query  = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
@@ -100,5 +112,12 @@ class parserJob extends Command {
     public function addSolicitedConfidentScoreJobtoQueue($relationID) {
         $pushData['relationID'] = $relationID;
         Queue::push('Mintmesh\Services\Queues\ConfidentScoreQueue', $pushData);
+    }
+    
+    public function processHcmJobReferralQueue($jobDetails, $userDetails, $relation) {
+        $pushData['job_details']  = $jobDetails;
+        $pushData['user_details'] = $userDetails;
+        $pushData['rel_details']  = $relation;
+        Queue::push('Mintmesh\Services\Queues\ProcessHcmJobReferralQueue', $pushData);
     }
 }
