@@ -215,6 +215,8 @@ class IntegrationManager {
                 $relationAttrs['company_code']  = $companyCode;
                 #get the extra information
                 $reqId = $neoInput['requistion_id'];
+                $isNotExisted = $this->checkJobExistedWithReqIdOrNot($reqId);
+            if($isNotExisted){
                 if(!empty($reqId)){
                     $response = ''; 
                     $endPoint       = self::API_LOCAL_URL.'?$format=json&$filter=jobReqId eq '.$reqId;
@@ -301,6 +303,7 @@ class IntegrationManager {
                     $this->updatePostInviteCount($postId, $inviteCount);
                 }    
             }
+          }
         }
         return true;
      }
@@ -386,6 +389,20 @@ class IntegrationManager {
         } else {
             return false;
         }
+    }
+    
+    public function checkJobExistedWithReqIdOrNot($reqId='') {
+        $return = TRUE;
+        if (!empty($reqId)) {
+            $queryString = "match (p:Post{hcm_type:'success factors'}) where p.requistion_id='".$reqId."' return p";
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();   
+            if (isset($result[0]) && isset($result[0][0])) {
+                    $nodeId = $result[0][0];
+                    $return = FALSE;
+                }
+        } 
+        return $return;
     }
     
     public function addSFCandidateIdToUserNode($userNodeId='', $candidateId='') {
