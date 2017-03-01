@@ -61,12 +61,7 @@ class parserJob extends Command {
                $relation        = !empty($value[0])?$value[0]:array();//relation details
                $jobDetails      = !empty($value[1])?$value[1]:array();//post details
                $userDetails     = !empty($value[2])?$value[2]:array();//user details
-               #check if referral job is hcm job or not
-               if($jobDetails->hcm_type == 'success factors'){
-                //echo 'success factors';
-                $this->integrationManager->processHcmJobReferral($jobDetails, $userDetails, $relation);
-                //$this->processHcmJobReferralQueue($jobDetails, $userDetails, $relation);
-               } 
+                
                $status       = 1;
                $relationId   = $relation->getID();
                #update status here
@@ -79,6 +74,11 @@ class parserJob extends Command {
                $updateParsedJson =  $this->updateResumeParsedJsonPath($relationId, $parsedRes);
                // adding confident score calcuation job to queue
                $this->addSolicitedConfidentScoreJobtoQueue($relationId);
+               #check if referral job is hcm job or not
+               if($jobDetails->hcm_type == 'success factors'){
+                //echo 'success factors';
+                $this->processHcmJobReferralQueue($jobDetails, $userDetails, $relation);
+               }
             }
         }
         return TRUE;
@@ -87,7 +87,7 @@ class parserJob extends Command {
     public function getParseList() {
             $return = array();
             //$queryString = "MATCH (u)-[r:GOT_REFERRED]->(p:Post)  return r,p,u order by r.created_at desc LIMIT 1";
-            $queryString = "MATCH (u)-[r:GOT_REFERRED]->(p:Post) where r.resume_parsed=0 return r LIMIT 1";
+            $queryString = "MATCH (u)-[r:GOT_REFERRED]->(p:Post) where r.resume_parsed=0  return r,p,u order by r.created_at desc LIMIT 1";
             $query  = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             if($result->count()){
@@ -97,7 +97,7 @@ class parserJob extends Command {
     }
     
     public function updateResumeParsedStatus($relationId=0, $status=0){
-        $queryString = "MATCH (u)-[r:GOT_REFERRED]->(p:Post) where ID(r)=".$relationId." set r.resume_parsed=".$status." RETURN r";
+        $queryString = "MATCH (u)-[r:GOT_REFERRED]->(p:Post) where ID(r)=".$relationId." set r.resume_parsed=1 RETURN r";
         $query = new CypherQuery($this->client, $queryString);
         return $result = $query->getResultSet();
     } 
@@ -115,9 +115,13 @@ class parserJob extends Command {
     }
     
     public function processHcmJobReferralQueue($jobDetails, $userDetails, $relation) {
-        $pushData['job_details']  = $jobDetails;
-        $pushData['user_details'] = $userDetails;
-        $pushData['rel_details']  = $relation;
-        Queue::push('Mintmesh\Services\Queues\ProcessHcmJobReferralQueue', $pushData);
+       
+        $pushData = array();
+        $pushData['job_details']  = $jobDetails->getProperties();
+        $pushData['rel_details']  = $relation->getProperties();
+        $pushData['user_details'] = $userDetails->getProperties();
+        $pushData['user_details']['node_id'] = $userDetails->getId();
+        Queue::push('Mintmesh\Services\Queues\ProcessHcmJobReferralQueue', $pushData, 'default');
+        //$this->integrationManager->processHcmJobReferral($pushData['job_details'], $pushData['user_details'], $pushData['rel_details']);
     }
 }

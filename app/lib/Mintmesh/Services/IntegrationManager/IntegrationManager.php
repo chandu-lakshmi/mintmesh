@@ -103,7 +103,7 @@ class IntegrationManager {
 
         $returnRequestData[self::API_END_POINT]  = $returnRequestData[self::DCNAME].$JobDetails->job_endpoint.$JobDetails->job_additional_params;
         $returnRequestData[self::API_END_POINT] .= '&$select='.$JobDetails->job_params;
-        $returnRequestData[self::API_END_POINT] .= '&$filter=lastModifiedDateTime ge datetimeoffset\''.$lastprocessedDate.'\'';
+        $returnRequestData[self::API_END_POINT] .= '&$filter=lastModifiedDateTime ge datetimeoffset\''.$lastprocessedDate.'\' and internalStatus eq \'Approved\'';
                                                     
         return $returnRequestData;
     }
@@ -510,8 +510,8 @@ class IntegrationManager {
     public function addAttachment($userDetails, $relation, $candidateId) {
         
         $contents   = '';
-        $resumePath = !empty($relation->resume_path)?$relation->resume_path:'';
-        $fileName   = !empty($relation->resume_original_name)?$relation->resume_original_name:'';
+        $resumePath = !empty($relation['resume_path'])?$relation['resume_path']:'';
+        $fileName   = !empty($relation['resume_original_name'])?$relation['resume_original_name']:'';
         
         if(!empty($resumePath)){
           //$fileName   = pathinfo($resumePath);
@@ -531,14 +531,14 @@ class IntegrationManager {
         return $this->doPost($data, $endPoint); 
     }
     
-    public function createCandidate($userDetails){
+    public function createCandidate($userDetails, $relation){
       
-        $firstName  = !empty($userDetails->firstname)?$userDetails->firstname:'The contact';
-        $lastName   = !empty($userDetails->lastname)?$userDetails->lastname:'The contact';
-        $emailId    = !empty($userDetails->emailid)?$userDetails->emailid:'';
-        $phone      = !empty($userDetails->phone_no)?$userDetails->phone_no:'';
+        $firstName  = !empty($userDetails['firstname'])?$userDetails['firstname']:'The contact';
+        $lastName   = !empty($userDetails['lastname'])?$userDetails['lastname']:'.';
+        $emailId    = !empty($userDetails['emailid'])?$userDetails['emailid']:'';
+        $phone      = !empty($userDetails['phone'])?$userDetails['phone']:'.';
         $country    = 'Us';
-        
+        #candidate basic details
         $data = array(
             'firstName'     => $firstName,
             'lastName'      => $lastName,
@@ -546,7 +546,25 @@ class IntegrationManager {
             'cellPhone'     => $phone,
             'primaryEmail'  => $emailId
         );
-        
+        #attaching resume here
+        $contents   = '';
+        $resumePath = !empty($relation['resume_path'])?$relation['resume_path']:'';
+        $fileName   = !empty($relation['resume_original_name'])?$relation['resume_original_name']:'';
+        #file encode
+        if(!empty($resumePath)){
+            $contents   = base64_encode(file_get_contents($resumePath));
+        }
+        #form the attachment array here
+        if(!empty($contents)){
+        $resumeAry = array(
+                        "__metadata"    => array("type" => "SFOData.Attachment"),
+                        "module"        => "RECRUITING",
+                        "moduleCategory"=> "ATTACHMENTS",
+                        "fileContent"   => $contents,
+                        "fileName"      => $fileName
+                        );
+        $data['resume'] = $resumeAry;
+        }
         $endPoint = 'v2/Candidate?$format=JSON';
         return $this->doPost($data, $endPoint); 
     }
@@ -559,15 +577,15 @@ class IntegrationManager {
         $companyJobConfigDetails = $this->getCompanyJobConfigs($JobDetails->hcm_id, $companyJobDetail->company_id);
         $requestParams           = $this->composeRequestParams($JobDetails, $companyJobDetail, $companyJobConfigDetails);
         $this->requestParams     = $requestParams;
-        #get job requisition id, success factors candidate id and user node Id from job&user details
-        $jobReqId       = !empty($jobDetails->requistion_id)?$jobDetails->requistion_id:'';
-        $userNodeId     = !empty($userDetails->getID())?$userDetails->getID():'';
-        $sfCandidateId  = !empty($userDetails->sf_candidate_id)?$userDetails->sf_candidate_id:'';
         
+        #get job requisition id, success factors candidate id and user node Id from job&user details
+        $jobReqId       = !empty($jobDetails['requistion_id'])?$jobDetails['requistion_id']:'';
+        $userNodeId     = !empty($userDetails['node_id'])?$userDetails['node_id']:'';
+        $sfCandidateId  = !empty($userDetails['sf_candidate_id'])?$userDetails['sf_candidate_id']:'';
         if(!empty($jobReqId)){
             #create candidate here
             if(empty($sfCandidateId)){
-                $candidateAry   = $this->createCandidate($userDetails);
+                $candidateAry   = $this->createCandidate($userDetails, $relation);
                 \Log::info("SF create Candidate hit :". print_r($candidateAry)); 
                 if(isset($candidateAry['d']) && isset($candidateAry['d']['candidateId'])){
                     $candidateId = $candidateAry['d']['candidateId'];

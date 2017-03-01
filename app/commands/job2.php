@@ -234,7 +234,7 @@ class job2 extends Command {
 //        $email = $this->appEncodeDecode->filterString(strtolower($emailid));
         $queryString = "CREATE (u:User) SET u.emailid='".$emailid."',u.firstname='".$neoInput['referral_name']."',u.fullname='".$neoInput['referral_name']."' ";
         if(!empty($neoInput['phone_no']) && isset($neoInput['phone_no'])){
-        $queryString .= ",u.phone_no='".$neoInput['phone_no']."' ";
+        $queryString .= ",u.phone='".$neoInput['phone_no']."' ";
         }
         $queryString .="return u.emailid";
         $query = new CypherQuery($this->client, $queryString);
