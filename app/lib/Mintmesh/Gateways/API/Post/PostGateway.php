@@ -326,8 +326,6 @@ class PostGateway {
                     $input['bucket_id'] = $value;
                     $neoCompanyBucketContacts = $this->enterpriseGateway->enterpriseContactsList($input);
                     $contactList = $neoCompanyBucketContacts['data'];
-                    $inviteCount+=$contactList['total_records'][0]->total_count;
-
                         
                     foreach ($contactList['Contacts_list'] as $contact => $contacts) {
                         
@@ -379,6 +377,7 @@ class PostGateway {
                             $emailData['reply_to']          = $replyToName.$replyToData.$replyToHost;
 //                            $this->sendJobPostEmailToContacts($emailData);  
                           Queue::push('Mintmesh\Services\Queues\SendJobPostEmailToContactsQueue', $emailData, 'Notification');
+                          $inviteCount+=1;
                         }
                     }
                 }
@@ -1980,9 +1979,6 @@ class PostGateway {
                     $neoInput['relation_count'] = '1';
                     $neoInput['completed_status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
                     $neoInput['awaiting_action_by'] = $neoInput['referred_for'];
-                    if(!empty($input['department']) && isset($input['department'])){
-                         $neoInput['department'] = $input['department'];
-                    }
                     if($input['flag'] == '1'){
                         $neoInput['one_way_status'] = Config::get('constants.REFERRALS.STATUSES.UNSOLICITED');
                     }
@@ -1991,6 +1987,11 @@ class PostGateway {
                     }
                     $referredCandidate = $this->neoPostRepository->referCandidate($neoInput,$input);
                     if($referredCandidate){
+                         if(!empty($input['department']) && isset($input['department'])){
+                         #map job_function if provided
+                         $userId = $referredCandidate[0][1]->getID();
+                         $jfResult = $this->neoPostRepository->mapJobFunctionToUser($input['department'], $userId, Config::get('constants.REFERRALS.ASSIGNED_JOB_FUNCTION'));
+                        }
                         $responseCode   = self::SUCCESS_RESPONSE_CODE;
                         $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
                         $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.success')));
@@ -2555,11 +2556,11 @@ class PostGateway {
                     #get referral status
                     if (!empty($relObj->one_way_status)){
                         #if one way status accepted
-                        if ($relObj->one_way_status == 'ACCEPTED'){
-                            $referral['ref_status'] = !empty($relObj->completed_status)?$relObj->completed_status:'PENDING';
-                        } else {
+                        //if ($relObj->one_way_status == 'ACCEPTED'){
+                            //$referral['ref_status'] = !empty($relObj->completed_status)?$relObj->completed_status:'PENDING';
+                        //} else {
                             $referral['ref_status'] = $relObj->one_way_status;
-                        }
+                        //}
                     }
                     #add label if non mintmesh
                     if ($nonMMlabel =='NonMintmesh'){
@@ -2573,6 +2574,10 @@ class PostGateway {
                         $isNonMintmesh = 1 ;
                         $referral["user_referred_by"] = 'emailid' ;
                         $nonMMUser = $this->contactsRepository->getImportRelationDetailsByEmail($userEmailId, $refEmail);
+                        if(empty($nonMMUser)){
+                            #In case of referral made from emailid
+                           $nonMMUser =  $this->neoUserRepository->getNodeByEmailId($refEmail);
+                        }
                     }
                     #form user name details for non mintmesh contacts
                     if (!empty($nonMMUser) || !empty($isNonMintmesh)){

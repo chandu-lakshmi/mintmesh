@@ -1253,8 +1253,13 @@ class ReferralsGateway {
                             $returnArray["to_is_mintmesh"] = 0 ;
                             $returnArray["to_referred_by"] = 'emailid' ;
                             $isNonMintmesh = 1 ;
-                            if (!empty($result[0][1]->emailid))
+                            if (!empty($result[0][1]->emailid)){
                                 $nonMintmeshUserDetails = $this->contactsRepository->getImportRelationDetailsByEmail($result[0][0]->referred_by, $result[0][1]->emailid);
+                                if(empty($nonMintmeshUserDetails)){
+                                    #In case of referral made from emailid
+                                   $nonMintmeshUserDetails =  $this->neoUserRepository->getNodeByEmailId($result[0][1]->emailid);
+                                }
+                            }
                         }
                         //check if self referred
                         if (!empty($returnArray['to_emailid']) && $returnArray['to_emailid'] == $returnArray['from_emailid']){

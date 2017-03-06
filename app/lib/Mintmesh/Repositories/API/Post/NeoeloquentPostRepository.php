@@ -381,7 +381,6 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         $queryString.=")<-[r:" . Config::get('constants.RELATIONS_TYPES.COMPANY_CREATED_CAMPAIGN') ." ]-(c) ";
         $queryString.=" set r.created_at='".date("Y-m-d H:i:s")."', n.created_at='".date("Y-m-d H:i:s")."', n.created_by = '".$userEmailId."' ";
         $queryString.=" return n";
-        //echo $queryString;exit;
         $query = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
         if ($result->count()) {
@@ -865,7 +864,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
                     if($neoInput['one_way_status'] == 'UNSOLICITED'){
                         $queryString .= ",p.unsolicited_count = p.unsolicited_count + 1";
                     }
-                    $queryString .=  " return count(p)";
+                    $queryString .=  " return count(p),u";
                     $query = new CypherQuery($this->client, $queryString);
                     $result = $query->getResultSet();
                     return $result;
@@ -1039,6 +1038,17 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         }
         return $return; 
     }
+    
+     public function mapJobFunctionToUser($jobFunctionId='', $userId='', $relationType=''){
+            $queryString = "Match (p:User),(j:Job_Functions)
+                                    where ID(p)=".$userId." and j.mysql_id=".$jobFunctionId."
+                                    create unique (p)-[r:".$relationType."";
+
+            $queryString.="]->(j)  set r.created_at='".date("Y-m-d H:i:s")."' return j";
+
+            $query = new CypherQuery($this->client, $queryString);
+            return $result = $query->getResultSet();
+         }
 }
 
 ?>

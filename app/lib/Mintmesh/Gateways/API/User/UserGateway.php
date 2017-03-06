@@ -407,62 +407,62 @@ class UserGateway {
                     $activationCode = $this->base_64_encode($createdUser->created_at,$createdUser->emailactivationcode);
                     // send welcome email to users
                     // set email required params
-                    $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.user_welcome');
-                    $this->userEmailManager->emailId = $input['emailid'];
-                    $dataSet = array();
-                    $dataSet['name'] = $input['firstname'];
-                    $deep_link = $this->getDeepLinkScheme($deep_link_type);
-                    $dataSet['desktop_link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/user/activate/".$activationCode ;
-                    $appLink = $deep_link.Config::get('constants.MNT_VERSION')."/user/activate/".$activationCode ;
+//                    $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.user_welcome');
+//                    $this->userEmailManager->emailId = $input['emailid'];
+//                    $dataSet = array();
+//                    $dataSet['name'] = $input['firstname'];
+//                    $deep_link = $this->getDeepLinkScheme($deep_link_type);
+//                    $dataSet['desktop_link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/user/activate/".$activationCode ;
+//                    $appLink = $deep_link.Config::get('constants.MNT_VERSION')."/user/activate/".$activationCode ;
                     //$appLinkCoded = $this->base_64_encode("", $appLink) ; 
-                    $dataSet['link'] = $appLink ;
-                    $dataSet['email'] = $input['emailid'] ;
+//                    $dataSet['link'] = $appLink ;
+//                    $dataSet['email'] = $input['emailid'] ;
 
                    // $dataSet['link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/redirect_to_app/".$appLinkCoded ;;
-                    $this->userEmailManager->dataSet = $dataSet;
-                    $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.welcome');
-                    $this->userEmailManager->name = $input['firstname']. " ".$input['lastname'];
-                    $email_sent = $this->userEmailManager->sendMail();
+//                    $this->userEmailManager->dataSet = $dataSet;
+//                    $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.welcome');
+//                    $this->userEmailManager->name = $input['firstname']. " ".$input['lastname'];
+//                    $email_sent = $this->userEmailManager->sendMail();
                     //log email status
-                    $emailStatus = 0;
-                    if (!empty($email_sent)) {
-                        $emailStatus = 1;
-                    }
-                    $emailLog = array(
-                           'emails_types_id' => 1,
-                           'from_user' => 0,
-                           'from_email' => '',
-                           'to_email' => $this->appEncodeDecode->filterString(strtolower($input['emailid'])),
-                           'related_code' => $activationCode,
-                           'sent' => $emailStatus,
-                           'ip_address' => $_SERVER['REMOTE_ADDR']
-                       ) ;
-                    $this->userRepository->logEmail($emailLog);
+//                    $emailStatus = 0;
+//                    if (!empty($email_sent)) {
+//                        $emailStatus = 1;
+//                    }
+//                    $emailLog = array(
+//                           'emails_types_id' => 1,
+//                           'from_user' => 0,
+//                           'from_email' => '',
+//                           'to_email' => $this->appEncodeDecode->filterString(strtolower($input['emailid'])),
+//                           'related_code' => $activationCode,
+//                           'sent' => $emailStatus,
+//                           'ip_address' => $_SERVER['REMOTE_ADDR']
+//                       ) ;
+//                    $this->userRepository->logEmail($emailLog);
                     
                     //send second email for thanks for download
-                    $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.user_introduction');
-                    $this->userEmailManager->emailId = $input['emailid'];
-                    $dataSet = array();
-                    $dataSet['name'] = $input['firstname'];
-                    $this->userEmailManager->dataSet = $dataSet;
-                    $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.introduction');
-                    $this->userEmailManager->name = $input['firstname']. " ".$input['lastname'];
-                    $email_sent = $this->userEmailManager->sendMail();
-                    //log email status
-                    $emailStatus = 0;
-                    if (!empty($email_sent)) {
-                        $emailStatus = 1;
-                    }
-                    $emailLog = array(
-                           'emails_types_id' => 1,
-                           'from_user' => 0,
-                           'from_email' => '',
-                           'to_email' => $this->appEncodeDecode->filterString(strtolower($input['emailid'])),
-//                           'related_code' => $activationCode,
-                           'sent' => $emailStatus,
-                           'ip_address' => $_SERVER['REMOTE_ADDR']
-                       ) ;
-                    $this->userRepository->logEmail($emailLog);
+//                    $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.user_introduction');
+//                    $this->userEmailManager->emailId = $input['emailid'];
+//                    $dataSet = array();
+//                    $dataSet['name'] = $input['firstname'];
+//                    $this->userEmailManager->dataSet = $dataSet;
+//                    $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.introduction');
+//                    $this->userEmailManager->name = $input['firstname']. " ".$input['lastname'];
+//                    $email_sent = $this->userEmailManager->sendMail();
+//                    //log email status
+//                    $emailStatus = 0;
+//                    if (!empty($email_sent)) {
+//                        $emailStatus = 1;
+//                    }
+//                    $emailLog = array(
+//                           'emails_types_id' => 1,
+//                           'from_user' => 0,
+//                           'from_email' => '',
+//                           'to_email' => $this->appEncodeDecode->filterString(strtolower($input['emailid'])),
+////                           'related_code' => $activationCode,
+//                           'sent' => $emailStatus,
+//                           'ip_address' => $_SERVER['REMOTE_ADDR']
+//                       ) ;
+//                    $this->userRepository->logEmail($emailLog);
                     //log points if location is filled..i.e if it v2 version api
                     if (!empty($input['location'])){
                         $this->userRepository->logLevel(6, $this->appEncodeDecode->filterString(strtolower($input['emailid'])), "", "",Config::get('constants.POINTS.SIGNUP'));

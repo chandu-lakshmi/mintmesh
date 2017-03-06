@@ -751,7 +751,7 @@ class EnterpriseAppController extends \BaseController {
         
         /**
 	 * get post status details
-         * 
+         * for hexagonal display
          * POST/get_post_status_details
          * 
          * @param string $access_token The Access token of a user

@@ -148,7 +148,7 @@ class IntegrationManager {
         $hcmJobId       = $jobId;
         $companyId      = $companyId;
         $bucketId       = 1;
-        $fromId = $postId = $inviteCount = 0;
+        $fromId = $postId = 0;
         $dfText = 'See Job Description';
         $companyDetails = $this->getCompanyDetails($companyId);
         $companyDetails = $companyDetails[0];
@@ -171,7 +171,7 @@ class IntegrationManager {
         }
         if(!empty($dataAry)){
             foreach($dataAry as $row){
-
+                $inviteCount = 0;
                 $neoInput =  $relationAttrs  = $postCompanyrelationAttrs = $neoCompanyBucketContacts = array();
                 $JobMappingFields = $this->getJobMappingFields($hcmJobId, $companyId); 
                 foreach ($JobMappingFields as $field){
@@ -550,12 +550,21 @@ class IntegrationManager {
     
     public function createCandidate($userDetails, $relation){
       
-        $firstName  = !empty($userDetails['firstname'])?$userDetails['firstname']:'The contact';
+        $contents   = '';
+        $firstName  = !empty($userDetails['fullname'])?$userDetails['fullname']:!empty($userDetails['firstname'])?$userDetails['firstname']:'';
         $lastName   = !empty($userDetails['lastname'])?$userDetails['lastname']:'.';
         $emailId    = !empty($userDetails['emailid'])?$userDetails['emailid']:'';
         $phone      = !empty($userDetails['phone'])?$userDetails['phone']:'.';
+        $refBy      = !empty($relation['referred_by'])?$relation['referred_by']:'';
         $country    = 'Us';
-        #candidate basic details
+        #get non mintmesh details from contacts import relation
+        if(empty($firstName) && !empty($refBy) && !empty($emailId)){
+            $nonMMUser    = $this->getImportRelationDetailsByEmail($refBy, $emailId);
+            $firstName    = !empty($nonMMUser->fullname)?$nonMMUser->fullname:!empty($nonMMUser->firstname)?$nonMMUser->firstname: "The contact";
+        }  else {
+            $firstName    = !empty($firstName)?$firstName:'The contact';
+        }
+        #form candidate basic details here
         $data = array(
             'firstName'     => $firstName,
             'lastName'      => $lastName,
@@ -564,7 +573,6 @@ class IntegrationManager {
             'primaryEmail'  => $emailId
         );
         #attaching resume here
-        $contents   = '';
         $resumePath = !empty($relation['resume_path'])?$relation['resume_path']:'';
         $fileName   = !empty($relation['resume_original_name'])?$relation['resume_original_name']:'';
         #file encode
@@ -574,12 +582,12 @@ class IntegrationManager {
         #form the attachment array here
         if(!empty($contents)){
         $resumeAry = array(
-                        "__metadata"    => array("type" => "SFOData.Attachment"),
-                        "module"        => "RECRUITING",
-                        "moduleCategory"=> "ATTACHMENTS",
-                        "fileContent"   => $contents,
-                        "fileName"      => $fileName
-                        );
+                "__metadata"    => array("type" => "SFOData.Attachment"),
+                "module"        => "RECRUITING",
+                "moduleCategory"=> "ATTACHMENTS",
+                "fileContent"   => $contents,
+                "fileName"      => $fileName
+                );
         $data['resume'] = $resumeAry;
         }
         $endPoint = 'v2/Candidate?$format=JSON';
@@ -621,6 +629,20 @@ class IntegrationManager {
                 \Log::info("SF add Attachment hit :". print_r($attachmentAry)); 
             }
         }    
+    }
+    
+    public function getImportRelationDetailsByEmail($refBy='', $emailId=''){
+        $refBy   = $this->appEncodeDecode->filterString(strtolower($refBy));
+        $emailId = $this->appEncodeDecode->filterString(strtolower($emailId));
+        $queryString = "match (u:User:Mintmesh)-[r:IMPORTED]-(c:User) where u.emailid='".$refBy."' and c.emailid='".$emailId."' return r order by r.created_at desc limit 1";
+        $query = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();
+        if ($result->count()){
+            $result[0][0]->fullname = (empty($result[0][0]->fullname)?$result[0][0]->firstname." ".$result[0][0]->lastname:$result[0][0]->fullname);
+            return $result[0][0] ;
+        } else {
+            return 0 ;
+        }
     }
     
 }

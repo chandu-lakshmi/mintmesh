@@ -506,6 +506,7 @@ Route::group(array('prefix' => 'v1/ent', 'before' => 'oauth'), function() {
     Route::post("enterprise/view_company_details", "API\EnterpriseApp\EnterpriseAppController@viewCompanyDetails");
     //change user password
     Route::post("user/change_password", "API\EnterpriseApp\EnterpriseAppController@changePassword");
+    //hexagonal display
     Route::post("referral/get_post_status_details", "API\EnterpriseApp\EnterpriseAppController@getPostStatusDetails");
     //you are values
     Route::post("get_you_are_values", "API\EnterpriseApp\EnterpriseAppController@getYouAreValues");
