@@ -986,13 +986,13 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         }
         
         if(!empty($userEmailId)){
-        $queryString = "MATCH (u:User:Mintmesh{emailid:'".$userEmailId."'})-[r:CONNECTED_TO_COMPANY]-(Company{companyCode:'".$companyCode."'})-[:POSTED_FOR]-(p:Post{status:'ACTIVE'})
-                        WHERE  p.post_type <>'campaign'
-                        WITH collect({post:p,rel:r}) as posts 
-                        OPTIONAL MATCH (u:User:Mintmesh{emailid:'".$userEmailId."'})-[r:CONNECTED_TO_COMPANY]-(Company{companyCode:'".$companyCode."'})-[COMPANY_CREATED_CMPAIGN]-(p:Campaign{status:'ACTIVE'})
-                        WITH posts + collect({post:p,rel:r}) as rows
-                        UNWIND rows as row
-                        RETURN row ORDER BY row.post.created_at DESC";
+        $queryString = "MATCH (u:User:Mintmesh{emailid:'".$userEmailId."'})-[r:INCLUDED]-(p:Post{status:'ACTIVE'})-[:POSTED_FOR]-(Company{companyCode:'".$companyCode."'})
+                WHERE  p.post_type <>'campaign'
+                WITH collect({post:p,rel:r}) as posts 
+                OPTIONAL MATCH (u:User:Mintmesh{emailid:'".$userEmailId."'})-[r:CAMPAIGN_CONTACT]-(p:Campaign{status:'ACTIVE', company_code:'".$companyCode."'})
+                WITH posts + collect({post:p,rel:r}) as rows
+                UNWIND rows as row
+                RETURN row ORDER BY row.post.created_at DESC";
         if (!empty($limit) && !($limit < 0))
         {
             $queryString.=" skip ".$skip." limit ".self::LIMIT ;

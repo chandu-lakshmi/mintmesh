@@ -348,12 +348,13 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
     public function getCompanyUserPosts($userEmail='', $companyCode ='',$filterLimit=''){
         $response = array();
         if(!empty($userEmail) && !empty($companyCode)){
-            $queryString = "MATCH (u:User{emailid:'" . $userEmail . "'})-[r:POSTED]-(p:Post {status:'ACTIVE'})-[:POSTED_FOR]-(:Company{companyCode:'" . $companyCode . "'}) ";
+//            $queryString = "MATCH (u:User{emailid:'" . $userEmail . "'})-[r:POSTED]-(p:Post {status:'ACTIVE'})-[:POSTED_FOR]-(:Company{companyCode:'" . $companyCode . "'}) ";
+            $queryString = "MATCH (u:User)-[r:POSTED]-(p:Post {status:'ACTIVE'})-[:POSTED_FOR]-(:Company{companyCode:'" . $companyCode . "'}) ";
             if(!empty($filterLimit)){
                 $queryString.= " where p.created_at >= '" . $filterLimit . "'";
             }
             $queryString.= "return distinct(u),p order by p.created_at desc ";
-            //echo $queryString;exit;
+//            echo $queryString;exit;
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet(); 
             $response['count']  = $result->count();
@@ -363,22 +364,25 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
     }
     
     
-    public function getCompanyUserPostReferrals($email='') {
-        if(!empty($email)){
-        $queryString = "MATCH (u:User)-[r:POSTED]->(p:Post) where u.emailid='".$email."' "; 
+    public function getCompanyUserPostReferrals($companyCode='') {
+        if(!empty($companyCode)){
+        $queryString = "MATCH (u:User)-[r:POSTED]->(p:Post)-[:POSTED_FOR]-(:Company{companyCode:'" . $companyCode . "'}) "; 
         $queryString.= "return p order by p.created_at desc ";
+//        echo $queryString;exit;
         $query = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();   
         }
         return $result;
     }
     
-    public function getCompanyUserTopReferrals($email='') {
+    public function getCompanyUserTopReferrals($email='',$companyCode='') {
         $result = array();
         if(!empty($email)){
-            $queryString = "MATCH (u:User),(p:Post)-[r:GOT_REFERRED]-() 
-                            where r.referred_for='".$email."' and u.emailid = r.referred_by 
-                            return DISTINCT(r.referred_by),count(r) as count,u order by count desc limit 6";
+            $queryString = "MATCH (u:User),(:Company{companyCode:'" . $companyCode . "'})<-[:POSTED_FOR]-(p:Post)-[r:GOT_REFERRED]-() 
+                    where u.emailid = r.referred_by 
+                return DISTINCT(r.referred_by),count(r) as count,u order by count desc limit 6";
+//                    where r.referred_for='".$email."' and u.emailid = r.referred_by 
+//                echo $queryString;exit;
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();   
         }
@@ -541,6 +545,16 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
         $query = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
         return $result[0][0];
+    }
+    
+    public function getCompanyBucketJobs($companyCode='', $bucketId=''){
+        $result = false;
+        if(!empty($companyCode) &&!empty($bucketId)){
+            $queryString = "match (c:Company)-[POSTED_FOR]-(p:Post{status:'ACTIVE'}) where c.companyCode='".$companyCode."' and p.bucket_id =~ '.*".$bucketId.".*' return ID(p)";
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+        }
+        return $result;
     }
     
 }

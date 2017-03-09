@@ -912,20 +912,25 @@ class EnterpriseGateway {
     public function createContactNodes($contactNode = array()) {
         
         $neoInput = $relationAttrs  = array();
+        $bucketId = $contactNode['bucket_id'];
         $neoInput['firstname']      = $contactNode['firstname'];
         $neoInput['lastname']       = $contactNode['lastname'];
-        $neoInput['emailid']        = $contactNode['emailid'];
+        $neoInput['emailid']        = $contactEmailId = $contactNode['emailid'];
         $neoInput['contact_number'] = $contactNode['contact_number'];
         $neoInput['employeeid']     = $contactNode['other_id'];
-        $neoInput['status']         = $contactNode['status'];
+        $neoInput['status']         = $status = $contactNode['status'];
         
-        $relationAttrs['company_code']      = $contactNode['company_code'];
-        $relationAttrs['loggedin_emailid']  = $contactNode['loggedin_emailid'];
+        $relationAttrs['company_code']      = $companyCode = $contactNode['company_code'];
+        $relationAttrs['loggedin_emailid']  = $emailId = $contactNode['loggedin_emailid'];
         $relationAttrs['created_at']        = gmdate("Y-m-d H:i:s");
          //\Log::info("<<<<<<<<<<<<<<<< In Queue >>>>>>>>>>>>>".print_r($neoInput,1));
         try {
-            $this->neoEnterpriseRepository->createContactNodes($contactNode['bucket_id'], $neoInput, $relationAttrs);
+            $this->neoEnterpriseRepository->createContactNodes($bucketId, $neoInput, $relationAttrs);
             $this->neoEnterpriseRepository->companyAutoConnect($neoInput['emailid'], $relationAttrs);
+            #check company bucket active jobs and create relation between user & job
+            if($status != 'Separated'){
+                $connectedJobs  = $this->companyJobsAutoConnect($companyCode, $bucketId, $contactEmailId, $emailId);
+            }
         } catch (\RuntimeException $e) {
             return false;
         }
@@ -1287,6 +1292,9 @@ class EnterpriseGateway {
         $companyId      = !empty($companyDetails[0])?$companyDetails[0]->id:0;
             
         switch ($requestType) {
+                case 'COUNTS':
+                    $data = $this->getCompanyUserPostCounts($userEmailId, $companyCode);
+                    break;
                 case 'PROGRESS':
                     $data = $this->getCompanyUserPostProgress($userEmailId, $userId, $companyCode, $companyId, $filterLimit);
                     break;
@@ -1295,6 +1303,9 @@ class EnterpriseGateway {
                     break;
                 case 'HIRED':
                     $data = $this->getCompanyUserPostHires($userEmailId, $companyCode, $filterLimit,$companyId,$input);
+                    break;
+                case 'TOPREFERRALS':
+                    $data = $this->getCompanyUserTopReferrals($userEmailId, $companyCode,$companyId);
                     break;
                 default:
                     $postCounts     = $this->getCompanyUserPostCounts($userEmailId, $companyCode);
@@ -1318,7 +1329,6 @@ class EnterpriseGateway {
     }
     
     public function getCompanyUserPostCounts($userEmailId, $companyCode){
-        
         $return = $aryStatus = $aryResult = array();
         // get the logged in user all posts counts here
         $resultPosts = $this->neoEnterpriseRepository->getCompanyUserPosts($userEmailId, $companyCode);
@@ -1430,7 +1440,8 @@ class EnterpriseGateway {
     public function getCompanyUserPostReferrals($userEmailId, $companyCode, $filterLimit,$input,$companyId){
         
         $return = $returnDetails = $referralDetails = $returnReferralDetails = array();
-        $postDetails = $this->neoEnterpriseRepository->getCompanyUserPostReferrals($userEmailId);
+//        $postDetails = $this->neoEnterpriseRepository->getCompanyUserPostReferrals($userEmailId);
+        $postDetails = $this->neoEnterpriseRepository->getCompanyUserPostReferrals($companyCode);
         if(!empty($postDetails)){
             
             foreach($postDetails as $post){
@@ -1472,7 +1483,8 @@ class EnterpriseGateway {
                         $neoReferrerName = !empty($neoReferrerDetails['fullname'])?$neoReferrerDetails['fullname']:$neoReferrerDetails['firstname'];
                         $returnDetails['job_title']      = $postDetails['service_name'];
                         $returnDetails['status']         = $postRelDetails['one_way_status'];
-                        $createdAt = $this->appEncodeDecode->UserTimezone($postRelDetails['created_at'],$input['time_zone']); 
+//                        $createdAt = $this->appEncodeDecode->UserTimezone($postRelDetails['created_at'],$input['time_zone']); 
+                        $createdAt = $postRelDetails['created_at'];
                         $returnDetails['created_at']     = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
                         $returnDetails['referral']       = !empty($referralName)?$referralName:'The contact';
                         $returnDetails['referral_img']   = !empty($userDetails['dp_renamed_name'])?$userDetails['dp_renamed_name']:'';
@@ -1492,7 +1504,7 @@ class EnterpriseGateway {
           
         $returnDetails  = $return = $referralDetails = $returnHiresDetails = array();
         $filterLimit    = empty($filterLimit)?date('Y-m-d H:i:s', strtotime('-1 month')):$filterLimit;//default 30 days
-        $postDetails    = $this->neoEnterpriseRepository->getCompanyUserPostReferrals($userEmailId);
+        $postDetails    = $this->neoEnterpriseRepository->getCompanyUserPostReferrals($companyCode);
         if(!empty($postDetails)){
             
             foreach($postDetails as $post){
@@ -1539,7 +1551,8 @@ class EnterpriseGateway {
                         
                             $returnDetails['job_title']      =  $postDetails['service_name'];
                             $returnDetails['status']         =  $postRelDetails['one_way_status'];
-                            $createdAt = $this->appEncodeDecode->UserTimezone($postRelDetails['created_at'],$input['time_zone']); 
+//                            $createdAt = $this->appEncodeDecode->UserTimezone($postRelDetails['created_at'],$input['time_zone']); 
+                            $createdAt = $postRelDetails['awaiting_action_updated_at'];
                             $returnDetails['created_at']     = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
                             $returnDetails['referral']       =  !empty($referralName)?$referralName:'The contact';
                             $returnDetails['referral_img']   =  !empty($userDetails['dp_renamed_name'])?$userDetails['dp_renamed_name']:'';
@@ -1560,7 +1573,7 @@ class EnterpriseGateway {
     public function getCompanyUserTopReferrals($userEmailId, $companyCode,$companyId){
            
         $returnTopReferrals = $topReferrals = array();
-        $topReferrals = $this->neoEnterpriseRepository->getCompanyUserTopReferrals($userEmailId);//get the top referrals list here
+        $topReferrals = $this->neoEnterpriseRepository->getCompanyUserTopReferrals($userEmailId,$companyCode);//get the top referrals list here
         if(!empty($topReferrals)){
             foreach($topReferrals as $referral){
                 $record = array();
@@ -1583,7 +1596,7 @@ class EnterpriseGateway {
                     }
                 } 
                 //set the return response here
-                $record['name']     = !empty($referrerName)?$referrerName:$neoReferrerName;
+                $record['name']     = !empty($referrerName)?$referrerName:!empty($neoReferrerName)?$neoReferrerName:'The contact';
 //                $record['name']     = !empty($referralUser->fullname)?$referralUser->fullname:'';
                 $record['image']    = !empty($referralUser->dp_renamed_name)?$referralUser->dp_renamed_name:'';
                 $record['designation'] = !empty($designation)?$designation:'';
@@ -1857,19 +1870,22 @@ class EnterpriseGateway {
         
         $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser();
         $userId      = $this->loggedinUserDetails->id;
-        $inputParams =$relationAttrs = array();
+        $emailId     = $this->loggedinUserDetails->emailid;
+        $inputParams = $relationAttrs = array();
+        $companyCode = !empty($input['company_code'])?$input['company_code']:'';
+        $bucketId    = !empty($input['bucket_id'])?$input['bucket_id']:'';
         $inputParams['company_id']   = $input['company_id'];
         $inputParams['user_id']      = $userId;
         $inputParams['bucket_id']    = $input['bucket_id'];
         $inputParams['firstname']    = !empty($input['firstname'])?$input['firstname']:'';      
         $inputParams['lastname']     = !empty($input['lastname'])?$input['lastname']:'';      
-        $inputParams['emailid']      = !empty($input['emailid'])?$this->appEncodeDecode->filterString(strtolower($input['emailid'])):'';      
+        $inputParams['emailid']      = $contactEmailId = !empty($input['emailid'])?$this->appEncodeDecode->filterString(strtolower($input['emailid'])):'';      
         $inputParams['phone']        = !empty($input['phone'])?$input['phone']:'';      
-        $inputParams['status']       = !empty($input['status'])?$input['status']:'unknown';  
+        $inputParams['status']       = $status = !empty($input['status'])?$input['status']:'unknown';  
         $inputParams['employeeid']   = !empty($input['other_id'])?$input['other_id']:'';      
          
         $relationAttrs['company_code']     = $input['company_code'];
-        $relationAttrs['loggedin_emailid'] = $this->loggedinUserDetails->emailid;
+        $relationAttrs['loggedin_emailid'] = $emailId;
         $relationAttrs['created_at']       = gmdate("Y-m-d H:i:s");
         $relationAttrs['firstname']       = !empty($input['firstname'])?$input['firstname']:'';    
         $relationAttrs['lastname']       = !empty($input['lastname'])?$input['lastname']:'';    
@@ -1888,6 +1904,10 @@ class EnterpriseGateway {
                 $result    = $this->enterpriseRepository->addContact($inputParams); 
                 $neoResult = $this->neoEnterpriseRepository->createContactNodes($input['bucket_id'],$neoInput,$relationAttrs);
                 $neoResult = $this->neoEnterpriseRepository->companyAutoConnect($neoInput['emailid'],$relationAttrs);
+                #check company bucket active jobs and create relation between user & job
+                if($status != 'Separated'){
+                    $connectedJobs  = $this->companyJobsAutoConnect($companyCode, $bucketId, $contactEmailId, $emailId);
+                }
                 if(!empty($result)){ 
                     $responseCode    = self::SUCCESS_RESPONSE_CODE;
                     $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
@@ -2601,6 +2621,26 @@ class EnterpriseGateway {
            $message = array('msg' => array(Lang::get('MINTMESH.resendActivationLink.failure'))); 
         }
          return $this->commonFormatter->formatResponse($responseCode, $responseMsg,$message,array());      
+     }
+     
+     public function companyJobsAutoConnect($companyCode, $bucketId, $contactEmailId, $emailId) {
+         
+        $companyBucketJobs  =  $this->neoEnterpriseRepository->getCompanyBucketJobs($companyCode, $bucketId);
+        $notificationMsg    =  Lang::get('MINTMESH.notifications.messages.27');
+        if(!empty($companyBucketJobs)){
+            #creating included Relation between Post and Contacts 
+            $pushData['postId']             = $companyBucketJobs;
+            $pushData['bucket_id']          = $bucketId;
+            $pushData['contact_emailid']    = $contactEmailId;
+            $pushData['company_code']       = $companyCode;
+            $pushData['user_emailid']       = $emailId;
+            $pushData['notification_msg']   = $notificationMsg;
+            foreach ($companyBucketJobs as $jobs){
+                #creating relation with each job
+                $pushData['postId']  = $jobs[0];
+                Queue::push('Mintmesh\Services\Queues\CreateEnterprisePostContactsRelation', $pushData, 'default');
+            }
+        }    
      }
 }
 

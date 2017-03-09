@@ -467,7 +467,7 @@ class PostGateway {
         $dataSet['emailbody']           = 'just testing';
         $dataSet['send_company_name']   = $emailData['company_name'];
         $dataSet['reply_to']            = $emailData['reply_to'];
-        $dataSet['app_id']              = '730971373717257';
+        $dataSet['app_id']              = '341777892883502';
         #form job details here
         $dataSet['looking_for']         = $posts->service_name;//'Senior UI/UX Designer';
         $dataSet['job_function']        = $postDetails['job_function_name'];//'Design';
@@ -759,9 +759,11 @@ class PostGateway {
                 }
                 $cvPath = !empty($userDetails['cv_path'])?$userDetails['cv_path']:'';
                 $returnReferralDetails['status']                = $postRelDetails['one_way_status'];   
-                $createdAt = $this->appEncodeDecode->UserTimezone($postRelDetails['created_at'],$input['time_zone']); 
+                 $createdAt        = $postRelDetails['created_at'];
+//                $createdAt = $this->appEncodeDecode->UserTimezone($postRelDetails['created_at'],$input['time_zone']); 
                 $returnReferralDetails['created_at']            = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
                 if(!empty($postRelDetails['p1_updated_at'])){
+//                $updatedAt = $postRelDetails['p1_updated_at']; 
                 $updatedAt = $this->appEncodeDecode->UserTimezone($postRelDetails['p1_updated_at'],$input['time_zone']); 
                 }
                 $returnReferralDetails['updated_at']            = !empty($updatedAt)?gmdate("d M Y H:i", strtotime($updatedAt)):'';
@@ -1131,7 +1133,8 @@ class PostGateway {
                             $returnReferralDetails['ref_designation'] = $jobTitle['name'];
                         }
                     } 
-                    $createdAt = $this->appEncodeDecode->UserTimezone($postRelDetails['created_at'],$input['time_zone']); 
+                    $createdAt = $postRelDetails['created_at']; 
+//                    $createdAt = $this->appEncodeDecode->UserTimezone($postRelDetails['created_at'],$input['time_zone']); 
                     $returnReferralDetails['created_at']            = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
                     $returnReferralDetails['referred_by']           = $neoReferrerDetails['emailid'];
                     $returnReferralDetails['referred_by_name']      = !empty($referrerName)?$referrerName:$neoReferrerName;
@@ -1327,7 +1330,7 @@ class PostGateway {
         $dataSet['campaign_location']       = $emailData['campaign_location'];
         $dataSet['company_name']        = $emailData['company_name'];//Enterpi Software Solutions Pvt.Ltd.
         $dataSet['company_logo']        = $emailData['company_logo'];
-        $dataSet['app_id']              = '730971373717257';
+        $dataSet['app_id']              = '341777892883502';
         #redirect email links
           $dataSet['view_jobs_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/share?ref=" . $refCode."";
           $dataSet['view_jobs_link_web']      = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/web?ref=" . $refCode."";
@@ -1540,9 +1543,9 @@ class PostGateway {
                 $campaignContacts['campaign_type'] = !empty($createdCampaign[0][0]->campaign_type)?$createdCampaign[0][0]->campaign_type:$editedCampaign[0][0]->campaign_type; 
                 if((isset($createdCampaign[0][0]) && $createdCampaign[0][0]->location_type === 'onsite')){
                     
-                   $campaignContacts['campaign_location'] = !empty($createdCampaign[0][0]->zip_code)?$createdCampaign[0][0]->address.','.$createdCampaign[0][0]->city.','.$createdCampaign[0][0]->zip_code.','.$createdCampaign[0][0]->state.','.$createdCampaign[0][0]->country:$createdCampaign[0][0]->address.','.$createdCampaign[0][0]->city.','.$createdCampaign[0][0]->state.','.$createdCampaign[0][0]->country;
+                   $campaignContacts['campaign_location'] = !empty($createdCampaign[0][0]->zip_code)?$createdCampaign[0][0]->address.', '.$createdCampaign[0][0]->city.', '.$createdCampaign[0][0]->zip_code.', '.$createdCampaign[0][0]->state.', '.$createdCampaign[0][0]->country:$createdCampaign[0][0]->address.', '.$createdCampaign[0][0]->city.', '.$createdCampaign[0][0]->state.', '.$createdCampaign[0][0]->country;
                 }else if(isset($editedCampaign[0][0]) && $editedCampaign[0][0]->location_type === 'onsite'){
-                    $campaignContacts['campaign_location'] = !empty($editedCampaign[0][0]->zip_code)?$editedCampaign[0][0]->address.','.$editedCampaign[0][0]->city.','.$editedCampaign[0][0]->zip_code.','.$editedCampaign[0][0]->state.','.$editedCampaign[0][0]->country:$editedCampaign[0][0]->address.','.$editedCampaign[0][0]->city.','.$editedCampaign[0][0]->state.','.$editedCampaign[0][0]->country;
+                    $campaignContacts['campaign_location'] = !empty($editedCampaign[0][0]->zip_code)?$editedCampaign[0][0]->address.', '.$editedCampaign[0][0]->city.', '.$editedCampaign[0][0]->zip_code.', '.$editedCampaign[0][0]->state.', '.$editedCampaign[0][0]->country:$editedCampaign[0][0]->address.', '.$editedCampaign[0][0]->city.', '.$editedCampaign[0][0]->state.', '.$editedCampaign[0][0]->country;
                 }
                 else{
                                         $campaignContacts['campaign_location'] = 'online'; 
@@ -1858,7 +1861,8 @@ class PostGateway {
                 $record['one_way_status']   = $relation->one_way_status;
                 $record['resume_path']      = $relation->resume_path;
                 $record['resume_name']      = $relation->resume_original_name;
-                $record['created_at']       = $this->appEncodeDecode->UserTimezone($relation->created_at,$input['time_zone']); 
+                $record['created_at']       = $relation->created_at; 
+//                $record['created_at']       = $this->appEncodeDecode->UserTimezone($relation->created_at,$input['time_zone']); 
                 $record['awt_status']       = $relation->awaiting_action_status;
                 #get the user details here
                 $referralName = '';
@@ -1946,6 +1950,7 @@ class PostGateway {
     
     public function applyJob($input){
      if(!empty($input['post_id']) && isset($input['post_id']) && !empty($input['reference_id']) && isset($input['reference_id'])){
+        $input['time_zone'] = !empty($input['timeZone'])?$input['timeZone']:0; 
         $input['referred_by_id'] = $input['reference_id'];
 //        $postStatus = $this->job2->getPost($input);
 //        if($postStatus->status == 'ACTIVE'){
@@ -1973,7 +1978,8 @@ class PostGateway {
                     $neoInput['resume_path'] = $renamedFileName;
                     }
                     $neoInput['resume_original_name'] = $input['resume_original_name'];
-                    $neoInput['created_at'] = gmdate('Y-m-d H:i:s');
+//                    $neoInput['created_at'] = gmdate('Y-m-d H:i:s');
+                    $neoInput['created_at']     = $this->appEncodeDecode->UserTimezone(gmdate('Y-m-d H:i:s'),$input['time_zone']); 
                     $neoInput['awaiting_action_status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
                     $neoInput['status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
                     $neoInput['relation_count'] = '1';
@@ -2353,7 +2359,7 @@ class PostGateway {
             $jobsListAry    = $this->neoPostRepository->getJobsList($userEmailId, $companyCode, $page, $search);
            
             if(!empty($jobsListAry->count())){
-                $jobsCount = $this->neoPostRepository->getCompanyJobsCount($userEmailId, $companyCode);
+                //$jobsCount = $this->neoPostRepository->getCompanyJobsCount($userEmailId, $companyCode);
                 $listCount = $jobsListAry->count();
                 foreach ($jobsListAry as $value) {
                     $record   = $rewards = $postRewards = $vacancies = array();
@@ -2383,14 +2389,14 @@ class PostGateway {
                             $postsRes = $this->neoPostRepository->getCampaignPosts($campaignId);
 
                             if(!empty($postsRes->count())){
-                                //$jobsCount+= $postsRes->count();
+                                $jobsCount+= $postsRes->count();
                                 foreach($postsRes as $posts){
                                     $postDetails    = $this->referralsGateway->formPostDetailsArray($posts[0]);
                                     $campaignJobs[] = !empty($postDetails['service_name'])?$postDetails['service_name']:'';
                                 }
                             }
                             $record['campaign_jobs']  = $campaignJobs;//array('ios developer','android developer','php developer');
-                            $postRead                       = 1;//!empty($jobRel->post_read_status)?1:0;
+                            $postRead                       = !empty($jobRel->post_read_status)?1:0;
                             $record['campaign_read_status'] = $postRead; 
 
                             $refId      = $campaignId.'_'.$neoUserId;
@@ -2413,7 +2419,7 @@ class PostGateway {
                             #get the post reward details here
                             $postRewards                = $this->referralsGateway->getPostRewards($postId, $userCountry, $isEnterprise=1);
                             $record['rewards']          = $postRewards;
-                            $postRead                   = 1;//!empty($jobRel->post_read_status)?1:0;
+                            $postRead                   = !empty($jobRel->post_read_status)?1:0;
                             $record['post_read_status'] = $postRead; 
 
                             $refId      = $postId.'_'.$neoUserId;
@@ -2421,7 +2427,7 @@ class PostGateway {
                             $record['social_job_share'] = $enterpriseUrl . "/email/job-details/share?ref=" . $refCode."";; 
 
                             $unreadCount+=empty($postRead)?1:0;
-                            //$jobsCount+=1;
+                            $jobsCount+=1;
 
                         }
                      $returnData[] = $record;
