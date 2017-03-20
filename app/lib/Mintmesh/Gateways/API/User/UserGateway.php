@@ -4997,7 +4997,7 @@ class UserGateway {
                         $thirdLastName  = !empty($otherUserRel->lastname)?$otherUserRel->lastname:"";
                     }
                     $serviceName = $serviceId = $companyName = '';
-                    
+                    $extra_msg    = Lang::get('MINTMESH.notifications.extra_texts.'.$nTypeId) ;
                     # get service name for the request
                     $serviceId = !empty($note->extra_info)?$note->extra_info:'';
                     if($note->note_type == 'new_service' && !empty($serviceId)){
@@ -5039,14 +5039,14 @@ class UserGateway {
                         $noteAry['notification']    = $noteAry['company_name']." ".$note->message." ".$noteAry['campaign_type'].$extra_msg;
                         $noteAry['dp_image']        = $dpImage;
                    
-                    }else if(($note->note_type == 'post_one_way_notify' || $note->note_type == 'post_declined'|| $note->note_type == 'post_one_way_self_notify'|| $note->note_type == 'post_declined_self') && !empty($serviceId)){
+                    }else if(($note->note_type == 'post_one_way_notify' || $note->note_type == 'post_declined'|| $note->note_type == 'post_one_way_self_notify'|| $note->note_type == 'post_declined_self' || $note->note_type == 'referral_interviewed'|| $note->note_type == 'referral_offered'|| $note->note_type == 'referral_hired') && !empty($serviceId)){
                         #get company details here
                         $companyDetails = $this->neoPostRepository->getPostCompany($serviceId);
                         $postDetails    = $this->neoUserRepository->getPost($serviceId);
                         
                             $companyLogo    = !empty($companyDetails->logo)?$companyDetails->logo:'';
                             $companyName    = !empty($companyDetails->name)?$companyDetails->name:'';
-                        
+                        $extra_msg    = Lang::get('MINTMESH.notifications.extra_texts.'.$nTypeId) ;
                         $noteAry['service_name']    = !empty($postDetails->service_name)?$postDetails->service_name:'';
                         $noteAry['company_name']    = $companyName;
                         #referral accept notification
@@ -5055,7 +5055,7 @@ class UserGateway {
                         $noteAry['referred_by']     = $emailId;
                         $noteAry['relation_count']  = 1;
                         $noteAry['post_id']         = $serviceId;
-                        $noteAry['notification']    = $companyName." ".$note->message." ".$noteAry['service_name'];
+                        $noteAry['notification']    = $companyName." ".$note->message." ".$extra_msg." ".$noteAry['service_name'];
                         $noteAry['dp_image']        = $companyLogo;
                         $noteAry['referred_by_phone']  = ($forMintmesh)?0:1;
                     } else if($note->note_type == 'accept_connect'){

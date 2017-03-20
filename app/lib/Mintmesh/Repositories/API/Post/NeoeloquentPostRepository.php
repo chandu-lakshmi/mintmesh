@@ -978,7 +978,6 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
     }
       
     public function getJobsList($userEmailId='', $companyCode='',$page=0, $search = '') {
-        
         $skip = $limit = 0;
         if (!empty($page)){
             $limit = $page*10;
@@ -986,18 +985,32 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         }
         
         if(!empty($userEmailId)){
-        $queryString = "MATCH (u:User:Mintmesh{emailid:'".$userEmailId."'})-[r:INCLUDED]-(p:Post{status:'ACTIVE'})-[:POSTED_FOR]-(Company{companyCode:'".$companyCode."'})
-                WHERE  p.post_type <>'campaign'
-                WITH collect({post:p,rel:r}) as posts 
-                OPTIONAL MATCH (u:User:Mintmesh{emailid:'".$userEmailId."'})-[r:CAMPAIGN_CONTACT]-(p:Campaign{status:'ACTIVE', company_code:'".$companyCode."'})
-                WITH posts + collect({post:p,rel:r}) as rows
+//             $queryString = "";
+//            if (!empty($search)) {
+//                $search = $this->appEncodeDecode->filterString($search);
+//                
+////                $queryString .= "start p = node(*) where p.service_name =~ '(?i).*". $search .".*' or p.service_location =~ '(?i).*". $search .".*' or p.post_type =~ '(?i).*". $search .".*' or p.campaign_type =~ '(?i).*". $search .".*' or p.campaign_name =~ '(?i).*". $search .".*' ";                       
+//            }
+            $queryString = "MATCH (u:User:Mintmesh{emailid:'".$userEmailId."'})-[r:INCLUDED]-(p:Post{status:'ACTIVE'})-[:POSTED_FOR]-(Company{companyCode:'".$companyCode."'}),(p)-[:ASSIGNED_EMPLOYMENT_TYPE]->(e:EmploymentType),(p)-[:ASSIGNED_JOB_FUNCTION]->(j:Job_Functions),(p)-[:ASSIGNED_INDUSTRY]->(i:Industries),(p)-[:ASSIGNED_EXPERIENCE_RANGE]->(ex:ExperienceRange)
+                WHERE  p.post_type <>'campaign' ";
+               if (!empty($search)) {
+                    $search = $this->appEncodeDecode->filterString($search);
+                   $queryString .= "and (p.service_name =~ '(?i).*". $search .".*' or p.service_location =~ '(?i).*". $search .".*' or p.post_type =~ '(?i).*". $search .".*' or e.name=~ '(?i).*". $search .".*' or j.name=~ '(?i).*". $search .".*' or i.name=~ '(?i).*". $search .".*' or ex.name=~ '(?i).*". $search .".*') ";
+                   }
+                $queryString .=  "WITH collect({post:p,rel:r}) as posts 
+                OPTIONAL MATCH (u:User:Mintmesh{emailid:'".$userEmailId."'})-[r:CAMPAIGN_CONTACT]-(p:Campaign{status:'ACTIVE', company_code:'".$companyCode."'}) ";
+                     if (!empty($search)) {
+                    $search = $this->appEncodeDecode->filterString($search);
+                   $queryString .= "where (p.campaign_type =~ '(?i).*". $search .".*' or p.campaign_name =~ '(?i).*". $search .".*' or p.address =~ '(?i).*". $search .".*' or p.city =~ '(?i).*". $search .".*' or p.state =~ '(?i).*". $search .".*' or p.country =~ '(?i).*". $search .".*') ";
+                   }
+               $queryString .=  "WITH posts + collect({post:p,rel:r}) as rows
                 UNWIND rows as row
-                RETURN row ORDER BY row.post.created_at DESC";
+                RETURN distinct(row) ORDER BY row.post.created_at DESC";
         if (!empty($limit) && !($limit < 0))
         {
             $queryString.=" skip ".$skip." limit ".self::LIMIT ;
         }
-       // echo $queryString;exit;
+//        print_r($queryString).exit;
         $query  = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
             if($result)

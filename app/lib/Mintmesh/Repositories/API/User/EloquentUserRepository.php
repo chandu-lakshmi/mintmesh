@@ -752,7 +752,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                             CASE WHEN other_phone IS NULL THEN 1
                             ELSE other_phone END
                          ) b ON nl.id = b.id  
-                         left join notifications_types nt on nt.id = nl.notifications_types_id where 1  ".$status." and nl.notifications_types_id IN (12,15,24,25,27,28) order by nl.id desc";
+                         left join notifications_types nt on nt.id = nl.notifications_types_id where 1  ".$status." and nl.notifications_types_id IN (12,15,24,25,27,28,29,30,31) order by nl.id desc";
                
                if (!empty($page))
                 {

@@ -18,6 +18,7 @@ use Mintmesh\Repositories\API\Payment\PaymentRepository;
 use Mintmesh\Gateways\API\Payment\PaymentGateway;
 use Mintmesh\Repositories\API\User\NeoUserRepository;
 use Mintmesh\Repositories\API\Post\NeoPostRepository;
+//use Mintmesh\Repositories\API\Globals\NeoGlobalRepository;
 use Mintmesh\Gateways\API\User\UserGateway;
 use Mintmesh\Services\FileUploader\API\User\UserFileUploader;
 use Mintmesh\Services\Emails\API\User\UserEmailManager;
@@ -48,7 +49,7 @@ class PostGateway {
     const ERROR_RESPONSE_CODE = 403;
     const ERROR_RESPONSE_MESSAGE = 'error';
 
-    protected $enterpriseRepository, $commonFormatter, $authorizer, $appEncodeDecode, $neoEnterpriseRepository, $userFileUploader,$job2,$paymentRepository;
+    protected $enterpriseRepository, $commonFormatter, $authorizer, $appEncodeDecode,$neoEnterpriseRepository,$userFileUploader,$job2,$paymentRepository;
     protected $createdNeoUser, $postValidator, $referralsRepository, $enterpriseGateway, $userGateway, $contactsRepository, $userEmailManager,$paymentGateway;
 
     public function __construct(NeoPostRepository $neoPostRepository, 
@@ -507,6 +508,8 @@ class PostGateway {
         $dataSet['discovery']   = $discovery;
         $dataSet['referral']    = $referral;
         $dataSet['job_details_link']    = Config::get('constants.MM_ENTERPRISE_URL') . "/email/job-details/share?ref=" . $refCode."";
+        $bitlyUrl = $this->urlShortner($dataSet['job_details_link']);
+        $dataSet['bittly_link']    = $bitlyUrl['data']['link_save']['link'];
         #redirect email links
         $dataSet['apply_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/candidate-details/web?ref=" . $refCode."&flag=0&jc=0";
         $dataSet['refer_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/referral-details/web?ref=" . $refCode."&flag=0&jc=0";
@@ -1006,7 +1009,22 @@ class PostGateway {
         $nonMintmesh = !empty($input['referred_by_phone']) ? 1 : 0;
         
         $result = $this->neoPostRepository->updateAwaitingActionDetails($userEmailId, $postId, $referredBy, $referral, $status, $relationCount, $nonMintmesh);
-        if (!empty($result)) { 
+        if (!empty($result)) {
+            #send notification
+            $objCompany = new \stdClass();
+            $objCompany->fullname = 'epi';
+            if($status == 'INTERVIEWED'){
+                $notificationId = 29;
+            } else if($status == 'OFFERED'){
+                $notificationId = 30;
+            } else if($status == 'HIRED'){
+                $notificationId = 31;
+            } else {
+                $notificationId = '';
+            }
+            #send notification to p2
+            $this->userGateway->sendNotification($this->loggedinUserDetails, $objCompany, $referredBy, $notificationId, array('extra_info' => $postId), array('other_user' => $referral), 1);
+            
             $postDetails     = !empty($result[0][0])?$result[0][0]:'';
             $postDetails     = $this->referralsGateway->formPostDetailsArray($postDetails);
             $relationDetails = !empty($result[0][1])?$result[0][1]:'';
@@ -1333,6 +1351,8 @@ class PostGateway {
         $dataSet['app_id']              = '341777892883502';
         #redirect email links
           $dataSet['view_jobs_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/share?ref=" . $refCode."";
+          $bitlyUrl = $this->urlShortner($dataSet['view_jobs_link']);
+          $dataSet['bittly_link']    = $bitlyUrl['data']['link_save']['link'];
           $dataSet['view_jobs_link_web']      = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/web?ref=" . $refCode."";
         #set email required params
         $this->userEmailManager->templatePath   = Lang::get('MINTMESH.email_template_paths.contacts_campaign_invitation');
@@ -1669,6 +1689,7 @@ class PostGateway {
     public function viewCampaign($input) {
         
         $data = $campSchedule = $scheduleRes = $postAry = $bucketAry  = array();
+        $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
         $loggedInUser   = $this->referralsGateway->getLoggedInUser();
         $this->neoLoggedInUserDetails   = $this->neoUserRepository->getNodeByEmailId($loggedInUser->emailid);
         $userId = $this->neoLoggedInUserDetails->id;
@@ -1759,7 +1780,9 @@ class PostGateway {
             $returnData['schedule']     = $campSchedule;
             $returnData['job_details']      = $postAry;
             $returnData['bucket_ids']   = $bucketAry;
-        
+            $url = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
+            $biltyUrl = $this->urlShortner($url);
+            $returnData['bittly_url'] = $biltyUrl['data']['link_save']['link'];
             $data = $returnData;
             $responseCode   = self::SUCCESS_RESPONSE_CODE;
             $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
@@ -1772,6 +1795,17 @@ class PostGateway {
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
     
+    private function urlShortner($url){
+       $bitly = Config::get('constants.BITLY_URL').Config::get('constants.BITLY_ACCESS_TOKEN').'&longUrl='.$url;
+         $ch = curl_init();
+         curl_setopt($ch, CURLOPT_URL, $bitly);
+         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+         $response  = curl_exec($ch);
+         curl_close($ch);
+        $b = (array) json_decode($response, TRUE);
+       return $b;
+        
+    }
     public function ptest() {
         
         $dir = __DIR__;
@@ -2050,17 +2084,21 @@ class PostGateway {
         $jobTitle = $companyDetails->name .' looking for '.$postStatus->looking_for;
         $jobDescription = 'Experience: '.$postDetails['experience_range_name'].', Location: '.$postStatus->service_location;
          $url = Config::get('constants.MM_ENTERPRISE_URL') . "/email/job-details/share?ref=" . $input['ref']."";
+         $bitlyUrl = $this->urlShortner($url);
+         $bittly    = $bitlyUrl['data']['link_save']['link'];
 
         }else if($input['all_jobs'] == 1){
             $jobTitle = 'These jobs are available in '.$companyDetails->name;
             $jobDescription = $postStatus->looking_for;
             $url = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-jobs/share?ref=" . $input['ref']."";
+            $bitlyUrl = $this->urlShortner($url);
+            $bittly    = $bitlyUrl['data']['link_save']['link'];
 
         }
         else{
             $jobTitle = $jobDescription = $url = '';
         }
-        $data = array("post_id" => $input['post_id'],"reference_id"=>$referred_by_id,"emailid" => $userDetails->emailid,"post_status"=>$postStatus->status,"company_logo"=>$companyLogo,"company_name"=>$companyDetails->name,"title"=>$jobTitle,"description" => $jobDescription,"url"=>$url);
+        $data = array("post_id" => $input['post_id'],"reference_id"=>$referred_by_id,"emailid" => $userDetails->emailid,"post_status"=>$postStatus->status,"company_logo"=>$companyLogo,"company_name"=>$companyDetails->name,"title"=>$jobTitle,"description" => $jobDescription,"url"=>$url,"bittly_url"=>$bittly);
         }else{
             $data = array();
         }
@@ -2072,11 +2110,15 @@ class PostGateway {
         $jobsListCount  = 0;
         $compName       = '';
         $resJobsList    = $refAry = $returnData =  $data = array();
+        $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
         $referenceId    = isset($input['reference_id'])?$input['reference_id']:'';
         $page           = !empty($input['page_no']) ? $input['page_no'] : 0;
         $search_for     = !empty($input['search']) ? $input['search'] : 0;
         if(!empty($referenceId)){
             $refId          = MyEncrypt::decrypt_blowfish($referenceId, Config::get('constants.MINTMESH_ENCCODE'));
+            $url = $enterpriseUrl . "/email/all-jobs/share?ref=" . $referenceId.""; 
+            $biltyUrl = $this->urlShortner($url);
+            $bittly = $biltyUrl['data']['link_save']['link'];
             $refAry         = array_map('intval', explode('_', $refId));
             $post_id        = isset($refAry[0])?$refAry[0]:0;  
             $refById        = isset($refAry[1])?$refAry[1]:0;
@@ -2109,7 +2151,7 @@ class PostGateway {
                     $returnData[] = $record; 
                 }
                 if($returnData){
-                $data = array("jobs_list" => array_values($returnData),'count'=>$jobsListCount, 'company_name'=>$compName,'company_logo' => $compLogo);
+                $data = array("jobs_list" => array_values($returnData),'count'=>$jobsListCount, 'company_name'=>$compName,'company_logo' => $compLogo,'bittly_url' => $bittly);
                 $responseCode   = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
                 $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_jobs_list.success')));
@@ -2218,6 +2260,7 @@ class PostGateway {
         $jobsListCount  = 0;
         $compName       = '';
         $resJobsList    = $refAry = $returnData =  $data = array();
+        $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
         $referenceId    = isset($input['reference_id'])?$input['reference_id']:'';
         if(!empty($referenceId)){
             $refId          = MyEncrypt::decrypt_blowfish($referenceId, Config::get('constants.MINTMESH_ENCCODE'));
@@ -2232,6 +2275,9 @@ class PostGateway {
                 $postResult = $this->referralsGateway->formPostDetailsArray($postDetails);
                 $postId = $postDetails->getID();
                 $companyDetails     = $this->neoPostRepository->getPostCompany($post_id);
+                $url = $enterpriseUrl . "/email/job-details/share?ref=" . $referenceId.""; 
+                $biltyUrl = $this->urlShortner($url);
+                $bittly = $biltyUrl['data']['link_save']['link'];
                 $record['job_name']         = $postDetails->service_name;
                 $record['experience']       = $postResult['experience_range_name'];
                 $record['vacancies']        = $postDetails->no_of_vacancies;
@@ -2243,7 +2289,7 @@ class PostGateway {
                 $record['rewards']          = $this->getPostRewards($postId);
                 $record['ref_code']         = MyEncrypt::encrypt_blowfish($postId.'_'.$refById,Config::get('constants.MINTMESH_ENCCODE'));
                 $returnData[] = $record;
-                $data = array("job_details" => array_values($returnData),'company_name'=>$companyDetails->name,'company_logo'=>$companyDetails->logo);
+                $data = array("job_details" => array_values($returnData),'company_name'=>$companyDetails->name,'company_logo'=>$companyDetails->logo,'bittly_url'=>$bittly);
                 $responseCode   = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
                 $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job_details.success')));
@@ -2268,12 +2314,17 @@ class PostGateway {
             $userDetails    = $this->neoEnterpriseRepository->getNodeById($input['reference_id']);
             $companyCode    = !empty($checkRelation->company_code)?$checkRelation->company_code:$userCompany;
             $page           = !empty($input['page_no']) ? $input['page_no'] : 0;
+            $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
             $search_for     = !empty($input['search']) ? $input['search'] : 0;
             if($companyCode){
                 $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
                 $companyLogo = !empty($companyDetails[0]->logo)?$companyDetails[0]->logo:'';
                 $campaignDetails = $this->neoPostRepository->getCampaignById($input['campaign_id']);
                 $campaignSchedule = $this->neoPostRepository->getCampaignSchedule($input['campaign_id']);  
+                $refCode = MyEncrypt::encrypt_blowfish($input['campaign_id'].'_'.$input['reference_id'],Config::get('constants.MINTMESH_ENCCODE'));
+                $url = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
+                $biltyUrl = $this->urlShortner($url);
+                $bittly = $biltyUrl['data']['link_save']['link'];
                 $startDate = $this->appEncodeDecode->UserTimezone($campaignSchedule[0][0]->gmt_start_date,$input['time_zone']); 
                 $endDate = $this->appEncodeDecode->UserTimezone($campaignSchedule[0][0]->gmt_end_date,$input['time_zone']); 
                 $start_date = \Carbon\Carbon::parse($startDate)->format('dS M Y');
@@ -2305,7 +2356,7 @@ class PostGateway {
                       $returnData[] = $record; 
                 }
                 if($returnData){
-                $data = array("campaign_jobs_list" => array_values($returnData),"campaign_name" => $campaignDetails->campaign_name,"campaign_type" => $campaignDetails->campaign_type, "campaign_location" => $campaignLocation,"campaign_start_date" => $start_date,"campaign_start_time" => $start_time,"campaign_end_date"=>$end_date,"campaign_end_time" => $end_time,"company_name" =>$companyDetails[0]->name,"company_logo"=>$companyLogo,"user_emailid"=>$userDetails->emailid,"count"=>count($campaignJobsList));
+                $data = array("bittly_url"=>$bittly,"campaign_jobs_list" => array_values($returnData),"campaign_name" => $campaignDetails->campaign_name,"campaign_type" => $campaignDetails->campaign_type, "campaign_location" => $campaignLocation,"campaign_start_date" => $start_date,"campaign_start_time" => $start_time,"campaign_end_date"=>$end_date,"campaign_end_time" => $end_time,"company_name" =>$companyDetails[0]->name,"company_logo"=>$companyLogo,"user_emailid"=>$userDetails->emailid,"count"=>count($campaignJobsList));
                 $responseCode   = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
                 $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_jobs_list.success')));
@@ -2328,7 +2379,7 @@ class PostGateway {
         $compName       = '';
         $companyCode    = $input['company_code'];
         $page           = !empty($input['page_no'])?$input['page_no']:0;
-        $search         = !empty($input['search'])?$input['search']:0;
+        $search         = !empty($input['key'])?$input['key']:0;
         $resJobsList    = $refAry = $returnData =  $data = $companyDetails = $jobsListAry = array();
         $encodeString   = Config::get('constants.MINTMESH_ENCCODE');
         $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
@@ -2356,6 +2407,7 @@ class PostGateway {
             $companyDetails['rewards']       = !empty($referralCashRes[0]->total_cash)?$referralCashRes[0]->total_cash:0;    
             $companyDetails['currency_type'] = (strtolower($userCountry) =="india")?2:1;
             #get jobs list with company code
+//            $jobsListAry    = $this->neoGlobalRepository->getJobsList($userEmailId, $companyCode, $page, $search);
             $jobsListAry    = $this->neoPostRepository->getJobsList($userEmailId, $companyCode, $page, $search);
            
             if(!empty($jobsListAry->count())){
@@ -2401,7 +2453,10 @@ class PostGateway {
 
                             $refId      = $campaignId.'_'.$neoUserId;
                             $refCode    = MyEncrypt::encrypt_blowfish($refId, $encodeString);
-                            $record['social_campaign_share'] = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
+//                            $record['social_campaign_share'] = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
+                            $url = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
+                            $biltyUrl = $this->urlShortner($url);
+                            $record['social_campaign_share'] = $biltyUrl['data']['link_save']['link'];
                             $unreadCount+=empty($postRead)?1:0;
 
                         }  else {
@@ -2424,8 +2479,10 @@ class PostGateway {
 
                             $refId      = $postId.'_'.$neoUserId;
                             $refCode    = MyEncrypt::encrypt_blowfish($refId, $encodeString);
-                            $record['social_job_share'] = $enterpriseUrl . "/email/job-details/share?ref=" . $refCode."";; 
-
+//                            $record['social_job_share'] = $enterpriseUrl . "/email/job-details/share?ref=" . $refCode."";; 
+                            $url = $enterpriseUrl . "/email/job-details/share?ref=" . $refCode."";; 
+                            $biltyUrl = $this->urlShortner($url);
+                            $record['social_job_share'] = $biltyUrl['data']['link_save']['link'];
                             $unreadCount+=empty($postRead)?1:0;
                             $jobsCount+=1;
 
@@ -2470,7 +2527,9 @@ class PostGateway {
         $campaignTitle = 'Here is a campaign at '.$companyDetails->name.' for '.$campaignStatus->campaign_name;
         $campaignDescription = 'Start date: '.$scheduleTimes[0][0]->start_date.' and End date: '.$scheduleTimes[0][0]->end_date;
         $url = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/share?ref=" . $input['ref']."";
-        $data = array("campaign_id" => $input['campaign_id'],"reference_id"=>$referred_by_id,"emailid" => $userDetails->emailid,"campaign_status"=>$campaignStatus->status,"company_logo"=>$companyLogo,"company_name"=>$companyDetails->name,"title"=>$campaignTitle,"description"=>$campaignDescription,"url" => $url);
+        $bitlyUrl = $this->urlShortner($url);
+        $bittly    = $bitlyUrl['data']['link_save']['link'];
+        $data = array("campaign_id" => $input['campaign_id'],"reference_id"=>$referred_by_id,"emailid" => $userDetails->emailid,"campaign_status"=>$campaignStatus->status,"company_logo"=>$companyLogo,"company_name"=>$companyDetails->name,"title"=>$campaignTitle,"description"=>$campaignDescription,"url" => $url,"bittly_url"=>$bittly);
         }else{
             $data = array();
         }
@@ -2523,7 +2582,10 @@ class PostGateway {
             #social job share link
             $refId      = $postId.'_'.$neoUserId;
             $refCode    = MyEncrypt::encrypt_blowfish($refId, $encodeString);
-            $record['social_job_share'] = $enterpriseUrl . "/email/job-details/share?ref=" . $refCode."";
+//            $record['social_job_share'] = $enterpriseUrl . "/email/job-details/share?ref=" . $refCode."";
+            $url = $enterpriseUrl . "/email/job-details/share?ref=" . $refCode."";
+            $bitlyUrl = $this->urlShortner($url);
+            $record['social_job_share'] = $bitlyUrl['data']['link_save']['link'];
             #get the post reward details here
             $postRewards                = $this->referralsGateway->getPostRewards($postId, $userCountry, $isEnterprise=1);
             $record['rewards']          = $postRewards;

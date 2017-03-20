@@ -123,6 +123,32 @@ class EnterpriseController extends \BaseController {
             return $returnResponse;
            
         }
+        /**
+	 * Activate a user account
+         * 
+         * GET/Email Verification
+         * 
+         * 
+	 * @return Response
+	 */
+        public function enterpriseSpecialGrantLogin()
+        {
+           
+           // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->EnterpriseGateway->validateEnterpriseSpecialGrantLogin($inputUserData);
+            if($validation['status'] == 'success') 
+            {   
+                $inputUserData['grant_type'] = 'special_grant';
+                $returnResponse = \Response::json($this->EnterpriseGateway->emailVerification($inputUserData));
+            } else {
+                // returning validation failure
+                $returnResponse = \Response::json($validation);
+            }
+            return $returnResponse;
+           
+        }
         
          /**
 	 * Authenticate an enterprise login
@@ -859,6 +885,31 @@ class EnterpriseController extends \BaseController {
             $validation = $this->EnterpriseGateway->validateResendActivationLinkInput($inputUserData);
             if($validation['status'] == 'success') {
                $response = $this->EnterpriseGateway->resendActivationLink($inputUserData);
+               return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+            
+	}
+        /**
+	 * get the Company Subscriptions details
+         * 
+         * POST/user
+         * 
+	 * @param string $access_token The Access token of a user
+         * @param string $company_code The company details 
+         * 
+	 * @return Response
+	 */
+	public function getCompanySubscriptions()
+	{
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->EnterpriseGateway->validateGetCompanySubscriptionsInput($inputUserData);
+            if($validation['status'] == 'success') {
+               $response = $this->EnterpriseGateway->getCompanySubscriptions($inputUserData);
                return \Response::json($response);
             } else {
                     // returning validation failure

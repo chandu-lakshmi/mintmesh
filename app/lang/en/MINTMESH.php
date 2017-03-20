@@ -203,15 +203,24 @@ return array(
                 '24'=>'accepted your self referral of', 
                 '25'=>'has turned down your self referral of',
                 '27'=>'is looking for',
-                '28'=>'has launched a'),
+                '28'=>'has launched a',
+                '29'=>'has Interviewed your referral',
+                '30'=>'has offered your referral',
+                '31'=>'has hired your referral'),
             "extra_texts"=>array(
                 '10'=>'for your request',
                 '11'=>'for a service',
                 '12'=>'for this request',
+                '15'=>'',
                 '22'=>'for this service',
                 '23'=>'for your request', 
+                '24'=>'', 
+                '25'=>'', 
                 '27'=>' please check out the Refer page.', 
-                '28'=>' event for jobs. Check out the refer page.')
+                '28'=>' event for jobs. Check out the refer page.',
+                '29'=>'for the position of',
+                '30'=>'for the position of',
+                '31'=>'for the position of')
          ),
          "get_requests"=>array(
              "success"=>"Successfully Listed"
@@ -381,7 +390,8 @@ return array(
             "failure"   =>  "failed to update",
             "file_format"       =>  "Invalid input file format.File extension should be:",
             "invalid_headers"   =>  "Invalid input file Headers",
-            "invalidempid"      =>  "empid already exists"          
+            "invalidempid"      =>  "empid already exists",          
+            "contactsLimitExceeded" =>  "your contacts limit is exceeded"          
     ),
     'deleteContact'   => array(
             "success"  =>   "successfully deleted",

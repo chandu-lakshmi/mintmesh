@@ -89,6 +89,10 @@ class EnterpriseGateway {
     public function validateEmailVerificationToken($input) {
         return $this->doValidation('validateEmailVerificationToken', 'MINTMESH.user.valid');
     }
+    // validation on validate Email Token Verification
+    public function validateEnterpriseSpecialGrantLogin($input) {
+        return $this->doValidation('validateEnterpriseSpecialGrantLogin', 'MINTMESH.user.valid');
+    }
     
     // validation on validate Email Token Verification
     public function validateEnterpriseGetUserDetails($input) {
@@ -206,6 +210,10 @@ class EnterpriseGateway {
     public function validateResendActivationLinkInput($input) {
         return $this->doValidation('resend_activation', 'MINTMESH.user.valid');
     }
+   //validation on campaign details
+    public function validateGetCompanySubscriptionsInput($input) {
+        return $this->doValidation('company_subscriptions', 'MINTMESH.user.valid');
+    }
    
     public function doValidation($validatorFilterKey, $langKey) {
         //validator passes method accepts validator filter key as param
@@ -289,6 +297,8 @@ class EnterpriseGateway {
             // creating company random code
             $randomCode = $this->getRandomCode();
             $input['company_code'] = $randomCode;
+            #get contacts limit with access code 
+            $input['contacts_limit'] = !empty($accessCode[0]->contacts_limit)?$accessCode[0]->contacts_limit:0;
             $createdGroup = $this->enterpriseRepository->createGroup();
             $input['group_id'] = $createdGroup['id'];
 //            $createPermissions = $this->enterpriseRepository->createPermissions($input);
@@ -299,12 +309,14 @@ class EnterpriseGateway {
             $neoEnterpriseUser = $this->createNeoUser($input);
             //cheking user succefully created in mysql DB
             if (!empty($createdUser)) {
-
+                
+                #get Subscription Type Id here
+                $input['subscription_type'] = $this->getSubscriptionTypeId($input['contacts_limit']);
                 //Inserting company name entry in mysql DB
                 $input['user_id'] = $createdUser['id'];
                 $createdCompany = $this->enterpriseRepository->createCompanyProfile($input);
-                $updatedGroup = $this->enterpriseRepository->updateGroup($input,$createdCompany->id);
-                $permissions = $this->enterpriseRepository->adminPermissions($input);
+                $updatedGroup   = $this->enterpriseRepository->updateGroup($input,$createdCompany->id);
+                $permissions    = $this->enterpriseRepository->adminPermissions($input);
                 // create a node for company in neo4j
                 $neoEnterpriseCompany = $this->createNeoCompany($input, $createdCompany);
                 if (!empty($createdCompany)) {
@@ -378,20 +390,26 @@ class EnterpriseGateway {
 
     public function emailVerification($input) {
         $responseCode = $responseMsg = $message = $data = "";
-        $responseData = array();
-        $response = $this->userGateway->activateUser($input['token']);
-
+        $responseData = $response  = array();
+        #added functionality for SAML login
+        if(!empty($input['grant_type'])){
+            $response['data']['emailid'] = !empty($input['emailId'])?$input['emailId']:'';
+            $input['token'] = 'token';//temporary token for skip validations
+        }else{
+            $response = $this->userGateway->activateUser($input['token']);
+        }
+           
         if (!empty($response['data']['emailid'])) {
 
             $returnResponse = $this->userRepository->getUserByEmail($response['data']['emailid']);
             $responseData = $this->enterpriseRepository->getUserCompanyMap($returnResponse['id']);
 
-            $input['username'] = $returnResponse['emailid'];
-            $input['emailid'] = $returnResponse['emailid'];
+            $input['username']  = $returnResponse['emailid'];
+            $input['emailid']   = $returnResponse['emailid'];
             $input['client_id'] = $input['client_id'];
             $input['client_secret'] = $input['client_secret'];
-            $input['grant_type'] = 'special_grant';
-
+            $input['grant_type']    = 'special_grant';
+                        
             $response = $this->loginCall($input);
 
             $userDetails = (array) json_decode($response, TRUE);
@@ -662,6 +680,7 @@ class EnterpriseGateway {
         $neoInputCompany['name'] = $input['company'];
         $neoInputCompany['mysql_id'] = $createdCompany['id'];
         $neoInputCompany['companyCode'] = $input['company_code'];
+        $neoInputCompany['size'] = $input['contacts_limit'];
         // creating company label
         if (empty($neoEnterpriseCompany)) {
             $neoEnterpriseCompany = $this->neoEnterpriseRepository->createCompany($neoInputCompany);
@@ -675,7 +694,7 @@ class EnterpriseGateway {
         $company_logo = !empty($responseData['company_logo']) ? $responseData['company_logo'] : "";
         $file = !empty($responseData['referral_bonus_file']) ? $responseData['referral_bonus_file'] : "";
         $file_org_name = !empty($responseData['referral_org_name']) ? $responseData['referral_org_name'] : "";
-        $updateNeoCompany = $this->neoEnterpriseRepository->updateCompanyLabel($input['code'], $input['company'], $input['website'], $input['number_of_employees'], $company_logo, $images, $input['description'],$input['industry'],$file,$file_org_name);
+        $updateNeoCompany = $this->neoEnterpriseRepository->updateCompanyLabel($input['code'], $input['company'], $input['website'], $company_logo, $images, $input['description'],$input['industry'],$file,$file_org_name);
          #map industry if provided
          if (!empty($input['industry'])) {
             $iResult = $this->neoEnterpriseRepository->mapIndustryToCompany($input['industry'], $input['code'], Config::get('constants.REFERRALS.ASSIGNED_INDUSTRY'));
@@ -741,21 +760,22 @@ class EnterpriseGateway {
                     }
                 }
 		unset($arrUniqueImpId);
+                #company available contacts count verification here  
+                $availableNo = $this->getCompanyAvailableContactsCount($companyCode);
                 
                 //$instanceId = $this->enterpriseRepository->getInstanceId(); //getting Instance Id
                 //create file record
-		$importFileId = $this->enterpriseRepository->getFileId($inputFile,$userId);
+                $importFileId = $this->enterpriseRepository->getFileId($inputFile,$userId);
                 //importing contacts to Mysql db
-                $resultsSet = $this->enterpriseRepository->uploadContacts($arrUniqueResults, $userId, $bucketId, $companyId, $importFileId);
-
+                $resultsSet = $this->enterpriseRepository->uploadContacts($arrUniqueResults, $userId, $bucketId, $companyId, $importFileId, $availableNo);
 
                 if (!empty($resultsSet)) {
                     //get the Import Contacts List By Instance Id
                     //$contactsList = $this->enterpriseRepository->getImportContactsListByInstanceId($userId, $bucketId, $companyId, $instanceId);
-                    
+
                     //get the Import Contacts List By Import File Id
                     $contactsList = $this->enterpriseRepository->getContactsListByFileId($companyId, $importFileId);
-                   
+
                     //Creating relation between company and bucket in neo4j
                     $neoCompanyBucketContacts = array();
                     $neoCompanyBucketContacts = $this->enterpriseContactsList($input);
@@ -775,7 +795,7 @@ class EnterpriseGateway {
                         $pushData['bucket_id'] = $bucketId;
                         $pushData['company_code'] = $companyCode;
                         $pushData['loggedin_emailid'] = $this->loggedinUserDetails->emailid;
-                       
+
                         //$this->createContactNodes($pushData);
                         //$this->checkToCreateEnterpriseContactsQueue($pushData['firstname'],$pushData['lastname'],$pushData['emailid'],$pushData['contact_number'],$pushData['other_id'],$pushData['status'],$pushData['bucket_id'],$pushData['company_code'],$pushData['loggedin_emailid']);
 
@@ -789,6 +809,7 @@ class EnterpriseGateway {
                     $responseMsg = self::ERROR_RESPONSE_MESSAGE;
                     $message = array(Lang::get('MINTMESH.enterprise.import_contacts_failure'));
                 }
+                
             } else {
                 $responseCode = self::ERROR_RESPONSE_CODE;
                 $responseMsg = self::ERROR_RESPONSE_MESSAGE;
@@ -1622,8 +1643,9 @@ class EnterpriseGateway {
 
             $company = $companyDetails[0][0];        
             $returnDetails['name']         = $company->name;
-            $returnDetails['company_code']  = $company->companyCode;
+            $returnDetails['company_code'] = $company->companyCode;
             $returnDetails['company_logo'] = $company->logo;
+            $returnDetails['employees_no'] = !empty($company->size)?$company->size:0;
             $data['companyDetails'] = $returnDetails;
             $data['userDetails'] = $userDetails;
             $checkGroupStatus = $this->enterpriseRepository->checkGroupStatus($this->loggedinUserDetails->group_id);
@@ -1807,13 +1829,18 @@ class EnterpriseGateway {
                     }
                 }
 		unset($arrUniqueImpId);
-                //importing contacts to Mysql db
-                $resultsSet   = $this->enterpriseRepository->uploadContacts($arrUniqueResults, $userId, $bucketId, $companyId, $importFileId);    
-                //get the Import Contacts List By Instance Id
+                #company available contacts count verification here  
+                $availableNo = $this->getCompanyAvailableContactsCount($companyCode);
+                #importing contacts to Mysql db
+                $resultsSet   = $this->enterpriseRepository->uploadContacts($arrUniqueResults, $userId, $bucketId, $companyId, $importFileId, $availableNo);    
+                $employeesNo  = $resultsSet['insert'];
+                #log the company subscriptions here
+                $this->addCompanySubscriptionsLog($companyId, $employeesNo);
+                #get the Import Contacts List By Instance Id
                 $contactsList = $this->enterpriseRepository->getContactsListByFileId($companyId, $importFileId);
-                    
+
                 if (!empty($contactsList)) {    
-                    //Creating relation between bucket and contacts in neo4j
+                    #Creating relation between bucket and contacts in neo4j
                     foreach ($contactsList as $key => $value) {
                         $pushData = array();
                         $pushData['firstname']      = $value->firstname;
@@ -1829,7 +1856,7 @@ class EnterpriseGateway {
                         Queue::push('Mintmesh\Services\Queues\CreateEnterpriseContactsQueue', $pushData, 'IMPORT');
                     }
                 }
-                $return = TRUE;
+                $return = TRUE;    
             }      
         }
         return $return;
@@ -1874,7 +1901,8 @@ class EnterpriseGateway {
         $inputParams = $relationAttrs = array();
         $companyCode = !empty($input['company_code'])?$input['company_code']:'';
         $bucketId    = !empty($input['bucket_id'])?$input['bucket_id']:'';
-        $inputParams['company_id']   = $input['company_id'];
+        $companyId   = !empty($input['company_id'])?$input['company_id']:'';
+        $inputParams['company_id']   = $companyId;
         $inputParams['user_id']      = $userId;
         $inputParams['bucket_id']    = $input['bucket_id'];
         $inputParams['firstname']    = !empty($input['firstname'])?$input['firstname']:'';      
@@ -1884,11 +1912,11 @@ class EnterpriseGateway {
         $inputParams['status']       = $status = !empty($input['status'])?$input['status']:'unknown';  
         $inputParams['employeeid']   = !empty($input['other_id'])?$input['other_id']:'';      
          
-        $relationAttrs['company_code']     = $input['company_code'];
-        $relationAttrs['loggedin_emailid'] = $emailId;
-        $relationAttrs['created_at']       = gmdate("Y-m-d H:i:s");
-        $relationAttrs['firstname']       = !empty($input['firstname'])?$input['firstname']:'';    
-        $relationAttrs['lastname']       = !empty($input['lastname'])?$input['lastname']:'';    
+        $relationAttrs['company_code']      = $companyCode;
+        $relationAttrs['loggedin_emailid']  = $emailId;
+        $relationAttrs['created_at']        = gmdate("Y-m-d H:i:s");
+        $relationAttrs['firstname']         = !empty($input['firstname'])?$input['firstname']:'';    
+        $relationAttrs['lastname']          = !empty($input['lastname'])?$input['lastname']:'';    
         $neoInput['firstname']   = $input['firstname'];
         $neoInput['lastname']    = $input['lastname'];
         $neoInput['phone']       = !empty($input['phone'])?$input['phone']:'';          
@@ -1896,33 +1924,42 @@ class EnterpriseGateway {
         $neoInput['employeeid']  = !empty($input['other_id'])?$input['other_id']:'';
         $neoInput['status']      = !empty($input['status'])?$input['status']:'unknown';  
         $checkContact = $this->enterpriseRepository->checkContact($inputParams);
-        if(empty($checkContact))
-        {
-             $checkEmployeeId = $this->enterpriseRepository->checkEmpId($input);
-             if(!$checkEmployeeId)
-             {
-                $result    = $this->enterpriseRepository->addContact($inputParams); 
-                $neoResult = $this->neoEnterpriseRepository->createContactNodes($input['bucket_id'],$neoInput,$relationAttrs);
-                $neoResult = $this->neoEnterpriseRepository->companyAutoConnect($neoInput['emailid'],$relationAttrs);
-                #check company bucket active jobs and create relation between user & job
-                if($status != 'Separated'){
-                    $connectedJobs  = $this->companyJobsAutoConnect($companyCode, $bucketId, $contactEmailId, $emailId);
-                }
-                if(!empty($result)){ 
-                    $responseCode    = self::SUCCESS_RESPONSE_CODE;
-                    $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
-                    $message = array('msg' => array(Lang::get('MINTMESH.addContact.success')));
-                }
-                else {
-                    $responseCode    = self::ERROR_RESPONSE_CODE;
-                    $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-                    $message = array('msg' => array(Lang::get('MINTMESH.addContact.failure')));
-                } 
-              }else{
+        if(empty($checkContact)){
+            #company available contacts count verification here  
+            $availableNo = $this->getCompanyAvailableContactsCount($companyCode);
+            if(!empty($availableNo)){
+
+                $checkEmployeeId = $this->enterpriseRepository->checkEmpId($input);
+                if(!$checkEmployeeId)
+                {
+                    $result    = $this->enterpriseRepository->addContact($inputParams); 
+                    if(!empty($result)){ 
+                        $employeesNo = 1;
+                        $this->addCompanySubscriptionsLog($companyId, $employeesNo);
+                        $neoResult = $this->neoEnterpriseRepository->createContactNodes($input['bucket_id'],$neoInput,$relationAttrs);
+                        $neoResult = $this->neoEnterpriseRepository->companyAutoConnect($neoInput['emailid'],$relationAttrs);
+                        #check company bucket active jobs and create relation between user & job
+                        if($status != 'Separated'){
+                            $connectedJobs  = $this->companyJobsAutoConnect($companyCode, $bucketId, $contactEmailId, $emailId);
+                        }
+                        $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                        $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+                        $message = array('msg' => array(Lang::get('MINTMESH.addContact.success')));
+                    }else {
+                        $responseCode    = self::ERROR_RESPONSE_CODE;
+                        $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                        $message = array('msg' => array(Lang::get('MINTMESH.addContact.failure')));
+                    } 
+                }else{
                     $responseCode    = self::ERROR_RESPONSE_CODE;
                     $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
                     $message = array('msg' => array(Lang::get('MINTMESH.editContactList.invalidempid')));
-              } 
+                } 
+            }else{
+                $responseCode    = self::ERROR_RESPONSE_CODE;
+                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                $message = array('msg' => array(Lang::get('MINTMESH.editContactList.contactsLimitExceeded')));
+            } 
         }
         else if($checkContact[0]->bucket_id == '0')
             {
@@ -2642,6 +2679,67 @@ class EnterpriseGateway {
             }
         }    
      }
+    
+    public function getSubscriptionTypeId($employeesNo=0){
+        
+        if($employeesNo > 5000){
+            $subscriptionTypeId = 3;
+        }  elseif ($employeesNo > 100 && $employeesNo <= 5000) {
+            $subscriptionTypeId = 2;
+        }  else {
+            $subscriptionTypeId = 1;
+        }
+       return $subscriptionTypeId; 
+    }
+    public function addCompanySubscriptionsLog($companyId='',$employeesNo=0){
+        #log the company subscriptions here        
+        $startDate      = gmdate("Y-m-d H:i:s");
+        $endDate        = date('Y-m-d H:i:s', strtotime('+1 year'));//next year date
+        $this->enterpriseRepository->addCompanySubscriptionsLog($companyId, $employeesNo, $startDate, $endDate);
+    }
+    public function getCompanyAvailableContactsCount($companyCode=''){
+        
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $employeesNo    = !empty($companyDetails[0]->employees_no)?$companyDetails[0]->employees_no:0;
+        $countAry   = $this->enterpriseRepository->getCompanyAvailableContacts($companyCode);
+        $empTotal   = !empty($countAry[0]->total)?$countAry[0]->total:0;
+        $available  =  $employeesNo - $empTotal;
+        
+        return $available;
+    }
+    
+    public function getCompanySubscriptions($input){
+        
+        
+        $returnAry  = $data = $return =  array();
+        $companyCode    = !empty($input['company_code'])?$input['company_code']:'';
+        $available = $this->getCompanyAvailableContactsCount($companyCode);
+        $subAry    = $this->enterpriseRepository->getCompanySubscriptions($companyCode);
+        
+        $return['plan_type']        = !empty($subAry[0]->name)?$subAry[0]->name:'';
+        $return['licence_code']     = !empty($subAry[0]->access_code)?$subAry[0]->access_code:'';
+        $return['available_count']  = $available;
+        
+        foreach ($subAry as $value) {
+            $licence = array();
+            $licence['employees_no'] = $value->employees_no;
+            $licence['start_date']   = $value->start_date;
+            $licence['end_date']     = $value->end_date;
+            $returnAry[]  = $licence;
+        }
+        $returnData = array('active_plan'=>$return,'licence_log'=>$returnAry);
+        if(!empty($returnData)){
+            $data = $returnData;
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.enterprise.retrieve_success')));
+          }else{
+            $responseCode   = self::ERROR_RESPONSE_CODE;
+            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.enterprise.retrieve_failure')));
+          }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data, false);    
+    }    
 }
 
 ?>

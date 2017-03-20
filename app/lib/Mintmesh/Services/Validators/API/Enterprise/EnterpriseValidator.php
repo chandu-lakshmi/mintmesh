@@ -12,6 +12,10 @@ class EnterpriseValidator extends Validator {
                 'token'                  => 'required',
                 'client_id'              => 'required',
                 'client_secret'          => 'required'),
+        'validateEnterpriseSpecialGrantLogin' => array(
+                'emailId'                => 'required',
+                'client_id'              => 'required',
+                'client_secret'          => 'required'),
         'enterpriseLogin'  => array(
                 'username'               => 'required',
                 'password'               => 'required'),
@@ -20,10 +24,6 @@ class EnterpriseValidator extends Validator {
                 'username'              => 'required',
                 'client_id'             => 'required',
                 'client_secret'         => 'required'),
-        'validateCompanyProfileInput' => array(
-                'company'               => 'required',
-                'industry'              => 'required',
-                'website'               => 'required'),
         'validateCompanyProfileInput' => array(
                 'company'               => 'required',
                 'industry'              => 'required',
@@ -141,6 +141,9 @@ class EnterpriseValidator extends Validator {
         ),
         'resend_activation' => array(
             'emailid'                =>  'required'
+        ),
+        'company_subscriptions' => array(
+            'company_code'      => 'required',
         )
         );
     

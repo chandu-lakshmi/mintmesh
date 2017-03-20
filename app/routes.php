@@ -100,6 +100,8 @@ Route::group(array('prefix' => 'v1'), function() {
        Route::post("enterprise/login", "API\Enterprise\EnterpriseController@enterpriseLogin");
        
        Route::post("enterprise/special_login", "API\Enterprise\EnterpriseController@enterpriseSpecialLogin");
+       //Mintmesh enterprise with emailid 
+       Route::post("enterprise/special_grant_login", "API\Enterprise\EnterpriseController@enterpriseSpecialGrantLogin");
     // Mintmesh enterprise forgot password
        Route::post("enterprise/forgot_password", "API\Enterprise\EnterpriseController@forgotPassword");
     // Mintmesh enterprise reset password   
@@ -301,6 +303,8 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
        Route::post("enterprise/view_dashboard", "API\Enterprise\EnterpriseController@viewDashboard");
       //company_profile
       Route::post("enterprise/get_company_profile", "API\Enterprise\EnterpriseController@getCompanyProfile");
+      //get company subscriptions log
+      Route::post("enterprise/get_company_subscriptions", "API\Enterprise\EnterpriseController@getCompanySubscriptions");
       //update contacts list
       Route::post("enterprise/update_contacts_list", "API\Enterprise\EnterpriseController@updateContactsList");
       //other edits in contact list

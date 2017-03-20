@@ -46,10 +46,12 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         public function createCompanyProfile($input)
         {     
             $companyProfile = array(
-                        "name" => $this->appEncodeDecode->filterString($input['company']),
-                        "code" => $input['company_code'],
-                        "is_primary" => '1',
-                        "created_by" => $input['user_id'],
+                        "name"          => $this->appEncodeDecode->filterString($input['company']),
+                        "code"          => $input['company_code'],
+                        "employees_no"  => $input['contacts_limit'],
+                        "is_primary"    => '1',
+                        "subscription_type"  => $input['subscription_type'],
+                        "created_by"    => $input['user_id'],
                         "ip_address"    => $_SERVER['REMOTE_ADDR']
             );
             return $this->companyProfile->create($companyProfile);
@@ -64,7 +66,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                         "description"   => $input['description'],
 //                        "description"   => !empty($input['description'])?$this->appEncodeDecode->filterString($input['description']):'',
                         "website"       => !empty($input['website'])?$input['website']:'',
-                        "employees_no"  => !empty($input['number_of_employees'])?$input['number_of_employees']:'',
+                        //"employees_no"  => !empty($input['number_of_employees'])?$input['number_of_employees']:'',
                         "logo"          => !empty($input['company_logo'])?$input['company_logo']:'',
                         "status"        => !empty($input['status'])?$input['status']:'1',
                         "updated_by"    => !empty($input['user_id'])?$input['user_id']:'',
@@ -170,7 +172,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             return $result;    
         }
         // upload Contacts on Web
-        public function uploadContacts($input, $userId, $bucketId, $companyId, $importFileId)
+        public function uploadContacts($input, $userId, $bucketId, $companyId, $importFileId, $availableNo)
         {     
             $ipAddress = !empty($_SERVER['REMOTE_ADDR'])?$_SERVER['REMOTE_ADDR']:0;
             $createdAt = gmdate("Y-m-d H:i:s");
@@ -194,9 +196,9 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                     $employeeId  = !empty($val['employee_idother_id'])?$val['employee_idother_id']:'';
                     $cellPhone   = !empty($val['cell_phone'])?$val['cell_phone']:'';
                     $status      = !empty($val['status'])?$val['status']:'unknown';
-                    $lastName      = !empty($val['last_name'])?$val['last_name']:'';
+                    $lastName    = !empty($val['last_name'])?$val['last_name']:'';
                      
-                    if(!empty($val['first_name']) &&filter_var($val['email_id'], FILTER_VALIDATE_EMAIL))
+                    if(!empty($val['first_name']) && filter_var($val['email_id'], FILTER_VALIDATE_EMAIL))
                     {                    
                         $firstName = $this->appEncodeDecode->filterString($val['first_name']);
                         $lastName  = $this->appEncodeDecode->filterString($val['last_name']);
@@ -206,11 +208,14 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                         
                         if(!array_key_exists($val['email_id'], $contactIsExist)){ 
                             $employeeId = ($employeeId!='' && in_array($employeeId, $contactIsExist))?'':$employeeId; 
-                            
-                            $inrt_sql.="('".$users_id."','".$companyId."','".$importFileId."','".$firstName."','".$lastName."','".$emailId."','".$cellPhone."',";
-                            $inrt_sql.="'".$employeeId."','".$status."','".$userId."','".$createdAt."','".$userId."','".$ipAddress."')," ;
-                            $i++;
-                            $insertResult++;
+                            #check available contacts count here
+                            if($availableNo){
+                                $inrt_sql.="('".$users_id."','".$companyId."','".$importFileId."','".$firstName."','".$lastName."','".$emailId."','".$cellPhone."',";
+                                $inrt_sql.="'".$employeeId."','".$status."','".$userId."','".$createdAt."','".$userId."','".$ipAddress."')," ;
+                                $i++;
+                                $insertResult++;
+                                $availableNo--;
+                            }    
                         } else {
                             
                             $employeeId = ($employeeId!='' && in_array($employeeId, $contactIsExist))?(($contactIsExist[$emailId]==$employeeId)?$employeeId:''):$employeeId;
@@ -223,12 +228,14 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                             $updatedRows++;
                         }
                     } 
+                    
                     if($i==500 && $inrt_sql!=''){
                             DB::statement($sql.trim($inrt_sql,','));
                             $inrt_sql = '';
                             $i=0;
                     }
                 }
+               
                 if($inrt_sql!=''){
                     DB::statement($sql.trim($inrt_sql,','));
                     $i=0;
@@ -338,7 +345,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         }
         public function getCompanyDetailsByCode($companyCode=0){    
             return DB::table('company')
-                   ->select('logo','id','name')
+                   ->select('logo','id','name','employees_no')
                    ->where('code', '=', $companyCode)->get();
         }
         
@@ -893,4 +900,42 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
          $sql = "select count(*) as count from contacts where company_id='".$companyId."' and status='Active' ";
          return $result = DB::SELECT($sql);
     }
+    #log the company subscriptions
+    public function addCompanySubscriptionsLog($companyId=0, $employeesNo=0, $startDate='', $endDate='')
+    {   
+        $result = FALSE;
+        if(!empty($companyId)){
+            $sql = "insert into company_subscriptions (`company_id`,`employees_no`,`start_date`,`end_date`)" ;
+            $sql.=" values('".$companyId."', '".$employeesNo."', '".$startDate."', '".$endDate."')" ;
+            $result = DB::statement($sql);
+        }
+        return $result;
+    }
+    
+    public function getCompanyAvailableContacts($companyCode='') {
+        $result = FALSE;
+        if(!empty($companyCode)){
+         $sql = "select sum(s.employees_no) as total
+                from company_subscriptions s 
+                left join company c on s.company_id = c.id 
+                where c.code = '".$companyCode."'";
+         $result = DB::SELECT($sql);
+        }
+        return $result;
+    }
+    
+    public function getCompanySubscriptions($companyCode='') {
+        $result = FALSE;
+        if(!empty($companyCode)){
+         $sql = "select t.name,a.access_code,s.employees_no,s.start_date,s.end_date
+                from company_subscriptions s 
+                left join company c on s.company_id = c.id 
+                left join subscription_types t on t.id = c.subscription_type
+                left join company_access a on a.company_id = c.id 
+                where c.code = '".$companyCode."'";
+         $result = DB::SELECT($sql);
+        }
+        return $result;
+    }
+    
 }

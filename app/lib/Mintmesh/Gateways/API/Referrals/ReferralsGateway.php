@@ -2276,7 +2276,10 @@ class ReferralsGateway {
             #social campaign share link
             $refId      = $campaignId.'_'.$neoUserId;
             $refCode    = MyEncrypt::encrypt_blowfish($refId, $encodeString);
-            $campAry['social_campaign_share'] = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode."";
+//            $campAry['social_campaign_share'] = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode."";
+            $urll = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode."";
+            $biltyUrl = $this->urlShortner($urll);
+            $campAry['social_campaign_share'] = $biltyUrl['data']['link_save']['link'];
             #return data here    
             $data    = array('campaign_details'=>$campAry);
             $message = array('msg' => array(Lang::get('MINTMESH.campaigns.success')));
@@ -2285,6 +2288,18 @@ class ReferralsGateway {
         }
         
         return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data);
+    }
+    
+    public function urlShortner($url){
+       $bitly = Config::get('constants.BITLY_URL').Config::get('constants.BITLY_ACCESS_TOKEN').'&longUrl='.$url;
+         $ch = curl_init();
+         curl_setopt($ch, CURLOPT_URL, $bitly);
+         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+         $response  = curl_exec($ch);
+         curl_close($ch);
+        $b = (array) json_decode($response, TRUE);
+       return $b;
+        
     }
     
     public function getAllMyReferrals($input) {

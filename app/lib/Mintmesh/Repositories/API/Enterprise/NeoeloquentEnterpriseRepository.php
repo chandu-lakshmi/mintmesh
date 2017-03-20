@@ -87,11 +87,11 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
         //return $this->neoUser->create($input);
     }
 
-    public function updateCompanyLabel($companyCode = "", $name = "", $website = "", $size = "", $logo = "", $images = "",$description="",$industry="",$file="",$file_org_name="") {
+    public function updateCompanyLabel($companyCode = "", $name = "", $website = "", $logo = "", $images = "",$description="",$industry="",$file="",$file_org_name="") {
         if (!empty($name) || !empty($website) || !empty($size) || !empty($logo) || !empty($images) || !empty($industry)) { 
                 $images = $this->appEncodeDecode->filterString($images);
                 $queryString = "Match (m:User:Mintmesh), (n:Company)
-                          where n.companyCode='" . $companyCode . "' set n.name='" . $name . "',n.website='" . $website . "',n.size='" . $size . "',n.logo='" . $logo . "',n.images='" . $images . "',n.description='".$description."',n.industry='".$industry."',n.referral_bonus_file='".$file."',n.referral_bonus_org_name='".$file_org_name."'";
+                          where n.companyCode='" . $companyCode . "' set n.name='" . $name . "',n.website='" . $website . "',n.logo='" . $logo . "',n.images='" . $images . "',n.description='".$description."',n.industry='".$industry."',n.referral_bonus_file='".$file."',n.referral_bonus_org_name='".$file_org_name."'";
             $query = new CypherQuery($this->client, $queryString);
             return $result = $query->getResultSet();
         } else {
