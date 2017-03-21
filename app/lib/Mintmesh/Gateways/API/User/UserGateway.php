@@ -80,7 +80,7 @@ class UserGateway {
                 $this->neoPostRepository = $neoPostRepository;
                 $this->contactsRepository = $contactsRepository ;
                 $this->notificationsTypes = array('3','4','5','6','10','11','12','13','14','15','17','18','19','20','22');
-                $this->enterpriseNotificationsTypes = array(12,15,24,25,27,28);
+                $this->enterpriseNotificationsTypes = array(12,15,24,25,27,28,29,30,31);
                 $this->extraTextsNotes = array('10','11','12','22','27','28') ;
                 $this->infoTypes = array('experience', 'education', 'certification');
                 $this->directProfileRedirections = array('2','12','14');
