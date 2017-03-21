@@ -2279,7 +2279,7 @@ class ReferralsGateway {
 //            $campAry['social_campaign_share'] = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode."";
             $urll = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode."";
             $biltyUrl = $this->urlShortner($urll);
-            $campAry['social_campaign_share'] = $biltyUrl['data']['link_save']['link'];
+            $campAry['social_campaign_share'] = $biltyUrl;
             #return data here    
             $data    = array('campaign_details'=>$campAry);
             $message = array('msg' => array(Lang::get('MINTMESH.campaigns.success')));
