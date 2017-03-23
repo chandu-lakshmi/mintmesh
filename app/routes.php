@@ -125,6 +125,8 @@ Route::group(array('prefix' => 'v1'), function() {
       Route::post("enterprise/decrypt_campaign_ref", "API\Post\PostController@decryptCampaignRef");
       //get campaign job list
       Route::post("enterprise/campaign_jobs_list", "API\Post\PostController@campaignJobsList");
+      //get campaign job list
+      Route::post("enterprise/company_integration", "API\Enterprise\EnterpriseController@companyIntegration");
 });
 
 //Route::group(array('prefix' => 'v1'), function() {
@@ -344,6 +346,12 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       Route::post("enterprise/multiple_awaiting_action", "API\Post\PostController@multipleAwaitingAction");
       //posting job from campaigns
       Route::post("enterprise/job_post_from_campaigns", "API\Post\PostController@jobPostFromCampaigns");
+      //add hcm
+      Route::post("enterprise/add_edit_hcm", "API\Enterprise\EnterpriseController@addEditHcm");
+      //view hcm
+      Route::post("enterprise/get_hcm_list", "API\Enterprise\EnterpriseController@getHcmList");
+      //view hcm
+      Route::post("enterprise/get_hcm_partners", "API\Enterprise\EnterpriseController@getHcmPartners");
       
 });
 

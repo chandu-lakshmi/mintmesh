@@ -214,6 +214,14 @@ class EnterpriseGateway {
     public function validateGetCompanySubscriptionsInput($input) {
         return $this->doValidation('company_subscriptions', 'MINTMESH.user.valid');
     }
+   //validation on add_edit_hcm details
+    public function validateAddEditHcmInput($input) {
+        return $this->doValidation('add_edit_hcm', 'MINTMESH.user.valid');
+    }
+   //validation on get_hcm_list details
+    public function validateGetHcmListInput($input) {
+        return $this->doValidation('get_hcm_list', 'MINTMESH.user.valid');
+    }
    
     public function doValidation($validatorFilterKey, $langKey) {
         //validator passes method accepts validator filter key as param
@@ -2710,7 +2718,6 @@ class EnterpriseGateway {
     
     public function getCompanySubscriptions($input){
         
-        
         $returnAry  = $data = $return =  array();
         $companyCode    = !empty($input['company_code'])?$input['company_code']:'';
         $available = $this->getCompanyAvailableContactsCount($companyCode);
@@ -2739,7 +2746,196 @@ class EnterpriseGateway {
             $responseMessage= array('msg' => array(Lang::get('MINTMESH.enterprise.retrieve_failure')));
           }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data, false);    
+    }
+    
+    public function addEditHcm($input){
+        
+        $message    = '';
+        $returnAry  = $data = array();
+        $companyCode    = !empty($input['company_code'])?$input['company_code']:'';
+        #get the logged in user company details with company code here
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = !empty($companyDetails[0]->id)?$companyDetails[0]->id:0; 
+        $hcmId          = !empty($input['hcm_id'])?$input['hcm_id']:'';
+        $hcmName        = !empty($input['hcm_name'])?$input['hcm_name']:'';
+        $hcmUrl         = !empty($input['hcm_url'])?$input['hcm_url']:'';
+        $hcmUsername    = !empty($input['hcm_username'])?$input['hcm_username']:'';
+        $hcmPassword    = !empty($input['hcm_password'])?$input['hcm_password']:'';
+        
+        if(empty($hcmId)){
+            $hcmId      = $this->enterpriseRepository->addHcm($companyId, $hcmName);
+            $message    = Lang::get('MINTMESH.hcm_details.insert_success');
+        }  else {
+            $hcmAry[0]['name']     = 'DCNAME';
+            $hcmAry[0]['value']    = $hcmUrl;
+            $hcmAry[1]['name']     = 'USERNAME';
+            $hcmAry[1]['value']    = $hcmUsername;
+            $hcmAry[2]['name']     = 'PASSWORD';
+            $hcmAry[2]['value']    = $hcmPassword;
+            
+            $updateHcmAry   = $this->enterpriseRepository->updateHcm($hcmId, $hcmAry);
+            $message        = Lang::get('MINTMESH.hcm_details.update_success');
+        }
+        $returnAry['hcm_id']    = $hcmId;
+        $returnAry['hcm_name']  = $hcmName;
+        $returnAry['hcm_url']   = $hcmUrl;
+        $returnAry['hcm_username'] = $hcmUsername;
+        $returnAry['hcm_password'] = $hcmPassword;
+
+        if(!empty($hcmId) || !empty($updateHcmAry)){
+            $data = $returnAry;
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array($message));
+        }else{
+          $responseCode   = self::ERROR_RESPONSE_CODE;
+          $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+          $responseMessage= array('msg' => array(Lang::get('MINTMESH.hcm_details.retrieve_failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data, false);    
+    }  
+    
+    public function formatHcmResult($getHcmList = array()){
+        $mainAry = $hcmDetails = $return = array();
+        if(!empty($getHcmList)){
+            foreach ($getHcmList as $value) {
+                $subAry = array();
+                $subAry['hcm_id']   = $value->hcm_id;
+                $subAry['name']     = $value->name;
+                $subAry[$value->config_name] = $value->config_value;
+                #arrange HCM details record here
+                if(isset($mainAry['hcm_id']) && $mainAry['hcm_id']!= $subAry['hcm_id']){
+                    $hcmDetails[] = $mainAry;
+                    $mainAry = array();
+                } 
+                $mainAry = array_merge($mainAry, $subAry);     
+            }
+            #last record adding with result
+            if(!empty($mainAry['hcm_id'])){
+                $hcmDetails[] = $mainAry;
+            }
+            $return = $hcmDetails;
+        }    
+        return $hcmDetails;
+    }
+    
+    public function getHcmList($input){
+        
+        $returnAry = $data = $getHcmList = array();
+        $companyCode    = !empty($input['company_code'])?$input['company_code']:'';
+        #get the logged in user company details with company code here
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = !empty($companyDetails[0]->id)?$companyDetails[0]->id:0;
+        #get company HCMs List here
+        $getHcmList = $this->enterpriseRepository->getHcmList($companyId);
+        $hcmDetails = $this->formatHcmResult($getHcmList);
+        
+        foreach ($hcmDetails as $value) {
+            $return = array();
+            $return['hcm_id']   = $value['hcm_id'];
+            $return['hcm_name'] = $value['name'];
+            $return['hcm_url']  = $value['DCNAME'];
+            $return['hcm_username'] = $value['USERNAME'];
+            $return['hcm_password'] = $value['PASSWORD'];
+            $returnAry[] = $return;
+        }       
+        
+        if(!empty($returnAry)){
+            $data = $returnAry;
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.hcm_details.retrieve_success')));
+        }else{
+            $responseCode   = self::ERROR_RESPONSE_CODE;
+            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.hcm_details.retrieve_failure')));
+          }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data, false);    
+    } 
+    
+    public function getHcmPartners(){
+        
+        $returnAry = $data = $hcmPartners = array();
+        #get company HCM Partners List here
+        $hcmPartners = $this->enterpriseRepository->getHcmPartners();
+        if(!empty($hcmPartners)){
+            #form company HCM Partners List here
+            foreach ($hcmPartners as $value) {
+                $return = array();
+                $return['hcm_id']   = $value->hcm_id;
+                $return['hcm_name'] = $value->name;
+                $returnAry[] = $return;
+            }       
+            $data = $returnAry;
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.hcm_details.retrieve_success')));
+        }else{
+            $responseCode   = self::ERROR_RESPONSE_CODE;
+            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.hcm_details.retrieve_failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data, false);    
     }    
+    
+    public function companyIntegration($input){
+        $inputData = $data = array();
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($input['company_code']);
+        $userDetails = $this->enterpriseRepository->getCompanyConnectedUser($input['company_code']);
+        if(!empty($companyDetails) && !empty($userDetails)){
+            $inputData['company_code'] = $input['company_code'];
+            $inputData['company_id'] = $companyDetails[0]->id;
+            $inputData['user_id']    = $userDetails[0]->user_id; 
+            $inputData['idp_signin_url'] = 'https://pmsalesdemo8.successfactors.com/sf/idp/SAML2/SSO/POST/company/SFPART011097';
+            $inputData['idp_signout_url'] = 'https://pmsalesdemo8.successfactors.com/sf/idp/SAML2/slo/POST';
+            $inputData['idp_issuer'] = 'https://pmsalesdemo8.successfactors.com/sf/idp/SAML2/company/SFPART011097';
+            $inputData['idp_cert'] = 'MIICDTCCAXagAwIBAgIETJj9LjANBgkqhkiG9w0BAQUFADBLMQswCQYDVQQGEwJVUzEbMBkGA1UE
+                                      ChMSU3VjY2Vzc2ZhY3RvcnMuY29tMQwwCgYDVQQLEwNPcHMxETAPBgNVBAMTCFNGIEFkbWluMB4X
+                                      DTEwMDkyMTE4NDUwMloXDTI1MDkxOTE4NDUwMlowSzELMAkGA1UEBhMCVVMxGzAZBgNVBAoTElN1
+                                      Y2Nlc3NmYWN0b3JzLmNvbTEMMAoGA1UECxMDT3BzMREwDwYDVQQDEwhTRiBBZG1pbjCBnzANBgkq
+                                      hkiG9w0BAQEFAAOBjQAwgYkCgYEArA9RLNnL9Pt6xynFfYfa8VXAXFDG9Y8xkgs3lhIOlsjqEYwb
+                                      SoghiqJIJvfYM45kx3aB7ZrN96tAR5uUupEsu/GcS6ACxhfruW+BY6uw8v6/w2vXhBdfFjBoO+Ke
+                                      Lx4k3llleVgKsmNlf81okOXv1ree8wErfZ3ssnNxkuQgGB0CAwEAATANBgkqhkiG9w0BAQUFAAOB
+                                      gQBeBCSMFnY8TB6jtWoSP/lorBudhptgvO7/3r+l/QK0hdk6CVv+VQmSilNPgWVgU9ktZGbNkZhw
+                                      IgwnqIQHAi6631ufkYQJB+48YUe1q/pv6EWaeIwGvcGYSXZp/E/aGZPtceTIXFPfqOyHQoFtb0nq
+                                      MMFWoDhpXUHmlroyTc9sJg==';
+            $inputData['status']   = '1';
+            $checkIntegration = $this->enterpriseRepository->checkCompanyIntegration($inputData['company_code']);
+            if(empty($checkIntegration))
+            {
+                $companyIntegrated = $this->enterpriseRepository->integrateCompany($inputData);
+                if($companyIntegrated){
+                    $data['idp_signin_url']  = $companyIntegrated[0]->idp_signin_url;
+                    $data['idp_signout_url']  = $companyIntegrated[0]->idp_signout_url;
+                    $data['idp_issuer']  = $companyIntegrated[0]->idp_issuer;
+                    $data['idp_cert']  = $companyIntegrated[0]->idp_cert;
+                    $responseCode   = self::SUCCESS_RESPONSE_CODE;
+                    $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                    $responseMessage= array('msg' => array(Lang::get('MINTMESH.company_integration.success')));
+                }else{
+                    $data  =  array();
+                    $responseCode   = self::ERROR_RESPONSE_CODE;
+                    $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+                    $responseMessage= array('msg' => array(Lang::get('MINTMESH.company_integration.failure')));
+                }
+            }else{
+                $data['idp_signin_url']  =  $checkIntegration[0]->idp_signin_url;
+                $data['idp_signout_url']  = $checkIntegration[0]->idp_signout_url;
+                $data['idp_issuer']  = $checkIntegration[0]->idp_issuer;
+                $data['idp_cert']  = $checkIntegration[0]->idp_cert;
+                $responseCode   = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseMessage= array('msg' => array(Lang::get('MINTMESH.company_integration.success')));
+            }
+            
+        }else{
+            $data  =  array();
+            $responseCode   = self::ERROR_RESPONSE_CODE;
+            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.company_integration.failure')));
+        }
+              return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data, false);  
+    }
 }
 
 ?>

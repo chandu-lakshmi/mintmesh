@@ -511,6 +511,16 @@ return array(
             "success"=>"successfully retrieved Job details",
             "no_jobs"=>"no Jobs found",
             "failure"=>"failed to retrieve Job details"
+    ),
+    'company_integration'=>array(
+           "success"=>"successfully integrated",
+           "failure"=>"failed to integrated"
+    ),
+     'hcm_details'=>array(
+            "insert_success"    =>  "HCM details added successfully",
+            "update_success"    =>  "HCM details successfully updated",
+            "retrieve_success"  =>  "successfully retrieved HCM details",
+            "hcm_name_isexist"  =>  "HCM name already exist",
+            "retrieve_failure"  =>  "failed to retrieve HCM details"
     )
-    
 );

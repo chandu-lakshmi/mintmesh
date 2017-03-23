@@ -938,4 +938,93 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         return $result;
     }
     
+    public function addHcm($companyId, $hcmName) {
+        
+        $date = gmdate("Y-m-d H:i:s");
+        $return = 0;
+        $sql = "insert into hcm(`name`,`status`,`created_at`) values('".$hcmName."','1','".$date."')";
+        $result = DB::statement($sql);
+        if($result){
+            $hcmId  = DB::select("SELECT LAST_INSERT_ID() as hcm_id"); 
+            $hcmId  = !empty($hcmId[0]->hcm_id)?$hcmId[0]->hcm_id:'';
+            $data   = $this->hcmConfig($hcmId, $companyId);
+            $return = $hcmId;
+        }
+        return $return;
+    }
+    
+    public function hcmConfig($hcmId, $companyId) {
+        
+        $date = gmdate("Y-m-d H:i:s");
+        $return = 0;
+        $sql = "insert into hcm_config_properties(`hcm_id`,`company_id`,`config_name`,`config_value`,`created_at`)
+                values
+                ('".$hcmId."','".$companyId."','DCNAME','','".$date."'),
+                ('".$hcmId."','".$companyId."','USERNAME','','".$date."'),
+                ('".$hcmId."','".$companyId."','PASSWORD','','".$date."')";
+        $return = DB::Statement($sql);
+        return $return;
+    }
+    
+    public function updateHcm($hcmId=0, $hcmAry=array()) {
+        $result = array();
+        foreach ($hcmAry as $value) {
+           $configName     = $value['name'];
+           $configValue    = $value['value'];
+           if(!empty($configValue)){
+               $sql = "update hcm_config_properties set config_value='".$configValue."' where hcm_id='".$hcmId."' and config_name='".$configName."' ";
+               $result[] = DB::statement($sql);
+           }
+        }
+        return  $result;
+    }
+    
+    public function getHcmList($companyId='') {
+        $result = FALSE;
+        if(!empty($companyId)){
+         $sql = "select h.hcm_id,h.name,c.config_name,c.config_value from
+                hcm_config_properties c
+                left join hcm h on h.hcm_id = c.hcm_id
+                where c.company_id='".$companyId."'";
+         $result = DB::SELECT($sql);
+        }
+        return $result;
+    }
+    
+    public function getCompanyConnectedUser($companyCode='') {
+        return DB::table('company_user_mapping')  
+                ->limit(1)
+                ->where('code', '=', $companyCode)->get();
+    }
+    
+    public function integrateCompany($input = array()) {
+         $result = DB::table('company_idp')->insert(
+                                array(
+                                    'company_id' => $input['company_id'],
+                                    'user_id' => $input['user_id'],
+                                    'company_code' => $input['company_code'],
+                                    'idp_signin_url' => $input['idp_signin_url'],
+                                    'idp_signout_url' => $input['idp_signout_url'],
+                                    'idp_issuer' => $input['idp_issuer'],
+                                    'idp_cert' => $input['idp_cert'],
+                                    'status' => $input['status']
+                                )
+                        );
+         if($result){
+           return DB::table('company_idp')  
+                ->where('company_code', '=', $input['company_code'])->get();
+         }
+    }
+         
+    public function checkCompanyIntegration($companyCode='') {
+        return DB::table('company_idp')  
+                ->where('company_code', '=', $companyCode)->get();
+    }
+    
+    public function getHcmPartners() {
+        return DB::table('hcm')
+                ->select('hcm_id','name')
+                ->get();
+    }
+    
 }

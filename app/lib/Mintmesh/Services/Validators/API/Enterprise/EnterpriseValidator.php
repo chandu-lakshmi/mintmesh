@@ -144,6 +144,12 @@ class EnterpriseValidator extends Validator {
         ),
         'company_subscriptions' => array(
             'company_code'      => 'required',
+        ),
+        'add_edit_hcm' => array(
+            'company_code'      => 'required',
+        ),
+        'get_hcm_list' => array(
+            'company_code'      => 'required',
         )
         );
     

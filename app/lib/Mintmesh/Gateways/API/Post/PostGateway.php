@@ -329,13 +329,14 @@ class PostGateway {
                     $contactList = $neoCompanyBucketContacts['data'];
                         
                     foreach ($contactList['Contacts_list'] as $contact => $contacts) {
-                        
+                       
                         if($contacts->status != 'Separated'){
-                            
+                            $neoUser = $this->neoEnterpriseRepository->getNodeByEmailId($contacts->emailid);
                             #creating included Relation between Post and Contacts 
                             $pushData['postId']         = $postId;
                             $pushData['bucket_id']      = $input['bucket_id'];
                             $pushData['contact_emailid']= $contacts->emailid;
+                            $pushData['contact_id']     = $neoUser['id'];
                             $pushData['company_code']   = $input['company_code'];
                             $pushData['user_emailid']   = $this->loggedinEnterpriseUserDetails->emailid;
                             $pushData['notification_msg'] = $notificationMsg;
@@ -416,16 +417,22 @@ class PostGateway {
     public function createPostContactsRelation($jobData = array()) {
         
         if (!empty($jobData['bucket_id']) && !empty($jobData['postId'])) {
-            
+            $encodeString   = Config::get('constants.MINTMESH_ENCCODE');
+            $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
             $postId          = $jobData['postId'];
             $contactEmailid  = $jobData['contact_emailid'];
+            $contactId  = $jobData['contact_id'];
             $company_code    = $jobData['company_code'];
             $notificationMsg = $jobData['notification_msg'];
-
+            $refId      = $postId.'_'.$contactId;
+            $refCode    = MyEncrypt::encrypt_blowfish($refId, $encodeString);
+            $url = $enterpriseUrl . "/email/job-details/share?ref=" . $refCode."";; 
+            $biltyUrl = $this->urlShortner($url);
             $relationAttrs = array();
             $relationAttrs['company_code']  = $jobData['company_code'];
             $relationAttrs['user_emailid']  = $jobData['user_emailid'];
             $relationAttrs['bucket_id']     = $jobData['bucket_id'];
+            $relationAttrs['bittly_url'] = $biltyUrl;
              // Log::info("<<<<<<<<<<<<<<<< In Queue >>>>>>>>>>>>>".print_r($postDetails,1));
             try {
                 $postDetails = $this->neoPostRepository->createPostContactsRelation($relationAttrs, $postId, $company_code, $contactEmailid);
@@ -1222,11 +1229,12 @@ class PostGateway {
             $inviteCount+=$contactList['total_records'][0]->total_count;
 
             foreach ($contactList['Contacts_list'] as $contact => $contacts) {
-
+                $neoUser = $this->neoEnterpriseRepository->getNodeByEmailId($contacts->emailid);
                 $pushData['postId']         = $postId;
                 $pushData['bucket_id']      = $input['bucket_id'];
                 $pushData['company_code']   = $input['company_code'];
                 $pushData['user_emailid']   = $loggedInUser->emailid;
+                $pushData['contact_id']   = $neoUser['id'];
                 $pushData['contact_emailid']  = $contacts->emailid;
                 $pushData['notification_msg'] = $notificationMsg;
 //                $this->createPostContactsRelation($pushData) ;
@@ -1244,7 +1252,6 @@ class PostGateway {
             $contactList = $neoCompanyBucketContacts['data'];
 
             foreach ($contactList['Contacts_list'] as $contact => $contacts) {
-
                 $pushData['campaign_id']        = $campaignId;
                 $pushData['bucket_id']          = $input['bucket_id'];
                 $pushData['contact_emailid']    = $contacts->emailid;
@@ -1288,20 +1295,24 @@ class PostGateway {
         
         
         $relationAttrs  = array();
+        $encodeString   = Config::get('constants.MINTMESH_ENCCODE');
+        $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
         $campaignId     = $relationInput['campaign_id'];
         $contactEmailid = $relationInput['contact_emailid'];
         $relationAttrs['bucket_id']     = $relationInput['bucket_id'];
         $relationAttrs['company_code']  = $relationInput['company_code'];
         $relationAttrs['created_by']    = $relationInput['user_emailid'];
         $relationAttrs['created_at']    = date("Y-m-d H:i:s");
+        $refId = $this->neoPostRepository->getUserNodeIdByEmailId($contactEmailid);
+        $refCode                        = MyEncrypt::encrypt_blowfish($campaignId.'_'.$refId,Config::get('constants.MINTMESH_ENCCODE'));
+        $url = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode."";; 
+        $biltyUrl = $this->urlShortner($url);
          //\Log::info("<<<<<<<<<<<<<<<< In Queue >>>>>>>>>>>>>".print_r($neoInput,1));
         try {
             $this->neoPostRepository->createCampaignContactsRelation($relationAttrs, $campaignId, $contactEmailid);
             #send email notifications to all the contacts
             $refId = $refCode = 0;
             $emailData  = array();
-            $refId = $this->neoPostRepository->getUserNodeIdByEmailId($contactEmailid);
-            $refCode                        = MyEncrypt::encrypt_blowfish($campaignId.'_'.$refId,Config::get('constants.MINTMESH_ENCCODE'));
             $emailData['company_name']      = $relationInput['company_name'];
             $emailData['company_code']      = $relationInput['company_code'];
             $emailData['campaign_id']       = $campaignId;
@@ -1319,6 +1330,7 @@ class PostGateway {
             $emailData['user_name']      = $relationInput['user_name'];
             $emailData['ref_code']          = $refCode;
             $emailData['ip_address']     = $relationInput['ip_address'] ;
+            $emailData['bittly_url']     = $biltyUrl ;
             $this->sendCampaignEmailToContacts($emailData); 
         
 
@@ -1351,8 +1363,8 @@ class PostGateway {
         $dataSet['app_id']              = '341777892883502';
         #redirect email links
           $dataSet['view_jobs_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/share?ref=" . $refCode."";
-          $bitlyUrl = $this->urlShortner($dataSet['view_jobs_link']);
-          $dataSet['bittly_link']    = $bitlyUrl;
+//          $bitlyUrl = $this->urlShortner($dataSet['view_jobs_link']);
+          $dataSet['bittly_link']    = $emailData['bittly_url'];;
           $dataSet['view_jobs_link_web']      = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/web?ref=" . $refCode."";
         #set email required params
         $this->userEmailManager->templatePath   = Lang::get('MINTMESH.email_template_paths.contacts_campaign_invitation');
@@ -2419,7 +2431,6 @@ class PostGateway {
             #get jobs list with company code
 //            $jobsListAry    = $this->neoGlobalRepository->getJobsList($userEmailId, $companyCode, $page, $search);
             $jobsListAry    = $this->neoPostRepository->getJobsList($userEmailId, $companyCode, $page, $search);
-           
             if(!empty($jobsListAry->count())){
                 //$jobsCount = $this->neoPostRepository->getCompanyJobsCount($userEmailId, $companyCode);
                 $listCount = $jobsListAry->count();
@@ -2460,13 +2471,16 @@ class PostGateway {
                             $record['campaign_jobs']  = $campaignJobs;//array('ios developer','android developer','php developer');
                             $postRead                       = !empty($jobRel->post_read_status)?1:0;
                             $record['campaign_read_status'] = $postRead; 
-
+                            if(isset($jobRel->bittly_url) && !empty($jobRel->bittly_url)){
+                                $record['social_campaign_share'] = $jobRel->bittly_url;
+                            }else{
                             $refId      = $campaignId.'_'.$neoUserId;
                             $refCode    = MyEncrypt::encrypt_blowfish($refId, $encodeString);
 //                            $record['social_campaign_share'] = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
                             $url = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
                             $biltyUrl = $this->urlShortner($url);
                             $record['social_campaign_share'] = $biltyUrl;
+                            }
                             $unreadCount+=empty($postRead)?1:0;
 
                         }  else {
@@ -2486,13 +2500,16 @@ class PostGateway {
                             $record['rewards']          = $postRewards;
                             $postRead                   = !empty($jobRel->post_read_status)?1:0;
                             $record['post_read_status'] = $postRead; 
-
+                            if(isset($jobRel->bittly_url) && !empty($jobRel->bittly_url)){
+                                $record['social_job_share'] = $jobRel->bittly_url;
+                            } else{
                             $refId      = $postId.'_'.$neoUserId;
                             $refCode    = MyEncrypt::encrypt_blowfish($refId, $encodeString);
 //                            $record['social_job_share'] = $enterpriseUrl . "/email/job-details/share?ref=" . $refCode."";; 
                             $url = $enterpriseUrl . "/email/job-details/share?ref=" . $refCode."";; 
                             $biltyUrl = $this->urlShortner($url);
                             $record['social_job_share'] = $biltyUrl;
+                            }
                             $unreadCount+=empty($postRead)?1:0;
                             $jobsCount+=1;
 

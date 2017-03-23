@@ -917,5 +917,95 @@ class EnterpriseController extends \BaseController {
             }
             
 	}
+        /**
+	 * POST add Edit Hcm details
+         * 
+         * POST/user
+         * 
+	 * @param string $access_token The Access token of a user
+         * @param string $company_code The company details 
+         * 
+	 * @return Response
+	 */
+	public function addEditHcm()
+	{
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->EnterpriseGateway->validateAddEditHcmInput($inputUserData);
+            if($validation['status'] == 'success') {
+               $response = $this->EnterpriseGateway->addEditHcm($inputUserData);
+               return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+            
+	}
+        /**
+	 * POST get Hcms List
+         * 
+         * POST/user
+         * 
+	 * @param string $access_token The Access token of a user
+         * @param string $company_code The company details 
+         * 
+	 * @return Response
+	 */
+	public function getHcmList()
+	{
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->EnterpriseGateway->validateGetHcmListInput($inputUserData);
+            if($validation['status'] == 'success') {
+               $response = $this->EnterpriseGateway->getHcmList($inputUserData);
+               return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+            
+	}
+        
+         /**
+	 * Company integration
+         * 
+         * POST/company_integration
+         * 
+	 * @param string $access_token The Access token of a user
+         * @param string $company_code The company details 
+         * 
+	 * @return Response
+	 */
+	public function companyIntegration()
+	{
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->EnterpriseGateway->validateGetCompanySubscriptionsInput($inputUserData);
+            if($validation['status'] == 'success') {
+               $response = $this->EnterpriseGateway->companyIntegration($inputUserData);
+               return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+            
+	}
+        
+        /**
+	 * POST get Hcm Partners
+         * 
+         * POST/user
+         * 
+	 * @param string $access_token The Access token of a user
+         * 
+	 * @return Response
+	 */
+        public function getHcmPartners(){
+               $response = $this->EnterpriseGateway->getHcmPartners();
+            return \Response::json($response);
+        }
 }
 ?>

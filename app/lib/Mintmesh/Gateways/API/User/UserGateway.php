@@ -2991,12 +2991,13 @@ class UserGateway {
                                     $companyDetails = $this->neoPostRepository->getPostCompany($serviceId);    
                                     $companyName    = !empty($companyDetails->name)?$companyDetails->name:'';
                                     $emailId        = !empty($userDetails['emailid'])?$userDetails['emailid']:"";
+                                    $extra_msg      = Lang::get('MINTMESH.notifications.extra_texts.'.$notificationType) ; 
                                     #referral accept notification
                                     $from_user       = $fromUser->emailid;
                                     $referral        = ($is_mintmesh)?$other_email:$other_phone;
                                     $referred_by     = $emailId;
                                     $relation_count  = 1;
-                                    $message         = $companyName." ".$noteMsg." ".$serviceName;
+                                    $message         = $companyName." ".$noteMsg.$extra_msg." ".$serviceName;
                                     $referred_by_phone  = ($is_mintmesh)?0:1;
                                     
                                 }

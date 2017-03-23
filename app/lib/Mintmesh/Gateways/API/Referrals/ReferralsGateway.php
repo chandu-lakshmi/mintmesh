@@ -2298,7 +2298,12 @@ class ReferralsGateway {
          $response  = curl_exec($ch);
          curl_close($ch);
         $b = (array) json_decode($response, TRUE);
-       return $b;
+        if(!empty($b['data']['link_save']['link'])){
+            $return = $b['data']['link_save']['link'];
+        } else {
+            $return = $url;
+        }
+       return $return;
         
     }
     
