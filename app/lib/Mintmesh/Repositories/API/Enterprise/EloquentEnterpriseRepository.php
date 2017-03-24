@@ -966,26 +966,43 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         return $return;
     }
     
-    public function updateHcm($hcmId=0, $hcmAry=array()) {
+    public function setHcmConfigProperties($hcmId=0, $companyId=0, $hcmAry=array()) {
         $result = array();
+        $date = gmdate("Y-m-d H:i:s");
+        $result['insert'] = FALSE;
         foreach ($hcmAry as $value) {
            $configName     = $value['name'];
            $configValue    = $value['value'];
+
            if(!empty($configValue)){
-               $sql = "update hcm_config_properties set config_value='".$configValue."' where hcm_id='".$hcmId."' and config_name='".$configName."' ";
-               $result[] = DB::statement($sql);
+            $checkHcm = $this->getHcmConfigProperties($hcmId, $companyId, $configName);
+                if(!empty($checkHcm)){
+                   $sql = "update hcm_config_properties set config_value='".$configValue."' where hcm_id='".$hcmId."' and company_id = '".$companyId."'  and config_name='".$configName."' ";
+                   $result[] = DB::statement($sql);
+                }else{
+                   $sql = "insert into hcm_config_properties(`hcm_id`,`company_id`,`config_name`,`config_value`,`created_at`)
+                            values ('".$hcmId."','".$companyId."','".$configName."','".$configValue."','".$date."')";
+                   $result[] = DB::statement($sql);
+                   $result['insert'] = TRUE;
+                }
            }
         }
         return  $result;
     }
     
-    public function getHcmList($companyId='') {
+    public function getHcmList($companyId='', $hcmId='') {
         $result = FALSE;
         if(!empty($companyId)){
-         $sql = "select h.hcm_id,h.name,c.config_name,c.config_value from
+         $sql = "select h.hcm_id, h.name, c.config_name, c.config_value, s.status from
                 hcm_config_properties c
                 left join hcm h on h.hcm_id = c.hcm_id
+                left join hcm_jobs j on j.hcm_id = c.hcm_id
+                left join company_hcm_jobs s on s.hcm_jobs_id = j.hcm_jobs_id
                 where c.company_id='".$companyId."'";
+            #get single hcm details    
+            if(!empty($hcmId)){
+                $sql .=" and c.hcm_id = '".$hcmId."'";
+            }
          $result = DB::SELECT($sql);
         }
         return $result;
@@ -1018,13 +1035,40 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
          
     public function checkCompanyIntegration($companyCode='') {
         return DB::table('company_idp')  
-                ->where('company_code', '=', $companyCode)->get();
+                ->where('hcm_id', '=', $companyCode)->get();
     }
     
     public function getHcmPartners() {
         return DB::table('hcm')
                 ->select('hcm_id','name')
                 ->get();
+    }
+    
+    public function getHcmConfigProperties($hcmId='', $companyId='', $configName='') {
+        return DB::table('hcm_config_properties')  
+                ->where('hcm_id', '=', $hcmId)
+                ->where('company_id', '=', $companyId)
+                ->where('config_name', '=', $configName)->get();
+    }
+    
+    public function getCompanyHcmJobs($hcmId='', $companyId='') {
+        $result = FALSE;
+        if(!empty($hcmId)){
+        $sql = "select c.* from company_hcm_jobs c
+                left join hcm_jobs j on j.hcm_jobs_id = c.hcm_jobs_id 
+                where j.hcm_id = '".$hcmId."' and company_id = '".$companyId."'";
+          $result = DB::SELECT($sql);
+        } 
+        return $result;
+    }
+    public function updateHcmRunStatus($companyHcmJobsId='', $hcmRunStatus='') {
+        $result = FALSE;
+        $hcmRunStatus = ($hcmRunStatus=='enable')?1:0;
+        if(!empty($companyHcmJobsId)){
+           $sql = "update company_hcm_jobs set status='".$hcmRunStatus."' where company_hcm_jobs_id='".$companyHcmJobsId."'";
+           $result = DB::statement($sql);
+        }
+        return $result;
     }
     
 }

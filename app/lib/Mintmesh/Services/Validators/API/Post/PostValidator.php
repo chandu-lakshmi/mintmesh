@@ -18,6 +18,7 @@ class PostValidator extends Validator {
             'job_period'      => 'required',
             'bucket_id'       => 'required',
             'job_type'        => 'required',
+            'post_type'       => 'required',
             'company_code'    => 'required'
         ),
         'jobs_list' => array(

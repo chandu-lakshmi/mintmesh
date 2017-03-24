@@ -55,6 +55,7 @@ class PostGateway {
     public function __construct(NeoPostRepository $neoPostRepository, 
                                 UserRepository $userRepository, 
                                 NeoUserRepository $neoUserRepository, 
+//                                NeoGlobalRepository $neoGlobalRepository, 
                                 UserGateway $userGateway, 
                                 UserController $userController, 
                                 ReferralsGateway $referralsGateway, 
@@ -75,6 +76,7 @@ class PostGateway {
                                 
     ) {
         $this->neoPostRepository = $neoPostRepository;
+//        $this->neoGlobalRepository = $neoGlobalRepository;
         $this->userController = $userController;
         $this->userRepository = $userRepository;
         $this->neoEnterpriseRepository = $neoEnterpriseRepository;
@@ -240,27 +242,27 @@ class PostGateway {
             $relationAttrs = $neoInput = $excludedList = $getSkillsAry = array();
             $neoInput['service_scope']      = "find_candidate";
             $neoInput['service_from_web']   = 1;
-            $neoInput['service_name']       = $input['job_title'];
-            $neoInput['looking_for']        = $input['job_title'];
-            $neoInput['job_function']       = $input['job_function'];
-            $neoInput['service_location']   = $input['location'];
+            $neoInput['service_name']       = !empty($input['job_title'])?$input['job_title']:'';
+            $neoInput['looking_for']        = !empty($input['job_title'])?$input['job_title']:'';
+            $neoInput['job_function']       = !empty($input['job_function'])?$input['job_function']:'';
+            $neoInput['service_location']   = !empty($input['location'])?$input['location']:'';
             $neoInput['service_country']    = !empty($input['country_code'])?$input['country_code']:'';
-            $neoInput['industry']           = $input['industry'];
-            $neoInput['employment_type']    = $input['employment_type'];
-            $neoInput['experience_range']   = $input['experience_range'];
-            $neoInput['service']            = $input['job_description'];
-            $neoInput['position_id']        = !empty($input['position_id']) ? $input['position_id'] : "";
-            $neoInput['requistion_id']      = !empty($input['requistion_id']) ? $input['requistion_id'] : "";
-            $neoInput['no_of_vacancies']    = !empty($input['no_of_vacancies']) ? $input['no_of_vacancies'] :0;
-            $neoInput['service_period']     = $input['job_period'];
-            $neoInput['service_type']       = $input['job_type'];
-            $neoInput['post_type']          = $input['post_type'];
+            $neoInput['industry']           = !empty($input['industry'])?$input['industry']:'';
+            $neoInput['employment_type']    = !empty($input['employment_type'])?$input['employment_type']:'';
+            $neoInput['experience_range']   = !empty($input['experience_range'])?$input['experience_range']:'';
+            $neoInput['service']            = !empty($input['job_description'])?$input['job_description']:'';
+            $neoInput['position_id']        = !empty($input['position_id'])?$input['position_id'] : "";
+            $neoInput['requistion_id']      = !empty($input['requistion_id'])?$input['requistion_id'] : "";
+            $neoInput['no_of_vacancies']    = !empty($input['no_of_vacancies'])?$input['no_of_vacancies'] :0;
+            $neoInput['service_period']     = !empty($input['job_period'])?$input['job_period'] : "";
+            $neoInput['service_type']       = !empty($input['job_type'])?$input['job_type'] : "";
+            $neoInput['post_type']          = !empty($input['post_type'])?$input['post_type'] : "";
             $neoInput['free_service']       = !empty($input['free_job']) ? 1 : 0;
-            $neoInput['service_currency']   = !empty($input['job_currency']) ? $input['job_currency'] : "";
-            $neoInput['service_cost']       = !empty($input['job_cost']) ? $input['job_cost'] : "";
-            $neoInput['bucket_id']          = $input['bucket_id'];
-            $neoInput['company']            = $input['company_name'];
-            $neoInput['job_description']    = $input['job_description'];
+            $neoInput['service_currency']   = !empty($input['job_currency'])?$input['job_currency'] : "";
+            $neoInput['service_cost']       = !empty($input['job_cost'])?$input['job_cost'] : "";
+            $neoInput['bucket_id']          = !empty($input['bucket_id'])?$input['bucket_id'] : "";
+            $neoInput['company']            = !empty($input['company_name'])?$input['company_name'] : "";
+            $neoInput['job_description']    = !empty($input['job_description'])?$input['job_description'] : "";
             $neoInput['status']             = Config::get('constants.POST.STATUSES.ACTIVE');
             $neoInput['created_by']         = $emailId;
             #form jobs skills here
@@ -270,8 +272,8 @@ class PostGateway {
             //print_r($neoInput).exit;
             
             $relationAttrs['created_at']    = date("Y-m-d H:i:s");
-            $relationAttrs['company_name']  = $input['company_name'];
-            $relationAttrs['company_code']  = $input['company_code'];
+            $relationAttrs['company_name']  = $neoInput['company'];
+            $relationAttrs['company_code']  = !empty($input['company_code'])?$input['company_code']:'';
             $objCompany->fullname   = $relationAttrs['company_name'];
             $createdPost = $this->neoPostRepository->createPostAndUserRelation($fromId,$neoInput, $relationAttrs);
             if (isset($createdPost[0]) && isset($createdPost[0][0])) {
@@ -773,8 +775,9 @@ class PostGateway {
 //                $createdAt = $this->appEncodeDecode->UserTimezone($postRelDetails['created_at'],$input['time_zone']); 
                 $returnReferralDetails['created_at']            = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
                 if(!empty($postRelDetails['p1_updated_at'])){
-//                $updatedAt = $postRelDetails['p1_updated_at']; 
-                $updatedAt = $this->appEncodeDecode->UserTimezone($postRelDetails['p1_updated_at'],$input['time_zone']); 
+//                $updatedAt = $postRelDetails['p1_updated_at'];
+                $timeZone = !empty($input['time_zone'])?$input['time_zone']:'';   
+                $updatedAt = $this->appEncodeDecode->UserTimezone($postRelDetails['p1_updated_at'], $timeZone); 
                 }
                 $returnReferralDetails['updated_at']            = !empty($updatedAt)?gmdate("d M Y H:i", strtotime($updatedAt)):'';
                 $returnReferralDetails['referred_by']           = $neoReferrerDetails['emailid'];
@@ -1307,11 +1310,12 @@ class PostGateway {
         $refCode                        = MyEncrypt::encrypt_blowfish($campaignId.'_'.$refId,Config::get('constants.MINTMESH_ENCCODE'));
         $url = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode."";; 
         $biltyUrl = $this->urlShortner($url);
+        $relationAttrs['bittly_url']    = $biltyUrl;
          //\Log::info("<<<<<<<<<<<<<<<< In Queue >>>>>>>>>>>>>".print_r($neoInput,1));
         try {
             $this->neoPostRepository->createCampaignContactsRelation($relationAttrs, $campaignId, $contactEmailid);
             #send email notifications to all the contacts
-            $refId = $refCode = 0;
+            $refId  = 0;
             $emailData  = array();
             $emailData['company_name']      = $relationInput['company_name'];
             $emailData['company_code']      = $relationInput['company_code'];
