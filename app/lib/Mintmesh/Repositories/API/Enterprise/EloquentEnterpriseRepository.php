@@ -1071,4 +1071,39 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         return $result;
     }
     
+     public function getCompanyAllContacts($params){
+                $sql = 'SELECT SQL_CALC_FOUND_ROWS c.id AS record_id, 
+                    c.firstname, 
+                    c.lastname, c.emailid, c.phone, c.employeeid, c.status
+                        FROM contacts c ';
+                if(!empty($params['bucket_id']))
+                $sql.= ' LEFT JOIN buckets_contacts bc ON c.id=bc.contact_id';
+                
+               // $sql = "select SQL_CALC_FOUND_ROWS id as record_id, firstname, lastname, emailid, phone, employeeid, status from contacts ";
+                $sql.= " where c.company_id='".$params['company_id']."' " ;
+                 if(!empty($params['bucket_id'])){
+                     $sql.= " AND bc.bucket_id = '".$params['bucket_id']."' " ;
+                 }
+               // $sql.= !empty($params['bucket_id'])?" and id IN (select contact_id from buckets_contacts where bucket_id = '".$params['bucket_id']."') ":'';
+                
+                if(!empty($params['search'])){
+                    $sql.= " AND (c.emailid like '%".  $this->appEncodeDecode->filterString(strtolower($params['search']))."%')";
+                }
+                 $sql .= " GROUP BY c.id ";
+                $sql .= "order by status";
+                if($params['sort'] == 'desc'){
+                    $sql .= " desc";
+                }
+                $page = $params['page_no'];
+                if (!empty($page))
+                {
+                    $page = $page-1 ;
+                    $offset  = $page*50 ;
+                    $sql.=  " limit ".$offset.",50 ";
+                } 
+                $result['Contacts_list'] = DB::select($sql);
+                $result['total_records'] = DB::select("select FOUND_ROWS() as total_count");
+            return $result;    
+        }
+    
 }

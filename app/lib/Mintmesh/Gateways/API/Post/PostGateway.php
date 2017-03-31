@@ -2475,16 +2475,16 @@ class PostGateway {
                             $record['campaign_jobs']  = $campaignJobs;//array('ios developer','android developer','php developer');
                             $postRead                       = !empty($jobRel->post_read_status)?1:0;
                             $record['campaign_read_status'] = $postRead; 
-                            if(isset($jobRel->bittly_url) && !empty($jobRel->bittly_url)){
-                                $record['social_campaign_share'] = $jobRel->bittly_url;
-                            }else{
+//                            if(isset($jobRel->bittly_url) && !empty($jobRel->bittly_url)){
+//                                $record['social_campaign_share'] = $jobRel->bittly_url;
+//                            }else{
                             $refId      = $campaignId.'_'.$neoUserId;
-                            $refCode    = MyEncrypt::encrypt_blowfish($refId, $encodeString);
-//                            $record['social_campaign_share'] = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
-                            $url = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
-                            $biltyUrl = $this->urlShortner($url);
-                            $record['social_campaign_share'] = $biltyUrl;
-                            }
+                             $refCode    = MyEncrypt::encrypt_blowfish($refId, $encodeString);
+                            $record['social_campaign_share'] = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
+//                            $url = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
+//                            $biltyUrl = $this->urlShortner($url);
+//                            $record['social_campaign_share'] = $biltyUrl;
+//                            }
                             $unreadCount+=empty($postRead)?1:0;
 
                         }  else {
@@ -2504,16 +2504,16 @@ class PostGateway {
                             $record['rewards']          = $postRewards;
                             $postRead                   = !empty($jobRel->post_read_status)?1:0;
                             $record['post_read_status'] = $postRead; 
-                            if(isset($jobRel->bittly_url) && !empty($jobRel->bittly_url)){
-                                $record['social_job_share'] = $jobRel->bittly_url;
-                            } else{
+//                            if(isset($jobRel->bittly_url) && !empty($jobRel->bittly_url)){
+//                                $record['social_job_share'] = $jobRel->bittly_url;
+//                            } else{
                             $refId      = $postId.'_'.$neoUserId;
                             $refCode    = MyEncrypt::encrypt_blowfish($refId, $encodeString);
-//                            $record['social_job_share'] = $enterpriseUrl . "/email/job-details/share?ref=" . $refCode."";; 
-                            $url = $enterpriseUrl . "/email/job-details/share?ref=" . $refCode."";; 
-                            $biltyUrl = $this->urlShortner($url);
-                            $record['social_job_share'] = $biltyUrl;
-                            }
+                            $record['social_job_share'] = $enterpriseUrl . "/email/job-details/share?ref=" . $refCode."";
+//                            $url = $enterpriseUrl . "/email/job-details/share?ref=" . $refCode."";
+//                            $biltyUrl = $this->urlShortner($url);
+//                            $record['social_job_share'] = $biltyUrl;
+//                            }
                             $unreadCount+=empty($postRead)?1:0;
                             $jobsCount+=1;
 

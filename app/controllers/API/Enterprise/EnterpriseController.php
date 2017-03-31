@@ -1007,5 +1007,30 @@ class EnterpriseController extends \BaseController {
                $response = $this->EnterpriseGateway->getHcmPartners();
             return \Response::json($response);
         }
+        
+         /**
+        * Company contacts
+        * 
+        * POST/login
+        * @param string  $access_token The Access token of a user  
+        * @param integer $company_id
+        * 
+        * @return Response
+        */
+	public function companyAllContacts()
+	{                 
+            // Receiving user input data
+            $inputUserData = \Input::all();            
+            // Validating user input data
+            $validation = $this->EnterpriseGateway->validateEnterpriseContactsList($inputUserData);            
+            if($validation['status'] == 'success') {
+                $returnResponse = \Response::json($this->EnterpriseGateway->companyAllContacts($inputUserData));
+            } else {
+                    // returning validation failure
+                $returnResponse = \Response::json($validation);
+            }
+            
+            return $returnResponse;
+	}
 }
 ?>

@@ -2953,6 +2953,48 @@ class EnterpriseGateway {
         }
               return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data, false);  
     }
+    
+    /**
+     * enterprise Contacts List.
+     *
+     * @return Response
+     */
+    public function companyAllContacts($input) {
+        $params = $data = $returnResult =  $returnData =array();
+        $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser(); //get the logged in user details
+        $params['user_id'] = $this->loggedinUserDetails->id;
+        $params['company_id'] = $input['company_id'];
+        $params['bucket_id'] = !empty($input['bucket_id']) ? $input['bucket_id'] : 0;
+        $params['page_no'] = !empty($input['page_no']) ? $input['page_no'] : 0;
+        $params['search'] = !empty($input['search']) ? $input['search'] : 0;
+        $params['sort'] = !empty($input['sort']) ? $input['sort'] : '';
+        $resultsSet = $this->enterpriseRepository->getCompanyAllContacts($params); //get the import contact list
+        if ($resultsSet) {
+            foreach($resultsSet['Contacts_list'] as $k=>$v){
+                $returnData['firstname'] = $v->firstname;
+                $returnData['lastname'] = $v->lastname;
+                $returnData['emailid'] = $v->emailid;
+                $returnResult[] = $returnData;
+            }
+            if(!empty($returnResult)){
+            $data = $returnResult;
+            $responseCode = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg = self::SUCCESS_RESPONSE_MESSAGE;
+            $message = array(Lang::get('MINTMESH.enterprise.retrieve_success'));
+            }else{
+                $responseCode = self::ERROR_RESPONSE_CODE;
+                $responseMsg = self::ERROR_RESPONSE_MESSAGE;
+                $message = array(Lang::get('MINTMESH.enterprise.retrieve_failure'));
+                $data = array();
+            }
+        } else {
+            $responseCode = self::ERROR_RESPONSE_CODE;
+            $responseMsg = self::ERROR_RESPONSE_MESSAGE;
+            $message = array(Lang::get('MINTMESH.enterprise.retrieve_failure'));
+            $data = array();
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $message, $data,false);
+    }
 }
 
 ?>
