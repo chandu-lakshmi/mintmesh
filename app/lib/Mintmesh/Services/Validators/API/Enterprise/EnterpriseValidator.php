@@ -106,7 +106,7 @@ class EnterpriseValidator extends Validator {
         'add_user' => array(
                 'fullname'              => 'required',
                 'designation'           => 'required',
-                'emailid'               => 'required|unique:users|email',
+                'emailid'               => 'required|email',
                 'location'              => 'required',
                 'status'                => 'required'
         ),
@@ -146,7 +146,8 @@ class EnterpriseValidator extends Validator {
             'company_code'      => 'required',
         ),
         'add_edit_hcm' => array(
-            'company_code'      => 'required',
+            'company_code'  => 'required',
+            'hcm_id'        => 'required',
         ),
         'get_hcm_list' => array(
             'company_code'      => 'required',

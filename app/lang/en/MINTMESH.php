@@ -115,7 +115,8 @@ return array(
                 "resume_attachment" => "emails.Api.User.resume_attachment",
                 "enterprise_contacts_invitation" => "emails.Api.User.enterprise_contacts_invitation",
                 "contacts_job_invitation" => "emails.Api.User.job_invitation",
-                "contacts_campaign_invitation" => "emails.Api.User.campaign_invitation"
+                "contacts_campaign_invitation" => "emails.Api.User.campaign_invitation",
+                "user_activation" => "emails.Api.User.user_activation"
          ),
          "activate_user"=>array(
              "success"=>"Successfully activated",
@@ -423,7 +424,7 @@ return array(
     ),
     'addUser'    =>   array(
                 "success"  =>  "user added successfully",
-                "failue"   =>   "failed to add user",
+                "failure"   =>   "failed to add user",
                 "userexists" =>  "user already exists",
                 "edit"     => "user details updated successfully",
                 "emailidexists"  => "emailid already exists"

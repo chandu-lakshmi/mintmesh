@@ -73,8 +73,8 @@ class NeoeloquentGlobalRepository extends BaseRepository implements NeoGlobalRep
         {
             $queryString.=" skip ".$skip." limit ".self::LIMIT ;
         }
+ //       print_r($queryString).exit;
         $query  = new CypherQuery($this->client, $queryString);
-//        print_r($query).exit;
         $result = $query->getResultSet();
         if($result){
            return $result;

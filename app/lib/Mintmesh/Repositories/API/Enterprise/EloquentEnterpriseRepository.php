@@ -280,6 +280,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
            $result = DB::select("select FOUND_ROWS() as total_count");     
            return $result[0];
         }
+        
         public function getImportContactsList($params){
                 $sql = 'SELECT SQL_CALC_FOUND_ROWS c.id AS record_id, 
                     c.firstname, 
@@ -303,8 +304,8 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                     $sql.= " OR c.employeeid like '%".  $this->appEncodeDecode->filterString(strtolower($params['search']))."%'";
                     $sql.= " OR c.status like '%".  $this->appEncodeDecode->filterString(strtolower($params['search']))."%')";
                 }
-                 $sql .= " GROUP BY c.id ";
-                $sql .= "order by status";
+                //$sql .= " GROUP BY c.id ";
+                //$sql .= "order by status";
                 if($params['sort'] == 'desc'){
                     $sql .= " desc";
                 }
@@ -315,6 +316,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                     $offset  = $page*50 ;
                     $sql.=  " limit ".$offset.",50 ";
                 } 
+                //echo $sql;exit;
                 $result['Contacts_list'] = DB::select($sql);
                 $result['total_records'] = DB::select("select FOUND_ROWS() as total_count");
             return $result;    
@@ -1064,7 +1066,17 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
     public function updateHcmRunStatus($companyHcmJobsId='', $hcmRunStatus='') {
         $result = FALSE;
         $hcmRunStatus = ($hcmRunStatus=='enable')?1:0;
+        
         if(!empty($companyHcmJobsId)){
+            
+           $sql = "select * from company_hcm_jobs where company_hcm_jobs_id='".$companyHcmJobsId."'";
+           $result = DB::statement($sql);
+           $frequency = !empty($result[0]->frequency)?$result[0]->frequency:0;
+           //$frequency = 300;
+           $frequency = "+".$frequency." second";
+           $lastDate = gmdate("Y-m-d H:i:s");
+           $nextDate = gmdate('Y-m-d H:i:s', strtotime($frequency));
+           
            $sql = "update company_hcm_jobs set status='".$hcmRunStatus."' where company_hcm_jobs_id='".$companyHcmJobsId."'";
            $result = DB::statement($sql);
         }
@@ -1105,5 +1117,12 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                 $result['total_records'] = DB::select("select FOUND_ROWS() as total_count");
             return $result;    
         }
-    
+        
+        public function updateEnterpriseUser($email='',$groupid='') {
+            return DB::table('users')
+                    ->where('emailid',$email)  
+                    ->update(array('is_enterprise' => '1','group_id'=>$groupid));
+          
+      }
+      
 }

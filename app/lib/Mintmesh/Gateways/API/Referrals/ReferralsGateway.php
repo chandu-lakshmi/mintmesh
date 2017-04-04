@@ -2240,8 +2240,10 @@ class ReferralsGateway {
         $neoUserId      = $this->neoUser->id;
         #get campaign result here
         $campaignsAry = $this->referralsRepository->getCampaigns($userEmail, $campaignId);
+        
         if(!empty($campaignsAry)){
-            $campaign   = $campaignsAry;
+            $campaign   = !empty($campaignsAry[0][0])?$campaignsAry[0][0]:'';
+            $campRel    = !empty($campaignsAry[0][1])?$campaignsAry[0][1]:'';
             #get company details here
             $companyCode    = $campaign->company_code;
             $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
@@ -2276,10 +2278,8 @@ class ReferralsGateway {
             #social campaign share link
             $refId      = $campaignId.'_'.$neoUserId;
             $refCode    = MyEncrypt::encrypt_blowfish($refId, $encodeString);
-//            $campAry['social_campaign_share'] = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode."";
-            $urll = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode."";
-            $biltyUrl = $this->urlShortner($urll);
-            $campAry['social_campaign_share'] = $biltyUrl;
+            $url = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode."";
+            $campAry['social_campaign_share'] = !empty($campRel->bittly_url)?$campRel->bittly_url:$url;
             #return data here    
             $data    = array('campaign_details'=>$campAry);
             $message = array('msg' => array(Lang::get('MINTMESH.campaigns.success')));

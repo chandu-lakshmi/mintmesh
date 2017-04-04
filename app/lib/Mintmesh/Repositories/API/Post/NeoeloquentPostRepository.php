@@ -4,7 +4,7 @@ namespace Mintmesh\Repositories\API\Post;
 
 use NeoEnterpriseUser;
 use DB;
-use Config;
+use Config, Lang;
 use Mintmesh\Repositories\BaseRepository;
 use Everyman\Neo4j\Query\ResultSet;
 use Everyman\Neo4j\Client as NeoClient;
@@ -54,6 +54,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         }
         $queryString.="]-(u) set p.created_at='" . date("Y-m-d H:i:s") . "' ";
         $queryString.=" , p.invited_count=0, p.total_referral_count=0, p.referral_accepted_count=0, p.referral_declined_count=0, p.referral_hired_count=0, p.referral_interviewed_count=0,p.unsolicited_count=0 return p";
+        //echo $queryString;exit;
         $query = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
         if ($result->count()) {
@@ -80,11 +81,12 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         return $result = $query->getResultSet();
     }
 
-    public function createPostContactsRelation($relationAttrs = array(), $postId = '', $company_code = '', $contactEmailid = '') {
+    public function createPostContactsRelation($relationAttrs = array(), $postId = '', $company_code = '', $contactEmailid = '', $bucketId = '') {
         
         if (!empty($postId) && !empty($company_code) && !empty($contactEmailid)) {
+            
             $queryString = "Match (b:Contact_bucket)-[r:COMPANY_CONTACT_IMPORTED]->(u:User),(p:Post)
-            where r.company_code='" . $company_code . "' and b.mysql_id='" . $relationAttrs['bucket_id'] . "' and ID(p)=" . $postId . " and u.emailid='".$contactEmailid."' ";
+            where r.company_code='" . $company_code . "' and b.mysql_id='" . $bucketId . "' and ID(p)=" . $postId . " and u.emailid='".$contactEmailid."' ";
             if ($queryString) {
 
                 $queryString .= " create unique (p)-[:" . Config::get('constants.REFERRALS.INCLUDED') ;
@@ -149,7 +151,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
             if (!empty($limit) && !($limit < 0)) {
                 $queryString.=" skip " . $skip . " limit " . self::LIMIT;
             } 
-//            echo $queryString;exit;
+            //echo $queryString;exit;
             $query = new CypherQuery($this->client, $queryString);
             return $result = $query->getResultSet();
         } else {
@@ -985,12 +987,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         }
         
         if(!empty($userEmailId)){
-//             $queryString = "";
-//            if (!empty($search)) {
-//                $search = $this->appEncodeDecode->filterString($search);
-//                
-////                $queryString .= "start p = node(*) where p.service_name =~ '(?i).*". $search .".*' or p.service_location =~ '(?i).*". $search .".*' or p.post_type =~ '(?i).*". $search .".*' or p.campaign_type =~ '(?i).*". $search .".*' or p.campaign_name =~ '(?i).*". $search .".*' ";                       
-//            }
+
             $queryString = "MATCH (u:User:Mintmesh{emailid:'".$userEmailId."'})-[r:INCLUDED]-(p:Post{status:'ACTIVE'})-[:POSTED_FOR]-(Company{companyCode:'".$companyCode."'}),(p)-[:ASSIGNED_EMPLOYMENT_TYPE]->(e:EmploymentType),(p)-[:ASSIGNED_JOB_FUNCTION]->(j:Job_Functions),(p)-[:ASSIGNED_INDUSTRY]->(i:Industries),(p)-[:ASSIGNED_EXPERIENCE_RANGE]->(ex:ExperienceRange)
                 WHERE  p.post_type <>'campaign' ";
                if (!empty($search)) {
@@ -1010,7 +1007,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         {
             $queryString.=" skip ".$skip." limit ".self::LIMIT ;
         }
-//        print_r($queryString).exit;
+        //print_r($queryString).exit;
         $query  = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
             if($result)
@@ -1042,7 +1039,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
     public function getCompanyJobsCount($emailId='',$companyCode='') {
         $return = 0;
         if(!empty($emailId) && !empty($companyCode)){
-            $queryString = "MATCH (u:User:Mintmesh{emailid:'".$emailId."'})-[r:CONNECTED_TO_COMPANY]-(Company{companyCode:'".$companyCode."'})-[:POSTED_FOR]-(p:Post{status:'ACTIVE'}) return count(p)";
+            $queryString = "MATCH (u:User:Mintmesh{emailid:'".$emailId."'})-[r:INCLUDED]-(p:Post{status:'ACTIVE'})-[:POSTED_FOR]-(Company{companyCode:'".$companyCode."'}) return count(p)";
             $query  = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             if(isset($result[0]) && isset($result[0][0])){

@@ -268,7 +268,7 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
             $result = $query->getResultSet();   
              $count = $result->count();
              if($count == 0){
-                $queryString = "MATCH (u:User)-[r:CONNECTED_TO_COMPANY]->(c:Company) where u.emailid='".$email."' return c,u";
+                $queryString = "MATCH (u:User)-[r:CONNECTED_TO_COMPANY]-(c:Company) where u.emailid='".$email."' return c,u";
                 $query = new CypherQuery($this->client, $queryString);
                 $result = $query->getResultSet();   
              }
@@ -378,11 +378,8 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
     public function getCompanyUserTopReferrals($email='',$companyCode='') {
         $result = array();
         if(!empty($email)){
-            $queryString = "MATCH (u:User),(:Company{companyCode:'" . $companyCode . "'})<-[:POSTED_FOR]-(p:Post)-[r:GOT_REFERRED]-() 
-                    where u.emailid = r.referred_by 
-                return DISTINCT(r.referred_by),count(r) as count,u order by count desc limit 6";
-//                    where r.referred_for='".$email."' and u.emailid = r.referred_by 
-//                echo $queryString;exit;
+            $queryString = "MATCH (:Company{companyCode:'" . $companyCode . "'})<-[:POSTED_FOR]-(p:Post)-[r:GOT_REFERRED]-() 
+                            return DISTINCT(r.referred_by),count(r) as count order by count desc limit 6";
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();   
         }

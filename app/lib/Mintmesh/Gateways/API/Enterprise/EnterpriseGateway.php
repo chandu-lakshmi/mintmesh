@@ -1354,7 +1354,7 @@ class EnterpriseGateway {
         } else {
             $message = array('msg' => array(Lang::get('MINTMESH.companyDetails.no_details')));
         }
-        return $this->commonFormatter->formatResponse(200, "success", $message, $data);
+        return $this->commonFormatter->formatResponse(200, "success", $message, $data, true);
     }
     
     public function getCompanyUserPostCounts($userEmailId, $companyCode){
@@ -1607,17 +1607,18 @@ class EnterpriseGateway {
             foreach($topReferrals as $referral){
                 $record = array();
                 $designation = '';
+                $referralUser    = $referral[0]; 
                 $referralsCount  = $referral[1];    
-                $referralUser    = $referral[2]; 
-                $referrerDetails = $this->enterpriseRepository->getContactByEmailId($referralUser->emailid,$companyId);
+                
+                $referrerDetails = $this->enterpriseRepository->getContactByEmailId($referralUser,$companyId);
                 if(!empty($referrerDetails)){
                 $referrerName = $referrerDetails[0]->firstname.' '.$referrerDetails[0]->lastname;}
-                $neoReferredByDetails = $this->neoUserRepository->getNodeByEmailId($referralUser->emailid);
+                $neoReferredByDetails = $this->neoUserRepository->getNodeByEmailId($referralUser);
                 $neoReferrerName = !empty($neoReferredByDetails['fullname'])?$neoReferredByDetails['fullname']:$neoReferredByDetails['firstname'];
                         
                 //get user designation here
-                if (!empty($referralUser) && $referralUser->completed_experience == '1'){
-                    $result = $this->neoEnterpriseRepository->getDesignation($referralUser->emailid);
+                if (!empty($neoReferredByDetails) && $neoReferredByDetails->completed_experience == '1'){
+                    $result = $this->neoEnterpriseRepository->getDesignation($referralUser);
                     if(!empty($result[0])){
                         foreach ($result[0] as $obj) {
                             $designation = $obj->name;   
@@ -1627,7 +1628,7 @@ class EnterpriseGateway {
                 //set the return response here
                 $record['name']     = !empty($referrerName)?$referrerName:!empty($neoReferrerName)?$neoReferrerName:'The contact';
 //                $record['name']     = !empty($referralUser->fullname)?$referralUser->fullname:'';
-                $record['image']    = !empty($referralUser->dp_renamed_name)?$referralUser->dp_renamed_name:'';
+                $record['image']    = !empty($neoReferredByDetails->dp_renamed_name)?$neoReferredByDetails->dp_renamed_name:'';
                 $record['designation'] = !empty($designation)?$designation:'';
                 $record['count']       = $referralsCount;
                 $returnTopReferrals[]  = $record;
@@ -2057,9 +2058,11 @@ class EnterpriseGateway {
         if (empty($userCount)) {
             $responseMessage = $responseCode = $responseStatus = "";
             $responseData = array();
-            $input['is_enterprise'] = 1;
+             $input['is_enterprise'] = 1;
              $input['company_code'] = $companyDetails->code;
              $input['company_id'] = $companyDetails->company_id;
+             $checkUser = $this->enterpriseRepository->getEnterpriseUserByEmail($input['emailid']);
+             if(empty($checkUser)){
              if (isset($input['photo']) && !empty($input['photo'])) {
             //upload the file
             $this->userFileUploader->source =  $input['photo'];
@@ -2094,7 +2097,7 @@ class EnterpriseGateway {
 //                $activationcode = $createdUser[0]['emailactivationcode'];
                 $code = $this->userGateway->base_64_encode($currentTime, $email);
                 $dataSet['hrs'] = Config::get('constants.USER_EXPIRY_HR');
-//                $dataSet['send_company_name'] = $this->loggedinUserDetails->firstname;
+                $dataSet['send_company_name'] = $this->loggedinUserDetails->firstname;
                 $dataSet['link'] = Config::get('constants.MM_ENTERPRISE_URL') . "/reset_password?setcode=" . $code; //comment it for normal flow of deep linki.e without http
                 $this->userEmailManager->dataSet = $dataSet;
                 $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.set_password');
@@ -2130,11 +2133,81 @@ class EnterpriseGateway {
               $message = array('msg' => array(Lang::get('MINTMESH.addUser.success')));
                 } 
             else{
+                 $data = array();
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
             $message = array('msg' => array(Lang::get('MINTMESH.addUser.failure'))); 
             }
+             }else{
+             $updateEnterpriseUser = $this->enterpriseRepository->updateEnterpriseUser($input['emailid'],$input['group_id']);
+             $data = $this->enterpriseRepository->companyUserMapping($checkUser['id'],$input['company_id'], $input['company_code']);
+             if($updateEnterpriseUser){
+                $groupName = $this->enterpriseRepository->getGroup($input['group_id']);
+                $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.user_activation');
+                $this->userEmailManager->emailId = $checkUser['emailid'];
+                $senderName =  $this->loggedinUserDetails->firstname .' via MintMesh';
+                $dataSet = array();
+                $contactDetails = $this->enterpriseRepository->getContactByEmailId($checkUser['emailid'],$input['company_id']);
+                 if(!empty($contactDetails)){
+                    $dataSet['name'] = $contactDetails[0]->firstname.' '.$contactDetails[0]->lastname;
+                }else{
+                $dataSet['name'] = $checkUser['firstname'];}
+                $dataSet['group_name'] = $groupName[0]->name;
+                $dataSet['emailid'] = $checkUser['emailid'];
+                $dataSet['company_name'] = $companyDetails->name;
+                $dataSet['send_company_name'] = $senderName;
+                //set reset code
+                //set timezone of mysql if different servers are being used
+                //date_default_timezone_set('America/Los_Angeles');
+                $currentTime = date('Y-m-d h:i:s');
+                $email = md5($checkUser['emailid']);
+//                $activationcode = $createdUser[0]['emailactivationcode'];
+                $code = $this->userGateway->base_64_encode($currentTime, $email);
+                $dataSet['hrs'] = Config::get('constants.USER_EXPIRY_HR');
+//                $dataSet['send_company_name'] = $this->loggedinUserDetails->firstname;
+                $dataSet['link'] = Config::get('constants.MM_ENTERPRISE_URL') . "/login"; //comment it for normal flow of deep linki.e without http
+                $this->userEmailManager->dataSet = $dataSet;
+                $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.set_password');
+                $this->userEmailManager->name = $checkUser['firstname'];
+                $email_sent = $this->userEmailManager->sendMail();
+                //log email status
+                $emailStatus = 0;
+                if (!empty($email_sent)) {
+                    $emailStatus = 1;
+                     $this->userRepository->setActive($checkUser['id'],$checkUser['emailid']);
+                }
+                $emailLog = array(
+                    'emails_types_id' => 1,
+                    'from_user' => 0,
+                    'from_email' => '',
+                    'to_email' => !empty($createdUser) ? $createdUser[0]->emailid : '',
+                    'related_code' => $code,
+                    'sent' => $emailStatus,
+                    'ip_address' => $_SERVER['REMOTE_ADDR']
+                );
+                $this->userRepository->logEmail($emailLog);
+                //update code in users table
+                $inputdata = array('user_id' => $checkUser['id'],
+                    'resetactivationcode' => $code);
+                if (!empty($email_sent)) {
+                    
+               $this->userRepository->updateUserresetpwdcode($inputdata);
+                }
+             
+            
+                  $data = array();
+                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+                $message = array('msg' => array(Lang::get('MINTMESH.addUser.success')));
+             }else{
+                  $data = array();
+                 $responseCode    = self::ERROR_RESPONSE_CODE;
+                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                $message = array('msg' => array(Lang::get('MINTMESH.addUser.failure'))); 
+             }
+             }
         }else{
+             $data = array();
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
             $message = array('msg' => array(Lang::get('MINTMESH.addUser.userexists'))); 
@@ -2154,6 +2227,8 @@ class EnterpriseGateway {
                 $input['status'] = '1';
             }
             $input['is_enterprise'] = 1;
+//            $checkUser = $this->enterpriseRepository->getEnterpriseUserByEmail($input['emailid']);
+//            if(empty($checkUser)){
              $input['company_code'] = $companyDetails->code;
              $input['company_id'] = $companyDetails->company_id;
              $input['firstname'] = $input['fullname'];
@@ -2192,7 +2267,7 @@ class EnterpriseGateway {
 //                $activationcode = $createdUser[0]['emailactivationcode'];
                 $code = $this->userGateway->base_64_encode($currentTime, $email);
                 $dataSet['hrs'] = Config::get('constants.USER_EXPIRY_HR');
-//                $dataSet['send_company_name'] = $this->loggedinUserDetails->firstname;
+                $dataSet['send_company_name'] = $this->loggedinUserDetails->firstname;
                 $dataSet['link'] = Config::get('constants.MM_ENTERPRISE_URL') . "/reset_password?setcode=" . $code; //comment it for normal flow of deep linki.e without http
                 $this->userEmailManager->dataSet = $dataSet;
                 $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.set_password');
@@ -2244,7 +2319,21 @@ class EnterpriseGateway {
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
             $message = array('msg' => array(Lang::get('MINTMESH.editUser.failure'))); 
             }
+//            }
+//            $updateEnterpriseUser = $this->enterpriseRepository->updateEnterpriseUser($input['emailid']);
+//             if($updateEnterpriseUser){
+//                  $data = array();
+//                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+//                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+//                $message = array('msg' => array(Lang::get('MINTMESH.addUser.success')));
+//             }else{
+//                  $data = array();
+//                 $responseCode    = self::ERROR_RESPONSE_CODE;
+//                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+//                $message = array('msg' => array(Lang::get('MINTMESH.addUser.failure'))); 
+//             }
             }else{
+            $data = array();
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
             $message = array('msg' => array(Lang::get('MINTMESH.editUser.emailexists')));
@@ -2280,7 +2369,7 @@ class EnterpriseGateway {
         }
         return $neoEnterpriseUser;
     }
-    private function getUsers($company,$groups) {
+    private function getUsers($company,$groups,$companyid) {
        $userDetails = $postDetails = array();
        $users = $this->enterpriseRepository->getUsers( $company,$groups);
        $input['user_id'] = $this->loggedinUserDetails->id;
@@ -2301,8 +2390,12 @@ class EnterpriseGateway {
             $postDetails['expired'] = (int)'0';
        }
        $postDetails['user_id'] = $neoUsers->mysql_id;
+       $contactDetails = $this->enterpriseRepository->getContactByEmailId($neoUsers->emailid,$companyid);
        $postDetails['emailid'] = $neoUsers->emailid;
-       $postDetails['fullname'] = $neoUsers->fullname;
+       if(!empty($contactDetails)){
+           $postDetails['fullname'] = $contactDetails[0]->firstname.' '.$contactDetails[0]->lastname;
+       }else{
+       $postDetails['fullname'] = $neoUsers->fullname;}
        $postDetails['location'] = isset($neoUsers->location)?$neoUsers->location:'';
        $postDetails['status'] = isset($neoUsers->status)?$neoUsers->status:'';
        $postDetails['designation'] = isset($neoUsers->designation)?$neoUsers->designation:'';
@@ -2408,7 +2501,7 @@ class EnterpriseGateway {
             $details['users'] = array();
            $input['type'] = '';
            $companyDetails = $this->enterpriseRepository->getUserCompanyMap($this->loggedinUserDetails->id);
-           $users = $this->getUsers( $companyDetails->code,$groups->id);
+           $users = $this->getUsers( $companyDetails->code,$groups->id, $companyDetails->company_id);
            foreach($users as $u){
                if(isset($u['expired'])){
                    $expired = $u['expired'];
@@ -2974,6 +3067,7 @@ class EnterpriseGateway {
                 $returnData['firstname'] = $v->firstname;
                 $returnData['lastname'] = $v->lastname;
                 $returnData['emailid'] = $v->emailid;
+                $returnData['status'] = $v->status;
                 $returnResult[] = $returnData;
             }
             if(!empty($returnResult)){

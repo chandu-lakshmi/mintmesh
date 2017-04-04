@@ -239,7 +239,7 @@ class PostGateway {
         $fromName   = $this->loggedinEnterpriseUserDetails->firstname;
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($input['company_code']);
         if ($this->loggedinEnterpriseUserDetails) {
-            $relationAttrs = $neoInput = $excludedList = $getSkillsAry = array();
+            $relationAttrs = $neoInput = $excludedList = $getSkillsAry = $usersAry = array();
             $neoInput['service_scope']      = "find_candidate";
             $neoInput['service_from_web']   = 1;
             $neoInput['service_name']       = !empty($input['job_title'])?$input['job_title']:'';
@@ -331,8 +331,11 @@ class PostGateway {
                     $contactList = $neoCompanyBucketContacts['data'];
                         
                     foreach ($contactList['Contacts_list'] as $contact => $contacts) {
-                       
-                        if($contacts->status != 'Separated'){
+                        
+                        #check the condition for duplicat job post here
+                        if(!in_array($contacts->emailid, $usersAry) && $contacts->status != 'Separated'){
+                            
+                            $usersAry[] = $contacts->emailid;
                             $neoUser = $this->neoEnterpriseRepository->getNodeByEmailId($contacts->emailid);
                             #creating included Relation between Post and Contacts 
                             $pushData['postId']         = $postId;
@@ -403,19 +406,6 @@ class PostGateway {
         return $this->userGateway->getLoggedInUser();
     }
 
-//    public function checkToCreateEnterprisePostContactsRelationQueue($jobData) {
-//        
-//        if (!empty($jobData['bucket_id']) && !empty($jobData['postId'])) {
-//            $postContactRelation = array();
-//            $postContactRelation['postId']          = $jobData['postId'];
-//            $postContactRelation['bucket_id']       = $jobData['bucket_id'];
-//            $postContactRelation['company_code']    = $jobData['company_code'];
-//            $postContactRelation['user_emailid']    = $jobData['user_emailid'];
-//            $postContactRelation['notification_msg']= $jobData['notification_msg'];
-//            $createResult = $this->createPostContactsRelation($postContactRelation);
-//        }
-//    }
-
     public function createPostContactsRelation($jobData = array()) {
         
         if (!empty($jobData['bucket_id']) && !empty($jobData['postId'])) {
@@ -433,11 +423,11 @@ class PostGateway {
             $relationAttrs = array();
             $relationAttrs['company_code']  = $jobData['company_code'];
             $relationAttrs['user_emailid']  = $jobData['user_emailid'];
-            $relationAttrs['bucket_id']     = $jobData['bucket_id'];
+            //$relationAttrs['bucket_id']     = $jobData['bucket_id'];//commenting for duplicate jobs relation
             $relationAttrs['bittly_url'] = $biltyUrl;
              // Log::info("<<<<<<<<<<<<<<<< In Queue >>>>>>>>>>>>>".print_r($postDetails,1));
             try {
-                $postDetails = $this->neoPostRepository->createPostContactsRelation($relationAttrs, $postId, $company_code, $contactEmailid);
+                $postDetails = $this->neoPostRepository->createPostContactsRelation($relationAttrs, $postId, $company_code, $contactEmailid, $jobData['bucket_id']);
                 if(isset($postDetails[0])){
                 $notificationLog = array(
                                         'notifications_types_id' => 27,
@@ -2424,19 +2414,16 @@ class PostGateway {
             $companyDetails['company_name']  = !empty($companyData->name)?$companyData->name:'';//company name  
             $companyDetails['company_logo']  = !empty($companyData->logo)?$companyData->logo:'';//company logo 
             
-            //$levelsInfo      = $this->userRepository->getCurrentLevelInfo($userEmailId);
             $creditResult    = $this->userRepository->getCreditsCount($userEmailId);
             $referralCashRes = $this->paymentRepository->getPaymentTotalCash($userEmailId,1);
             #user rewards details
-            //$companyDetails['points']        = !empty($levelsInfo[0]->points)?$levelsInfo[0]->points:0;  
             $companyDetails['points']        = !empty($creditResult[0]->credits)?$creditResult[0]->credits:0;  
             $companyDetails['rewards']       = !empty($referralCashRes[0]->total_cash)?$referralCashRes[0]->total_cash:0;    
             $companyDetails['currency_type'] = (strtolower($userCountry) =="india")?2:1;
             #get jobs list with company code
-//            $jobsListAry    = $this->neoGlobalRepository->getJobsList($userEmailId, $companyCode, $page, $search);
             $jobsListAry    = $this->neoPostRepository->getJobsList($userEmailId, $companyCode, $page, $search);
             if(!empty($jobsListAry->count())){
-                //$jobsCount = $this->neoPostRepository->getCompanyJobsCount($userEmailId, $companyCode);
+                $jobsCount = $this->neoPostRepository->getCompanyJobsCount($userEmailId, $companyCode);
                 $listCount = $jobsListAry->count();
                 foreach ($jobsListAry as $value) {
                     $record   = $rewards = $postRewards = $vacancies = array();
@@ -2466,25 +2453,21 @@ class PostGateway {
                             $postsRes = $this->neoPostRepository->getCampaignPosts($campaignId);
 
                             if(!empty($postsRes->count())){
-                                $jobsCount+= $postsRes->count();
+                                //$jobsCount+= $postsRes->count();
                                 foreach($postsRes as $posts){
                                     $postDetails    = $this->referralsGateway->formPostDetailsArray($posts[0]);
                                     $campaignJobs[] = !empty($postDetails['service_name'])?$postDetails['service_name']:'';
                                 }
                             }
-                            $record['campaign_jobs']  = $campaignJobs;//array('ios developer','android developer','php developer');
+                            $record['campaign_jobs']  = $campaignJobs;
                             $postRead                       = !empty($jobRel->post_read_status)?1:0;
                             $record['campaign_read_status'] = $postRead; 
-//                            if(isset($jobRel->bittly_url) && !empty($jobRel->bittly_url)){
-//                                $record['social_campaign_share'] = $jobRel->bittly_url;
-//                            }else{
+
                             $refId      = $campaignId.'_'.$neoUserId;
-                             $refCode    = MyEncrypt::encrypt_blowfish($refId, $encodeString);
-                            $record['social_campaign_share'] = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
-//                            $url = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
-//                            $biltyUrl = $this->urlShortner($url);
-//                            $record['social_campaign_share'] = $biltyUrl;
-//                            }
+                            $refCode    = MyEncrypt::encrypt_blowfish($refId, $encodeString);
+                            $refUrl     = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode."";
+                            $record['social_campaign_share']   = !empty($jobRel->bittly_url)?$jobRel->bittly_url:$refUrl;
+
                             $unreadCount+=empty($postRead)?1:0;
 
                         }  else {
@@ -2504,18 +2487,14 @@ class PostGateway {
                             $record['rewards']          = $postRewards;
                             $postRead                   = !empty($jobRel->post_read_status)?1:0;
                             $record['post_read_status'] = $postRead; 
-//                            if(isset($jobRel->bittly_url) && !empty($jobRel->bittly_url)){
-//                                $record['social_job_share'] = $jobRel->bittly_url;
-//                            } else{
+                            
                             $refId      = $postId.'_'.$neoUserId;
                             $refCode    = MyEncrypt::encrypt_blowfish($refId, $encodeString);
-                            $record['social_job_share'] = $enterpriseUrl . "/email/job-details/share?ref=" . $refCode."";
-//                            $url = $enterpriseUrl . "/email/job-details/share?ref=" . $refCode."";
-//                            $biltyUrl = $this->urlShortner($url);
-//                            $record['social_job_share'] = $biltyUrl;
-//                            }
+                            $refUrl     = $enterpriseUrl . "/email/job-details/share?ref=" . $refCode."";
+                            $record['social_job_share']   = !empty($jobRel->bittly_url)?$jobRel->bittly_url:$refUrl;
+
                             $unreadCount+=empty($postRead)?1:0;
-                            $jobsCount+=1;
+                            //$jobsCount+=1;
 
                         }
                      $returnData[] = $record;
@@ -2587,12 +2566,12 @@ class PostGateway {
         $returnCompany['company_code'] = !empty($companyAry->companyCode)?$companyAry->companyCode:0;
         $returnData['company_details'] = $returnCompany;
         #get job Details by post id here
-        //$postResultAry = $this->referralsRepository->getPostDetails($postId, $userEmailId);
         $postResultAry = $this->referralsRepository->getPostAndMyReferralDetails($postId, $userEmailId);
         
         if(!empty($postResultAry[0]) && !empty($postResultAry[0][0])){
             
             $jobData  = $postDetails = $this->referralsGateway->formPostDetailsArray($postResultAry[0][0]);
+            $relData = !empty($postResultAry[0][4])?$postResultAry[0][4]:'';
             $jobDesc = $jobData['job_description'];
             $jobDesc = trim(preg_replace('/ +/', ' ', preg_replace('/[^A-Za-z0-9 ]/', ' ', urldecode(html_entity_decode(strip_tags($jobDesc))))));
             
@@ -2613,10 +2592,8 @@ class PostGateway {
             #social job share link
             $refId      = $postId.'_'.$neoUserId;
             $refCode    = MyEncrypt::encrypt_blowfish($refId, $encodeString);
-//            $record['social_job_share'] = $enterpriseUrl . "/email/job-details/share?ref=" . $refCode."";
             $url = $enterpriseUrl . "/email/job-details/share?ref=" . $refCode."";
-            $bitlyUrl = $this->urlShortner($url);
-            $record['social_job_share'] = $bitlyUrl;
+            $record['social_job_share'] = !empty($relData->bittly_url)?$relData->bittly_url:$url;
             #get the post reward details here
             $postRewards                = $this->referralsGateway->getPostRewards($postId, $userCountry, $isEnterprise=1);
             $record['rewards']          = $postRewards;
