@@ -211,7 +211,7 @@ return array(
             "extra_texts"=>array(
                 '10'=>'for your request',
                 '11'=>'for a service',
-                '12'=>'for this request',
+                '12'=>' this request',
                 '15'=>'',
                 '22'=>'for this service',
                 '23'=>'for your request', 
