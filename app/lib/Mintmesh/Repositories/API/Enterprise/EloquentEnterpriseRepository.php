@@ -1119,7 +1119,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             return $result;    
         }
         
-        public function updateEnterpriseUser() {
+        public function updateEnterpriseUser($email='', $groupid='') {
             return DB::table('users')
                     ->where('emailid',$email)  
                     ->update(array('is_enterprise' => '1','group_id'=>$groupid));

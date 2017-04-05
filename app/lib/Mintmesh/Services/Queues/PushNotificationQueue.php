@@ -29,7 +29,7 @@ class PushNotificationQueue {
         }
        
         #check Platform Endpoint already created or not
-       if(!empty($jobData['deviceToken']) && empty($jobData['platformArn']) && !empty($platformArn)){
+       if(!empty($jobData['deviceToken']) && empty($jobData['EndpointArn']) && !empty($platformArn)){
 
             #create Platform Endpoint
             $deviceToken = $jobData['deviceToken'];
@@ -43,8 +43,8 @@ class PushNotificationQueue {
         
         if(!empty($endpointArn) && !empty($message)){
             #publish Push Notification here
-            \Log::info("<<<<<<<<<<<<<<<< In kj Notification message here >>>>>>>>>>>>>".print_r($message,1));
-            \Log::info("<<<<<<<<<<<<<<<< In kj Notification here end point >>>>>>>>>>>>>".print_r($endpointArn,1));
+            \Log::info("<<<<<<<<<<<<<<<< In Notification message here >>>>>>>>>>>>>".print_r($message,1));
+            \Log::info("<<<<<<<<<<<<<<<< In Notification here end point >>>>>>>>>>>>>".print_r($endpointArn,1));
             $this->notificationManager->publishJson($message, $endpointArn);
         }
         $job->delete();
