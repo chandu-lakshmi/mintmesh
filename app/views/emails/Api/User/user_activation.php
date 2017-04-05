@@ -29,7 +29,7 @@
   <tr>
     <td valign="top" class="textContent" style="padding:20px 20px 10px 0px;line-height:135%;letter-spacing:0.2px;font-size:18px; font-weight:normal; color:#777777;">
        <h3 style="color:#000000;line-height:125%;font-family: 'arial', sans-serif;font-size:16px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello <b><?php echo ucfirst($name) ; ?>,</b></h3>
-       <p style="color:#000000;font-size:16px">You have been added as a new user to <b><?php echo $group_name ; ?>.</b>
+       <p style="color:#000000;font-size:16px">You have been added as a new user to <b><?php echo $group_name ; ?></b> group.
 <!--          </b> Employee Referral Management
           system with the following User ID. </p>
        <p><b><?php // echo $emailid ; ?></b></p>-->

@@ -211,7 +211,7 @@ return array(
             "extra_texts"=>array(
                 '10'=>'for your request',
                 '11'=>'for a service',
-                '12'=>' this request',
+                '12'=>' the position of',
                 '15'=>'',
                 '22'=>'for this service',
                 '23'=>'for your request', 
@@ -219,9 +219,9 @@ return array(
                 '25'=>'', 
                 '27'=>' please check out the Refer page.', 
                 '28'=>' event for jobs. Check out the refer page.',
-                '29'=>'for the position of',
-                '30'=>'for the position of',
-                '31'=>'for the position of')
+                '29'=>' for the position of',
+                '30'=>' for the position of',
+                '31'=>' for the position of')
          ),
          "get_requests"=>array(
              "success"=>"Successfully Listed"
@@ -523,5 +523,17 @@ return array(
             "retrieve_success"  =>  "successfully retrieved HCM details",
             "hcm_name_isexist"  =>  "HCM name already exist",
             "retrieve_failure"  =>  "failed to retrieve HCM details"
+    ),
+    'add_configuration'=>array(
+            "success"          => "successfully added",
+            "failure"          => "failed to add configuration details"
+    ),
+    'edit_configuration'=>array(
+            "success"          => "successfully updated",
+            "failure"          => "failed to update configuration details"
+    ),
+    'configuration_details'=>array(
+            "success"          => "successfully retrieved configuration details",
+            "failure"          => "no details found"
     )
 );

@@ -1022,11 +1022,12 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                                     'company_id' => $input['company_id'],
                                     'user_id' => $input['user_id'],
                                     'company_code' => $input['company_code'],
-                                    'idp_signin_url' => $input['idp_signin_url'],
-                                    'idp_signout_url' => $input['idp_signout_url'],
+                                    'idp_signin_url' => $input['signin_url'],
+                                    'idp_signout_url' => $input['signout_url'],
                                     'idp_issuer' => $input['idp_issuer'],
-                                    'idp_cert' => $input['idp_cert'],
-                                    'status' => $input['status']
+                                    'idp_cert' => $input['certificate'],
+                                    'status' => '1',
+                                    'created_at' => $input['createdAt']
                                 )
                         );
          if($result){
@@ -1118,10 +1119,25 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             return $result;    
         }
         
-        public function updateEnterpriseUser($email='',$groupid='') {
+        public function updateEnterpriseUser() {
             return DB::table('users')
                     ->where('emailid',$email)  
                     ->update(array('is_enterprise' => '1','group_id'=>$groupid));
+          
+      }
+        public function updateConfiguration($input=array()) {
+            $result =  DB::table('company_idp')
+                    ->where('id',$input['id'])  
+                    ->update(array('idp_signin_url' => $input['signin_url'],'idp_signout_url'=>$input['signout_url'],'idp_issuer'=>$input['idp_issuer'],'idp_cert'=>$input['certificate']));
+           if($result){
+           return DB::table('company_idp')  
+                ->where('id', '=', $input['id'])->get();
+         }
+      }
+      
+      public function getConfigurationDetails($input) {
+          return DB::table('company_idp')  
+                ->where('company_code', '=', $input['company_code'])->get();
           
       }
       

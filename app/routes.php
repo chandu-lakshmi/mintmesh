@@ -354,7 +354,11 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       Route::post("enterprise/get_hcm_partners", "API\Enterprise\EnterpriseController@getHcmPartners");
       // company all contacts
       Route::post("enterprise/company_all_contacts", "API\Enterprise\EnterpriseController@companyAllContacts");
-      
+      // add_configuration
+      Route::post("enterprise/add_configuration", "API\Enterprise\EnterpriseController@addConfiguration");
+      // get_configuration
+      Route::post("enterprise/get_configuration", "API\Enterprise\EnterpriseController@getConfiguration");
+
 });
 
 

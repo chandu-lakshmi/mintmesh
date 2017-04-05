@@ -1032,5 +1032,61 @@ class EnterpriseController extends \BaseController {
             
             return $returnResponse;
 	}
+        
+        /**
+	 * adding configuration
+         * 
+         * POST/add_configuration
+         * 
+	 * @param string $access_token The Access token of a user
+         * @param string $company_code The company code 
+         * @param string $signin_url The company code 
+         * @param string $signout_url The company code 
+         * @param string $idp_issuer The company code 
+         * @param string $certificate The company code 
+         * 
+	 * @return Response
+	 */
+	public function addConfiguration()
+	{
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->EnterpriseGateway->validateAddConfigurationInput($inputUserData);
+            if($validation['status'] == 'success') {
+               $response = $this->EnterpriseGateway->addConfiguration($inputUserData);
+               return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+            
+	}
+        
+         /**
+	 * get configuration
+         * 
+         * POST/get_configuration
+         * 
+	 * @param string $access_token The Access token of a user
+         * @param string $id The company code 
+         * 
+	 * @return Response
+	 */
+	public function getConfiguration()
+	{
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->EnterpriseGateway->validateGetConfigurationInput($inputUserData);
+            if($validation['status'] == 'success') {
+               $response = $this->EnterpriseGateway->getConfiguration($inputUserData);
+               return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+            
+	}
 }
 ?>

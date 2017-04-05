@@ -151,6 +151,18 @@ class EnterpriseValidator extends Validator {
         ),
         'get_hcm_list' => array(
             'company_code'      => 'required',
+        ),
+        'add_configuration' => array(
+            'company_code'      => 'required',
+            'signin_url'      => 'required',
+            'signout_url'      => 'required',
+            'idp_issuer'      => 'required',
+//            'white_listing'      => 'required',
+//            'certificate_org_name'      => 'required',
+//            'certificate_path'      => 'required',
+        ),
+        'get_configuration' => array(
+            'company_code'     =>    'required'
         )
         );
     
