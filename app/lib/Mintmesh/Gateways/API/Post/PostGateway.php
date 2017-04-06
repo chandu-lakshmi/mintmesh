@@ -336,12 +336,10 @@ class PostGateway {
                         if(!in_array($contacts->emailid, $usersAry) && $contacts->status != 'Separated'){
                             
                             $usersAry[] = $contacts->emailid;
-                            $neoUser = $this->neoEnterpriseRepository->getNodeByEmailId($contacts->emailid);
                             #creating included Relation between Post and Contacts 
                             $pushData['postId']         = $postId;
                             $pushData['bucket_id']      = $input['bucket_id'];
                             $pushData['contact_emailid']= $contacts->emailid;
-                            $pushData['contact_id']     = $neoUser['id'];
                             $pushData['company_code']   = $input['company_code'];
                             $pushData['user_emailid']   = $this->loggedinEnterpriseUserDetails->emailid;
                             $pushData['notification_msg'] = $notificationMsg;
@@ -409,17 +407,21 @@ class PostGateway {
     public function createPostContactsRelation($jobData = array()) {
         
         if (!empty($jobData['bucket_id']) && !empty($jobData['postId'])) {
-            $encodeString   = Config::get('constants.MINTMESH_ENCCODE');
-            $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
-            $postId          = $jobData['postId'];
-            $contactEmailid  = $jobData['contact_emailid'];
-            $contactId  = $jobData['contact_id'];
-            $company_code    = $jobData['company_code'];
-            $notificationMsg = $jobData['notification_msg'];
+            #get the $jobData here
+            $encodeString       = Config::get('constants.MINTMESH_ENCCODE');
+            $enterpriseUrl      = Config::get('constants.MM_ENTERPRISE_URL');
+            $postId             = $jobData['postId'];
+            $contactEmailid     = $jobData['contact_emailid'];
+            $company_code       = $jobData['company_code'];
+            $notificationMsg    = $jobData['notification_msg'];
+            #get neo user node id
+            $neoUser    = $this->neoEnterpriseRepository->getNodeByEmailId($contactEmailid);
+            $contactId  = !empty($neoUser['id'])?$neoUser['id']:'';
             $refId      = $postId.'_'.$contactId;
             $refCode    = MyEncrypt::encrypt_blowfish($refId, $encodeString);
             $url = $enterpriseUrl . "/email/job-details/share?ref=" . $refCode."";; 
             $biltyUrl = $this->urlShortner($url);
+            #form relation details here
             $relationAttrs = array();
             $relationAttrs['company_code']  = $jobData['company_code'];
             $relationAttrs['user_emailid']  = $jobData['user_emailid'];
