@@ -1978,21 +1978,23 @@ class EnterpriseGateway {
                 $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
                 $message = array('msg' => array(Lang::get('MINTMESH.editContactList.contactsLimitExceeded')));
             } 
-        }
-        else if($checkContact[0]->bucket_id == '0')
-            {
+        } else if($checkContact[0]->bucket_id == '0'){
+            
                 $inputParams['id'] = $checkContact[0]->id;
                 $update = $this->enterpriseRepository->updateContact($inputParams);
                 $neoUpdate = $this->neoEnterpriseRepository->updateContactNode($input['bucket_id'],$neoInput,$relationAttrs);
+                #check company bucket active jobs and create relation between user & job
+                if($status != 'Separated'){
+                    $connectedJobs  = $this->companyJobsAutoConnect($companyCode, $bucketId, $contactEmailId, $emailId);
+                }
                 $responseCode    = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
                 $message = array('msg' => array(Lang::get('MINTMESH.addContact.contactUpdated')));
-            }
-        else{
-            $responseCode    = self::ERROR_RESPONSE_CODE;
-            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $message = array('msg' => array(Lang::get('MINTMESH.addContact.contactExists')));
-        }     
+            }else{
+                $responseCode    = self::ERROR_RESPONSE_CODE;
+                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                $message = array('msg' => array(Lang::get('MINTMESH.addContact.contactExists')));
+            }     
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $message, array());
     }
         
