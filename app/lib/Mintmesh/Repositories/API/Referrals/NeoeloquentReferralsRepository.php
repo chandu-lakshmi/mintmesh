@@ -469,15 +469,16 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                      $queryString = "Match (u:NonMintmesh)-[r:GOT_REFERRED]->(p:Post) 
                                  where ID(p)=".$input['post_id']." 
                                   and u.phone='".$input['referral']."' and 
-                                  r.referred_by='".$input['referred_by']."' and r.referred_for='".$input['from_user']."'
+                                  r.referred_by='".$input['referred_by']."' 
                                   and r.relation_count='".$input['relation_count']."' return r,u,p,labels(u)" ;
                  }else{
                      $queryString = "Match (u:User)-[r:GOT_REFERRED]->(p:Post) 
                                  where ID(p)=".$input['post_id']." 
                                   and u.emailid='".$input['referral']."' and 
-                                  r.referred_by='".$input['referred_by']."' and r.referred_for='".$input['from_user']."'
+                                  r.referred_by='".$input['referred_by']."' 
                                   and r.relation_count='".$input['relation_count']."' return r,u,p,labels(u)" ;
                  }
+                 //and r.referred_for='".$input['from_user']."'
                  $query = new CypherQuery($this->client, $queryString);
                  return $result = $query->getResultSet();
              }

@@ -1201,6 +1201,7 @@ class ReferralsGateway {
                     $returnArray['p3_cv_original_name'] = !empty($result[0][0]->resume_original_name)?$result[0][0]->resume_original_name:"Resume" ;
                     $returnArray['uploaded_by_p2'] = !empty($result[0][0]->uploaded_by_p2)?$result[0][0]->uploaded_by_p2:0 ;
                     $returnArray['service_scope'] = !empty($result[0][2]->service_scope)?$result[0][2]->service_scope:"" ;
+                    $returnArray['awaiting_action_status'] = !empty($result[0][0]->awaiting_action_status)?$result[0][0]->awaiting_action_status:"" ;
                     if (!empty($result[0][0]->referred_for))
                     {
                         $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($result[0][0]->referred_for) ;
