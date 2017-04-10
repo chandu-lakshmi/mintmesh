@@ -1141,4 +1141,10 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
           
       }
       
+      public function getCompanyAllCodes(){    
+            return DB::table('company')
+                   ->select('code')
+                   ->get();
+        }
+      
 }

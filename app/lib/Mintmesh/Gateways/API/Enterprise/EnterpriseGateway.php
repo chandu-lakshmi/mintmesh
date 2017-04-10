@@ -2362,9 +2362,9 @@ class EnterpriseGateway {
         $neoUserInput['fullname']       = $input['fullname'];
         $neoUserInput['emailid']        = $input['emailid'];
         $neoUserInput['is_enterprise']  = $input['is_enterprise'];
-        $neoUserInput['location']  = $input['location'];
+//        $neoUserInput['location']  = $input['location'];
         $neoUserInput['status']  = $input['status'];
-        $neoUserInput['designation']  = $input['designation'];
+//        $neoUserInput['designation']  = $input['designation'];
         $neoUserInput['photo']  = isset($input['photo'])?$input['photo']:'';
         $neoUserInput['photo_org_name']  = isset($input['photo_org_name'])?$input['photo_org_name']:'';
         $neoUserInput['mysql_id']  = $input['user_id'];
@@ -2774,22 +2774,37 @@ class EnterpriseGateway {
      
      public function companyJobsAutoConnect($companyCode, $bucketId, $contactEmailId, $emailId) {
          
+        $pushData = $jobData = array(); 
         $companyBucketJobs  =  $this->neoEnterpriseRepository->getCompanyBucketJobs($companyCode, $bucketId);
         $notificationMsg    =  Lang::get('MINTMESH.notifications.messages.27');
-        if(!empty($companyBucketJobs)){
+        if(!empty($companyBucketJobs[0])){
             #creating included Relation between Post and Contacts 
-            $pushData['postId']             = $companyBucketJobs;
             $pushData['bucket_id']          = $bucketId;
             $pushData['contact_emailid']    = $contactEmailId;
             $pushData['company_code']       = $companyCode;
             $pushData['user_emailid']       = $emailId;
             $pushData['notification_msg']   = $notificationMsg;
+            $pushData['notification_log']   = 1;//for log the notification or not
+             \Log::info("<<<<<<<<<<<<<<<< In company Jobs Auto Connect >>>>>>>>>>>>>".print_r($pushData,1));
             foreach ($companyBucketJobs as $jobs){
                 #creating relation with each job
-                $pushData['postId']  = $jobs[0];
-                Queue::push('Mintmesh\Services\Queues\CreateEnterprisePostContactsRelation', $pushData, 'default');
+                $pushData['postId']  = !empty($jobs[0])?$jobs[0]:'';
+                Queue::push('Mintmesh\Services\Queues\CompanyPostsAutoConnectWithContactQueue', $pushData, 'default');
             }
-        }    
+        }
+        $companyBucketCampaigns  =  $this->neoEnterpriseRepository->getCompanyBucketCampaigns($companyCode, $bucketId);
+        if(!empty($companyBucketCampaigns[0])){
+            $jobData['bucket_id']       = $bucketId;
+            $jobData['contact_emailid'] = $contactEmailId;
+            $jobData['company_code']    = $companyCode;
+            $jobData['user_emailid']    = $emailId;
+            \Log::info("<<<<<<<<<<<<<<<< In company Campaigns Auto Connect >>>>>>>>>>>>>".print_r($jobData,1));
+            foreach ($companyBucketCampaigns as $jobs){
+                #creating relation with each job
+                $jobData['campaign_id']     = !empty($jobs[0])?$jobs[0]:'';
+                Queue::push('Mintmesh\Services\Queues\CompanyCampaignsAutoConnectWithContactQueue', $jobData, 'default');
+            }
+        }
      }
     
     public function getSubscriptionTypeId($employeesNo=0){

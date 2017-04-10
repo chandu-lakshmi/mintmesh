@@ -250,6 +250,19 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
                return false;
            }
        }
+       
+      public function getPostInviteCount($jobid = "") {
+          $return = 0;
+           if (!empty($jobid)) {
+               $queryString = "match (p:Post)-[r:INCLUDED]-(u:User) where ID(p)=" . $jobid . " return count(distinct(u))";
+               $query = new CypherQuery($this->client, $queryString);
+               $result = $query->getResultSet();
+               if(isset($result[0]) && isset($result[0][0])){
+                $return = $result[0][0];
+               }
+           } 
+           return $return;
+       }
       //Update Active or Decline Status count
       public function updatePostStatusCount($data = array()) {
           if (!empty($data)) {
@@ -626,6 +639,14 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         {
             $queryString.=" skip ".$skip." limit ".self::LIMIT ;
         }
+        $query  = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();   
+        return $result;
+    }
+    
+    public function getCampaignActivePosts($campaignId='') {
+        
+        $queryString = "MATCH (c:Campaign)-[r:CAMPAIGN_POST]-(p:Post{status:'ACTIVE'}) where ID(c)=".$campaignId."  return distinct(p) ORDER BY p.created_at DESC ";
         $query  = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();   
         return $result;
@@ -1040,6 +1061,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         $return = 0;
         if(!empty($emailId) && !empty($companyCode)){
             $queryString = "MATCH (u:User:Mintmesh{emailid:'".$emailId."'})-[r:INCLUDED]-(p:Post{status:'ACTIVE'})-[:POSTED_FOR]-(Company{companyCode:'".$companyCode."'}) return count(p)";
+            echo $queryString;exit;
             $query  = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             if(isset($result[0]) && isset($result[0][0])){
@@ -1058,7 +1080,94 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
 
             $query = new CypherQuery($this->client, $queryString);
             return $result = $query->getResultSet();
-         }
+    }
+    
+    public function getCampaignJobIds($campaignId=''){
+        $result = false;
+        if(!empty($campaignId)){
+            $queryString = "MATCH (c:Campaign)-[r:CAMPAIGN_POST]-(p:Post) where ID(c)=".$campaignId." return distinct(ID(p))";
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+        }
+        return $result;
+    }
+    
+    public function checkCampaignContactsRelation($campaignId='', $emailId='') {
+        $return = 0;
+        if(!empty($emailId) && !empty($campaignId)){
+            $queryString = "MATCH (u:User)-[r:CAMPAIGN_CONTACT]-(c:Campaign) where u.emailid='".$emailId."' and ID(c)=".$campaignId." return count(r)";
+            $query  = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if(isset($result[0]) && isset($result[0][0])){
+                $return = $result[0][0];
+            }
+        }
+        return $return; 
+    }
+    public function checkPostAndCampaignRelation($postId='', $campaignId='') {
+        $return = 0;
+        if(!empty($postId) && !empty($campaignId)){
+            $queryString = "MATCH (c:Campaign)-[r:CAMPAIGN_POST]-(p:Post) where ID(c)=".$campaignId." and ID(p)=".$postId." return p";
+            $query  = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if(isset($result[0]) && isset($result[0][0])){
+                $return = $result;
+            }
+        }
+        return $return; 
+    }
+    
+    public function checkPostContactsRelation($postId='', $emailId='') {
+        $return = 0;
+        if(!empty($emailId) && !empty($postId)){
+            $queryString = "match (u:User)-[r:INCLUDED]-(p:Post) where u.emailid='".$emailId."' and ID(p)=".$postId." return count(r)";
+            $query  = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if(isset($result[0]) && isset($result[0][0])){
+                $return = $result[0][0];
+            }
+        }
+        return $return; 
+    }
+    
+    public function getCompanyJobsList($emailId='',$companyCode='') {
+        $return = 0;
+        if(!empty($emailId) && !empty($companyCode)){
+            $queryString = "MATCH (u:User:Mintmesh{emailid:'".$emailId."'})-[r:INCLUDED]-(p:Post{status:'ACTIVE'})-[:POSTED_FOR]-(Company{companyCode:'".$companyCode."'})
+                WHERE  p.post_type <>'campaign' 
+                WITH collect({post:p,rel:r}) as posts 
+                OPTIONAL MATCH (u:User:Mintmesh{emailid:'".$emailId."'})-[r:CAMPAIGN_CONTACT]-(p:Campaign{status:'ACTIVE', company_code:'".$companyCode."'}) 
+                WITH posts + collect({post:p,rel:r}) as rows
+                UNWIND rows as row
+                RETURN distinct(row)";            
+            $query  = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if(isset($result[0]) && isset($result[0][0])){
+                $return = $result;
+            }
+        }
+        return $return; 
+    }
+    
+    public function getCampaigns($companyCode='') {
+        $result = false;
+        if(!empty($companyCode)){
+            $queryString = "match (c:Company)-[COMPANY_CREATED_CAMPAIGN]-(p:Campaign) where c.companyCode='".$companyCode."'  return ID(p)";
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+        }
+        return $result;
+    }
+    public function updateCampaigns($campaignId='', $bucket_ids='') {
+        $result = false;
+        if(!empty($campaignId)){
+            $queryString = "match (c:Campaign) where ID(c)=".$campaignId." set c.bucket_id ='".$bucket_ids."' return c";
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+        }
+        return $result;
+    }
+    
 }
 
 ?>

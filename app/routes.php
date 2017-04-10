@@ -127,6 +127,9 @@ Route::group(array('prefix' => 'v1'), function() {
       Route::post("enterprise/campaign_jobs_list", "API\Post\PostController@campaignJobsList");
       //get campaign job list
       Route::post("enterprise/company_integration", "API\Enterprise\EnterpriseController@companyIntegration");
+      
+      Route::post("enterprise/test_camp", "API\Post\PostController@testCamp");
+      
 });
 
 //Route::group(array('prefix' => 'v1'), function() {

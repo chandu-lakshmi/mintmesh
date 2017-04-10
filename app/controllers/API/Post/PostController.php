@@ -498,6 +498,14 @@ class PostController extends \BaseController {
                 return \Response::json($validation);
             }
         }
+        
+        public function testCamp()
+	{
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            $response = $this->PostGateway->testCamp($inputUserData);
+            return \Response::json($response);
+	}
 }
 
 ?>

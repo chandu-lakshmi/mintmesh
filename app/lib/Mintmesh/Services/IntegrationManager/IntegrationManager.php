@@ -274,6 +274,7 @@ class IntegrationManager {
                             $pushData['company_code']       = $params['company_code'];
                             $pushData['user_emailid']       = $userEmailId;
                             $pushData['notification_msg']   = $notificationMsg;
+                            $pushData['notification_log']   = 1;//for log the notification or not
                             Queue::push('Mintmesh\Services\Queues\CreateEnterprisePostContactsRelation', $pushData, 'default');
                             
                             #send email notifications to all the contacts

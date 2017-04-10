@@ -105,16 +105,16 @@ class EnterpriseValidator extends Validator {
 //        ),
         'add_user' => array(
                 'fullname'              => 'required',
-                'designation'           => 'required',
+//                'designation'           => 'required',
                 'emailid'               => 'required|email',
-                'location'              => 'required',
+//                'location'              => 'required',
                 'status'                => 'required'
         ),
         'edit_user'  => array(
                'fullname'              => 'required',
-                'designation'           => 'required',
+//                'designation'           => 'required',
                 'emailid'               => 'required',
-                'location'              => 'required',
+//                'location'              => 'required',
                 'status'                => 'required'
         ),
         'add_group'  =>  array(

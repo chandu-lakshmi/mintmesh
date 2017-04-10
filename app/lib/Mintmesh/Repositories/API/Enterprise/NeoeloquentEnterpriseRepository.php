@@ -547,7 +547,17 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
     public function getCompanyBucketJobs($companyCode='', $bucketId=''){
         $result = false;
         if(!empty($companyCode) &&!empty($bucketId)){
-            $queryString = "match (c:Company)-[POSTED_FOR]-(p:Post{status:'ACTIVE'}) where c.companyCode='".$companyCode."' and p.bucket_id =~ '.*".$bucketId.".*' return ID(p)";
+            $queryString = "match (c:Company)-[POSTED_FOR]-(p:Post{status:'ACTIVE'}) where c.companyCode='".$companyCode."' and p.bucket_id =~ '.*".$bucketId.".*' return distinct(ID(p))";
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+        }
+        return $result;
+    }
+    
+    public function getCompanyBucketCampaigns($companyCode='', $bucketId=''){
+        $result = false;
+        if(!empty($companyCode) &&!empty($bucketId)){
+            $queryString = "match (c:Company)-[COMPANY_CREATED_CAMPAIGN]-(p:Campaign{status:'ACTIVE'}) where c.companyCode='".$companyCode."' and p.bucket_id =~ '.*".$bucketId.".*' return distinct(ID(p))";
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
         }
