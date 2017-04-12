@@ -25,7 +25,7 @@
 </head>
 <body style="margin:0px; font-family: 'arial', sans-serif;font-weight:300;font-size:18px;">
     <table style='min-width:550px;width: 550px' align="center" bgcolor="#EAEFF2 ">
-        <tr align="center"><td><img src="<?php echo $public_url ; ?>images/logo.jpg" alt="brand-logo" height="60px"></td></tr>
+        <tr align="center"><td><img src="<?php echo $public_url ; ?>images/mintmesh-logo.png" alt="brand-logo" height="60px"></td></tr>
         <tr>
             <td style="padding:20px">
                 <table  width="100%" style="background-color:#fff">

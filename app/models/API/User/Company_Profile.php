@@ -12,7 +12,7 @@ class Company_Profile extends Eloquent {
         //the mysql database table used by user model
 	protected $table  = 'company';
 
-	protected $fillable = array('name','code','employees_no','website','logo','status','created_by','ip_address');
+	protected $fillable = array('name','code','employees_no','website','logo','status','subscription_type','created_by','ip_address');
         
         // Definig mysql connection
 	protected $connection = 'mysql';

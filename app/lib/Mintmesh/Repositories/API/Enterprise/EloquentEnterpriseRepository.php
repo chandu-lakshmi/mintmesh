@@ -1038,7 +1038,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
          
     public function checkCompanyIntegration($companyCode='') {
         return DB::table('company_idp')  
-                ->where('hcm_id', '=', $companyCode)->get();
+                ->where('company_code', '=', $companyCode)->get();
     }
     
     public function getHcmPartners() {
@@ -1093,7 +1093,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                 $sql.= ' LEFT JOIN buckets_contacts bc ON c.id=bc.contact_id';
                 
                // $sql = "select SQL_CALC_FOUND_ROWS id as record_id, firstname, lastname, emailid, phone, employeeid, status from contacts ";
-                $sql.= " where c.company_id='".$params['company_id']."' " ;
+                $sql.= " where c.company_id='".$params['company_id']."' AND c.status!='Separated' " ;
                  if(!empty($params['bucket_id'])){
                      $sql.= " AND bc.bucket_id = '".$params['bucket_id']."' " ;
                  }
@@ -1133,12 +1133,6 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
            return DB::table('company_idp')  
                 ->where('id', '=', $input['id'])->get();
          }
-      }
-      
-      public function getConfigurationDetails($input) {
-          return DB::table('company_idp')  
-                ->where('company_code', '=', $input['company_code'])->get();
-          
       }
       
       public function getCompanyAllCodes(){    

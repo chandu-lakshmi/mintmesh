@@ -430,8 +430,8 @@ class PostGateway {
             $relationAttrs['post_read_status'] = 0;
             $relationAttrs['bittly_url'] = $biltyUrl;
              // Log::info("<<<<<<<<<<<<<<<< In Queue >>>>>>>>>>>>>".print_r($postDetails,1));
-            print_r($postId);
-            print_r($contactEmailid);
+            //print_r($postId);
+            //print_r($contactEmailid);
             
             try {
                 $postDetails = $this->neoPostRepository->createPostContactsRelation($relationAttrs, $postId, $company_code, $contactEmailid, $jobData['bucket_id']);
@@ -1328,8 +1328,8 @@ class PostGateway {
         $url = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
         $biltyUrl = $this->urlShortner($url);
         $relationAttrs['bittly_url']    = $biltyUrl;
-        print($campaignId);
-        print($contactEmailid);
+        //print($campaignId);
+        //print($contactEmailid);
          //\Log::info("<<<<<<<<<<<<<<<< In Queue >>>>>>>>>>>>>".print_r($neoInput,1));
         try {
             $this->neoPostRepository->createCampaignContactsRelation($relationAttrs, $campaignId, $contactEmailid);
@@ -1808,7 +1808,7 @@ class PostGateway {
                 $postDetails = $this->referralsGateway->formPostDetailsArray($posts[0]);
                 $post['post_id'] = $postDetails['post_id'];
                 $post['name'] = $postDetails['service_name'];
-                $post['no_of_vacancies'] = $postDetails['no_of_vacancies'];
+                $post['no_of_vacancies'] = !empty($postDetails['no_of_vacancies'])?$postDetails['no_of_vacancies']:'';
                 $postAry[] = $post;
                 $vacancies += !empty($postDetails['no_of_vacancies'])?$postDetails['no_of_vacancies']:'';;
             }

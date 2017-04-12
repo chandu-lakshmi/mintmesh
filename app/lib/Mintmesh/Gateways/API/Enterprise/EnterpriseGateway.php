@@ -2811,7 +2811,7 @@ class EnterpriseGateway {
         
         if($employeesNo > 5000){
             $subscriptionTypeId = 3;
-        }  elseif ($employeesNo > 100 && $employeesNo <= 5000) {
+        }  elseif ($employeesNo > 50 && $employeesNo <= 5000) {
             $subscriptionTypeId = 2;
         }  else {
             $subscriptionTypeId = 1;
@@ -2849,8 +2849,8 @@ class EnterpriseGateway {
         foreach ($subAry as $value) {
             $licence = array();
             $licence['employees_no'] = $value->employees_no;
-            $licence['start_date']   = $value->start_date;
-            $licence['end_date']     = $value->end_date;
+            $licence['start_date']  = date('Y-m-d', strtotime($value->start_date));
+            $licence['end_date']     = date('Y-m-d', strtotime($value->end_date));
             $returnAry[]  = $licence;
         }
         $returnData = array('active_plan'=>$return,'licence_log'=>$returnAry);
@@ -3015,62 +3015,24 @@ class EnterpriseGateway {
     }    
     
     public function companyIntegration($input){
-        $inputData = $data = array();
-        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($input['company_code']);
-        $userDetails = $this->enterpriseRepository->getCompanyConnectedUser($input['company_code']);
-        if(!empty($companyDetails) && !empty($userDetails)){
-            $inputData['company_code'] = $input['company_code'];
-            $inputData['company_id'] = $companyDetails[0]->id;
-            $inputData['user_id']    = $userDetails[0]->user_id; 
-            $inputData['idp_signin_url'] = 'https://pmsalesdemo8.successfactors.com/sf/idp/SAML2/SSO/POST/company/SFPART011097';
-            $inputData['idp_signout_url'] = 'https://pmsalesdemo8.successfactors.com/sf/idp/SAML2/slo/POST';
-            $inputData['idp_issuer'] = 'https://pmsalesdemo8.successfactors.com/sf/idp/SAML2/company/SFPART011097';
-            $inputData['idp_cert'] = 'MIICDTCCAXagAwIBAgIETJj9LjANBgkqhkiG9w0BAQUFADBLMQswCQYDVQQGEwJVUzEbMBkGA1UE
-                                      ChMSU3VjY2Vzc2ZhY3RvcnMuY29tMQwwCgYDVQQLEwNPcHMxETAPBgNVBAMTCFNGIEFkbWluMB4X
-                                      DTEwMDkyMTE4NDUwMloXDTI1MDkxOTE4NDUwMlowSzELMAkGA1UEBhMCVVMxGzAZBgNVBAoTElN1
-                                      Y2Nlc3NmYWN0b3JzLmNvbTEMMAoGA1UECxMDT3BzMREwDwYDVQQDEwhTRiBBZG1pbjCBnzANBgkq
-                                      hkiG9w0BAQEFAAOBjQAwgYkCgYEArA9RLNnL9Pt6xynFfYfa8VXAXFDG9Y8xkgs3lhIOlsjqEYwb
-                                      SoghiqJIJvfYM45kx3aB7ZrN96tAR5uUupEsu/GcS6ACxhfruW+BY6uw8v6/w2vXhBdfFjBoO+Ke
-                                      Lx4k3llleVgKsmNlf81okOXv1ree8wErfZ3ssnNxkuQgGB0CAwEAATANBgkqhkiG9w0BAQUFAAOB
-                                      gQBeBCSMFnY8TB6jtWoSP/lorBudhptgvO7/3r+l/QK0hdk6CVv+VQmSilNPgWVgU9ktZGbNkZhw
-                                      IgwnqIQHAi6631ufkYQJB+48YUe1q/pv6EWaeIwGvcGYSXZp/E/aGZPtceTIXFPfqOyHQoFtb0nq
-                                      MMFWoDhpXUHmlroyTc9sJg==';
-            $inputData['status']   = '1';
-            $checkIntegration = $this->enterpriseRepository->checkCompanyIntegration($inputData['company_code']);
-            if(empty($checkIntegration))
-            {
-                $companyIntegrated = $this->enterpriseRepository->integrateCompany($inputData);
-                if($companyIntegrated){
-                    $data['idp_signin_url']  = $companyIntegrated[0]->idp_signin_url;
-                    $data['idp_signout_url']  = $companyIntegrated[0]->idp_signout_url;
-                    $data['idp_issuer']  = $companyIntegrated[0]->idp_issuer;
-                    $data['idp_cert']  = $companyIntegrated[0]->idp_cert;
-                    $responseCode   = self::SUCCESS_RESPONSE_CODE;
-                    $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
-                    $responseMessage= array('msg' => array(Lang::get('MINTMESH.company_integration.success')));
-                }else{
-                    $data  =  array();
-                    $responseCode   = self::ERROR_RESPONSE_CODE;
-                    $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
-                    $responseMessage= array('msg' => array(Lang::get('MINTMESH.company_integration.failure')));
-                }
-            }else{
-                $data['idp_signin_url']  =  $checkIntegration[0]->idp_signin_url;
-                $data['idp_signout_url']  = $checkIntegration[0]->idp_signout_url;
-                $data['idp_issuer']  = $checkIntegration[0]->idp_issuer;
-                $data['idp_cert']  = $checkIntegration[0]->idp_cert;
-                $responseCode   = self::SUCCESS_RESPONSE_CODE;
-                $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
-                $responseMessage= array('msg' => array(Lang::get('MINTMESH.company_integration.success')));
-            }
-            
-        }else{
-            $data  =  array();
-            $responseCode   = self::ERROR_RESPONSE_CODE;
-            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage= array('msg' => array(Lang::get('MINTMESH.company_integration.failure')));
-        }
-              return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data, false);  
+        $checkIntegration = $this->enterpriseRepository->checkCompanyIntegration($input['company_code']);
+       if(!empty($checkIntegration))
+       {
+           $data['idp_signin_url']  =  $checkIntegration[0]->idp_signin_url;
+           $data['idp_signout_url']  = $checkIntegration[0]->idp_signout_url;
+           $data['idp_issuer']  = $checkIntegration[0]->idp_issuer;
+           $data['idp_cert']  = $checkIntegration[0]->idp_cert;
+           $data['status']  = $checkIntegration[0]->status;
+           $responseCode   = self::SUCCESS_RESPONSE_CODE;
+           $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+           $responseMessage= array('msg' => array(Lang::get('MINTMESH.company_integration.success')));
+       } else {
+           $data  =  array();
+           $responseCode   = self::ERROR_RESPONSE_CODE;
+           $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+           $responseMessage= array('msg' => array(Lang::get('MINTMESH.company_integration.failure')));
+       }
+       return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data, false); 
     }
     
     /**
@@ -3187,7 +3149,7 @@ class EnterpriseGateway {
     
     public function getConfiguration($input) {
         $data = array(); 
-        $configurationDetails = $this->enterpriseRepository->getConfigurationDetails($input);
+        $configurationDetails = $this->enterpriseRepository->checkCompanyIntegration($input['company_code']);
         if(!empty($configurationDetails)){
                 $data['id'] = $configurationDetails[0]->id;
                 $data['signin_url'] = $configurationDetails[0]->idp_signin_url;

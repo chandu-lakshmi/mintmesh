@@ -56,7 +56,7 @@ class job1 extends Command {
         $result = $query->getResultSet();   
         foreach($result as $key=>$value){
             $campaignId = $value[0]->getID();
-            $queryString1 = "MATCH (c:Campaign)-[r:CAMPAIGN_SCHEDULE]-(s:CampaignSchedule) where ID(c)=".$campaignId." return distinct(s) ORDER BY s.start_date ASC";
+            $queryString1 = "MATCH (c:Campaign)-[r:CAMPAIGN_SCHEDULE]-(s:CampaignSchedule) where ID(c)=".$campaignId." return distinct(s) ORDER BY s.gmt_end_date DESC";
             $query  = new CypherQuery($this->client, $queryString1);
             $result1 = $query->getResultSet();    
             $currentDate = gmdate("Y-m-d H:i:s");
