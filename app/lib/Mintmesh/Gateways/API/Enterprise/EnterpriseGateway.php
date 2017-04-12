@@ -3097,10 +3097,14 @@ class EnterpriseGateway {
          $this->userFileUploader->destination = Config::get('constants.S3BUCKET_FILE');
             $renamedFileName = $this->userFileUploader->uploadToS3BySource($input['certificate_path']);
             $inputData['certificate'] = $renamedFileName.','.$input['certificate_org_name'].','.$filesize;
+            $getFileContents = !empty($renamedFileName)?file_get_contents($renamedFileName):'';
+            $inputData['idp_file_content'] = $getFileContents;
         }
          if (isset($input['certificate_path_s3']) && !empty($input['certificate_path_s3'])) {
             //upload the file
             $inputData['certificate'] = $input['certificate_path_s3'].','.$input['certificate_org_name'].','.$input['size'];
+            $getFileContents = !empty($renamedFileName)?file_get_contents($renamedFileName):'';
+            $inputData['idp_file_content'] = $input['certificate_path_s3'];
         }
         if($input['action'] == 'add'){
         $addedConfiguration = $this->enterpriseRepository->integrateCompany($inputData);

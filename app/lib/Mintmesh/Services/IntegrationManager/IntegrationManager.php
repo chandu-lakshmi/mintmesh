@@ -521,7 +521,7 @@ class IntegrationManager {
             "candidateId"   => $candidateId,
             "status"        => "Forwarded"
         );
-        $endPoint = 'v2/JobReqFwdCandidates?$format=JSON';
+        $endPoint = 'JobReqFwdCandidates?$format=JSON';
         return  $this->doPost($data, $endPoint); 
     }
     
@@ -545,7 +545,7 @@ class IntegrationManager {
             "viewable"      => true, 
             "deletable"     => false 
         );
-        $endPoint = 'v2/Attachment?$format=JSON';
+        $endPoint = 'Attachment?$format=JSON';
         return $this->doPost($data, $endPoint); 
     }
     
@@ -591,7 +591,7 @@ class IntegrationManager {
                 );
         $data['resume'] = $resumeAry;
         }
-        $endPoint = 'v2/Candidate?$format=JSON';
+        $endPoint = 'Candidate?$format=JSON';
         return $this->doPost($data, $endPoint); 
     }
     
