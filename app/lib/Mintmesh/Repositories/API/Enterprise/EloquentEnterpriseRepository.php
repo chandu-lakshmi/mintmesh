@@ -1019,15 +1019,16 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
     public function integrateCompany($input = array()) {
          $result = DB::table('company_idp')->insert(
                                 array(
-                                    'company_id' => $input['company_id'],
-                                    'user_id' => $input['user_id'],
-                                    'company_code' => $input['company_code'],
-                                    'idp_signin_url' => $input['signin_url'],
-                                    'idp_signout_url' => $input['signout_url'],
-                                    'idp_issuer' => $input['idp_issuer'],
-                                    'idp_cert' => $input['certificate'],
-                                    'idp_file_content' => $input['idp_file_content'],
-                                    'status' => '1',
+                                    'company_id'    => $input['company_id'],
+                                    'user_id'       => $input['user_id'],
+                                    'company_code'  => $input['company_code'],
+                                    'idp_signin_url'    => $input['signin_url'],
+                                    'idp_signout_url'   => $input['signout_url'],
+                                    'idp_issuer'        => $input['idp_issuer'],
+                                    'idp_cert'          => $input['certificate'],
+                                    'idp_file_name'     => $input['idp_file_name'],
+                                    'idp_file_content'  => $input['idp_file_content'],
+                                    'status'     => $input['status'],
                                     'created_at' => $input['createdAt']
                                 )
                         );
@@ -1129,7 +1130,14 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         public function updateConfiguration($input=array()) {
             $result =  DB::table('company_idp')
                     ->where('id',$input['id'])  
-                    ->update(array('idp_signin_url' => $input['signin_url'],'idp_signout_url'=>$input['signout_url'],'idp_issuer'=>$input['idp_issuer'],'idp_cert'=>$input['certificate'],'idp_file_content'=>$input['idp_file_content']));
+                    ->update(array('idp_signin_url'     =>  $input['signin_url'],
+                                    'idp_signout_url'   =>  $input['signout_url'],
+                                    'idp_issuer'        =>  $input['idp_issuer'],
+                                    'idp_cert'          =>  $input['certificate'],
+                                    'idp_file_name'     =>  $input['idp_file_name'],
+                                    'idp_file_content'  =>  $input['idp_file_content'],
+                                    'status'            =>  $input['status']
+                                ));
            if($result){
            return DB::table('company_idp')  
                 ->where('id', '=', $input['id'])->get();

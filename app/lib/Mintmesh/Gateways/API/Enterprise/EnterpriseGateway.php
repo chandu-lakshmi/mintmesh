@@ -3015,19 +3015,25 @@ class EnterpriseGateway {
     }    
     
     public function companyIntegration($input){
-        $checkIntegration = $this->enterpriseRepository->checkCompanyIntegration($input['company_code']);
+        
+        $data  =  array();
+        $companyCode = !empty($input['company_code'])?$input['company_code']:'';
+        #get Company Integration details here
+        $checkIntegration = $this->enterpriseRepository->checkCompanyIntegration($companyCode);
        if(!empty($checkIntegration))
        {
-           $data['idp_signin_url']  =  $checkIntegration[0]->idp_signin_url;
-           $data['idp_signout_url']  = $checkIntegration[0]->idp_signout_url;
-           $data['idp_issuer']  = $checkIntegration[0]->idp_issuer;
-           $data['idp_cert']  = $checkIntegration[0]->idp_cert;
-           $data['status']  = $checkIntegration[0]->status;
+           $idpDataObj = !empty($checkIntegration[0])?$checkIntegration[0]:'';
+           $data['idp_signin_url']      = $idpDataObj->idp_signin_url;
+           $data['idp_signout_url']     = $idpDataObj->idp_signout_url;
+           $data['idp_issuer']          = $idpDataObj->idp_issuer;
+           $data['idp_cert']            = $idpDataObj->idp_cert;
+           $data['status']              = $idpDataObj->status;
+           $data['idp_file_content']    = $idpDataObj->idp_file_content;
+           
            $responseCode   = self::SUCCESS_RESPONSE_CODE;
            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
            $responseMessage= array('msg' => array(Lang::get('MINTMESH.company_integration.success')));
        } else {
-           $data  =  array();
            $responseCode   = self::ERROR_RESPONSE_CODE;
            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
            $responseMessage= array('msg' => array(Lang::get('MINTMESH.company_integration.failure')));
@@ -3079,44 +3085,55 @@ class EnterpriseGateway {
     }
     
     public function addConfiguration($input) {
+        
         $inputData = $data = array();
+        $companyCode = !empty($input['company_code'])?$input['company_code']:'';
         $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser();
-        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($input['company_code']);
-        $inputData['user_id']  = $this->loggedinUserDetails->id;
-        $inputData['company_id'] = $companyDetails[0]->id;
-        $inputData['signin_url'] = $input['signin_url'];
-        $inputData['signout_url'] = $input['signout_url'];
-        $inputData['idp_issuer'] = $input['idp_issuer'];
-        $inputData['createdAt'] = gmdate("Y-m-d H:i:s");
+        #get Company Details By Code
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        
+        $inputData['company_code']  = $companyCode;
+        $inputData['user_id']       = $this->loggedinUserDetails->id;
+        $inputData['company_id']    = $companyDetails[0]->id;
+        $inputData['signin_url']    = !empty($input['signin_url'])?$input['signin_url']:'';
+        $inputData['signout_url']   = !empty($input['signout_url'])?$input['signout_url']:'';
+        $inputData['idp_issuer']    = !empty($input['idp_issuer'])?$input['idp_issuer']:'';
+        $inputData['status']        = !empty($input['status'])?$input['status']:0;
+        $inputData['createdAt']     = gmdate("Y-m-d H:i:s");
 //        $inputData['white_listing'] = $input['white_listing'];
-        $inputData['company_code'] = $input['company_code'];
         if (isset($input['certificate_path']) && !empty($input['certificate_path'])) {
-         $filesize = filesize($input['certificate_path'])/1000;
-         //upload the file
-         $this->userFileUploader->source =  $input['certificate_path'];
-         $this->userFileUploader->destination = Config::get('constants.S3BUCKET_FILE');
-            $renamedFileName = $this->userFileUploader->uploadToS3BySource($input['certificate_path']);
-            $inputData['certificate'] = $renamedFileName.','.$input['certificate_org_name'].','.$filesize;
-            $getFileContents = !empty($renamedFileName)?file_get_contents($renamedFileName):'';
-            $inputData['idp_file_content'] = $getFileContents;
+         #upload the file
+         $this->userFileUploader->source        =  $input['certificate_path'];
+         $this->userFileUploader->destination   = Config::get('constants.S3BUCKET_FILE');
+         $renamedFileName = $this->userFileUploader->uploadToS3BySource($input['certificate_path']);
+            $certificateOrgName = $input['certificate_org_name'];
+            $getFileContents    = !empty($renamedFileName)?file_get_contents($renamedFileName):'';
+            $inputData['certificate']       = $renamedFileName;
+            $inputData['idp_file_content']  = $getFileContents;
+            $inputData['idp_file_name']     = $certificateOrgName;
         }
-         if (isset($input['certificate_path_s3']) && !empty($input['certificate_path_s3'])) {
-            //upload the file
-            $inputData['certificate'] = $input['certificate_path_s3'].','.$input['certificate_org_name'].','.$input['size'];
-            $getFileContents = !empty($renamedFileName)?file_get_contents($renamedFileName):'';
-            $inputData['idp_file_content'] = $input['certificate_path_s3'];
+        if (isset($input['certificate_path_s3']) && !empty($input['certificate_path_s3'])) {
+            
+            $renamedFileName    = $input['certificate_path_s3'];
+            $certificateOrgName = $input['certificate_org_name'];
+            $getFileContents    = !empty($renamedFileName)?file_get_contents($renamedFileName):'';
+            $inputData['certificate']       = $renamedFileName;
+            $inputData['idp_file_content']  = $getFileContents;
+            $inputData['idp_file_name']     = $certificateOrgName;
         }
         if($input['action'] == 'add'){
         $addedConfiguration = $this->enterpriseRepository->integrateCompany($inputData);
             if(!empty($addedConfiguration)){
-                $data['id'] = $addedConfiguration[0]->id;
-                $data['signin_url'] = $addedConfiguration[0]->idp_signin_url;
-                $data['signout_url'] = $addedConfiguration[0]->idp_signout_url;
-                $data['idp_issuer'] = $addedConfiguration[0]->idp_issuer;
-                $certificate = !empty($addedConfiguration[0]->idp_cert)?explode(',',$addedConfiguration[0]->idp_cert):'';
-                $data['certificate'] = $certificate[1];
-                $data['certificate_s3_path'] = $certificate[0];
-                $data['size'] = $certificate[2];
+                
+                $intDataObj = !empty($addedConfiguration[0])?$addedConfiguration[0]:'';
+                $data['id'] = $intDataObj->id;
+                $data['status']         = $intDataObj->status;
+                $data['signin_url']     = $intDataObj->idp_signin_url;
+                $data['signout_url']    = $intDataObj->idp_signout_url;
+                $data['idp_issuer']     = $intDataObj->idp_issuer;
+                $data['certificate']    = $intDataObj->idp_cert;
+                $data['idp_file_name']  = $intDataObj->idp_file_name;
+                
                 $responseCode   = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
                 $responseMessage= array('msg' => array(Lang::get('MINTMESH.add_configuration.success')));
@@ -3126,43 +3143,51 @@ class EnterpriseGateway {
                 $responseMessage = array(Lang::get('MINTMESH.add_configuration.failure'));
                 $data = array();
             }
+            
         }else{
-           $inputData['id'] = $input['id'];
-           $updateConfiguration = $this->enterpriseRepository->updateConfiguration($inputData); 
-           if(!empty($updateConfiguration)){
-                $data['id'] = $updateConfiguration[0]->id;
-                $data['signin_url'] = $updateConfiguration[0]->idp_signin_url;
-                $data['signout_url'] = $updateConfiguration[0]->idp_signout_url;
-                $data['idp_issuer'] = $updateConfiguration[0]->idp_issuer;
-                $certificate = !empty($updateConfiguration[0]->idp_cert)?explode(',',$updateConfiguration[0]->idp_cert):'';
-                $data['certificate'] = $certificate[1];
-                $data['certificate_s3_path'] = $certificate[0];
-                $data['size'] = !empty($certificate[2])?$certificate[2]:$input['size'];
+            
+            $inputData['id'] = $input['id'];
+            $updateConfiguration = $this->enterpriseRepository->updateConfiguration($inputData); 
+            if(!empty($updateConfiguration)){
+                
+                $intDataObj = !empty($updateConfiguration[0])?$updateConfiguration[0]:'';
+                $data['id'] = $intDataObj->id;
+                $data['status']         = $intDataObj->status;
+                $data['signin_url']     = $intDataObj->idp_signin_url;
+                $data['signout_url']    = $intDataObj->idp_signout_url;
+                $data['idp_issuer']     = $intDataObj->idp_issuer;
+                $data['certificate']    = $intDataObj->idp_cert;
+                $data['idp_file_name']  = $intDataObj->idp_file_name;
+                
                 $responseCode   = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
                 $responseMessage= array('msg' => array(Lang::get('MINTMESH.edit_configuration.success')));
-           }else{
+            }else{
                 $responseCode = self::ERROR_RESPONSE_CODE;
                 $responseMsg = self::ERROR_RESPONSE_MESSAGE;
                 $responseMessage = array(Lang::get('MINTMESH.edit_configuration.failure'));
                 $data = array();
-           }
+            }
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data, false);  
     }
     
     public function getConfiguration($input) {
+        
         $data = array(); 
-        $configurationDetails = $this->enterpriseRepository->checkCompanyIntegration($input['company_code']);
+        $companyCode = !empty($input['company_code'])?$input['company_code']:'';
+        $configurationDetails = $this->enterpriseRepository->checkCompanyIntegration($companyCode);
+        
         if(!empty($configurationDetails)){
-                $data['id'] = $configurationDetails[0]->id;
-                $data['signin_url'] = $configurationDetails[0]->idp_signin_url;
-                $data['signout_url'] = $configurationDetails[0]->idp_signout_url;
-                $data['idp_issuer'] = $configurationDetails[0]->idp_issuer;
-                $certificate = !empty($configurationDetails[0]->idp_cert)?explode(',',$configurationDetails[0]->idp_cert):'';
-                $data['certificate'] = $certificate[1];
-                $data['certificate_s3_path'] = $certificate[0];
-                $data['size'] = $certificate[2];
+                $idpDataObj = !empty($configurationDetails[0])?$configurationDetails[0]:'';
+                $data['id'] = $idpDataObj->id;
+                $data['status']         = $idpDataObj->status;
+                $data['signin_url']     = $idpDataObj->idp_signin_url;
+                $data['signout_url']    = $idpDataObj->idp_signout_url;
+                $data['idp_issuer']     = $idpDataObj->idp_issuer;
+                $data['certificate']    = $idpDataObj->idp_cert;
+                $data['idp_file_name']  = $idpDataObj->idp_file_name;
+                
                 $responseCode   = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
                 $responseMessage= array('msg' => array(Lang::get('MINTMESH.configuration_details.success')));
