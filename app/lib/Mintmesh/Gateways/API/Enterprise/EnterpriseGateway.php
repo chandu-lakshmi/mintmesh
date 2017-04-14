@@ -1805,7 +1805,6 @@ class EnterpriseGateway {
     }
     
     public function processUploadContacts($inputParams){ 
-
         $return = FALSE;
         $contactsList = array();
         $companyId    =  $inputParams['company_id'];
@@ -1889,7 +1888,6 @@ class EnterpriseGateway {
         $companyDetails  = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId       = !empty($companyDetails[0]->id)?$companyDetails[0]->id:0; 
         $contacts        = !empty($input['contacts'])?$input['contacts']:array();
-       
             foreach ($contacts as $key => $value) {
                 $inputParams = array();
                 $inputParams['company_id']   = $companyId;
@@ -2147,7 +2145,7 @@ class EnterpriseGateway {
                  $data = array();
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $message = array('msg' => array(Lang::get('MINTMESH.addUser.failure'))); 
+            $message = array('msg' => array(Lang::get('MINTMESH.addUser.userexists'))); 
             }
              }else{
              $updateEnterpriseUser = $this->enterpriseRepository->updateEnterpriseUser($input['emailid'],$input['group_id']);
@@ -2214,7 +2212,7 @@ class EnterpriseGateway {
                   $data = array();
                  $responseCode    = self::ERROR_RESPONSE_CODE;
                 $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-                $message = array('msg' => array(Lang::get('MINTMESH.addUser.failure'))); 
+                $message = array('msg' => array(Lang::get('MINTMESH.addUser.userexists'))); 
              }
              }
         }else{

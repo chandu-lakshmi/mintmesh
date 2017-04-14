@@ -723,7 +723,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             return $input['user_id'];
       }
     public function getUsers($companyCode,$groupId) {
-        return DB::select("select u.id as user_id,u.firstname as name, u.emailid, u.status,u.resetactivationcode from users u inner join company_user_mapping c on c.user_id=u.id where c.code='".$companyCode."' and u.group_id='".$groupId."' ORDER BY firstname");  
+            return DB::select("select DISTINCT(u.id) as user_id,u.firstname as name, u.emailid, u.status,u.resetactivationcode from users u inner join company_user_mapping c on c.user_id=u.id where c.code='".$companyCode."' and u.group_id='".$groupId."' ORDER BY firstname");  
     }
     
    // creating new Enterprise user Company Profile in storage

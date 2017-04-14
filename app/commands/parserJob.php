@@ -3,7 +3,7 @@ use Mintmesh\Services\APPEncode\APPEncode;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
-use DB as D;
+use DB as B;
 use Config as C;
 use Mintmesh\Repositories\BaseRepository;
 use Everyman\Neo4j\Query\ResultSet;
@@ -61,8 +61,9 @@ class parserJob extends Command {
                $relation        = !empty($value[0])?$value[0]:array();//relation details
                $jobDetails      = !empty($value[1])?$value[1]:array();//post details
                $userDetails     = !empty($value[2])?$value[2]:array();//user details
-                
+               
                $status       = 1;
+               $postId       = $jobDetails->getID();
                $relationId   = $relation->getID();
                #update status here
                $updateStatus = $this->updateResumeParsedStatus($relationId, $status);
@@ -77,7 +78,10 @@ class parserJob extends Command {
                #check if referral job is hcm job or not
                if($jobDetails->hcm_type == 'success factors'){
                 //echo 'success factors';
-                $this->processHcmJobReferralQueue($jobDetails, $userDetails, $relation);
+                $postCompany = $this->getPostCompany($postId);
+                $companyCode = !empty($postCompany->companyCode)?$postCompany->companyCode:'';
+                
+                $this->processHcmJobReferralQueue($jobDetails, $userDetails, $relation, $companyCode);
                }
             }
         }
@@ -114,14 +118,32 @@ class parserJob extends Command {
         Queue::push('Mintmesh\Services\Queues\ConfidentScoreQueue', $pushData);
     }
     
-    public function processHcmJobReferralQueue($jobDetails, $userDetails, $relation) {
+    public function processHcmJobReferralQueue($jobDetails, $userDetails, $relation, $companyCode) {
        
         $pushData = array();
+        $pushData['company_code'] = $companyCode;
         $pushData['job_details']  = $jobDetails->getProperties();
         $pushData['rel_details']  = $relation->getProperties();
         $pushData['user_details'] = $userDetails->getProperties();
         $pushData['user_details']['node_id'] = $userDetails->getId();
         Queue::push('Mintmesh\Services\Queues\ProcessHcmJobReferralQueue', $pushData, 'default');
-        //$this->integrationManager->processHcmJobReferral($pushData['job_details'], $pushData['user_details'], $pushData['rel_details']);
+        //$this->integrationManager->processHcmJobReferral($pushData['job_details'], $pushData['user_details'], $pushData['rel_details'], $pushData['company_code']);
     }
+    
+    public function getPostCompany($postId=''){
+        $return = FALSE;
+        $queryString = "MATCH (p:Post)-[:POSTED_FOR]->(c:Company) where ID(p)=".$postId." return c";
+        $query  = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();
+        if (isset($result[0]) && isset($result[0][0])){
+            $return = $result[0][0];
+        }
+       return $return;
+    }
+    
+    public function getCompanyDetailsByCode($companyCode=0){    
+            return B::table('company')
+                   ->select('logo','id','name','employees_no')
+                   ->where('code', '=', $companyCode)->get();
+        }
 }

@@ -10,11 +10,12 @@ class ProcessHcmJobReferralQueue {
         $this->integrationManager = $integrationManager;
     }
     public function fire($job, $jobData)
-    {
+    {   
+        $companyCode =  $jobData['company_code'];
         $jobDetails  =  $jobData['job_details'];
         $userDetails =  $jobData['user_details'];
         $relation    =  $jobData['rel_details'];
-        $this->integrationManager->processHcmJobReferral($jobDetails, $userDetails, $relation) ;
+        $this->integrationManager->processHcmJobReferral($jobDetails, $userDetails, $relation, $companyCode) ;
         $job->delete();
     }
 

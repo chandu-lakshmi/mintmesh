@@ -38,7 +38,7 @@ class IntegrationManager {
     private function getCompanyHcmJobbyId($company_hcm_job_id) {
         // get the job data from company_hcm_jobs
         $result = DB::table('company_hcm_jobs')
-                ->select('hcm_jobs_id','company_id','frequency','last_processed_at','next_process_at')
+                ->select('hcm_jobs_id','company_id','frequency','last_processed_at','next_process_at','status')
                 ->where('company_hcm_jobs_id', '=', $company_hcm_job_id)->first();
 
         return $result;
@@ -111,17 +111,19 @@ class IntegrationManager {
     public function intiateRequest($company_hcm_job_id) {
 
         $companyJobDetail        = $this->getCompanyHcmJobbyId($company_hcm_job_id);
-        $JobDetails              = $this->getJobDetail($companyJobDetail->hcm_jobs_id);
-        $companyJobConfigDetails = $this->getCompanyJobConfigs($JobDetails->hcm_id, $companyJobDetail->company_id);
-        $requestParams           = $this->composeRequestParams($JobDetails, $companyJobDetail, $companyJobConfigDetails);
-        
-        //$endPoint = 'https://apisalesdemo8.successfactors.com:443/odata/v2/JobRequisition?$format=json&$select=jobCode,function,location,industry,jobGrade,positionNumber,jobReqId,numberOpenings,classificationType,currency&$filter=lastModifiedDateTime ge datetime\'2016-11-22T17:19:28\'';
-        //$endPoint = 'https://apisalesdemo8.successfactors.com/odata/v2/JobRequisitionLocale(1683)?%24format=json';
-        //$requestParams[self::API_END_POINT] = $endPoint;
-        $this->requestParams = $requestParams;
-        $return = $this->doRequest($requestParams);
-        $this->processResponseData($return, $companyJobDetail->hcm_jobs_id, $companyJobDetail->company_id);
-        $this->updateLastProcessedTime($company_hcm_job_id, $companyJobDetail);
+        if(!empty($companyJobDetail) && $companyJobDetail->status == '1'){
+            $JobDetails              = $this->getJobDetail($companyJobDetail->hcm_jobs_id);
+            $companyJobConfigDetails = $this->getCompanyJobConfigs($JobDetails->hcm_id, $companyJobDetail->company_id);
+            $requestParams           = $this->composeRequestParams($JobDetails, $companyJobDetail, $companyJobConfigDetails);
+
+            //$endPoint = 'https://apisalesdemo8.successfactors.com:443/odata/v2/JobRequisition?$format=json&$select=jobCode,function,location,industry,jobGrade,positionNumber,jobReqId,numberOpenings,classificationType,currency&$filter=lastModifiedDateTime ge datetime\'2016-11-22T17:19:28\'';
+            //$endPoint = 'https://apisalesdemo8.successfactors.com/odata/v2/JobRequisitionLocale(1683)?%24format=json';
+            //$requestParams[self::API_END_POINT] = $endPoint;
+            $this->requestParams = $requestParams;
+            $return = $this->doRequest($requestParams);
+            $this->processResponseData($return, $companyJobDetail->hcm_jobs_id, $companyJobDetail->company_id);
+            $this->updateLastProcessedTime($company_hcm_job_id, $companyJobDetail);
+        }  
     }
 
     public function processResponseData($responseBody, $jobId, $companyId) {
@@ -595,9 +597,15 @@ class IntegrationManager {
         return $this->doPost($data, $endPoint); 
     }
     
-    public function processHcmJobReferral($jobDetails, $userDetails, $relation){
+    public function processHcmJobReferral($jobDetails, $userDetails, $relation, $companyCode){
         
-        $company_hcm_job_id      = 1;
+        #get company details by code
+        $compData   = $this->getCompanyDetailsByCode($companyCode);   
+        $companyId  = !empty($compData[0]->id)?$compData[0]->id:'';
+        $hcmData    = $this->getCompanyHcmJobbyIdByCompanyID($companyId=187);
+        $company_hcm_job_id = !empty($hcmData[0]->company_hcm_jobs_id)?$hcmData[0]->company_hcm_jobs_id:'';
+        
+        //$company_hcm_job_id      = 1;
         $companyJobDetail        = $this->getCompanyHcmJobbyId($company_hcm_job_id);
         $JobDetails              = $this->getJobDetail($companyJobDetail->hcm_jobs_id);
         $companyJobConfigDetails = $this->getCompanyJobConfigs($JobDetails->hcm_id, $companyJobDetail->company_id);
@@ -645,6 +653,19 @@ class IntegrationManager {
             return 0 ;
         }
     }
+    
+    public function getCompanyDetailsByCode($companyCode=0){    
+        return DB::table('company')
+               ->select('logo','id','name','employees_no')
+               ->where('code', '=', $companyCode)->get();
+    }
+    
+    public function getCompanyHcmJobbyIdByCompanyID($companyId=0){    
+        return DB::table('company_hcm_jobs')
+               ->select('company_hcm_jobs_id')
+               ->where('company_id', '=', $companyId)->get();
+    }
+    
     
 }
 
