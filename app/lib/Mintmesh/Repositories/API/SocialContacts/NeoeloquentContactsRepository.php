@@ -181,6 +181,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
                     }
                     $queryString = rtrim($queryString,',');
                 }
+                $queryString.=' return r';
                 //\Log::info("--relate query-----".$queryString);
                 //echo $queryString ; exit;
                 $query = new CypherQuery($this->client, $queryString);
@@ -414,6 +415,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
         public function getNonMintmeshContact($phone=''){
             if (!empty($phone)){
                 $phone = $this->appEncodeDecode->filterString(strtolower($phone));
+                $phone = $this->appEncodeDecode->formatphoneNumbers(strtolower($phone));
                 $queryString = "match (u:NonMintmesh) where u.phone='".$phone."' return u limit 1";
                 $query = new CypherQuery($this->client, $queryString);
                 $result = $query->getResultSet();

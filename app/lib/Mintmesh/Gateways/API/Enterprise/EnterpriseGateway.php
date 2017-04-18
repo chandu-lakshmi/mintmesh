@@ -2904,6 +2904,9 @@ class EnterpriseGateway {
                 $message    = Lang::get('MINTMESH.hcm_details.update_success');
             }
             #get company HCMs details here
+            $getHcmJobs = $this->enterpriseRepository->checkCompanyHcmJobs($companyId);
+            $getHcmstatus = !empty($getHcmJobs[0]->status)?$getHcmJobs[0]->status:0;
+            $getHcmstatus = !empty($getHcmstatus)?'enable':'disable';
             $getHcmList = $this->enterpriseRepository->getHcmList($companyId, $hcmId);
             $hcmDetails = $this->formatHcmResult($getHcmList);
             #form return company HCMs details
@@ -2914,7 +2917,7 @@ class EnterpriseGateway {
                 $returnAry['hcm_url']  = $value['DCNAME'];
                 $returnAry['hcm_username'] = $value['USERNAME'];
                 $returnAry['hcm_password'] = $value['PASSWORD'];
-                $returnAry['hcm_status']   = !empty($value['status'])?'enable':'disable'; 
+                $returnAry['hcm_status']   = $getHcmstatus; 
             }
             $data = $returnAry;
             $responseCode   = self::SUCCESS_RESPONSE_CODE;
@@ -2961,6 +2964,9 @@ class EnterpriseGateway {
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId      = !empty($companyDetails[0]->id)?$companyDetails[0]->id:0;
         #get company HCMs List here
+        $getHcmJobs = $this->enterpriseRepository->checkCompanyHcmJobs($companyId);
+        $getHcmstatus = !empty($getHcmJobs[0]->status)?$getHcmJobs[0]->status:0;
+        $getHcmstatus = !empty($getHcmstatus)?'enable':'disable';
         $getHcmList = $this->enterpriseRepository->getHcmList($companyId);
         $hcmDetails = $this->formatHcmResult($getHcmList);
         foreach ($hcmDetails as $value) {
@@ -2970,7 +2976,7 @@ class EnterpriseGateway {
             $return['hcm_url']  = $value['DCNAME'];
             $return['hcm_username'] = $value['USERNAME'];
             $return['hcm_password'] = $value['PASSWORD'];
-            $return['hcm_status']   = !empty($value['status'])?'enable':'disable';
+            $return['hcm_status']   = $getHcmstatus;
             $returnAry[] = $return;
         }       
         

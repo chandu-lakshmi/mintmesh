@@ -305,7 +305,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                     $sql.= " OR c.status like '%".  $this->appEncodeDecode->filterString(strtolower($params['search']))."%')";
                 }
                 //$sql .= " GROUP BY c.id ";
-                //$sql .= "order by status";
+                $sql .= "order by status";
                 if($params['sort'] == 'desc'){
                     $sql .= " desc";
                 }

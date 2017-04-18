@@ -2022,8 +2022,11 @@ class ReferralsGateway {
                if (!empty($input['refer_non_mm_email']) && !empty($input['referring'])){//non mintmesh and refer 
                    
                    if (!empty($input['referring_phone_no'])){//create node for this and relate
+                       $input['referring'] = $this->appEncodeDecode->formatphoneNumbers(strtolower($input['referring']));
                        
                        $nonMintmeshContactExist = $this->contactsRepository->getNonMintmeshContact($input['referring']);
+                       //$nonMintmeshContactExist = $this->appEncodeDecode->formatphoneNumbers($input['referring']);
+                       //print_r($nonMintmeshContactExist).exit;
                        $phoneContactInput = $phoneContactRelationInput = array();
                        $phoneContactInput['firstname'] = $phoneContactInput['lastname'] = $phoneContactInput['fullname'] = "";
                        $phoneContactRelationInput['firstname'] = !empty($input['referring_user_firstname'])?$this->appEncodeDecode->filterString($input['referring_user_firstname']):'';

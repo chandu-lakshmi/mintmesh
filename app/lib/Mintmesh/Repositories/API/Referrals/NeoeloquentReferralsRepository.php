@@ -813,6 +813,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
         public function referContactByPhone($referred_by, $referred_for, $referredUser, $postId, $relationAttrs=array())
         {
             $referredUser = $this->appEncodeDecode->filterString(strtolower($referredUser));
+            $referredUser = $this->appEncodeDecode->formatphoneNumbers(strtolower($referredUser));
             $queryString = "MATCH (u:NonMintmesh),(p:Post),(u1:User:Mintmesh{emailid:'".$referred_by."'})
                             WHERE u.phone = '".$referredUser."' and ID(p)=".$postId." 
                              and (u1)-[:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."]->(u)
