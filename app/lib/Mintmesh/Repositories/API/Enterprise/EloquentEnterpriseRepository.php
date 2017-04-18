@@ -906,7 +906,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
     public function addCompanySubscriptionsLog($companyId=0, $employeesNo=0, $startDate='', $endDate='')
     {   
         $result = FALSE;
-        if(!empty($companyId)){
+        if(!empty($companyId) && !empty($employeesNo)){
             $sql = "insert into company_subscriptions (`company_id`,`employees_no`,`start_date`,`end_date`)" ;
             $sql.=" values('".$companyId."', '".$employeesNo."', '".$startDate."', '".$endDate."')" ;
             $result = DB::statement($sql);
