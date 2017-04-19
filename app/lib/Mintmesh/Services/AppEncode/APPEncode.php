@@ -223,7 +223,11 @@ use Cache;
         }
         function sortByFirstName($a, $b)
         {
-            return strcmp(strtolower(trim($a["firstname"])), strtolower(trim($b["firstname"])));
+            if(!empty($a["firstname"]) && !empty($b["firstname"])){
+                return strcmp(strtolower(trim($a["firstname"])), strtolower(trim($b["firstname"])));
+            }  else {
+                return true;    
+            }
         }
         
         function formatphoneNumbers($number=''){

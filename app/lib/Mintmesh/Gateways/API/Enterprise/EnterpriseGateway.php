@@ -677,6 +677,7 @@ class EnterpriseGateway {
         $neoUserInput['fullname']       = $input['fullname'];
         $neoUserInput['emailid']        = $input['emailid'];
         $neoUserInput['is_enterprise']  = $input['is_enterprise'];
+        $neoUserInput['login_source']   = $input['login_source'];
         $neoUserInput['mysql_id']       = $input['mysql_id'];
         $neoUserInput['status']         = 'Active';
         if (empty($neoEnterprise)) {
