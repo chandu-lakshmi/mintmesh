@@ -216,7 +216,7 @@ class IntegrationManager {
                 $relationAttrs['company_name']  = $companyName;
                 $relationAttrs['company_code']  = $companyCode;
                 #get the extra information
-                $reqId = $neoInput['requistion_id'];
+                $reqId = !empty($neoInput['requistion_id'])?$neoInput['requistion_id']:'';
                 $isNotExisted = $this->checkJobExistedWithReqIdOrNot($reqId);
             if($isNotExisted){
                 if(!empty($reqId)){

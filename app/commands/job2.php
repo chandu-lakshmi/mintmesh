@@ -93,10 +93,11 @@ class job2 extends Command {
                                             }
                                     } 
 					$mail_parse_ref = isset($reply_vals['ref'])?MyEncrypt::decrypt_blowfish($reply_vals['ref'],C::get('constants.MINTMESH_ENCCODE')):0;  	
-				$mail_parse_ref_val = array_map('intval',explode('_',$mail_parse_ref));				                                                   
+				$mail_parse_ref_val = array_map('intval',explode('_',$mail_parse_ref));	
+                                print_r($mail_parse_ref_val);
             $neoInput['post_id'] = isset($mail_parse_ref_val[0])?$mail_parse_ref_val[0]:0;  
             $postStatus = $this->getPost($neoInput);
-            if($postStatus->status == 'ACTIVE'){
+            if(isset($postStatus->status) && $postStatus->status == 'ACTIVE'){
             //check candidate for job it is not decline
             $checkCand_Not_exist = $this->checkCandidate($neoInput,$from);
             if($checkCand_Not_exist){
@@ -142,7 +143,7 @@ class job2 extends Command {
                 $queryString.="}";
                 }
                 $queryString.="]->(p) set p.total_referral_count = p.total_referral_count + 1, r.resume_parsed=0  return count(p)";
-               // Log::info("<<<<<<<<<<<<<<<< In neo4j_query >>>>>>>>>>>>>".print_r($queryString,1));
+                Log::info("<<<<<<<<<<<<<<<< In job2 neo4j_query >>>>>>>>>>>>>".print_r($queryString,1));
 			  
                 $query = new CypherQuery($this->client, $queryString);
                 $result = $query->getResultSet();
@@ -287,9 +288,13 @@ class job2 extends Command {
         }
     }
     public function getPost($neoInput){
+        $return = FALSE;
         $queryString = "MATCH (p:Post) where ID(p)=".$neoInput['post_id']." return p";
         $query = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
-        return $result[0][0];
+        if(!empty($result[0]) && !empty($result[0][0])){
+            $return = $result[0][0];
+        }
+        return $return;
     }
 }

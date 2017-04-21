@@ -1880,7 +1880,7 @@ class PostGateway {
         }else{
             $ReferralsRes   = $this->neoPostRepository->getCompanyAllReferrals($emailId, $companyCode, $search, $page,'');
             $totalReferralsRes   = $this->neoPostRepository->getCompanyAllReferrals($emailId, $companyCode, $search, '','');
-        }
+        }        
         $totalRec       = !empty($ReferralsRes)?$ReferralsRes->count():'';
         $totalRecords       = !empty($totalReferralsRes)?$totalReferralsRes->count():'';
         if($ReferralsRes){
@@ -1914,7 +1914,7 @@ class PostGateway {
 //                $record['created_at']       = $this->appEncodeDecode->UserTimezone($relation->created_at,$input['time_zone']); 
                 $record['awt_status']       = $relation->awaiting_action_status;
                 #get the user details here
-                $referralName = '';
+                $referralName = $userName = '';
                 $nonMMUser    = new \stdClass();
                 if(!empty($user->emailid) && !empty($relation->referred_by)){
                     $userDetails = $this->enterpriseRepository->getContactByEmailId($user->emailid,$company->company_id);
@@ -1945,6 +1945,7 @@ class PostGateway {
 //                $nodeByEmail = $this->neoUserRepository->getNodeByEmailId($relation->referred_by);
                 $record['fullname']    = !empty($referralName)?$referralName:'The contact';
                 $record['referred_by_name'] = !empty($referrerName)?$referrerName:$neoReferrerName;
+                
                 $returnData[] = $record;
             }
 //            $returnData[] = array('total_records'=>$totalRec); 
