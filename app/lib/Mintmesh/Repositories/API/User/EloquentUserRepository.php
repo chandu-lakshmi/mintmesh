@@ -780,6 +780,16 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
             $return = $this->userActivityLogs->create($userActivity);
         }
         return $return;
-    }    
+    }
+    
+    public function updateIsEnterpriseStatus($emailId){
+        $sql = "update users set is_enterprise=2 where emailid='".$emailId."'" ;
+        return $result = DB::update($sql);
+    }
+    
+    public function getIsEnterpriseStatus($emailId){
+        $sql = "select is_enterprise from users where emailid='".$emailId."'" ;
+        return $result = DB::select($sql);
+    }
         
 }

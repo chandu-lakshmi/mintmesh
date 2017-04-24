@@ -587,7 +587,7 @@ class EnterpriseGateway {
             $loggedinUserDetails = $this->enterpriseRepository->getEnterpriseUserByEmail($inputUserData['username']);
             $neologgedinUserDetails = $this->neoUserRepository->getNodeByEmailId($loggedinUserDetails->emailid);
             if (!empty($loggedinUserDetails)) {
-                if($loggedinUserDetails['is_enterprise'] == 1)
+                if($loggedinUserDetails['is_enterprise'] == 1 || $loggedinUserDetails['is_enterprise'] == 2)
                 {
                     if($loggedinUserDetails->status == 1){
                         $input['group_id'] = $loggedinUserDetails->group_id;
@@ -1417,11 +1417,13 @@ class EnterpriseGateway {
         //CONTACTS ENGAGEMENT
         //$companyInvitedCount = $this->enterpriseRepository->companyInvitedCount($userId, $companyId, $filterLimit);
         //$downloadedCount     = $this->enterpriseRepository->companyInvitedCount($userId, $companyId, $filterLimit, TRUE);
-        $downloadedCount     = $this->enterpriseRepository->appDownloadCount($companyId);
-        $companyInvitedCount = $this->enterpriseRepository->appActiveContactsCount($companyId);
+        //$downloadedCount     = $this->enterpriseRepository->appDownloadCount($companyId);
         
-        $downloadedCount     = !empty($downloadedCount[0]->count)?$downloadedCount[0]->count:0;
-        $companyInvitedCount = !empty($companyInvitedCount[0]->count)?$companyInvitedCount[0]->count:0;
+        $downloadedCount        = $this->enterpriseRepository->appActiveUserCount($userId, $companyId, $filterLimit);
+        $companyInvitedCount    = $this->enterpriseRepository->appActiveContactsCount($companyId);
+        $downloadedCount        = !empty($downloadedCount[0]->count)?$downloadedCount[0]->count:0;
+        $companyInvitedCount    = !empty($companyInvitedCount[0]->count)?$companyInvitedCount[0]->count:0;
+        
         //CONTACTS ENGAGEMENT COUNT
         if(!empty($companyInvitedCount)){
             $contactsCount = round((($downloadedCount/$companyInvitedCount)*100),2);
@@ -2157,7 +2159,15 @@ class EnterpriseGateway {
             $message = array('msg' => array(Lang::get('MINTMESH.addUser.userexists'))); 
             }
              }else{
-             $updateEnterpriseUser = $this->enterpriseRepository->updateEnterpriseUser($input['emailid'],$input['group_id']);
+             
+                $isEnterprise =  $this->userRepository->getIsEnterpriseStatus($input['emailid']);
+                if($isEnterprise[0]->is_enterprise==0){
+                    $isEnterprise = 2;
+                }else {
+                    $isEnterprise = 1;
+                }
+  
+             $updateEnterpriseUser = $this->enterpriseRepository->updateEnterpriseUser($input['emailid'],$input['group_id'], $isEnterprise);
              $data = $this->enterpriseRepository->companyUserMapping($checkUser['id'],$input['company_id'], $input['company_code']);
              if($updateEnterpriseUser){
                 $groupName = $this->enterpriseRepository->getGroup($input['group_id']);

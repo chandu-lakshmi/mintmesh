@@ -839,6 +839,13 @@ class UserGateway {
             {
                 $neoUser =  $this->neoUserRepository->getNodeByEmailId($inputUserData['username']) ;
                 $loggedinUserDetails = $this->userRepository->getUserByEmail($inputUserData['username']);
+                $userId         = !empty($loggedinUserDetails->id)?$loggedinUserDetails->id:'';
+                #log user activity here
+                $this->userRepository->addUserActivityLogs($userId, $appType=1, $moduleType=12);
+                if($loggedinUserDetails->is_enterprise=='1'){
+                    $this->userRepository->updateIsEnterpriseStatus($loggedinUserDetails->emailid);
+                }
+                
                 $remaning_days = $this->userRepository->getRemaningDays($inputUserData['username']);
                 if (!empty($neoUser))
                 {
@@ -4170,6 +4177,9 @@ class UserGateway {
             $loggedinUserDetails = $this->getLoggedInUser();
             if ($loggedinUserDetails)
             {
+                $userId         = !empty($loggedinUserDetails->id)?$loggedinUserDetails->id:'';
+                #log user activity here
+                $this->userRepository->addUserActivityLogs($userId, $appType=1, $moduleType=13);
                 $neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($loggedinUserDetails->emailid) ;
                 if (count($neoLoggedInUserDetails))
                 {

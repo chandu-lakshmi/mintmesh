@@ -69,6 +69,9 @@ class ContactsGateway {
                 $mintUsers = array();
                 // getting the loggedin user details
                 $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid);
+                $userId         = !empty($this->loggedinUserDetails->id)?$this->loggedinUserDetails->id:'';
+                #log user activity here
+                $this->userRepository->addUserActivityLogs($userId, $appType=1, $moduleType=11);
                 // logged in user/from user data
                 $fromUser_email = $this->loggedinUserDetails->emailid;
                 $fromUser_phone = $this->neoLoggedInUserDetails->phone;

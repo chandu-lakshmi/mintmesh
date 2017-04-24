@@ -282,8 +282,10 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         }
         
         public function getImportContactsList($params){
-            
-                $search = $this->appEncodeDecode->filterString(strtolower($params['search']));            
+                
+                
+                $search = $this->appEncodeDecode->filterString(strtolower($params['search'])); 
+
                 $sql = 'SELECT SQL_CALC_FOUND_ROWS c.id AS record_id, 
                     c.firstname, c.lastname, c.emailid, c.phone, c.employeeid, c.status,
                     case when u.id is not null then 1 else 0 end as download_status
@@ -291,20 +293,32 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                 if(!empty($params['bucket_id']))
                 $sql.= ' LEFT JOIN buckets_contacts bc ON c.id=bc.contact_id';
                 
-                $sql.= " LEFT JOIN users u ON u.emailid=c.emailid and u.lastname<>''
+                $sql.= " LEFT JOIN users u ON u.emailid=c.emailid and u.is_enterprise!='1' 
                         where c.company_id='".$params['company_id']."' " ;
-                 if(!empty($params['bucket_id'])){
-                     $sql.= " AND bc.bucket_id = '".$params['bucket_id']."' " ;
-                 }
                 
-                if(!empty($params['search'])){
+                if(!empty($params['bucket_id'])){
+                    $sql.= " AND bc.bucket_id = '".$params['bucket_id']."' " ;
+                }
+                
+                if (!empty($search) && $search == 'no') {
+                    
+                    $sql.= " and u.is_enterprise is null ";
+                    
+                } else if(!empty($search)){
+                     
                     $sql.= " AND (c.emailid like '%".  $search."%'";
                     $sql.= " OR c.phone like '%".  $search."%'";
                     $sql.= " OR c.firstname like '%".  $search."%'";
                     $sql.= " OR c.lastname like '%".  $search."%'";
                     $sql.= " OR c.employeeid like '%".  $search."%'";
+                    
+                    if($search =='yes' || $search =='ye'){
+                        $sql.= " OR u.is_enterprise like '%0%'";
+                        $sql.= " OR u.is_enterprise like '%2%'";
+                    }
+                    
                     $sql.= " OR c.status like '%".  $search."%')";
-                }
+                } 
                
                 $sql .= "order by status";
                 if($params['sort'] == 'desc'){
@@ -330,21 +344,32 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                 if(!empty($params['bucket_id']))
                 $sql.= ' LEFT JOIN buckets_contacts bc ON c.id=bc.contact_id';
                 
-                $sql.= " LEFT JOIN users u ON u.emailid=c.emailid and u.lastname<>''
+                $sql.= " LEFT JOIN users u ON u.emailid=c.emailid and u.is_enterprise!='1'
                          where c.company_id='".$params['company_id']."' " ;
                 
                  if(!empty($params['bucket_id'])){
                      $sql.= " AND bc.bucket_id = '".$params['bucket_id']."' " ;
                  }
                 
-                if(!empty($params['search'])){
+                if (!empty($search) && $search == 'no') {
+                    
+                    $sql.= " and u.is_enterprise is null ";
+                    
+                } else if(!empty($search)){
+                     
                     $sql.= " AND (c.emailid like '%".  $search."%'";
                     $sql.= " OR c.phone like '%".  $search."%'";
                     $sql.= " OR c.firstname like '%".  $search."%'";
                     $sql.= " OR c.lastname like '%".  $search."%'";
                     $sql.= " OR c.employeeid like '%".  $search."%'";
+                    
+                    if($search =='yes' || $search =='ye'){
+                        $sql.= " OR u.is_enterprise like '%0%'";
+                        $sql.= " OR u.is_enterprise like '%2%'";
+                    }
+                    
                     $sql.= " OR c.status like '%".  $search."%')";
-                }
+                } 
                 //echo $sql;exit;
                 $result = DB::select($sql);
                 
@@ -380,13 +405,22 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                    ->where('code', '=', $companyCode)->get();
         }
         
-        public function companyInvitedCount($userId, $companyId, $filterLimit,$download = FALSE)
+        public function companyInvitedCount($userId, $companyId, $filterLimit)
         {   
             $sql = "select COUNT(DISTINCT to_email) AS count from emails_logs " ;
-            $sql.=" where from_user ='".$userId."' and emails_types_id = 5 and related_code ='".$companyId."' and created_at >= '".$filterLimit."'" ;
-            if($download){ 
-                $sql.=" and to_email IN (select emailid from users)" ;
-            }
+            $sql.=" where  emails_types_id = 5 and related_code ='".$companyId."' and created_at >= '".$filterLimit."'" ;
+           
+            $result = DB::Select($sql);
+            return $result;
+        }
+        
+        public function appActiveUserCount($userId, $companyId, $filterLimit)
+        {   
+            $sql = "select count(DISTINCT a.user_id) as count from user_activity_logs a
+                    left join users u on u.id = a.user_id 
+                    left join contacts c on c.emailid = u.emailid
+                    where  application_type=1 and c.company_id='".$companyId."' and c.status='Active' and  a.created_at >= '".$filterLimit."' " ;
+           //echo $sql;exit;
             $result = DB::Select($sql);
             return $result;
         }
@@ -1155,10 +1189,10 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             return $result;    
         }
         
-        public function updateEnterpriseUser($email='', $groupid='') {
+        public function updateEnterpriseUser($email='', $groupid='' ,$isEnterprise='') {
             return DB::table('users')
                     ->where('emailid',$email)  
-                    ->update(array('is_enterprise' => '1','group_id'=>$groupid));
+                    ->update(array('is_enterprise' => $isEnterprise,'group_id'=>$groupid));
           
       }
         public function updateConfiguration($input=array()) {

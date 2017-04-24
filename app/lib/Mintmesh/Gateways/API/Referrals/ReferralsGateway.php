@@ -1190,6 +1190,11 @@ class ReferralsGateway {
         {
             $isReferredUser = false;
             $isNonMintmesh = 0 ;
+            $this->loggedinUserDetails = $this->getLoggedInUser();
+            $userId         = !empty($this->loggedinUserDetails->id)?$this->loggedinUserDetails->id:'';
+            #log user activity here
+            $this->userRepository->addUserActivityLogs($userId, $appType=1, $moduleType=17);
+            
             $result = $this->referralsRepository->getPostStatusDetails($input);
             if (count($result))
             {
