@@ -885,25 +885,30 @@ class EnterpriseGateway {
      * @return Response
      */
     public function enterpriseContactsList($input) {
-        $params = array();
+        $params = $resultsSet = $data = array();
         $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser(); //get the logged in user details
-        $params['user_id'] = $this->loggedinUserDetails->id;
-        $params['company_id'] = $input['company_id'];
-        $params['bucket_id'] = !empty($input['bucket_id']) ? $input['bucket_id'] : 0;
-        $params['page_no'] = !empty($input['page_no']) ? $input['page_no'] : 0;
-        $params['search'] = !empty($input['search']) ? $input['search'] : 0;
-        $params['sort'] = !empty($input['sort']) ? $input['sort'] : '';
-        $resultsSet = $this->enterpriseRepository->getImportContactsList($params); //get the import contact list
+        $params['user_id']      = $this->loggedinUserDetails->id;
+        $params['company_id']   = $input['company_id'];
+        $params['bucket_id']    = !empty($input['bucket_id']) ? $input['bucket_id'] : 0;
+        $params['page_no']      = !empty($input['page_no']) ? $input['page_no'] : 0;
+        $params['search']       = !empty($input['search']) ? $input['search'] : 0;
+        $params['sort']         = !empty($input['sort']) ? $input['sort'] : '';
+        $resultsCount   = $this->enterpriseRepository->getImportContactsListCount($params);
+        $resultsSet     = $this->enterpriseRepository->getImportContactsList($params); //get the import contact list
         if ($resultsSet) {
+            #get count here
+            $totalDownloads = !empty($resultsCount[0]->total_downloads)?$resultsCount[0]->total_downloads:0;
+            $totalRecords   = !empty($resultsSet['total_records'][0]->total_count)?$resultsSet['total_records'][0]->total_count:0;
+            $resultsSet['total_records'] = array('total_count'  => $totalRecords, 'total_downloads'=> $totalDownloads);
+            
             $responseCode = self::SUCCESS_RESPONSE_CODE;
-            $responseMsg = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseMsg  = self::SUCCESS_RESPONSE_MESSAGE;
             $message = array(Lang::get('MINTMESH.enterprise.retrieve_success'));
             $data = $resultsSet;
         } else {
             $responseCode = self::ERROR_RESPONSE_CODE;
-            $responseMsg = self::ERROR_RESPONSE_MESSAGE;
+            $responseMsg  = self::ERROR_RESPONSE_MESSAGE;
             $message = array(Lang::get('MINTMESH.enterprise.retrieve_failure'));
-            $data = array();
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $message, $data,false);
     }
@@ -1211,6 +1216,9 @@ class EnterpriseGateway {
         
         $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser();
         $userEmailId = $this->loggedinUserDetails->emailid;
+         $userId     = !empty($this->loggedinUserDetails->id)?$this->loggedinUserDetails->id:'';
+        #log user activity here
+        $this->userRepository->addUserActivityLogs($userId, $appType=1, $moduleType=9);
         $companyCode = $input['company_code'];
         
         $returnDetails  = $return = $data = array();

@@ -2402,7 +2402,10 @@ class PostGateway {
         $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
         #get logged in user details here
         $this->user     = $this->getLoggedInEnterpriseUser();
+        $userId         = !empty($this->user->id)?$this->user->id:'';
         $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($this->user->emailid);
+        #log user activity here
+        $this->userRepository->addUserActivityLogs($userId, $appType=1, $moduleType=1);
         
         $userEmailId    = $neoUserDetails->emailid;
         $neoUserId      = $neoUserDetails->id;
@@ -2555,6 +2558,9 @@ class PostGateway {
         #get logged in user details here
         $this->user     = $this->getLoggedInEnterpriseUser();
         $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($this->user->emailid);
+        $userId         = !empty($this->user->id)?$this->user->id:'';
+        #log user activity here
+        $this->userRepository->addUserActivityLogs($userId, $appType=1, $moduleType=2);
         $userEmailId    = $neoUserDetails->emailid;
         $neoUserId      = $neoUserDetails->id;
         $userCountry    = $neoUserDetails->phone_country_name;

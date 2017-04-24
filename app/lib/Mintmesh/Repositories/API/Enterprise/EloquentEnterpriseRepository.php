@@ -282,43 +282,72 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         }
         
         public function getImportContactsList($params){
+            
+                $search = $this->appEncodeDecode->filterString(strtolower($params['search']));            
                 $sql = 'SELECT SQL_CALC_FOUND_ROWS c.id AS record_id, 
-                    c.firstname, 
-                    c.lastname, c.emailid, c.phone, c.employeeid, c.status
-                        FROM contacts c ';
+                    c.firstname, c.lastname, c.emailid, c.phone, c.employeeid, c.status,
+                    case when u.id is not null then 1 else 0 end as download_status
+                    FROM contacts c ';
                 if(!empty($params['bucket_id']))
                 $sql.= ' LEFT JOIN buckets_contacts bc ON c.id=bc.contact_id';
                 
-               // $sql = "select SQL_CALC_FOUND_ROWS id as record_id, firstname, lastname, emailid, phone, employeeid, status from contacts ";
-                $sql.= " where c.company_id='".$params['company_id']."' " ;
+                $sql.= " LEFT JOIN users u ON u.emailid=c.emailid and u.lastname<>''
+                        where c.company_id='".$params['company_id']."' " ;
                  if(!empty($params['bucket_id'])){
                      $sql.= " AND bc.bucket_id = '".$params['bucket_id']."' " ;
                  }
-               // $sql.= !empty($params['bucket_id'])?" and id IN (select contact_id from buckets_contacts where bucket_id = '".$params['bucket_id']."') ":'';
                 
                 if(!empty($params['search'])){
-                    $sql.= " AND (c.emailid like '%".  $this->appEncodeDecode->filterString(strtolower($params['search']))."%'";
-                    $sql.= " OR c.phone like '%".  $this->appEncodeDecode->filterString(strtolower($params['search']))."%'";
-                    $sql.= " OR c.firstname like '%".  $this->appEncodeDecode->filterString(strtolower($params['search']))."%'";
-                    $sql.= " OR c.lastname like '%".  $this->appEncodeDecode->filterString(strtolower($params['search']))."%'";
-                    $sql.= " OR c.employeeid like '%".  $this->appEncodeDecode->filterString(strtolower($params['search']))."%'";
-                    $sql.= " OR c.status like '%".  $this->appEncodeDecode->filterString(strtolower($params['search']))."%')";
+                    $sql.= " AND (c.emailid like '%".  $search."%'";
+                    $sql.= " OR c.phone like '%".  $search."%'";
+                    $sql.= " OR c.firstname like '%".  $search."%'";
+                    $sql.= " OR c.lastname like '%".  $search."%'";
+                    $sql.= " OR c.employeeid like '%".  $search."%'";
+                    $sql.= " OR c.status like '%".  $search."%')";
                 }
-                //$sql .= " GROUP BY c.id ";
+               
                 $sql .= "order by status";
                 if($params['sort'] == 'desc'){
                     $sql .= " desc";
                 }
                 $page = $params['page_no'];
-                if (!empty($page))
-                {
-                    $page = $page-1 ;
-                    $offset  = $page*50 ;
+                if (!empty($page)){
+                    $page   = $page-1 ;
+                    $offset = $page*50 ;
                     $sql.=  " limit ".$offset.",50 ";
                 } 
                 //echo $sql;exit;
                 $result['Contacts_list'] = DB::select($sql);
                 $result['total_records'] = DB::select("select FOUND_ROWS() as total_count");
+            return $result;    
+        }
+        
+        public function getImportContactsListCount($params){
+                
+                $search = $this->appEncodeDecode->filterString(strtolower($params['search']));            
+                $sql = 'SELECT  count(u.id) as total_downloads FROM contacts c ';
+                
+                if(!empty($params['bucket_id']))
+                $sql.= ' LEFT JOIN buckets_contacts bc ON c.id=bc.contact_id';
+                
+                $sql.= " LEFT JOIN users u ON u.emailid=c.emailid and u.lastname<>''
+                         where c.company_id='".$params['company_id']."' " ;
+                
+                 if(!empty($params['bucket_id'])){
+                     $sql.= " AND bc.bucket_id = '".$params['bucket_id']."' " ;
+                 }
+                
+                if(!empty($params['search'])){
+                    $sql.= " AND (c.emailid like '%".  $search."%'";
+                    $sql.= " OR c.phone like '%".  $search."%'";
+                    $sql.= " OR c.firstname like '%".  $search."%'";
+                    $sql.= " OR c.lastname like '%".  $search."%'";
+                    $sql.= " OR c.employeeid like '%".  $search."%'";
+                    $sql.= " OR c.status like '%".  $search."%')";
+                }
+                //echo $sql;exit;
+                $result = DB::select($sql);
+                
             return $result;    
         }
         

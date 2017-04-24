@@ -1205,6 +1205,9 @@ class UserGateway {
                 $from_linkedin =  0;
                 $data=array();
                 $this->loggedinUserDetails = $this->getLoggedInUser();
+                $userId         = !empty($this->loggedinUserDetails->id)?$this->loggedinUserDetails->id:'';
+                #log user activity here
+                $this->userRepository->addUserActivityLogs($userId, $appType=1, $moduleType=8);
                 if ($this->loggedinUserDetails)
                 {
                     if (!empty($input['info_type']) && $input['info_type'] == 'contact')
@@ -1624,6 +1627,9 @@ class UserGateway {
             $responseMessage = $responseCode = $responseStatus = "";
             $responseData = array();
             $loggedinUserDetails = $this->getLoggedInUser();
+            $userId         = !empty($loggedinUserDetails->id)?$loggedinUserDetails->id:'';
+            #log user activity here
+            $this->userRepository->addUserActivityLogs($userId, $appType=1, $moduleType=7);
             if ($loggedinUserDetails)
             {                
                 $requestsCount = 0;
@@ -4952,6 +4958,9 @@ class UserGateway {
             $defaultName    = Lang::get('MINTMESH.user.non_mintmesh_user_name');
             $user           = $this->getLoggedInUser();
             $emailId        = $user->emailid;
+            $userId         = !empty($user->id)?$user->id:'';
+            #log user activity here
+            $this->userRepository->addUserActivityLogs($userId, $appType=1, $moduleType=5);
             $count = FALSE;
             $userDetails    = $this->neoUserRepository->getNodeByEmailId($user->emailid);
             $unreadCount    = $this->getBellNotificationCount($emailId);

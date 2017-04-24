@@ -5,6 +5,7 @@ use User;
 use Emails_Logs;
 use Levels_Logs;
 use Notifications_Logs;
+use User_Activity_Logs;
 use Config ;
 use Mail ;
 use DB;
@@ -15,9 +16,9 @@ use Mintmesh\Repositories\API\Referrals\ReferralsRepository;
 class EloquentUserRepository extends BaseRepository implements UserRepository {
 
         protected $user;
-        protected $email, $level, $appEncodeDecode, $notifications,$referralsRepository;
+        protected $email, $level, $appEncodeDecode, $notifications,$referralsRepository, $userActivityLogs;
         
-        public function __construct(User $user, Emails_Logs $email, Levels_Logs $level, APPEncode $appEncodeDecode, Notifications_Logs $notifications, referralsRepository $referralsRepository)
+        public function __construct(User $user, Emails_Logs $email, Levels_Logs $level, APPEncode $appEncodeDecode, Notifications_Logs $notifications, referralsRepository $referralsRepository, User_Activity_Logs $userActivityLogs)
         {
                 parent::__construct($user);
                 $this->user = $user;
@@ -25,6 +26,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                 $this->level = $level ;
                 $this->appEncodeDecode = $appEncodeDecode ;
                 $this->notifications = $notifications ;
+                $this->userActivityLogs = $userActivityLogs ;
                 $this->referralsRepository = $referralsRepository;
         }
         // creating new user in storage
@@ -764,4 +766,20 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
             }
            return $resultAry; 
         }
+        
+    // creating new Enterprise user user Activity Logs in storage
+    public function addUserActivityLogs($userId='', $appType='', $moduleType='')
+    {    
+        $return = FALSE;
+        if(!empty($userId)){   
+            $userActivity = array(
+                        "user_id"           => $userId,
+                        "application_type"  => $appType,
+                        "module_type"       => $moduleType
+            );
+            $return = $this->userActivityLogs->create($userActivity);
+        }
+        return $return;
+    }    
+        
 }

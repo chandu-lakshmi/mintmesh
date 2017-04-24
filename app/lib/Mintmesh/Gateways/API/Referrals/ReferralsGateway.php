@@ -2239,6 +2239,9 @@ class ReferralsGateway {
         $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
         #get Logged In User Details  
         $this->user     = $this->getLoggedInUser();
+        $userId         = !empty($this->user->id)?$this->user->id:'';
+        #log user activity here
+        $this->userRepository->addUserActivityLogs($userId, $appType=1, $moduleType=4);
         $this->neoUser  = $this->neoUserRepository->getNodeByEmailId($this->user->emailid) ;
         $userEmail      = $this->neoUser->emailid;
         $neoUserId      = $this->neoUser->id;

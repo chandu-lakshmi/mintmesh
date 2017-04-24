@@ -16,3 +16,4 @@ Artisan::add(new job3);
 Artisan::add(new parserJob);
 Artisan::add(new testJob);
 Artisan::add(new hcmJob);
+Artisan::add(new zenefits);

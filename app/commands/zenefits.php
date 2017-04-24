@@ -3,9 +3,9 @@ use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use Mintmesh\Services\IntegrationManager\IntegrationManager;
-use Mintmesh\Services\IntegrationManager\SFManager;
+use Mintmesh\Services\IntegrationManager\ZenefitsManager;
 
-class hcmJob extends Command {
+class zenefits extends Command {
 
 	/**
 	 * The console command name.
@@ -13,10 +13,11 @@ class hcmJob extends Command {
 	 * @var string
 	 */
 
-	protected $name = 'hcmJob:run';
+	protected $name = 'zenefits:run';
 
 	protected $description = 'Command test';
 	protected $integrationManager;
+	protected $zenefitsManager;
 
 	/**
 	 * Create a new command instance.
@@ -27,7 +28,7 @@ class hcmJob extends Command {
         {
             parent::__construct();
 
-            $this->SFManager = new SFManager();
+           $this->zenefitsManager = new ZenefitsManager();
         }
 
 	/**
@@ -40,11 +41,11 @@ class hcmJob extends Command {
     {
         $jobId = $this->option('job_id');
         
-        $res = $this->SFManager->intiateRequest($jobId);
+        $res = $this->zenefitsManager->insertContacts($jobId);
         //$res = $this->integrationManager->createJob($jobId);
         //print_r($jobId).exit;
         
-
+        print_r($res); die;
         $this->info('This a command test'.$res);
     }
     
