@@ -1,13 +1,13 @@
 <?php
 namespace Mintmesh\Services\Queues;
 
-use Mintmesh\Services\IntegrationManager\IntegrationManager;
+use Mintmesh\Services\IntegrationManager\SFManager;
 class ProcessHcmJobReferralQueue {
 
-    protected $integrationManager;
-    public function __construct(IntegrationManager $integrationManager)
+    protected $SFManager;
+    public function __construct(SFManager $SFManager)
     {
-        $this->integrationManager = $integrationManager;
+        $this->SFManager = $SFManager;
     }
     public function fire($job, $jobData)
     {   
@@ -15,7 +15,7 @@ class ProcessHcmJobReferralQueue {
         $jobDetails  =  $jobData['job_details'];
         $userDetails =  $jobData['user_details'];
         $relation    =  $jobData['rel_details'];
-        $this->integrationManager->processHcmJobReferral($jobDetails, $userDetails, $relation, $companyCode) ;
+        $this->SFManager->processHcmJobReferral($jobDetails, $userDetails, $relation, $companyCode) ;
         $job->delete();
     }
 
