@@ -445,7 +445,7 @@ class SFManager extends IntegrationManager {
     public function createCandidate($userDetails, $relation) {
 
         $contents = '';
-        $firstName = !empty($userDetails['fullname']) ? $userDetails['fullname'] : !empty($userDetails['firstname']) ? $userDetails['firstname'] : '';
+        $firstName = !empty($userDetails['fullname'])?$userDetails['fullname']:isset($userDetails['firstname'])?$userDetails['firstname']:'';
         $lastName = !empty($userDetails['lastname']) ? $userDetails['lastname'] : '.';
         $emailId = !empty($userDetails['emailid']) ? $userDetails['emailid'] : '';
         $phone = !empty($userDetails['phone']) ? $userDetails['phone'] : '.';
