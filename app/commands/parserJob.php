@@ -11,7 +11,7 @@ use Everyman\Neo4j\Client as NeoClient;
 use Everyman\Neo4j\Cypher\Query as CypherQuery;
 use Mintmesh\Services\FileUploader\API\User\UserFileUploader;
 use Mintmesh\Services\Parser\ParserManager;
-use Mintmesh\Services\IntegrationManager\IntegrationManager;
+use Mintmesh\Services\IntegrationManager\SFManager;
 
 class parserJob extends Command {
      protected $neoEnterpriseUser,$neoPostRepository, $db_user, $db_pwd, $client, $appEncodeDecode, $db_host, $db_port;
@@ -40,7 +40,7 @@ class parserJob extends Command {
                 $this->userFileUploader = new UserFileUploader;
                 $this->appEncodeDecode = new APPEncode();
                 $this->Parser = new ParserManager;
-                $this->integrationManager = new IntegrationManager();
+                $this->SFManager = new SFManager();
     }
     
     /**
@@ -91,7 +91,7 @@ class parserJob extends Command {
     public function getParseList() {
             $return = array();
             //$queryString = "MATCH (u)-[r:GOT_REFERRED]->(p:Post)  return r,p,u order by r.created_at desc LIMIT 1";
-            $queryString = "MATCH (u)-[r:GOT_REFERRED]->(p:Post) where r.resume_parsed=0  return r,p,u order by r.created_at desc LIMIT 1";
+            $queryString = "MATCH (u)-[r:GOT_REFERRED]->(p:Post) where r.resume_parsed=0 return r,p,u order by r.created_at desc LIMIT 1";
             $query  = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             if($result->count()){
@@ -127,7 +127,7 @@ class parserJob extends Command {
         $pushData['user_details'] = $userDetails->getProperties();
         $pushData['user_details']['node_id'] = $userDetails->getId();
         Queue::push('Mintmesh\Services\Queues\ProcessHcmJobReferralQueue', $pushData, 'default');
-        //$this->integrationManager->processHcmJobReferral($pushData['job_details'], $pushData['user_details'], $pushData['rel_details'], $pushData['company_code']);
+        //$this->SFManager->processHcmJobReferral($pushData['job_details'], $pushData['user_details'], $pushData['rel_details'], $pushData['company_code']);
     }
     
     public function getPostCompany($postId=''){

@@ -27,7 +27,6 @@ class SFManager extends IntegrationManager {
     const DCNAME = 'DCNAME';
     const USERNAME = 'USERNAME';
     const PASSWORD = 'PASSWORD';
-    const API_LOCAL_URL = 'https://apisalesdemo8.successfactors.com/odata/v2/JobRequisitionLocale';
 
     public function __construct() {
         $this->db_user = Config::get('database.connections.neo4j.username');
@@ -49,10 +48,8 @@ class SFManager extends IntegrationManager {
         $companyJobConfigDetails = $integrationManager->getCompanyJobConfigs($JobDetails->hcm_id, $companyJobDetail->company_id);
         $requestParams = $integrationManager->composeRequestParams($JobDetails, $companyJobDetail, $companyJobConfigDetails);
 
-        //$endPoint = 'https://apisalesdemo8.successfactors.com:443/odata/v2/JobRequisition?$format=json&$select=jobCode,function,location,industry,jobGrade,positionNumber,jobReqId,numberOpenings,classificationType,currency&$filter=lastModifiedDateTime ge datetime\'2016-11-22T17:19:28\'';
-        //$endPoint = 'https://apisalesdemo8.successfactors.com/odata/v2/JobRequisitionLocale(1683)?%24format=json';
-        //$requestParams[self::API_END_POINT] = $endPoint;
         $this->requestParams = $requestParams;
+        
         $return = $integrationManager->doRequest($requestParams);
         $this->processResponseData($return, $companyJobDetail->hcm_jobs_id, $companyJobDetail->company_id);
         $integrationManager->updateLastProcessedTime($company_hcm_job_id, $companyJobDetail);
@@ -70,11 +67,7 @@ class SFManager extends IntegrationManager {
     }
     
     public function processResponseData($responseBody, $jobId, $companyId) {
-        // insert to mintmesh data
-        //echo $jobId."\n";
-        //echo $companyId."\n";
-        //echo $responseBody."\n";
-        //echo "End : ".date("Y-m-d H:i:s")."\n";
+
         $array = json_decode($responseBody, TRUE);
 
         $return = array();
@@ -87,8 +80,9 @@ class SFManager extends IntegrationManager {
     }
     
     public function createJob($dataAry, $companyId, $jobId) {
-
+        
         $integrationManager = new IntegrationManager();
+        $objCompany = new \stdClass();
         $hcmJobId = $jobId;
         $companyId = $companyId;
         $bucketId = 1;
@@ -103,6 +97,7 @@ class SFManager extends IntegrationManager {
         $userDetails = $userDetails[0];
         $userEmailId = !empty($userDetails->emailid) ? $userDetails->emailid : ''; //'gopi68@mintmesh.com';
         $userFirstname = !empty($userDetails->firstname) ? $userDetails->firstname : ''; //'gopi68@mintmesh.com';
+        $objCompany->fullname = $companyName;
 
         $notificationMsg = Lang::get('MINTMESH.notifications.messages.27');
         $params['company_code'] = $companyCode;
@@ -112,6 +107,8 @@ class SFManager extends IntegrationManager {
         if (!empty($userEmailId)) {
             $neoUser = $this->getNeoUserByEmailId($userEmailId);
             $fromId = !empty($neoUser->getID()) ? $neoUser->getID() : ''; //292819;
+            $userData = $this->getUserByEmail($userEmailId);
+            $this->user = !empty($userData[0])?$userData[0]:'';
         }
         if (!empty($dataAry)) {
             foreach ($dataAry as $row) {
@@ -162,14 +159,14 @@ class SFManager extends IntegrationManager {
                 if ($isNotExisted) {
                     if (!empty($reqId)) {
                         $response = '';
-                        $endPoint = self::API_LOCAL_URL . '?$format=json&$filter=jobReqId eq ' . $reqId;
-                        $requestParams = $this->requestParams;
-                        //$endPoint = 'https://apisalesdemo8.successfactors.com/odata/v2/JobRequisitionLocale?$format=json&$filter=jobReqId eq 1682';
+                        #get Job Requisition Locale details here
+                        $requestParams  = $this->requestParams;
+                        $endPoint       = $requestParams[self::DCNAME] . 'JobRequisitionLocale?$format=json&$filter=jobReqId eq ' . $reqId;
                         $requestParams[self::API_END_POINT] = $endPoint;
-
+                        #request to Requisition Locale
                         $response = $integrationManager->doRequest($requestParams);
                         $responseAry = json_decode($response, TRUE);
-                        //print_r($responseAry).exit;
+                        
                         if (isset($responseAry['d']) && isset($responseAry['d']['results']) && isset($responseAry['d']['results'][0])) {
                             $localAry = $responseAry['d']['results'][0];
                             $neoInput['service_name'] = !empty($localAry['jobTitle']) ? $localAry['jobTitle'] : !empty($localAry['externalTitle']) ? $localAry['externalTitle'] : '';
@@ -185,7 +182,7 @@ class SFManager extends IntegrationManager {
                     }
                     if (!empty($postId)) {
                         #map post and Rewards
-                        $rewardsAttrs = array();
+                        $rewardsAttrs = $excludedList = array();
                         $rewardsAttrs['post_id'] = $postId;
                         $rewardsAttrs['rewards_type'] = 'free';
                         $rewardsAttrs['type'] = 'discovery';
@@ -219,6 +216,19 @@ class SFManager extends IntegrationManager {
                                 $pushData['notification_msg'] = $notificationMsg;
                                 $pushData['notification_log'] = 1; //for log the notification or not
                                 Queue::push('Mintmesh\Services\Queues\CreateEnterprisePostContactsRelation', $pushData, 'default');
+                                
+                                #send push notifications to all the contacts
+                                $notifyData   = array();
+                                $notifyData['serviceId']            = $postId;
+                                $notifyData['loggedinUserDetails']  = $this->user;
+                                $notifyData['neoLoggedInUserDetails'] = $objCompany;//obj
+                                $notifyData['includedList']     = array($contacts->emailid);
+                                $notifyData['excludedList']     = $excludedList;
+                                $notifyData['service_type']     = '';
+                                $notifyData['service_location'] = '';
+                                $notifyData['notification_type']  = 27;
+                                $notifyData['service_name']       = $neoInput['service_name'];
+                                Queue::push('Mintmesh\Services\Queues\NewPostReferralQueue', $notifyData, 'Notification');
 
                                 #send email notifications to all the contacts
                                 $refId = $refCode = 0;
@@ -396,15 +406,15 @@ class SFManager extends IntegrationManager {
   
 
     public function jobReqForwardCandidates($jobReqId, $candidateId) {
-
+        
         $data = array(
             "jobReqId" => $jobReqId,
             "candidateId" => $candidateId,
             "status" => "Forwarded"
         );
-        $endPoint = 'v2/JobReqFwdCandidates?$format=JSON';
+        $endPoint = 'JobReqFwdCandidates?$format=JSON';
         $integrationManager = new IntegrationManager();
-        return $integrationManager->doPost($data, $endPoint);
+        return $integrationManager->doPost($data, $endPoint, $this->requestParams);
     }
 
     public function addAttachment($userDetails, $relation, $candidateId) {
@@ -427,9 +437,9 @@ class SFManager extends IntegrationManager {
             "viewable" => true,
             "deletable" => false
         );
-        $endPoint = 'v2/Attachment?$format=JSON';
+        $endPoint = 'Attachment?$format=JSON';
         $integrationManager = new IntegrationManager();
-        return $integrationManager->doPost($data, $endPoint);
+        return $integrationManager->doPost($data, $endPoint, $this->requestParams);
     }
 
     public function createCandidate($userDetails, $relation) {
@@ -474,9 +484,9 @@ class SFManager extends IntegrationManager {
             );
             $data['resume'] = $resumeAry;
         }
-        $endPoint = 'v2/Candidate?$format=JSON';
+        $endPoint = 'Candidate?$format=JSON';
         $integrationManager = new IntegrationManager();
-        return $integrationManager->doPost($data, $endPoint);
+        return $integrationManager->doPost($data, $endPoint, $this->requestParams);
     }
 
     public function processHcmJobReferral($jobDetails, $userDetails, $relation, $companyCode){
@@ -487,7 +497,7 @@ class SFManager extends IntegrationManager {
         $companyId  = !empty($compData[0]->id)?$compData[0]->id:'';
         $hcmData    = $this->getCompanyHcmJobbyIdByCompanyID($companyId);
         $company_hcm_job_id = !empty($hcmData[0]->company_hcm_jobs_id)?$hcmData[0]->company_hcm_jobs_id:'';
-        
+
         //$company_hcm_job_id      = 1;
         $companyJobDetail        = $integrationManager->getCompanyHcmJobbyId($company_hcm_job_id);
         $JobDetails              = $integrationManager->getJobDetail($companyJobDetail->hcm_jobs_id);
@@ -547,6 +557,10 @@ class SFManager extends IntegrationManager {
         return DB::table('company_hcm_jobs')
                ->select('company_hcm_jobs_id')
                ->where('company_id', '=', $companyId)->get();
+    }
+    public function getUserByEmail($emailId=''){    
+        return DB::table('users')
+               ->where('emailid', '=', $emailId)->get();
     }
 
 }

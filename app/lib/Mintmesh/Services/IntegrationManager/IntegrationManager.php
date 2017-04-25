@@ -20,7 +20,6 @@ class IntegrationManager {
     const USERNAME = 'USERNAME';
     const PASSWORD = 'PASSWORD';
     const AuthorizationHeader = 'Authorization';
-    const API_LOCAL_URL = 'https://apisalesdemo8.successfactors.com/odata/v2/JobRequisitionLocale';
 
     public function __construct() {
         $this->db_user = Config::get('database.connections.neo4j.username');
@@ -154,9 +153,8 @@ class IntegrationManager {
 
     }
     
-    protected function doPost($data, $endPoint) {
-        
-        $requestParams  = $this->requestParams;
+    protected function doPost($data, $endPoint, $requestParams) {
+      
         #do post to hcm endpoints
         $endPoint = $requestParams[self::DCNAME].$endPoint;
         $username = $requestParams[self::USERNAME];
