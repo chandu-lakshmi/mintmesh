@@ -46,11 +46,11 @@
 										<tr height="20px"><td>&nbsp;</td></tr>
                                         <tr style="font-size: 22px;color:#999999">
                                         	<td width="47%" style="border-bottom: 1px solid #ededed;padding-bottom:10px">
-                                        		<img width="30px" src="<?php echo $public_url ;?>images/calender.jpg" alt="calendar" style="width:30px"><span style="vertical-align: middle;margin-left: 10px">Time</span>
+                                        		<img width="30px" src="<?php echo $public_url ;?>images/calender.png" alt="calendar" style="width:30px"><span style="vertical-align: middle;margin-left: 10px">Time</span>
                                         	</td>
                                         	<td width="6%">&nbsp;</td>
                                         	<td width="47%" style="border-bottom: 1px solid #ededed;padding-bottom:10px">
-                                        		<img width="20px" src="<?php echo $public_url ;?>images/location.jpg" alt="location" style="width:20px"><span style="vertical-align: middle;margin-left: 10px">Location</span>
+                                        		<img width="20px" src="<?php echo $public_url ;?>images/location.png" alt="location" style="width:20px"><span style="vertical-align: middle;margin-left: 10px">Location</span>
                                         	</td>
                                         </tr>
 	                                </table>

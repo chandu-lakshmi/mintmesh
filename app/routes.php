@@ -485,6 +485,7 @@ Route::group(array('prefix' => 'v1/ent'), function() {
     Route::get("user/activate/{code}", "API\EnterpriseApp\EnterpriseAppController@activateAccount");
     //check phone existance
     Route::post("checkPhoneExistance", "API\EnterpriseApp\EnterpriseAppController@checkPhoneExistance");
+    Route::post("user/check_reset_password", "API\EnterpriseApp\EnterpriseAppController@checkResetPassword");
 });
 Route::group(array('prefix' => 'v1/ent', 'before' => 'oauth'), function() {
     //logout

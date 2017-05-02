@@ -76,50 +76,56 @@ class ZenefitsManager extends IntegrationManager {
 
     public function processResponseData($responseBody, $jobId, $companyId) {
 
-        $array = json_decode($responseBody, TRUE);
-        $empInfo = array();
-        $return = array();
+        $array   = json_decode($responseBody, TRUE);
+        $empInfo = $return = array();
         if (isset($array['data'])) {
             $return = $array['data']['data'];
-
             foreach ($return as $key => $value) {
-                if($value['work_email'] !== ""){
-                $empInfo[$key]['first_name'] = $value['first_name'];
-                $empInfo[$key]['last_name'] = $value['last_name'];
-                $empInfo[$key]['work_email'] = $value['work_email'];
-                $empInfo[$key]['work_phone'] = $value['work_phone'];
-                $empInfo[$key]['id'] = $value['id'];
-                if ($value['status'] == "active") {
-                    $empInfo[$key]['status'] = "Active";
-                } elseif ( $value['status'] == "deleted" || $value['status'] == "terminated" || $value['status'] == "leave_of_absence" || $value['status'] == "requested" || $value['status'] == "setup" || $value['status'] == "") {
-                    $empInfo[$key]['status'] = "seaparated";
+                
+                $workEmail  = !empty($value['work_email'])?$value['work_email']:'';
+                $status     = !empty($value['status'])?$value['status']:'';
+                
+                if($workEmail){
+                    $empInfo[$key]['first_name'] = !empty($value['first_name'])?$value['first_name']:'';
+                    $empInfo[$key]['last_name']  = !empty($value['last_name'])?$value['last_name']:'';
+                    $empInfo[$key]['work_email'] = !empty($value['work_email'])?$value['work_email']:'';
+                    $empInfo[$key]['work_phone'] = !empty($value['work_phone'])?$value['work_phone']:'';
+                    $empInfo[$key]['id']         = !empty($value['id'])?$value['id']:'';
+                    if ($status == "active") {
+                        $empInfo[$key]['status'] = "Active";
+                    } elseif ($status == "deleted" || $status == "terminated" || $status == "leave_of_absence" || $status == "requested" || $status == "setup" || $status == "") {
+                        $empInfo[$key]['status'] = "seaparated";
+                    }
                 }
-              }
             }
-
-
             $this->insertEmpinfoIntoContacts($empInfo, $companyId);
         }
-
         return true;
     }
 
     public function insertEmpinfoIntoContacts($empInfo, $companyId) {
 
+        #get company details here
+        $companyDetails = $this->getCompanyDetails($companyId);
+        $companyDetails = !empty($companyDetails[0])?$companyDetails[0]:'';
+        $companyCode    = $companyDetails->code;
+        $userId         = $companyDetails->created_by;
+        $userData       = $this->getUserByUserId($userId);
+        $this->user     = !empty($userData[0])?$userData[0]:'';
+        $userEmailid    = $this->user->emailid;
+        $bucketId       = "1";
+        
         foreach ($empInfo as $key => $value) {
             $query = "Select * from contacts where emailid = '" . $value['work_email'] . "' AND company_id =187";
-
             $existEailidAndCompanyId = DB::select($query);
 
             if (count($existEailidAndCompanyId) == 0) {
                 $query = "INSERT INTO contacts (firstname, lastname, emailid, phone, company_id, import_file_id, employeeid, status, updated_by,created_by, ip_address)
-VALUES ('" . $value['first_name'] . "', '" . $value['last_name'] . "', '" . $value['work_email'] . "','" . $value['work_phone'] . "', '" . $companyId . "', '0', '" . $value['id'] . "', '" . $value['status'] . "', '0', '0', '0')";
-
+                            VALUES ('" . $value['first_name'] . "', '" . $value['last_name'] . "', '" . $value['work_email'] . "','" . $value['work_phone'] . "', '" . $companyId . "', '0', '" . $value['id'] . "', '" . $value['status'] . "', '0', '0', '0')";
                 DB::Statement($query);
-
-                //Assign Bucket
+                #Assign Bucket
                 $lastInsertId = DB::getPdo()->lastInsertId();
-                $bucketId = "1";
+                
                 $bucket_insert = "INSERT INTO buckets_contacts (bucket_id, contact_id, company_id) VALUES ('" . $bucketId . "','" . $lastInsertId . "','" . $companyId . "')";
                 DB::Statement($bucket_insert);
            
@@ -128,10 +134,20 @@ VALUES ('" . $value['first_name'] . "', '" . $value['last_name'] . "', '" . $val
                 DB::Statement($query);
             }
 
-
             \Log::info("Successfully");
         }
         return true;
     }
+    
+    public function getCompanyDetails($id) {
+        return DB::table('company')
+            ->where('id', '=', $id)->get(); 
+    }
+    
+    public function getUserByUserId($userId=0){    
+        return DB::table('users')
+            ->select('firstname','emailid','status')
+            ->where('id', '=', $userId)->get();
+    }      
 
 }

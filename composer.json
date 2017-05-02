@@ -18,7 +18,8 @@
         "aws/aws-sdk-php-laravel": "1.*",
         "paypal/rest-api-sdk-php": "*",
         "maatwebsite/excel": "~1.3",
-        "php-imap/php-imap": "~2.0"
+        "php-imap/php-imap": "~2.0",
+        "phpoffice/phpexcel": "1.8.*"
 	},
 	"autoload": {
 		"classmap": [

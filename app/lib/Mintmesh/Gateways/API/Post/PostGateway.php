@@ -554,13 +554,16 @@ class PostGateway {
         $totalCount = 0;
         $this->loggedinEnterpriseUserDetails = $this->getLoggedInEnterpriseUser();
         $this->neoLoggedInEnterpriseUserDetails = $this->neoEnterpriseRepository->getNodeByEmailId($this->loggedinEnterpriseUserDetails->emailid);
-        $userEmail = $this->neoLoggedInEnterpriseUserDetails->emailid;
+//        $userEmail = $this->neoLoggedInEnterpriseUserDetails->emailid;
+        $input['userEmail'] = $this->neoLoggedInEnterpriseUserDetails->emailid;
         $page = !empty($input['page_no']) ? $input['page_no'] : 0;
         $search_for = !empty($input['search_for']) ? $input['search_for'] : 0;
         $post_by = !empty($input['post_by']) ? $input['post_by'] : 0;
         $checkPermissions = $this->enterpriseRepository->getUserPermissions($this->loggedinEnterpriseUserDetails->group_id,$input);
-        $posts = $this->neoPostRepository->jobsList($userEmail, $input['company_code'], $input['request_type'], $page, $search_for,$checkPermissions['view_jobs'],$post_by);
-        $totalCount = count($this->neoPostRepository->jobsList($userEmail, $input['company_code'], $input['request_type'], "", $search_for,$checkPermissions['view_jobs'],$post_by));
+//        $posts = $this->neoPostRepository->jobsList($userEmail, $input['company_code'], $input['request_type'], $page, $search_for,$checkPermissions['view_jobs'],$post_by);
+        $posts = $this->neoPostRepository->jobsList($input, $page, $search_for,$checkPermissions['view_jobs'],$post_by);
+//        $totalCount = count($this->neoPostRepository->jobsList($userEmail, $input['company_code'], $input['request_type'], "", $search_for,$checkPermissions['view_jobs'],$post_by));
+        $totalCount = count($this->neoPostRepository->jobsList($input, "", $search_for,$checkPermissions['view_jobs'],$post_by));
         if (!empty(count($posts))) {
             $returnPostsData = $returnPosts = array();
             
@@ -604,7 +607,7 @@ class PostGateway {
                 $returnPosts['pending_count']   = max($pendingCount, 0);
                 $returnPosts['rewards']         = $this->getPostRewards($postDetails['post_id']);
                 $returnPostsData[] = $returnPosts;
-            }
+                }
         }
 
         if (!empty($returnPostsData)) {
@@ -780,7 +783,7 @@ class PostGateway {
                 $timeZone = !empty($input['time_zone'])?$input['time_zone']:'';   
                 $updatedAt = $this->appEncodeDecode->UserTimezone($postRelDetails['p1_updated_at'], $timeZone); 
                 }
-                $returnReferralDetails['updated_at']            = !empty($updatedAt)?gmdate("d M Y H:i", strtotime($updatedAt)):'';
+                $returnReferralDetails['updated_at']            = !empty($updatedAt)?gmdate("D M d, Y H:i:s A", strtotime($updatedAt)):'';
                 $returnReferralDetails['referred_by']           = $neoReferrerDetails['emailid'];
                 $returnReferralDetails['resume_path']           = !empty($postRelDetails['resume_path'])?$postRelDetails['resume_path']:$cvPath;
                 $returnReferralDetails['resume_original_name']  = $postRelDetails['resume_original_name'];
@@ -797,7 +800,7 @@ class PostGateway {
                     }  else {
                         $returnReferralDetails['awaiting_action_by'] = '';
                     }
-                    $returnReferralDetails['awaiting_action_updated_at'] = !empty($postRelDetails['awaiting_action_updated_at'])?date("d-m-Y", strtotime($postRelDetails['awaiting_action_updated_at'])):'';
+                    $returnReferralDetails['awaiting_action_updated_at'] = !empty($postRelDetails['awaiting_action_updated_at'])?date("D M d, Y H:i:s A", strtotime($postRelDetails['awaiting_action_updated_at'])):'';
                     $returnReferralDetails['awaiting_action_status']     = !empty($postRelDetails['awaiting_action_status'])?$postRelDetails['awaiting_action_status']:'ACCEPTED';
                 }
                 $returnDetails[] = $returnReferralDetails;
@@ -1018,7 +1021,6 @@ class PostGateway {
         $referredBy = $input['referred_by'];
         $relationCount = $input['relation_count'];
         $nonMintmesh = !empty($input['referred_by_phone']) ? 1 : 0;
-        
         $result = $this->neoPostRepository->updateAwaitingActionDetails($userEmailId, $postId, $referredBy, $referral, $status, $relationCount, $nonMintmesh);
         if (!empty($result)) {
             #send notification
@@ -1035,17 +1037,15 @@ class PostGateway {
             }
             #send notification to p2
             $this->userGateway->sendNotification($this->loggedinUserDetails, $objCompany, $referredBy, $notificationId, array('extra_info' => $postId), array('other_user' => $referral), 1);
-            
             $postDetails     = !empty($result[0][0])?$result[0][0]:'';
             $postDetails     = $this->referralsGateway->formPostDetailsArray($postDetails);
             $relationDetails = !empty($result[0][1])?$result[0][1]:'';
             $relationDetails = $this->referralsGateway->formPostDetailsArray($relationDetails);
-
             $response['hired_count']                =  !empty($postDetails['referral_hired_count'])?$postDetails['referral_hired_count']:0;
             $response['awaiting_action_status']     =  !empty($relationDetails['awaiting_action_status'])?$relationDetails['awaiting_action_status']:'ACCEPTED';
             $response['awaiting_action_by']         =  !empty($relationDetails['awaiting_action_by'])?$userFirstName:'';
             $response['awaiting_action_updated_at'] =  !empty($relationDetails['awaiting_action_updated_at'])?$relationDetails['awaiting_action_updated_at']:date("d-m-Y");
-            $response['awaiting_action_updated_at'] =  date("d-m-Y", strtotime($response['awaiting_action_updated_at']));
+            $response['awaiting_action_updated_at'] =  date("D M d, Y H:i:s A", strtotime($response['awaiting_action_updated_at']));
             
             if (!empty($response)) {   
                 $message = array('msg' => array(Lang::get('MINTMESH.referrals.success')));
@@ -1577,6 +1577,7 @@ class PostGateway {
                     }
                     //creating Post and contacts Relation here
                     if(!empty($postCampaignRes) && !empty($campBucketIds)){
+                        $this->neoPostRepository->changePostStatus($postId);
                         $postContacts['company_id']   = $companyId;    
                         $postContacts['company_code'] = $companyCode;
                         $this->createRelationBwPostAndContacts($postId, $postContacts, $campBucketIds, $loggedInUser, $objCompany);
@@ -1910,8 +1911,7 @@ class PostGateway {
                 $record['one_way_status']   = $relation->one_way_status;
                 $record['resume_path']      = $relation->resume_path;
                 $record['resume_name']      = $relation->resume_original_name;
-                $record['created_at']       = $relation->created_at; 
-//                $record['created_at']       = $this->appEncodeDecode->UserTimezone($relation->created_at,$input['time_zone']); 
+                $record['created_at']       = date('M d, Y H:i:s',strtotime($relation->created_at));
                 $record['awt_status']       = $relation->awaiting_action_status;
                 #get the user details here
                 $referralName = $userName = '';
@@ -2224,7 +2224,7 @@ class PostGateway {
             $neoInput['company']            = $input['company_name'];
             $neoInput['job_description']    = $input['job_description'];
             $neoInput['skills']             =  $this->userGateway->getSkillsFromJobTitle($neoInput['service_name'], $neoInput['job_description']);
-            $neoInput['status']             = Config::get('constants.POST.STATUSES.ACTIVE');
+            $neoInput['status']             = Config::get('constants.POST.STATUSES.PENDING');
             $neoInput['created_by']         = $emailId;
             $neoInput['post_type']          = 'campaign';          
             $relationAttrs['created_at']    = date("Y-m-d H:i:s");

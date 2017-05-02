@@ -15,6 +15,7 @@ return [
     'MNT_FROM_NAME'=>'Mintmesh',
     'MM_ENTERPRISE_URL'=>'http://202.63.105.85/mmenterprise',
     'MNT_DEEP_LINK_IOS'=>'mintmeshstg://',
+    'MNT_ENT_DEEP_LINK_IOS'=>'mintmeshenterprise://',
     'MNT_DEEP_LINK_ANDROID'=>'http://202.63.105.85/mintmesh/',
     'DP_PATH' => '/uploads/ProfilePics',
     'LOGO_PATH' => '/public/uploads',
@@ -27,7 +28,7 @@ return [
     'PLATFORM_ARN_IOS'=>'ios',
     'INVITE_SINGLE'=>false,
     'INVITE_EMAIL'=>'mintmeshapp@gmail.com',
-    'MNT_PUBLIC_URL'=>'https://staging.mintmesh.com/public/',//mintmesh public folder url
+    'MNT_PUBLIC_URL'=>'http://202.63.105.85/mintmesh/public/',//mintmesh public folder url
     'PUSH_APP_ID' =>'0YORwFGpy2BsSW4g6ify3FxeBraHHiMDuzFUTJX0',//'0YORwFGpy2BsSW4g6ify3FxeBraHHiMDuzFUTJX0',// 'MTPajI5Vj2EzNUvKnvvynrZHh320Nk2pu9iW3x60',//'0YORwFGpy2BsSW4g6ify3FxeBraHHiMDuzFUTJX0',
     'PUSH_REST_KEY' =>'dVGfvLnENYwyTXVKoUPJKvOW4J9Ww9UoRbQQfJg7',//'dVGfvLnENYwyTXVKoUPJKvOW4J9Ww9UoRbQQfJg7',// '32zUISSPq5aAdkdWdrGYTQpad4JsRhoQsD4Exro8',//'dVGfvLnENYwyTXVKoUPJKvOW4J9Ww9UoRbQQfJg7',
     'PUSH_MASTER_KEY' =>'noK7rjixKT90K6GICpVwzgoMIb8v8JOhq2U1Z6BA',//'noK7rjixKT90K6GICpVwzgoMIb8v8JOhq2U1Z6BA',// 'LJIrWD0drrfZC55wvKwpWpnSyeq9UhMl5Ybuern6',//'noK7rjixKT90K6GICpVwzgoMIb8v8JOhq2U1Z6BA'

@@ -26,6 +26,7 @@ use LucaDegasperi\OAuth2Server\Authorizer;
 use Mintmesh\Services\APPEncode\APPEncode;
 use Illuminate\Support\Facades\Hash;
 use GuzzleHttp\Client;
+use lib\MyExcel\MyExcel;
 use Lang,
     Excel;
 use Config;
@@ -42,7 +43,7 @@ class EnterpriseGateway {
     const ERROR_RESPONSE_MESSAGE = 'error';
 
     protected $userRepository, $enterpriseRepository, $enterpriseValidator, $userFileUploader, $commonFormatter, $authorizer, $appEncodeDecode, $neoEnterpriseRepository;
-    protected $allowedHeaders, $allowedExcelExtensions, $createdNeoUser, $referralsGateway, $contactsRepository,$referralsRepository;
+    protected $allowedHeaders, $allowedExcelExtensions, $createdNeoUser, $referralsGateway, $contactsRepository,$referralsRepository,$myExcel;
 
     public function __construct(EnterpriseRepository $enterpriseRepository, 
                                 NeoEnterpriseRepository $neoEnterpriseRepository, 
@@ -58,7 +59,8 @@ class EnterpriseGateway {
             UserEmailManager $userEmailManager, 
             CommonFormatter $commonFormatter, 
             APPEncode $appEncodeDecode,
-            ContactsRepository $contactsRepository
+            ContactsRepository $contactsRepository,
+            MyExcel $myExcel
     ) {
 
         $this->enterpriseRepository = $enterpriseRepository;
@@ -76,7 +78,9 @@ class EnterpriseGateway {
         $this->commonFormatter = $commonFormatter;
         $this->appEncodeDecode = $appEncodeDecode;
         $this->contactsRepository = $contactsRepository;
+        $this->myExcel = $myExcel;
         $this->allowedHeaders         = array('employee_idother_id', 'first_name', 'last_name', 'email_id', 'cell_phone', 'status');
+        $this->validHeaders           = array('Employee ID/Other ID', 'First Name', 'Last Name', 'Email ID', 'Cell Phone', 'Status');
         $this->allowedExcelExtensions = array('csv', 'xlsx', 'xls');
     }
 
@@ -1218,7 +1222,7 @@ class EnterpriseGateway {
         $userEmailId = $this->loggedinUserDetails->emailid;
          $userId     = !empty($this->loggedinUserDetails->id)?$this->loggedinUserDetails->id:'';
         #log user activity here
-        $this->userRepository->addUserActivityLogs($userId, $appType=1, $moduleType=9);
+        //$this->userRepository->addUserActivityLogs($userId, $appType=1, $moduleType=9);
         $companyCode = $input['company_code'];
         
         $returnDetails  = $return = $data = array();
@@ -1786,28 +1790,33 @@ class EnterpriseGateway {
         $responseCode       = self::ERROR_RESPONSE_CODE;
         $responseMsg        = self::ERROR_RESPONSE_MESSAGE;
         $inputFile          = !empty($input['file_name'])?$input['file_name']:'';
-        
+        $resultAry = array();
         if(!empty($inputFile)){
             $inputFileInfo      = pathinfo($inputFile);
             $inputFileExtension = $inputFileInfo['extension'];
         }
-        //cheking file format here             
+        #cheking file format here             
         if (!empty($inputFile) && in_array($inputFileExtension, $this->allowedExcelExtensions)) {
-            //reading input excel file here
-            $arrResults     = Excel::load($inputFile)->first()->toArray();
-            $validHeaders   = TRUE;
-            //comparing headers here
-            foreach ($this->allowedHeaders as $value) {
-                if (!array_key_exists($value, $arrResults)) {
-                    $validHeaders = FALSE;
-                }
+            #reading input excel file here
+            $allDataInSheet = MyExcel::read_excel1_sheets_headers($inputFile);
+
+            $header_excel = !empty($allDataInSheet['column_names'][0])?$allDataInSheet['column_names'][0]:'';
+            foreach ($header_excel as $key => $value) {
+                $id     = isset($value['id']) ? $value['id'] : '';
+                $label  = isset($value['label']) ? $value['label'] : '';
+                $resultAry[$id] = $label;
             }
-            if($validHeaders){
+            $header_array = array_map('trim', $this->validHeaders);
+            $header_excel_array = array_map('trim', $resultAry);
+            $validHeaders = array_diff_assoc($header_array, $header_excel_array);
+            
+            if(empty($validHeaders)){
                 $responseCode = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg  = self::SUCCESS_RESPONSE_MESSAGE;
                 $message      = array('msg' => array(Lang::get('MINTMESH.user.valid')));
              } else {
                 $message = array('msg' => array(Lang::get('MINTMESH.editContactList.invalid_headers')));
+                \Log::info("<<<<<<<<<<<<<<<< Invalid Headers >>>>>>>>>>>>>".print_r($header_excel_array,1));
              }       
         }else {
             $message = array('msg' => array(Lang::get('MINTMESH.editContactList.file_format').'csv, xlsx, xls'));
@@ -1828,35 +1837,22 @@ class EnterpriseGateway {
             $inputFileInfo      = pathinfo($inputFile);
             $inputFileExtension = $inputFileInfo['extension'];
         }
-        //cheking file format here             
+        #cheking file format here             
         if (!empty($inputFile) && in_array($inputFileExtension, $this->allowedExcelExtensions)) {
-            //reading input excel file here
-            $arrResults     = Excel::load($inputFile)->all();
-            $firstRow       = $arrResults->first()->toArray();
-            $validHeaders   = TRUE;
-            //comparing headers here
-            foreach ($this->allowedHeaders as $value) {
-                if (!array_key_exists($value, $firstRow)) {
-                    $validHeaders = FALSE;
-                }
-            }            
-            //check header validations here  
-            if($validHeaders){
-                $arrResults = $arrResults->toArray();
-                //create file record
+            #reading input excel file here
+            $allDataInSheet = MyExcel::readExcel($inputFile);
+            #get excel headers
+            $header_array = array_map('trim', $this->validHeaders);
+            $header_excel = $allDataInSheet[0][1];
+            $header_excel_array = array_map('trim', $header_excel);            
+            $validHeaders = array_diff_assoc($header_array, $header_excel_array);
+            #check header validations here  
+            if(empty($validHeaders)){
+                #create file record
 		$importFileId = $this->enterpriseRepository->getFileId($inputFile,$userId);
-                //filtering to make unique email ids and employee id for avoiding duplicate entry's 
-                $arrUniqueImpId = array();
-                foreach ($arrResults as $key => $val) {
-                    if ($val['email_id']) {		 
-                        $val['employee_idother_id'] = ($val['employee_idother_id']!='' && in_array($val['employee_idother_id'],$arrUniqueImpId))?'':$val['employee_idother_id'];
-                        $arrUniqueResults[$val['email_id']] = $val;
-                        
-                        if($val['employee_idother_id']!='')
-			$arrUniqueImpId[$val['email_id']] = $val['employee_idother_id'];
-                    }
-                }
-		unset($arrUniqueImpId);
+                #get excel sheet unique rows filter
+		$arrUniqueResults = $this->getExcelUniqueRows($allDataInSheet);
+                //print_r($arrUniqueResults).exit;
                 #company available contacts count verification here  
                 $availableNo = $this->getCompanyAvailableContactsCount($companyCode);
                 #importing contacts to Mysql db
@@ -1866,7 +1862,7 @@ class EnterpriseGateway {
                 $this->addCompanySubscriptionsLog($companyId, $employeesNo);
                 #get the Import Contacts List By Instance Id
                 $contactsList = $this->enterpriseRepository->getContactsListByFileId($companyId, $importFileId);
-
+                
                 if (!empty($contactsList)) {    
                     #Creating relation between bucket and contacts in neo4j
                     foreach ($contactsList as $key => $value) {
@@ -1889,6 +1885,7 @@ class EnterpriseGateway {
         }
         return $return;
     }
+    
     public function uploadContacts($input){ 
         
         $result = array();
@@ -1918,6 +1915,39 @@ class EnterpriseGateway {
            $message = array('msg' => array(Lang::get('MINTMESH.editContactList.failure')));
         }   
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $message, array());
+    }
+    
+    public function getExcelUniqueRows($allDataInSheet) {
+            
+        $shift = array_shift($allDataInSheet[0]);
+            #filtering to make unique email ids and employee id for avoiding duplicate entry's 
+            $arrUniqueImpId = $arrUniqueResults = array();
+            foreach ($allDataInSheet as $rowKey => $rowVal) {
+                foreach ($rowVal as $cellKey => $cellVal) {
+                    $string_email = isset($cellVal[3]) ? $cellVal[3] : '';
+
+                    if(!empty($string_email) && filter_var($string_email, FILTER_VALIDATE_EMAIL)){
+
+                        $cellVal  = array_map('trim', $cellVal);
+                        $email_id = str_replace("&nbsp;", '', $cellVal[3]);
+
+                        $cellVal[0] = ($cellVal[0] !='' && in_array($cellVal[0],$arrUniqueImpId))?'':$cellVal[0];
+
+                        $arrUniqueResults[$email_id] = array(
+                                "email_id"      => $email_id,
+                                "first_name"    => isset($cellVal[1]) ? $cellVal[1] : '',
+                                "last_name"     => isset($cellVal[2]) ? $cellVal[2] : '',
+                                "employee_idother_id" => isset($cellVal[0]) ? $cellVal[0] : '',
+                                "cell_phone"    => isset($cellVal[4]) ? $cellVal[4] : '',
+                                "status"        => isset($cellVal[5]) ? $cellVal[5] : ''
+                            );
+                        if($cellVal[0]!='')
+                        $arrUniqueImpId[$email_id] = $cellVal[0];
+                    }
+                }    
+            }
+            unset($arrUniqueImpId); 
+        return $arrUniqueResults;    
     }
     
     public function addContact($input){ 
@@ -2193,7 +2223,8 @@ class EnterpriseGateway {
                 $code = $this->userGateway->base_64_encode($currentTime, $email);
                 $dataSet['hrs'] = Config::get('constants.USER_EXPIRY_HR');
 //                $dataSet['send_company_name'] = $this->loggedinUserDetails->firstname;
-                $dataSet['link'] = Config::get('constants.MM_ENTERPRISE_URL') . "/login"; //comment it for normal flow of deep linki.e without http
+                $companyName = explode(' ', $companyDetails->name);
+                $dataSet['link'] = Config::get('constants.MM_ENTERPRISE_URL') . "/company/$companyName[0]/$companyDetails->code"; //comment it for normal flow of deep linki.e without http
                 $this->userEmailManager->dataSet = $dataSet;
                 $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.set_password');
                 $this->userEmailManager->name = $checkUser['firstname'];
@@ -2866,8 +2897,8 @@ class EnterpriseGateway {
         foreach ($subAry as $value) {
             $licence = array();
             $licence['employees_no'] = $value->employees_no;
-            $licence['start_date']  = date('Y-m-d', strtotime($value->start_date));
-            $licence['end_date']     = date('Y-m-d', strtotime($value->end_date));
+            $licence['start_date']  = date('M d, Y', strtotime($value->start_date));
+            $licence['end_date']     = date('M d, Y', strtotime($value->end_date));
             $returnAry[]  = $licence;
         }
         $returnData = array('active_plan'=>$return,'licence_log'=>$returnAry);
@@ -3222,6 +3253,7 @@ class EnterpriseGateway {
            }
             return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data, false);  
         }
+        
 }
 
 ?>

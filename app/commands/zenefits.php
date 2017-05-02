@@ -14,7 +14,6 @@ class zenefits extends Command {
 	 */
 
 	protected $name = 'zenefits:run';
-
 	protected $description = 'Command test';
 	protected $integrationManager;
 	protected $zenefitsManager;
@@ -42,10 +41,6 @@ class zenefits extends Command {
         $jobId = $this->option('job_id');
         
         $res = $this->zenefitsManager->insertContacts($jobId);
-        //$res = $this->integrationManager->createJob($jobId);
-        //print_r($jobId).exit;
-        
-        print_r($res); die;
         $this->info('This a command test'.$res);
     }
     

@@ -146,6 +146,7 @@ class EnterpriseAppController extends \BaseController {
             // Validating user input data
             $validation = $this->userGateway->validateForgotPasswordInput($inputUserData);
             if($validation['status'] == 'success') {
+                $inputUserData['is_ent'] = TRUE;
                 return \Response::json($this->userGateway->sendForgotPasswordEmail($inputUserData));
             } else {
                     // returning validation failure
@@ -977,6 +978,31 @@ class EnterpriseAppController extends \BaseController {
             if($validation['status'] == 'success') {
                 $response = $this->userGateway->checkPhoneExistance($inputUserData);
                 return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+        }
+        
+        
+        /**
+	 * check reset user's password
+         * 
+         * POST/check_reset_password
+         * 
+         * @param string $code The reset password code
+         * 
+	 * @return Response
+	 */
+        public function checkResetPassword()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->userGateway->validateCheckResetPasswordInput($inputUserData);
+            if($validation['status'] == 'success') {
+               $response = $this->userGateway->checkResetPassword($inputUserData);
+               return \Response::json($response);
             } else {
                     // returning validation failure
                 return \Response::json($validation);

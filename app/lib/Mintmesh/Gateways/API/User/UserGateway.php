@@ -1129,6 +1129,7 @@ class UserGateway {
         {
             if (!empty($input))
             {
+                $isEnt = !empty($input['is_ent'])?$input['is_ent']:0;
                 //get user details
                 $userDetails = $this->userRepository->getUserByEmail($input['emailid']);
                 $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($input['emailid']) ;      
@@ -1146,7 +1147,7 @@ class UserGateway {
                     $email = md5($input['emailid']) ;
                     $code = $this->base_64_encode($currentTime, $email) ;
                     $deep_link_type = !empty($input['os_type'])?$input['os_type']:'';
-                    $deep_link = $this->getDeepLinkScheme($deep_link_type);
+                    $deep_link = $this->getDeepLinkScheme($deep_link_type, $isEnt);
                     $appLink = $deep_link.Config::get('constants.MNT_VERSION')."/user/reset_password/".$code ;
                     $appLinkCoded = $this->base_64_encode("", $appLink) ; //comment it for normal flow of deep linki.e without http
                     //$dataSet['link'] = $appLink ;//remove comment it for normal flow of deep linki.e without http
@@ -4155,7 +4156,7 @@ class UserGateway {
             
         }
         
-        public function getDeepLinkScheme($os_type)
+        public function getDeepLinkScheme($os_type,$isEnt=0)
         {
             $deep_link = "";
             if (!empty($os_type))
@@ -4166,7 +4167,11 @@ class UserGateway {
                 }
                 else if ($os_type == Config::get('constants.IOS'))
                 {
-                    $deep_link = Config::get('constants.MNT_DEEP_LINK_IOS');
+                    if($isEnt){#only from enterprise app
+                        $deep_link = Config::get('constants.MNT_ENT_DEEP_LINK_IOS');
+                    }else{
+                        $deep_link = Config::get('constants.MNT_DEEP_LINK_IOS');
+                    }
                 }
             }
             return $deep_link ;

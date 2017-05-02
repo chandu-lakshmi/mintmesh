@@ -44,15 +44,19 @@ class SFManager extends IntegrationManager {
         
         $integrationManager = new IntegrationManager();
         $companyJobDetail = $integrationManager->getCompanyHcmJobbyId($company_hcm_job_id);
-        $JobDetails = $integrationManager->getJobDetail($companyJobDetail->hcm_jobs_id);
-        $companyJobConfigDetails = $integrationManager->getCompanyJobConfigs($JobDetails->hcm_id, $companyJobDetail->company_id);
-        $requestParams = $integrationManager->composeRequestParams($JobDetails, $companyJobDetail, $companyJobConfigDetails);
+        #scheduler enabled or disabled here
+        if(!empty($companyJobDetail) && $companyJobDetail->status == '1'){
+            $JobDetails = $integrationManager->getJobDetail($companyJobDetail->hcm_jobs_id);
+            $companyJobConfigDetails = $integrationManager->getCompanyJobConfigs($JobDetails->hcm_id, $companyJobDetail->company_id);
+            $requestParams = $integrationManager->composeRequestParams($JobDetails, $companyJobDetail, $companyJobConfigDetails);
 
-        $this->requestParams = $requestParams;
-        
-        $return = $integrationManager->doRequest($requestParams);
-        $this->processResponseData($return, $companyJobDetail->hcm_jobs_id, $companyJobDetail->company_id);
-        $integrationManager->updateLastProcessedTime($company_hcm_job_id, $companyJobDetail);
+            $this->requestParams = $requestParams;
+
+            $return = $integrationManager->doRequest($requestParams);
+            $this->processResponseData($return, $companyJobDetail->hcm_jobs_id, $companyJobDetail->company_id);
+            $integrationManager->updateLastProcessedTime($company_hcm_job_id, $companyJobDetail);
+        }
+        return TRUE;
     }
     
     protected function getNeoUserByEmailId($userEmailId) {
