@@ -11,13 +11,11 @@ use Guzzle\Http\Client as guzzleClient;
 use Guzzle\Http\Exception\ClientErrorResponseException;
 use GuzzleHttp\Message\ResponseInterface;
 use lib\Parser\MyEncrypt;
-use DB,
-    Config,
-    Queue,
-    Lang;
+use DB, Config, Queue, Lang;
 
 class ZenefitsManager extends IntegrationManager {
 
+    protected $db_user, $db_pwd, $client, $appEncodeDecode, $db_host, $db_port;
     protected $userRepository, $guzzleClient;
     public $requestParams = array();
 
@@ -26,53 +24,36 @@ class ZenefitsManager extends IntegrationManager {
     const AuthorizationHeader = 'Authorization';
     const API_LOCAL_URL = 'https://api.zenefits.com/core/';
 
-//    public function createRequestParams($JobDetails, $companyJobDetail, $companyJobConfigDetails) {
-//        // composing request params and configs
-//        $returnRequestData = array();
-//        // composing endpoing
-//        foreach ($companyJobConfigDetails as $dataValue) {
-//            $returnRequestData[$dataValue->config_name] = $dataValue->config_value;
-//        }
-//
-//        // converting last processed datetime to UTC timezone
-//        $lastprocessedDate = gmdate("Y-m-d\TH:i:s\Z", strtotime($companyJobDetail->last_processed_at));
-//
-//        $returnRequestData[self::API_END_POINT] = $JobDetails->job_endpoint;
-//        return $returnRequestData;
-//    }
-
+    public function __construct() {
+        $this->db_user = Config::get('database.connections.neo4j.username');
+        $this->db_pwd = Config::get('database.connections.neo4j.password');
+        $this->db_host = Config::get('database.connections.neo4j.host');
+        $this->db_port = Config::get('database.connections.neo4j.port');
+        $this->client = new NeoClient($this->db_host, $this->db_port);
+        $this->client->getTransport()->setAuth($this->db_user, $this->db_pwd);
+        $this->neoEnterpriseUser = $this->db_user;
+        $this->guzzleClient = new guzzleClient();
+        $this->appEncodeDecode = new APPEncode();
+    }
+    
     public function insertContacts($company_hcm_job_id) {
-        $integrationManager = new IntegrationManager();
-        $companyJobDetail = $integrationManager->getCompanyHcmJobbyId($company_hcm_job_id);
-        $JobDetails = $integrationManager->getJobDetail($companyJobDetail->hcm_jobs_id);
-        $companyJobConfigDetails = $integrationManager->getCompanyJobConfigs($JobDetails->hcm_id, $companyJobDetail->company_id);
-        $requestParams = $integrationManager->composeRequestParams($JobDetails, $companyJobDetail, $companyJobConfigDetails);
-        $this->requestParams = $requestParams;
-        $return = $integrationManager->doRequest($requestParams);
-        $this->processResponseData($return, $companyJobDetail->hcm_jobs_id, $companyJobDetail->company_id);
-        $integrationManager->updateLastProcessedTime($company_hcm_job_id, $companyJobDetail);
+        
+        $integrationManager      = new IntegrationManager();
+        $companyJobDetail        = $integrationManager->getCompanyHcmJobbyId($company_hcm_job_id);
+        #scheduler enabled or disabled here 
+        if(!empty($companyJobDetail) && $companyJobDetail->status == '1'){
+            $JobDetails              = $integrationManager->getJobDetail($companyJobDetail->hcm_jobs_id);
+            $companyJobConfigDetails = $integrationManager->getCompanyJobConfigs($JobDetails->hcm_id, $companyJobDetail->company_id);
+            $requestParams           = $integrationManager->composeRequestParams($JobDetails, $companyJobDetail, $companyJobConfigDetails);
+            $this->requestParams     = $requestParams;
+
+            $return = $integrationManager->doRequest($requestParams);
+            $this->processResponseData($return, $companyJobDetail->hcm_jobs_id, $companyJobDetail->company_id);
+            $integrationManager->updateLastProcessedTime($company_hcm_job_id, $companyJobDetail);
+        }  
+        return TRUE;
     }
 
-//    public function doZenefitsRequest($requestParams) {
-//        // do request to hcm endpoints
-//        $endPoint = self::API_LOCAL_URL . $requestParams[self::API_END_POINT];
-//        $accesToken = $requestParams[self::AuthorizationHeader];
-//        \Log::info("Zenefits Endpoint hit : $endPoint");
-//        $request = $this->guzzleClient->get($endPoint);
-//
-//        $request->setHeader(self::AuthorizationHeader, $accesToken);
-//
-//        try {
-//            $response = $request->send();
-//            if ($response->isSuccessful() && $response->getStatusCode() == self::SUCCESS_RESPONSE_CODE) {
-//                return $response->getBody();
-//            } else {
-//                \Log::info("Error while getting response : $response->getInfo()");
-//            }
-//        } catch (ClientErrorResponseException $exception) {
-//            $responseBody = $exception->getResponse()->getBody(true);
-//        }
-//    }
 
     public function processResponseData($responseBody, $jobId, $companyId) {
 
@@ -104,7 +85,8 @@ class ZenefitsManager extends IntegrationManager {
     }
 
     public function insertEmpinfoIntoContacts($empInfo, $companyId) {
-
+       
+        $input = array();
         #get company details here
         $companyDetails = $this->getCompanyDetails($companyId);
         $companyDetails = !empty($companyDetails[0])?$companyDetails[0]:'';
@@ -116,10 +98,12 @@ class ZenefitsManager extends IntegrationManager {
         $bucketId       = "1";
         
         foreach ($empInfo as $key => $value) {
-            $query = "Select * from contacts where emailid = '" . $value['work_email'] . "' AND company_id =187";
+            
+            $query = "Select * from contacts where emailid = '" . $value['work_email'] . "' AND company_id ='". $companyId ."'";
             $existEailidAndCompanyId = DB::select($query);
 
             if (count($existEailidAndCompanyId) == 0) {
+                
                 $query = "INSERT INTO contacts (firstname, lastname, emailid, phone, company_id, import_file_id, employeeid, status, updated_by,created_by, ip_address)
                             VALUES ('" . $value['first_name'] . "', '" . $value['last_name'] . "', '" . $value['work_email'] . "','" . $value['work_phone'] . "', '" . $companyId . "', '0', '" . $value['id'] . "', '" . $value['status'] . "', '0', '0', '0')";
                 DB::Statement($query);
@@ -128,13 +112,25 @@ class ZenefitsManager extends IntegrationManager {
                 
                 $bucket_insert = "INSERT INTO buckets_contacts (bucket_id, contact_id, company_id) VALUES ('" . $bucketId . "','" . $lastInsertId . "','" . $companyId . "')";
                 DB::Statement($bucket_insert);
-           
+                #create contact  
+                $pushData = array();
+                $pushData['firstname']          = $value['first_name'];;
+                $pushData['lastname']           = $value['last_name'];
+                $pushData['emailid']            = $this->appEncodeDecode->filterString(strtolower($value['work_email']));
+                $pushData['contact_number']     = !empty($value['work_phone']) ? $value['work_phone'] : '';;
+                $pushData['other_id']           = !empty($value['id']) ? $value['id'] : '';
+                $pushData['status']             = !empty($value['status']) ? $value['status'] : 'unknown';;
+                $pushData['bucket_id']          = $bucketId;
+                $pushData['company_code']       = $companyCode;
+                $pushData['loggedin_emailid']   = $userEmailid;
+                Queue::push('Mintmesh\Services\Queues\CreateEnterpriseContactsQueue', $pushData, 'IMPORT');
+                        
             } else if (count($existEailidAndCompanyId) > 0) {
                 $query = "UPDATE contacts SET firstname = '".$value['first_name']."', lastname = '".$value['last_name']."', phone = '".$value['work_phone']."', status= '".$value['status']."' WHERE id ='". $existEailidAndCompanyId[0]->id."'";
                 DB::Statement($query);
             }
 
-            \Log::info("Successfully");
+           \Log::info("Successfully".print_r($value,1));
         }
         return true;
     }

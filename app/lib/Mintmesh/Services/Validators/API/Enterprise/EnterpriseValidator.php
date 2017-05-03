@@ -149,7 +149,14 @@ class EnterpriseValidator extends Validator {
             'company_code'  => 'required',
             'hcm_id'        => 'required',
         ),
+        'add_edit_zenefits_hcm' => array(
+            'company_code'  => 'required',
+            'hcm_id'        => 'required',
+        ),
         'get_hcm_list' => array(
+            'company_code'      => 'required',
+        ),
+        'get_zenefits_hcm_list' => array(
             'company_code'      => 'required',
         ),
         'add_configuration' => array(

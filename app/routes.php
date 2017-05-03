@@ -351,8 +351,10 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       Route::post("enterprise/job_post_from_campaigns", "API\Post\PostController@jobPostFromCampaigns");
       //add hcm
       Route::post("enterprise/add_edit_hcm", "API\Enterprise\EnterpriseController@addEditHcm");
+      Route::post("enterprise/add_edit_zenefits_hcm", "API\Enterprise\EnterpriseController@addEditZenefitsHcm");
       //view hcm
       Route::post("enterprise/get_hcm_list", "API\Enterprise\EnterpriseController@getHcmList");
+      Route::post("enterprise/get_zenefits_hcm_list", "API\Enterprise\EnterpriseController@getZenefitsHcmList");
       //view hcm
       Route::post("enterprise/get_hcm_partners", "API\Enterprise\EnterpriseController@getHcmPartners");
       // company all contacts

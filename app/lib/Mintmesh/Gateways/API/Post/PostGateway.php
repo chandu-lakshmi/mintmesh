@@ -474,7 +474,7 @@ class PostGateway {
         $dataSet['emailbody']           = 'just testing';
         $dataSet['send_company_name']   = $emailData['company_name'];
         $dataSet['reply_to']            = $emailData['reply_to'];
-        $dataSet['app_id']              = '341777892883502';
+        $dataSet['app_id']              = '1268916456509673';
         #form job details here
         $dataSet['looking_for']         = $posts->service_name;//'Senior UI/UX Designer';
         $dataSet['job_function']        = $postDetails['job_function_name'];//'Design';
@@ -1383,7 +1383,7 @@ class PostGateway {
         $dataSet['campaign_location']       = $emailData['campaign_location'];
         $dataSet['company_name']        = $emailData['company_name'];//Enterpi Software Solutions Pvt.Ltd.
         $dataSet['company_logo']        = $emailData['company_logo'];
-        $dataSet['app_id']              = '341777892883502';
+        $dataSet['app_id']              = '1268916456509673';
         #redirect email links
           $dataSet['view_jobs_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/share?ref=" . $refCode."";
 //          $bitlyUrl = $this->urlShortner($dataSet['view_jobs_link']);

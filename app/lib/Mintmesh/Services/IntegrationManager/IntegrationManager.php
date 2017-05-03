@@ -96,7 +96,7 @@ class IntegrationManager {
             $returnRequestData[$dataValue->config_name] = $dataValue->config_value;
         }
 
-        // converting last processed datetime to UTC timezone
+        #converting last processed datetime to UTC timezone
          $lastprocessedDate = gmdate("Y-m-d\TH:i:s\Z", strtotime($companyJobDetail->last_processed_at));
 
         if(array_key_exists(self::DCNAME, $returnRequestData)){

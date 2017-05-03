@@ -333,7 +333,6 @@ class SFManager extends IntegrationManager {
         $sql .= " GROUP BY c.id ";
         $sql .= "order by status";
 
-        //echo $sql;exit;
         $result['Contacts_list'] = DB::select($sql);
         $result['total_records'] = DB::select("select FOUND_ROWS() as total_count");
         return $result;

@@ -942,6 +942,24 @@ class EnterpriseController extends \BaseController {
             }
             
 	}
+        /*
+        * Zenefits Adding and Updating
+        */
+        public function addEditZenefitsHcm()
+	{
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->EnterpriseGateway->validateAddEditZenefitsHcmInput($inputUserData);
+            if($validation['status'] == 'success') {
+               $response = $this->EnterpriseGateway->addEditZenefitsHcm($inputUserData);
+               return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+            
+	}
         /**
 	 * POST get Hcms List
          * 
@@ -968,6 +986,22 @@ class EnterpriseController extends \BaseController {
             
 	}
         
+        public function getZenefitsHcmList()
+	{
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            
+            // Validating user input data
+            $validation = $this->EnterpriseGateway->validateGetZenefitsHcmListInput($inputUserData);
+            if($validation['status'] == 'success') {
+               $response = $this->EnterpriseGateway->getZenefitsHcmList($inputUserData);
+               return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+            
+	}
          /**
 	 * Company integration
          * 

@@ -1079,9 +1079,10 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                 ->where('code', '=', $companyCode)->get();
     }
     
-    public function checkCompanyHcmJobs($companyId='') {
+    public function checkCompanyHcmJobs($companyId='', $hcmJobsId) {
         return DB::table('company_hcm_jobs')  
-                ->where('company_id', '=', $companyId)->get();
+                ->where('company_id', '=', $companyId)
+                ->where('hcm_jobs_id', '=', $hcmJobsId)->get();
     }
     
     public function integrateCompany($input = array()) {
