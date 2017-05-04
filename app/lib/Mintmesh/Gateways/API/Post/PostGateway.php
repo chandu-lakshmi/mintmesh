@@ -586,8 +586,8 @@ class PostGateway {
                 }
                 $returnPosts['post_type']  = $postDetails['post_type'];
                 $returnPosts['id']          = $postDetails['post_id'];
-                $returnPosts['location']    = $postDetails['service_location'];
-                $returnPosts['job_title']   = $postDetails['service_name'];
+                $returnPosts['location']    = !empty($postDetails['service_location']) ? $postDetails['service_location'] : 'See Job Description';
+                $returnPosts['job_title']   = !empty($postDetails['service_name']) ? $postDetails['service_name'] : 'See Job Description';
                 $returnPosts['free_service']    = $postDetails['free_service'];
                 $returnPosts['status']          = $postDetails['status'];
                 $returnPosts['no_of_vacancies']  = !empty($postDetails['no_of_vacancies'])?$postDetails['no_of_vacancies']:0;
@@ -655,7 +655,7 @@ class PostGateway {
                 $hiredCount     = !empty($postDetails['referral_hired_count']) ? $postDetails['referral_hired_count'] : 0;
                 $pendingCount   = $referralCount - ($acceptedCount + $declinedCount);
 
-                $returnPosts['location']    = $postDetails['service_location'];
+                $returnPosts['location']    = !empty($postDetails['service_location']) ? $postDetails['service_location'] : 'See Job Description';
                 $returnPosts['post_type']   = $postDetails['post_type'];
                 $returnPosts['job_title']   = $postDetails['service_name'];
                 $returnPosts['created_at']  = $postDetails['created_at'];

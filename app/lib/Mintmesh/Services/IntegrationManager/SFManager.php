@@ -53,22 +53,22 @@ class SFManager extends IntegrationManager {
             $this->requestParams = $requestParams;
 
             $return = $integrationManager->doRequest($requestParams);
-            $this->processResponseData($return, $companyJobDetail->hcm_jobs_id, $companyJobDetail->company_id);
+            $this->processResponseData($return, $company_hcm_job_id, $companyJobDetail->company_id);
             $integrationManager->updateLastProcessedTime($company_hcm_job_id, $companyJobDetail);
         }
         return TRUE;
     }
     
-    protected function getNeoUserByEmailId($userEmailId) {
-        $return = array();
-        $queryString = "match (u:User) where u.emailid='" . $userEmailId . "' return u";
-        $query = new CypherQuery($this->client, $queryString);
-        $result = $query->getResultSet();
-        if (isset($result[0]) && isset($result[0][0])) {
-            $return = $result[0][0];
-        }
-        return $return;
-    }
+//    protected function getNeoUserByEmailId($userEmailId) {
+//        $return = array();
+//        $queryString = "match (u:User) where u.emailid='" . $userEmailId . "' return u";
+//        $query = new CypherQuery($this->client, $queryString);
+//        $result = $query->getResultSet();
+//        if (isset($result[0]) && isset($result[0][0])) {
+//            $return = $result[0][0];
+//        }
+//        return $return;
+//    }
     
     public function processResponseData($responseBody, $jobId, $companyId) {
 
@@ -85,6 +85,7 @@ class SFManager extends IntegrationManager {
     
     public function createJob($dataAry, $companyId, $jobId) {
         
+        $reqId = '';
         $integrationManager = new IntegrationManager();
         $objCompany = new \stdClass();
         $hcmJobId = $jobId;
@@ -109,7 +110,7 @@ class SFManager extends IntegrationManager {
         $params['company_id'] = $companyId;
 
         if (!empty($userEmailId)) {
-            $neoUser = $this->getNeoUserByEmailId($userEmailId);
+            $neoUser = $integrationManager->getNeoUserByEmailId($userEmailId);
             $fromId = !empty($neoUser->getID()) ? $neoUser->getID() : ''; //292819;
             $userData = $this->getUserByEmail($userEmailId);
             $this->user = !empty($userData[0])?$userData[0]:'';
@@ -123,6 +124,8 @@ class SFManager extends IntegrationManager {
 
                     $neoInput[$field->destination_key] = !empty($row[$field->source_key]) ? $row[$field->source_key] : '';
                 }
+                //\Log::info("Job Mapping Fields :". print_r($row)); 
+                
                 $neoInput['service_scope'] = "find_candidate";
                 $neoInput['service_from_web'] = 1;
                 if (empty($neoInput['employment_type'])) {
@@ -157,10 +160,18 @@ class SFManager extends IntegrationManager {
                 $relationAttrs['created_at'] = date("Y-m-d H:i:s");
                 $relationAttrs['company_name'] = $companyName;
                 $relationAttrs['company_code'] = $companyCode;
+                 //print_r($neoInput).exit;
                 #get the extra information
-                $reqId = $neoInput['requistion_id'];
-                $isNotExisted = $this->checkJobExistedWithReqIdOrNot($reqId);
+                if(!empty($neoInput['requistion_id'])){
+                    $reqId = $neoInput['requistion_id'];
+                } else {
+                    //\Log::info("Requistion id Empty:". print_r($row)); 
+                }
+                
+                $isNotExisted = $this->checkJobExistedWithReqIdOrNot($reqId, $companyCode);
+                
                 if ($isNotExisted) {
+                   
                     if (!empty($reqId)) {
                         $response = '';
                         #get Job Requisition Locale details here
@@ -231,7 +242,7 @@ class SFManager extends IntegrationManager {
                                 $notifyData['service_type']     = '';
                                 $notifyData['service_location'] = '';
                                 $notifyData['notification_type']  = 27;
-                                $notifyData['service_name']       = $neoInput['service_name'];
+                                $notifyData['service_name']       = !empty($neoInput['service_name']) ? $neoInput['service_name'] : 'See Job Description';
                                 Queue::push('Mintmesh\Services\Queues\NewPostReferralQueue', $notifyData, 'Notification');
 
                                 #send email notifications to all the contacts
@@ -348,16 +359,16 @@ class SFManager extends IntegrationManager {
         }
     }
 
-    public function checkJobExistedWithReqIdOrNot($reqId = '') {
+    public function checkJobExistedWithReqIdOrNot($reqId = '' , $company_code='') {
         $return = TRUE;
         if (!empty($reqId)) {
-            $queryString = "match (p:Post{hcm_type:'success factors'}) where p.requistion_id='" . $reqId . "' return p";
+            $queryString = "match (p:Post{hcm_type:'success factors'})-[POSTED_FOR]-(c:Company) where p.requistion_id='" . $reqId . "' and c.companyCode='". $company_code."' return p";
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             if (isset($result[0]) && isset($result[0][0])) {
                 $nodeId = $result[0][0];
                 $return = FALSE;
-            }
+            } 
         }
         return $return;
     }

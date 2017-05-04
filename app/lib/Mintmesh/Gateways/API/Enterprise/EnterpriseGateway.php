@@ -1541,7 +1541,7 @@ class EnterpriseGateway {
                         $referrerName = $referrerDetails[0]->firstname.' '.$referrerDetails[0]->lastname;}
                         $neoReferrerDetails = $this->neoUserRepository->getNodeByEmailId($postRelDetails['referred_by']);
                         $neoReferrerName = !empty($neoReferrerDetails['fullname'])?$neoReferrerDetails['fullname']:$neoReferrerDetails['firstname'];
-                        $returnDetails['job_title']      = $postDetails['service_name'];
+                        $returnDetails['job_title']      = !empty($postDetails['service_name']) ? $postDetails['service_name'] : 'See Job Description';
                         $returnDetails['status']         = $postRelDetails['one_way_status'];
 //                        $createdAt = $this->appEncodeDecode->UserTimezone($postRelDetails['created_at'],$input['time_zone']); 
                         $createdAt = $postRelDetails['created_at'];
