@@ -1987,6 +1987,8 @@ class ReferralsGateway {
         public function referContactV2($input)
         {
             
+            #if enterprise user flag
+            $isEnt = !empty($input['is_ent'])?$input['is_ent']:0;
             $referNonMintmesh = $nonMintmeshPhoneRefer = 0;
             $uploadedByP2=0;
             $p3CvOriginalName = "";
@@ -2045,12 +2047,15 @@ class ReferralsGateway {
                             $importedContact = $this->contactsRepository->createNodeAndRelationForPhoneContacts($userEmail, $phoneContactInput, $phoneContactRelationInput);
                        }
                        //send sms invitation to p3
-                       $smsInput=array();
-                       $smsInput['numbers'] = json_encode(array($phoneContactInput['phone']));
-                       $otherUserDetails = $this->neoUserRepository->getNodeByEmailId($input['refer_to']) ;
-                       $smsInput['other_name'] = !empty($otherUserDetails->fullname)?$otherUserDetails->fullname:"";
-                       $smsInput['sms_type']=3;
-                       $smsSent = $this->smsGateway->sendSMSForReferring($smsInput);
+                       #not send to enterprise user 
+                       if(empty($isEnt)){
+                            $smsInput=array();
+                            $smsInput['numbers'] = json_encode(array($phoneContactInput['phone']));
+                            $otherUserDetails = $this->neoUserRepository->getNodeByEmailId($input['refer_to']) ;
+                            $smsInput['other_name'] = !empty($otherUserDetails->fullname)?$otherUserDetails->fullname:"";
+                            $smsInput['sms_type']=3;
+                            $smsSent = $this->smsGateway->sendSMSForReferring($smsInput);
+                       }
                        $referNonMintmesh = 1 ;
                        
                    }else{
@@ -2061,10 +2066,13 @@ class ReferralsGateway {
                             return $this->commonFormatter->formatResponse(406, "error", $message, array()) ;
                         }
                         else{//send invitation email to p3
-                            $postInvitationArray = array();
-                            $postInvitationArray['emails'] = json_encode(array($input['referring']));
-                            $postInvitationArray['post_id'] = $input['post_id'] ;
-                            $invited = $this->contactsGateway->sendPostReferralInvitations($postInvitationArray);
+                            #not send to enterprise user 
+                            if(empty($isEnt)){
+                                 $postInvitationArray = array();
+                                 $postInvitationArray['emails'] = json_encode(array($input['referring']));
+                                 $postInvitationArray['post_id'] = $input['post_id'] ;
+                                 $invited = $this->contactsGateway->sendPostReferralInvitations($postInvitationArray);
+                            }    
                         }
                    }
                    

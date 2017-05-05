@@ -2455,7 +2455,8 @@ class EnterpriseGateway {
        }else{
             $postDetails['expired'] = (int)'0';
        }
-       $postDetails['user_id'] = $neoUsers->mysql_id;
+//       $postDetails['user_id'] = $neoUsers->mysql_id;
+       $postDetails['user_id'] =  $v->user_id;
        $contactDetails = $this->enterpriseRepository->getContactByEmailId($neoUsers->emailid,$companyid);
        $postDetails['emailid'] = $neoUsers->emailid;
        if(!empty($contactDetails)){

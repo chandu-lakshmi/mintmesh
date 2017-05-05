@@ -441,12 +441,19 @@ class SFManager extends IntegrationManager {
             //$fileName   = pathinfo($resumePath);
             $contents = base64_encode(file_get_contents($resumePath));
         }
+        
+        #split the name from username here
+        $requestParams  = $this->requestParams;
+        $userName       = !empty($requestParams[self::USERNAME]) ? $requestParams[self::USERNAME] : 'admin';
+        $parts          = explode("@", $userName);
+        $userName       = !empty($parts[0]) ? $parts[0] : 'admin';
+        
         $data = array(
-            "userId" => "admin",
+            "userId" => $userName,
             "externalId" => $candidateId,
             "fileName" => $fileName,
             "module" => "CDP",
-            "description" => "des1",
+            "description" => "Resume Attachment",
             "fileContent" => $contents,
             "viewable" => true,
             "deletable" => false
@@ -464,7 +471,7 @@ class SFManager extends IntegrationManager {
         $emailId = !empty($userDetails['emailid']) ? $userDetails['emailid'] : '';
         $phone = !empty($userDetails['phone']) ? $userDetails['phone'] : '.';
         $refBy = !empty($relation['referred_by']) ? $relation['referred_by'] : '';
-        $country = 'Us';
+        $country = 'US';
         #get non mintmesh details from contacts import relation
         if (empty($firstName) && !empty($refBy) && !empty($emailId)) {
             $nonMMUser = $this->getImportRelationDetailsByEmail($refBy, $emailId);
