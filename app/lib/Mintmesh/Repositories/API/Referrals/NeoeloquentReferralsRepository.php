@@ -1427,7 +1427,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                 $queryString = "MATCH (u:User:Mintmesh)-[i:INCLUDED]-(p:Post)
                                 WHERE  ID(p)=".$postId." and u.emailid='".$userEmailID."'
                                 OPTIONAL MATCH (p)<-[r:GOT_REFERRED]-(n)
-                                WHERE r.referred_by='".$userEmailID."' 
+                                WHERE r.referred_by='".$userEmailID."' and r.one_way_status<>'UNSOLICITED'
                                 and ('Mintmesh' IN labels(n) OR  'NonMintmesh' IN labels(n) OR 'User' IN labels(n))
                                 set i.post_read_status =1
                                 RETURN p,r,n,labels(n),i" ;

@@ -123,7 +123,7 @@ class UserValidator extends Validator {
         ),
         'get_services'=>array(
             'service_type'=>'required',
-            'user_country'=>'required',
+            //'user_country'=>'required',
             'search'=>'required'
         )
         );
