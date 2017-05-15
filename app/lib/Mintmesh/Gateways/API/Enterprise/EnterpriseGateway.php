@@ -342,7 +342,8 @@ class EnterpriseGateway {
                 $input['subscription_type'] = $this->getSubscriptionTypeId($input['contacts_limit']);
                 //Inserting company name entry in mysql DB
                 $input['user_id'] = $createdUser['id'];
-                $createdCompany = $this->enterpriseRepository->createCompanyProfile($input);
+                $createdCompany   = $this->enterpriseRepository->createCompanyProfile($input);
+                $subscriptionsLog = $this->addCompanySubscriptionsLog($createdCompany->id, $input['contacts_limit']);
                 $updatedGroup   = $this->enterpriseRepository->updateGroup($input,$createdCompany->id);
                 $permissions    = $this->enterpriseRepository->adminPermissions($input);
                 // create a node for company in neo4j
@@ -1545,7 +1546,8 @@ class EnterpriseGateway {
                         $returnDetails['status']         = $postRelDetails['one_way_status'];
 //                        $createdAt = $this->appEncodeDecode->UserTimezone($postRelDetails['created_at'],$input['time_zone']); 
                         $createdAt = $postRelDetails['created_at'];
-                        $returnDetails['created_at']     = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
+//                        $returnDetails['created_at']     = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
+                        $returnDetails['created_at']     = \Carbon\Carbon::createFromTimeStamp(strtotime($this->appEncodeDecode->UserTimezone($createdAt,$input['time_zone'])))->diffForHumans();
                         $returnDetails['referral']       = !empty($referralName)?$referralName:'The contact';
                         $returnDetails['referral_img']   = !empty($userDetails['dp_renamed_name'])?$userDetails['dp_renamed_name']:'';
                         $returnDetails['referred_by']    = !empty($referrerName)?$referrerName:$neoReferrerName;
@@ -1613,7 +1615,7 @@ class EnterpriseGateway {
                             $returnDetails['status']         =  $postRelDetails['one_way_status'];
 //                            $createdAt = $this->appEncodeDecode->UserTimezone($postRelDetails['created_at'],$input['time_zone']); 
                             $createdAt = $postRelDetails['awaiting_action_updated_at'];
-                            $returnDetails['created_at']     = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
+                            $returnDetails['created_at']     = \Carbon\Carbon::createFromTimeStamp(strtotime($this->appEncodeDecode->UserTimezone($createdAt,$input['time_zone'])))->diffForHumans();
                             $returnDetails['referral']       =  !empty($referralName)?$referralName:'The contact';
                             $returnDetails['referral_img']   =  !empty($userDetails['dp_renamed_name'])?$userDetails['dp_renamed_name']:'';
                             $returnDetails['referred_by']    =  !empty($referrerName)?$referrerName:$neoReferrerName;
@@ -1699,25 +1701,49 @@ class EnterpriseGateway {
     }
     
     public function updateContactsList($input) {
+        
         $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser();
         $company = $this->enterpriseRepository->getUserCompanyMap($this->loggedinUserDetails['id']);
         $input['company_id'] = $company->company_id;
+        $companyCode = $company->code;
+        #check if EmployeeId already exist or not.
         $checkEmployeeId = $this->enterpriseRepository->checkEmployeeId($input);
         if(!$checkEmployeeId)
-        {
-            $updated = $this->enterpriseRepository->updateContactsList($input);
-            if(!empty($updated))
-            {
-                $neoupdated = $this->neoEnterpriseRepository->updateContactsList($updated[0]->emailid,$input);
+        {   
+            $allowToUpdate = TRUE;
+            $status     = isset($input['status']) ? $input['status'] : '';
+            $recordId   = isset($input['record_id']) ? $input['record_id'] : 0;
+            
+            if ($status == 'Active' || $status == 'Inactive') {
+                #check contact current status here.
+                $currentStatus = $this->enterpriseRepository->checkContactCurrentStatusById($recordId);
+                if(empty($currentStatus)){
+                    #if current status already Active or Inactive allow to Update.
+                    $available = $this->getCompanyAvailableContactsCount($companyCode);
+                    #check available contact count here.
+                    if(empty($available)){
+                        $allowToUpdate = FALSE;
+                    }
+                } 
             }
-            if($updated){
-                $message = array('msg' => array(Lang::get('MINTMESH.editContactList.success')));
-            }else{
-              $message = array('msg' => array(Lang::get('MINTMESH.editContactList.failure')));
-            }
+            #check allowToUpdate flag enable or disable.
+            if($allowToUpdate){
+                #update contact record in MySql
+                $updated = $this->enterpriseRepository->updateContactsList($input);
+                if(!empty($updated)){
+                    #update contact record in Neo4j
+                    $neoupdated = $this->neoEnterpriseRepository->updateContactsList($updated[0]->emailid,$input);
+                }
+                if($updated){
+                    $message = array('msg' => array(Lang::get('MINTMESH.editContactList.success')));
+                } else {
+                    $message = array('msg' => array(Lang::get('MINTMESH.editContactList.failure')));
+                }
+            } else {
+                $message = array('msg' => array(Lang::get('MINTMESH.editContactList.contactsLimitExceeded')));
+            }    
         }
         else{
-            
              $message = array('msg' => array(Lang::get('MINTMESH.editContactList.invalidempid')));
         }   
         return $this->commonFormatter->formatResponse(200, "success", $message);
@@ -1866,7 +1892,7 @@ class EnterpriseGateway {
                 $resultsSet   = $this->enterpriseRepository->uploadContacts($arrUniqueResults, $userId, $bucketId, $companyId, $importFileId, $availableNo);    
                 $employeesNo  = $resultsSet['insert'];
                 #log the company subscriptions here
-                $this->addCompanySubscriptionsLog($companyId, $employeesNo);
+                //$this->addCompanySubscriptionsLog($companyId, $employeesNo);
                 #get the Import Contacts List By Instance Id
                 $contactsList = $this->enterpriseRepository->getContactsListByFileId($companyId, $importFileId);
                 
@@ -1973,7 +1999,7 @@ class EnterpriseGateway {
         $inputParams['lastname']     = !empty($input['lastname'])?$input['lastname']:'';      
         $inputParams['emailid']      = $contactEmailId = !empty($input['emailid'])?$this->appEncodeDecode->filterString(strtolower($input['emailid'])):'';      
         $inputParams['phone']        = !empty($input['phone'])?$input['phone']:'';      
-        $inputParams['status']       = $status = !empty($input['status'])?$input['status']:'unknown';  
+        $inputParams['status']       = $status = !empty($input['status'])?$input['status']:'Active';  
         $inputParams['employeeid']   = !empty($input['other_id'])?$input['other_id']:'';      
          
         $relationAttrs['company_code']      = $companyCode;
@@ -1986,12 +2012,13 @@ class EnterpriseGateway {
         $neoInput['phone']       = !empty($input['phone'])?$input['phone']:'';          
         $neoInput['emailid']     = $this->appEncodeDecode->filterString(strtolower($input['emailid']));
         $neoInput['employeeid']  = !empty($input['other_id'])?$input['other_id']:'';
-        $neoInput['status']      = !empty($input['status'])?$input['status']:'unknown';  
+        $neoInput['status']      = $status;  
         $checkContact = $this->enterpriseRepository->checkContact($inputParams);
         if(empty($checkContact)){
             #company available contacts count verification here  
             $availableNo = $this->getCompanyAvailableContactsCount($companyCode);
-            if(!empty($availableNo)){
+            #when status is Separated then allow to create or availableNo not zero
+            if(!empty($availableNo) || $status == 'Separated'){
 
                 $checkEmployeeId = $this->enterpriseRepository->checkEmpId($input);
                 if(!$checkEmployeeId)
@@ -1999,7 +2026,7 @@ class EnterpriseGateway {
                     $result    = $this->enterpriseRepository->addContact($inputParams); 
                     if(!empty($result)){ 
                         $employeesNo = 1;
-                        $this->addCompanySubscriptionsLog($companyId, $employeesNo);
+                        //$this->addCompanySubscriptionsLog($companyId, $employeesNo);
                         $neoResult = $this->neoEnterpriseRepository->createContactNodes($input['bucket_id'],$neoInput,$relationAttrs);
                         $neoResult = $this->neoEnterpriseRepository->companyAutoConnect($neoInput['emailid'],$relationAttrs);
                         #check company bucket active jobs and create relation between user & job
@@ -2882,30 +2909,28 @@ class EnterpriseGateway {
     }
     public function getCompanyAvailableContactsCount($companyCode=''){
         
-        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
-        $employeesNo    = !empty($companyDetails[0]->employees_no)?$companyDetails[0]->employees_no:0;
-        $countAry   = $this->enterpriseRepository->getCompanyAvailableContacts($companyCode);
-        $empTotal   = !empty($countAry[0]->total)?$countAry[0]->total:0;
-        $available  =  $employeesNo - $empTotal;
-        
+        $activeCount    = $this->enterpriseRepository->getCompanyActiveOrInactiveContactsCount($companyCode);
+        $purchasedCount = $this->enterpriseRepository->getCompanyPurchasedContacts($companyCode);
+        $available      = $purchasedCount - $activeCount;
+        $available      = max($available,0);
         return $available;
     }
     
     public function getCompanySubscriptions($input){
         
         $returnAry  = $data = $return =  array();
-        $companyCode    = !empty($input['company_code'])?$input['company_code']:'';
+        $companyCode    = !empty($input['company_code']) ? $input['company_code'] : '';
         $available = $this->getCompanyAvailableContactsCount($companyCode);
         $subAry    = $this->enterpriseRepository->getCompanySubscriptions($companyCode);
         
-        $return['plan_type']        = !empty($subAry[0]->name)?$subAry[0]->name:'';
-        $return['licence_code']     = !empty($subAry[0]->access_code)?$subAry[0]->access_code:'';
+        $return['plan_type']        = !empty($subAry[0]->name) ? $subAry[0]->name : '';
+        $return['licence_code']     = !empty($subAry[0]->access_code) ? $subAry[0]->access_code : '';
         $return['available_count']  = $available;
         
         foreach ($subAry as $value) {
             $licence = array();
             $licence['employees_no'] = $value->employees_no;
-            $licence['start_date']  = date('M d, Y', strtotime($value->start_date));
+            $licence['start_date']   = date('M d, Y', strtotime($value->start_date));
             $licence['end_date']     = date('M d, Y', strtotime($value->end_date));
             $returnAry[]  = $licence;
         }
@@ -3358,6 +3383,22 @@ class EnterpriseGateway {
                 $data = array();
            }
             return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data, false);  
+        }
+        
+        public function testLic($input) {
+            
+            $companiesData = $this->enterpriseRepository->getAllCompaniesData();
+            foreach ($companiesData as $key => $value) {
+                $companyId    = $value->id;
+                $employeesNo  = $value->employees_no;
+                $created_at   = $value->created_at;
+                
+                $startDate      = $created_at;
+                $endDate        = date('Y-m-d H:i:s', strtotime('+1 year', strtotime($startDate)));
+                $this->enterpriseRepository->addCompanySubscriptionsLog($companyId, $employeesNo, $startDate, $endDate);
+            }
+            echo 'done';
+          exit;  
         }
         
 }

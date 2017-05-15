@@ -741,7 +741,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
                  $queryString.= " r.one_way_status='".Config::get('constants.REFERRALS.STATUSES.ACCEPTED')."',
                                   p.referral_accepted_count = p.referral_accepted_count + 1, r.awaiting_action_status = '".Config::get('constants.REFERRALS.STATUSES.ACCEPTED')."',
                                   r.awaiting_action_by = '".$userEmail."', r.awaiting_action_updated_at= '".date("Y-m-d H:i:s")."',
-                                  r.p1_updated_at='".date("Y-m-d H:i:s")."' return p,r" ; 
+                                  r.p1_updated_at='".gmdate("Y-m-d H:i:s")."' return p,r" ; 
                  $query = new CypherQuery($this->client, $queryString);
                  return $result = $query->getResultSet(); 
              }

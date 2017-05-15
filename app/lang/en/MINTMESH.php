@@ -138,7 +138,7 @@ return array(
              "error"=>"Invalid Token",
              "valid"=>"Validated",
              "same"=>"New password cannot be same as old password",
-             "codeexpired"=>"code has been expired"
+             "codeexpired"=>"the Code has Expired"
          ),
          "check_reset_password"=>array(
              "success"=>"sucess",

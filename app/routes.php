@@ -128,7 +128,7 @@ Route::group(array('prefix' => 'v1'), function() {
       //get campaign job list
       Route::post("enterprise/company_integration", "API\Enterprise\EnterpriseController@companyIntegration");
       
-      Route::post("enterprise/test_camp", "API\Post\PostController@testCamp");
+      Route::post("enterprise/test_lic", "API\Enterprise\EnterpriseController@testLic");
       
 });
 

@@ -820,22 +820,25 @@ class ReferralsGateway {
                 }
             }
         }
-        public function formPostDetailsArray($postResult = array())
+        public function formPostDetailsArray($postResult = array(),$flag=TRUE)
         {
             if (!empty($postResult))
             {
                 $postId = $postResult->getId();
                 $return = $postResult->getProperties();
                 $return['post_id'] = $postId ;
-                #get industry name
-                $return['industry_name'] = $this->referralsRepository->getIndustryNameForPost($postId);
-                if(empty($return['industry_name'])) {
-                   $return['industry_name'] = $postResult->industry;
-                }
-                #get job function name
-                $return['job_function_name'] = $this->referralsRepository->getJobFunctionNameForPost($postId);
-                if(empty($return['job_function_name'])) {
-                   $return['job_function_name'] = $postResult->job_function;
+                #added flag for enterprise jobs list api no need industry and job function
+                if($flag){
+                    #get industry name
+                    $return['industry_name'] = $this->referralsRepository->getIndustryNameForPost($postId);
+                    if(empty($return['industry_name'])) {
+                       $return['industry_name'] = $postResult->industry;
+                    }
+                    #get job function name
+                    $return['job_function_name'] = $this->referralsRepository->getJobFunctionNameForPost($postId);
+                    if(empty($return['job_function_name'])) {
+                       $return['job_function_name'] = $postResult->job_function;
+                    }
                 }
                 #get experience range name
                 $return['experience_range_name'] = $this->referralsRepository->getExperienceRangeNameForPost($postId);

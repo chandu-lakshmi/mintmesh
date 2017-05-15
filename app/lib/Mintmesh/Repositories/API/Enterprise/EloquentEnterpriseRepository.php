@@ -176,13 +176,13 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         {     
             $ipAddress = !empty($_SERVER['REMOTE_ADDR'])?$_SERVER['REMOTE_ADDR']:0;
             $createdAt = gmdate("Y-m-d H:i:s");
+            $allowedStatus = array('Active', 'Inactive', 'Separated');
             if (!empty($userId) && !empty($bucketId) && !empty($companyId))
             {
                 $contactsList = $this->getImportContactByEmailId($userId, $bucketId, $companyId);
                 $contactIsExist = $updatedRows = $result = array();
                 //checking email id already exist or not  
                 foreach ($contactsList as $obj){
-                    //$contactIsExist[] = $obj->emailid; 
                     $contactIsExist[$obj->emailid] = $obj->employeeid;    
                 }
                 $sql = "insert into contacts 
@@ -193,10 +193,14 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
 				$updatedRows = 0;
                 foreach ($input as $key=>$val)
                 {                             
-                    $employeeId  = !empty($val['employee_idother_id'])?$val['employee_idother_id']:'';
-                    $cellPhone   = !empty($val['cell_phone'])?$val['cell_phone']:'';
-                    $status      = !empty($val['status'])?$val['status']:'unknown';
-                    $lastName    = !empty($val['last_name'])?$val['last_name']:'';
+                    $employeeId  = !empty($val['employee_idother_id']) ? $val['employee_idother_id'] : '';
+                    $cellPhone   = !empty($val['cell_phone']) ? $val['cell_phone'] : '';
+                    $lastName    = !empty($val['last_name']) ? $val['last_name'] : '';
+                    $status      = !empty($val['status']) ?  ucfirst(strtolower($val['status'])): 'Active';
+                    #set default status as Active
+                    if(!in_array($status, $allowedStatus)){
+                        $status = 'Active';
+                    }
                      
                     if(!empty($val['first_name']) && filter_var($val['email_id'], FILTER_VALIDATE_EMAIL))
                     {                    
@@ -214,14 +218,34 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                                 $inrt_sql.="'".$employeeId."','".$status."','".$userId."','".$createdAt."','".$userId."','".$ipAddress."')," ;
                                 $i++;
                                 $insertResult++;
-                                $availableNo--;
+                                if($status != 'Separated'){
+                                    $availableNo--;
+                                }    
                             }    
                         } else {
+                            
+                            $allowToUpdate = TRUE;
+                            if ($status == 'Active' || $status == 'Inactive') {
+                                #check contact current status here.
+                                $currentStatus = $this->checkContactCurrentStatusByEmailId($companyId, $emailId);
+                                if(empty($currentStatus)){
+                                    #check available contact count here.
+                                    if($availableNo){
+                                        $availableNo--;
+                                    } else {
+                                        $allowToUpdate = FALSE;
+                                    }
+                                } 
+                            }
                             
                             $employeeId = ($employeeId!='' && in_array($employeeId, $contactIsExist))?(($contactIsExist[$emailId]==$employeeId)?$employeeId:''):$employeeId;
                             
                             $sqlQuery = "UPDATE contacts SET `user_id`='".$users_id."', `import_file_id` = '".$importFileId."',`firstname`='".$firstName."',`lastname`='".$lastName."',";
-                            $sqlQuery.= " `phone`='".$cellPhone."',`employeeid`='".$employeeId."',`status`='".$status."',`updated_by`='".$userId."'";
+                            $sqlQuery.= " `phone`='".$cellPhone."',`employeeid`='".$employeeId."',`updated_by`='".$userId."'";
+                            #check update status
+                            if($allowToUpdate){
+                              $sqlQuery.=" ,`status`='".$status."' ";
+                            }
                             $sqlQuery.= " WHERE `emailid` = '".$emailId."' and`company_id` ='".$companyId."'";
                             
                             DB::statement($sqlQuery);
@@ -977,14 +1001,32 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         return $result;
     }
     
-    public function getCompanyAvailableContacts($companyCode='') {
+    public function getCompanyPurchasedContacts($companyCode='') {
         $result = FALSE;
         if(!empty($companyCode)){
-         $sql = "select sum(s.employees_no) as total
+            $sql = "select sum(s.employees_no) as count
                 from company_subscriptions s 
                 left join company c on s.company_id = c.id 
                 where c.code = '".$companyCode."'";
-         $result = DB::SELECT($sql);
+            $sqlResult = DB::SELECT($sql);
+            if (isset($sqlResult[0])){
+                $result = $sqlResult[0]->count;
+            }
+        }
+        return $result;
+    }
+    
+    public function getCompanyActiveOrInactiveContactsCount($companyCode='') {
+        $result = FALSE;
+        if(!empty($companyCode)){
+            $sql = "select count(t.id) as count
+                from contacts t
+                left join company c on t.company_id = c.id 
+                where c.code = '".$companyCode."' and (t.status = 'Active' or t.status='Inactive')";
+            $sqlResult = DB::SELECT($sql);
+            if (isset($sqlResult[0])){
+                $result = $sqlResult[0]->count;
+            }
         }
         return $result;
     }
@@ -1213,10 +1255,27 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
          }
       }
       
-      public function getCompanyAllCodes(){    
-            return DB::table('company')
-                   ->select('code')
-                   ->get();
+      public function getAllCompaniesData() {
+        return DB::table('company')
+                ->select('id','employees_no','created_at')
+                ->get();
+    }
+    
+    public function checkContactCurrentStatusById($recordId=''){
+        $result = 0;
+        if($recordId){
+            $sql = "select id from contacts where id=".$recordId." and (status = 'Active' or status='Inactive') " ;
+            $result = DB::Select($sql);
         }
+        return $result;
+    }
+    public function checkContactCurrentStatusByEmailId($companyId='',$emailId=''){
+        $result = 0;
+        if(!empty($companyId) && !empty($emailId)){
+            $sql = "select id from contacts where company_id ='".$companyId."' and emailid='".$emailId."' and (status = 'Active' or status='Inactive')" ;
+            $result = DB::Select($sql);
+        }
+        return $result;
+    }
       
 }

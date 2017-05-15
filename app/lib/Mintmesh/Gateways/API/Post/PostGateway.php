@@ -271,7 +271,7 @@ class PostGateway {
             $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($input['company_code']);
             //print_r($neoInput).exit;
             
-            $relationAttrs['created_at']    = date("Y-m-d H:i:s");
+            $relationAttrs['created_at']    = gmdate("Y-m-d H:i:s");
             $relationAttrs['company_name']  = $neoInput['company'];
             $relationAttrs['company_code']  = !empty($input['company_code'])?$input['company_code']:'';
             $objCompany->fullname   = $relationAttrs['company_name'];
@@ -551,55 +551,58 @@ class PostGateway {
     }
 
     public function jobsList($input) {
+        
         $totalCount = 0;
-        $this->loggedinEnterpriseUserDetails = $this->getLoggedInEnterpriseUser();
-        $this->neoLoggedInEnterpriseUserDetails = $this->neoEnterpriseRepository->getNodeByEmailId($this->loggedinEnterpriseUserDetails->emailid);
-//        $userEmail = $this->neoLoggedInEnterpriseUserDetails->emailid;
-        $input['userEmail'] = $this->neoLoggedInEnterpriseUserDetails->emailid;
-        $page = !empty($input['page_no']) ? $input['page_no'] : 0;
+        $timeZone   = !empty($input['time_zone']) ? $input['time_zone'] : 0;  
+        $page       = !empty($input['page_no']) ? $input['page_no'] : 0;
         $search_for = !empty($input['search_for']) ? $input['search_for'] : 0;
-        $post_by = !empty($input['post_by']) ? $input['post_by'] : 0;
-        $checkPermissions = $this->enterpriseRepository->getUserPermissions($this->loggedinEnterpriseUserDetails->group_id,$input);
-//        $posts = $this->neoPostRepository->jobsList($userEmail, $input['company_code'], $input['request_type'], $page, $search_for,$checkPermissions['view_jobs'],$post_by);
-        $posts = $this->neoPostRepository->jobsList($input, $page, $search_for,$checkPermissions['view_jobs'],$post_by);
-//        $totalCount = count($this->neoPostRepository->jobsList($userEmail, $input['company_code'], $input['request_type'], "", $search_for,$checkPermissions['view_jobs'],$post_by));
-        $totalCount = count($this->neoPostRepository->jobsList($input, "", $search_for,$checkPermissions['view_jobs'],$post_by));
-        if (!empty(count($posts))) {
-            $returnPostsData = $returnPosts = array();
-            
-            foreach ($posts as $post) {
-                $postDetails = $this->referralsGateway->formPostDetailsArray($post[0]);
+        $post_by    = !empty($input['post_by']) ? $input['post_by'] : 0;
+        #get loggedin Enterprise User Details
+        $this->loggedinEnterpriseUserDetails    = $this->getLoggedInEnterpriseUser();
+        $this->neoLoggedInEnterpriseUserDetails = $this->neoEnterpriseRepository->getNodeByEmailId($this->loggedinEnterpriseUserDetails->emailid);
+        $input['userEmail'] = $this->neoLoggedInEnterpriseUserDetails->emailid;
+        #get User Permissions here
+        $checkPermissions = $this->enterpriseRepository->getUserPermissions($this->loggedinEnterpriseUserDetails->group_id, $input);
+        $checkPermissions = isset($checkPermissions['view_jobs']) ? $checkPermissions['view_jobs'] : '';
+        #get jobs list from Neo4j DB
+        $jobsList = $this->neoPostRepository->jobsList($input, $page, $search_for, $checkPermissions, $post_by);
+        #get total records count from jobs list results
+        $totalCount = isset($jobsList[0]) ? isset($jobsList[0][1]) ? $jobsList[0][1] : 0 : 0;
+        if ($totalCount) {
+            $returnPostsData = array();
+            foreach ($jobsList as $post) {
+                $flag = FALSE;//skip get industry and job function name
+                $returnPosts = array();
+                $postDetails = $this->referralsGateway->formPostDetailsArray($post[0], $flag);
                 $invitedCount   = !empty($postDetails['invited_count']) ? $postDetails['invited_count'] : 0;
                 $referralCount  = !empty($postDetails['total_referral_count']) ? $postDetails['total_referral_count'] : 0;
                 $acceptedCount  = !empty($postDetails['referral_accepted_count']) ? $postDetails['referral_accepted_count'] : 0;
                 $declinedCount  = !empty($postDetails['referral_declined_count']) ? $postDetails['referral_declined_count'] : 0;
                 $hiredCount     = !empty($postDetails['referral_hired_count']) ? $postDetails['referral_hired_count'] : 0;
                 $pendingCount   = $referralCount - ($acceptedCount + $declinedCount);
+                $returnPosts['campaign_name'] = '';
                 if(($postDetails['post_type']) == 'campaign'){
                    $campaignName = $this->neoPostRepository->getPostCampaign($postDetails['post_id']);
                    if(isset($campaignName[0]) && isset($campaignName[0][0])){
                         $returnPosts['campaign_name'] = $campaignName[0][0]->campaign_name;
                    }
                 }
-                else{
-                    $returnPosts['campaign_name'] = '';
-                }
-                $returnPosts['post_type']  = $postDetails['post_type'];
+                $returnPosts['post_type']   = $postDetails['post_type'];
                 $returnPosts['id']          = $postDetails['post_id'];
                 $returnPosts['location']    = !empty($postDetails['service_location']) ? $postDetails['service_location'] : 'See Job Description';
                 $returnPosts['job_title']   = !empty($postDetails['service_name']) ? $postDetails['service_name'] : 'See Job Description';
-                $returnPosts['free_service']    = $postDetails['free_service'];
-                $returnPosts['status']          = $postDetails['status'];
-                $returnPosts['no_of_vacancies']  = !empty($postDetails['no_of_vacancies'])?$postDetails['no_of_vacancies']:0;
-                $returnPosts['experience']['id'] = $postDetails['experience_range'];
-                $returnPosts['employment']['id'] = $postDetails['employment_type'];
-                $returnPosts['experience']['name'] = isset($postDetails['experience_range_name']) ? $postDetails['experience_range_name'] : "";
-                $returnPosts['employment']['name'] = isset($postDetails['employment_type_name']) ? $postDetails['employment_type_name'] : "";
+                $returnPosts['free_service']        = $postDetails['free_service'];
+                $returnPosts['status']              = $postDetails['status'];
+                $returnPosts['no_of_vacancies']     = !empty($postDetails['no_of_vacancies'])?$postDetails['no_of_vacancies']:0;
+                $returnPosts['experience']['id']    = $postDetails['experience_range'];
+                $returnPosts['employment']['id']    = $postDetails['employment_type'];
+                $returnPosts['experience']['name']  = isset($postDetails['experience_range_name']) ? $postDetails['experience_range_name'] : "";
+                $returnPosts['employment']['name']  = isset($postDetails['employment_type_name']) ? $postDetails['employment_type_name'] : "";
                 if ($returnPosts['free_service'] == 0) {
                     $returnPosts['service_cost'] = $postDetails['service_cost'];
                     $returnPosts['service_currency'] = $postDetails['service_currency'];
                 }
-                $returnPosts['created_at']      = $postDetails['created_at'];
+                $returnPosts['created_at']      = !empty($postDetails['created_at']) ? date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($postDetails['created_at'], $timeZone))) : '';
                 $returnPosts['hired_count']     = $hiredCount;
                 $returnPosts['invited_count']   = $invitedCount;
                 $returnPosts['referral_count']  = $referralCount;
@@ -607,7 +610,7 @@ class PostGateway {
                 $returnPosts['pending_count']   = max($pendingCount, 0);
                 $returnPosts['rewards']         = $this->getPostRewards($postDetails['post_id']);
                 $returnPostsData[] = $returnPosts;
-                }
+            }
         }
 
         if (!empty($returnPostsData)) {
@@ -623,6 +626,7 @@ class PostGateway {
     public function jobDetails($input) {
         $this->loggedinEnterpriseUserDetails = $this->getLoggedInEnterpriseUser();
         $posts = $this->neoPostRepository->jobsDetails($input['id'], $input['company_code']);
+        $timeZone = !empty($input['time_zone'])?$input['time_zone']:0;   
         $checkPermissions = $this->enterpriseRepository->getUserPermissions($this->loggedinEnterpriseUserDetails->group_id,$input);
         if (!empty(count($posts))) {
             $returnPosts = array();
@@ -658,7 +662,8 @@ class PostGateway {
                 $returnPosts['location']    = !empty($postDetails['service_location']) ? $postDetails['service_location'] : 'See Job Description';
                 $returnPosts['post_type']   = $postDetails['post_type'];
                 $returnPosts['job_title']   = $postDetails['service_name'];
-                $returnPosts['created_at']  = $postDetails['created_at'];
+//                $returnPosts['created_at']  = $postDetails['created_at'];
+                $returnPosts['created_at']  =  !empty($postDetails['created_at'])?date("D M d, Y H:i:s A", strtotime($this->appEncodeDecode->UserTimezone($postDetails['created_at'],$timeZone))):'';
                 $returnPosts['position_id'] = $postDetails['position_id'];
                 $returnPosts['status']      = $postDetails['status'];
                 $closeJobs = !empty($checkPermissions['close_jobs'])?$checkPermissions['close_jobs']:'';
@@ -775,15 +780,15 @@ class PostGateway {
                 }
                 $cvPath = !empty($userDetails['cv_path'])?$userDetails['cv_path']:'';
                 $returnReferralDetails['status']                = $postRelDetails['one_way_status'];   
+                $timeZone = !empty($input['time_zone'])?$input['time_zone']:0;   
                  $createdAt        = $postRelDetails['created_at'];
 //                $createdAt = $this->appEncodeDecode->UserTimezone($postRelDetails['created_at'],$input['time_zone']); 
-                $returnReferralDetails['created_at']            = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
-                if(!empty($postRelDetails['p1_updated_at'])){
+                $returnReferralDetails['created_at']            = \Carbon\Carbon::createFromTimeStamp(strtotime($this->appEncodeDecode->UserTimezone($createdAt,$timeZone)))->diffForHumans();
+//                if(!empty($postRelDetails['p1_updated_at'])){
 //                $updatedAt = $postRelDetails['p1_updated_at'];
-                $timeZone = !empty($input['time_zone'])?$input['time_zone']:'';   
-                $updatedAt = $this->appEncodeDecode->UserTimezone($postRelDetails['p1_updated_at'], $timeZone); 
-                }
-                $returnReferralDetails['updated_at']            = !empty($updatedAt)?gmdate("D M d, Y H:i:s A", strtotime($updatedAt)):'';
+//                $updatedAt = $this->appEncodeDecode->UserTimezone($postRelDetails['p1_updated_at'], $timeZone); 
+//                }
+                $returnReferralDetails['updated_at']            = !empty($postRelDetails['p1_updated_at'])?date("D M d, Y H:i:s A", strtotime($this->appEncodeDecode->UserTimezone($postRelDetails['p1_updated_at'],$timeZone))):'';
                 $returnReferralDetails['referred_by']           = $neoReferrerDetails['emailid'];
                 $returnReferralDetails['resume_path']           = !empty($postRelDetails['resume_path'])?$postRelDetails['resume_path']:$cvPath;
                 $returnReferralDetails['resume_original_name']  = $postRelDetails['resume_original_name'];
@@ -800,7 +805,8 @@ class PostGateway {
                     }  else {
                         $returnReferralDetails['awaiting_action_by'] = '';
                     }
-                    $returnReferralDetails['awaiting_action_updated_at'] = !empty($postRelDetails['awaiting_action_updated_at'])?date("D M d, Y H:i:s A", strtotime($postRelDetails['awaiting_action_updated_at'])):'';
+//                    $returnReferralDetails['awaiting_action_updated_at'] = !empty($postRelDetails['awaiting_action_updated_at'])?date("D M d, Y H:i:s A", strtotime($postRelDetails['awaiting_action_updated_at'])):'';
+                    $returnReferralDetails['awaiting_action_updated_at'] = !empty($postRelDetails['awaiting_action_updated_at'])?date("D M d, Y H:i:s A", strtotime($this->appEncodeDecode->UserTimezone($postRelDetails['awaiting_action_updated_at'],$timeZone))):'';
                     $returnReferralDetails['awaiting_action_status']     = !empty($postRelDetails['awaiting_action_status'])?$postRelDetails['awaiting_action_status']:'ACCEPTED';
                 }
                 $returnDetails[] = $returnReferralDetails;
@@ -851,7 +857,6 @@ class PostGateway {
         $checkCandidate = $this->neoPostRepository->checkCandidate($referral,$postId);
 //        if(isset($checkCandidate[0]) && isset($checkCandidate[0][0])){
         $result = $this->neoPostRepository->statusDetails($postId, $referredBy, $referral, $status, $postWay, $relationCount, $phoneNumberReferred);
-        
         if (count($result)) {
 
             if ($status != 'DECLINED') {
@@ -1015,6 +1020,7 @@ class PostGateway {
         $userEmailId   = $this->loggedinUserDetails->emailid;
         $userFirstName = $this->loggedinUserDetails->firstname;
         $data = $response = array();
+        $timeZone = !empty($input['time_zone'])?$input['time_zone']:0;   
         $postId = $input['post_id'];
         $status = $input['awaiting_action_status'];
         $referral = $input['from_user'];
@@ -1045,7 +1051,8 @@ class PostGateway {
             $response['awaiting_action_status']     =  !empty($relationDetails['awaiting_action_status'])?$relationDetails['awaiting_action_status']:'ACCEPTED';
             $response['awaiting_action_by']         =  !empty($relationDetails['awaiting_action_by'])?$userFirstName:'';
             $response['awaiting_action_updated_at'] =  !empty($relationDetails['awaiting_action_updated_at'])?$relationDetails['awaiting_action_updated_at']:date("d-m-Y");
-            $response['awaiting_action_updated_at'] =  date("D M d, Y H:i:s A", strtotime($response['awaiting_action_updated_at']));
+//            $response['awaiting_action_updated_at'] =  date("D M d, Y H:i:s A", strtotime($response['awaiting_action_updated_at']));
+            $response['awaiting_action_updated_at'] =  date("D M d, Y H:i:s A", strtotime($this->appEncodeDecode->UserTimezone($response['awaiting_action_updated_at'],$timeZone)));
             
             if (!empty($response)) {   
                 $message = array('msg' => array(Lang::get('MINTMESH.referrals.success')));
@@ -1081,6 +1088,7 @@ class PostGateway {
         $aryRefRewards  = $aryDscRewards = $postDetails = array();
         $currencyType   = $totalCash = $totalPoints = 0;
         $postId         = !empty($input['post_id'])?$input['post_id']:0;
+         $timeZone = !empty($input['time_zone'])?$input['time_zone']:0;   
         //get the post referrals data here
         $postReferrals  = $this->neoPostRepository->getJobReferrals($postId);
         $postDetails    = !empty($postReferrals[0])?!empty($postReferrals[0][2])?$postReferrals[0][2]:$postDetails:$postDetails;
@@ -1164,7 +1172,7 @@ class PostGateway {
                     } 
                     $createdAt = $postRelDetails['created_at']; 
 //                    $createdAt = $this->appEncodeDecode->UserTimezone($postRelDetails['created_at'],$input['time_zone']); 
-                    $returnReferralDetails['created_at']            = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
+                    $returnReferralDetails['created_at']            = \Carbon\Carbon::createFromTimeStamp(strtotime($this->appEncodeDecode->UserTimezone($createdAt,$timeZone)))->diffForHumans();
                     $returnReferralDetails['referred_by']           = $neoReferrerDetails['emailid'];
                     $returnReferralDetails['referred_by_name']      = !empty($referrerName)?$referrerName:$neoReferrerName;
                     $returnReferralDetails['referred_by_dp_image']  = $neoReferrerDetails['dp_renamed_name'];
@@ -1322,7 +1330,7 @@ class PostGateway {
         //$relationAttrs['bucket_id']     = $relationInput['bucket_id'];
         $relationAttrs['company_code']  = $relationInput['company_code'];
         $relationAttrs['created_by']    = $relationInput['user_emailid'];
-        $relationAttrs['created_at']    = date("Y-m-d H:i:s");
+        $relationAttrs['created_at']    = gmdate("Y-m-d H:i:s");
         $refId = $this->neoPostRepository->getUserNodeIdByEmailId($contactEmailid);
         $refCode                        = MyEncrypt::encrypt_blowfish($campaignId.'_'.$refId,Config::get('constants.MINTMESH_ENCCODE'));
         $url = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
@@ -1426,6 +1434,7 @@ class PostGateway {
         $loggedInUser   = $this->referralsGateway->getLoggedInUser();
         $this->neoLoggedInUserDetails   = $this->neoUserRepository->getNodeByEmailId($loggedInUser->emailid);
         $userId = $this->neoLoggedInUserDetails->id;
+        $timeZone = !empty($input['time_zone'])?$input['time_zone']:0;  
         $company        = $this->enterpriseRepository->getUserCompanyMap($loggedInUser['id']);
         $companyId      = $company->company_id;
         $companyCode    = $company->code;
@@ -1531,11 +1540,12 @@ class PostGateway {
                         $scheduleAttrs['start_date'] = $schedule['start_on_date'];
                         $scheduleAttrs['start_time'] = $schedule['start_on_time'];
                         $gmtstart_date = $schedule['start_on_date']." " .$schedule['start_on_time'];
-                        $scheduleAttrs['gmt_start_date'] = $this->appEncodeDecode->UserTimezoneGmt($gmtstart_date,$input['time_zone']);    
+//                        $scheduleAttrs['gmt_start_date'] = $this->appEncodeDecode->UserTimezoneGmt($gmtstart_date,$input['time_zone']);    
+                        $scheduleAttrs['gmt_start_date'] = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezoneGmt($gmtstart_date,$timeZone)));  
                         $scheduleAttrs['end_date']   = $schedule['end_on_date'];
                         $scheduleAttrs['end_time']   = $schedule['end_on_time'];
                         $gmtend_date = $schedule['end_on_date']." " .$schedule['end_on_time'];
-                        $scheduleAttrs['gmt_end_date'] = $this->appEncodeDecode->UserTimezoneGmt($gmtend_date,$input['time_zone']); 
+                        $scheduleAttrs['gmt_end_date'] = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezoneGmt($gmtend_date,$timeZone)));   
                         $scheduleAttrs['company_code'] = $companyCode;
                         
                         if(!empty($scheduleId)){
@@ -1565,7 +1575,7 @@ class PostGateway {
             //checking if user selected at least one job or not
             if(!empty($campPostIds)){
                 $postCampaign['company_code'] = $companyCode;
-                $postCampaign['created_at']   = date("Y-m-d H:i:s");
+                $postCampaign['created_at']   = gmdate("Y-m-d H:i:s");
                 $postCampaign['created_by']   = $userEmailId;
                 foreach ($campPostIds as $key => $postId) {
                     $postCampaignRes = '';
@@ -1659,6 +1669,7 @@ class PostGateway {
         
         $campaign = $returnDetails = $ids =array();
         $page = !empty($input['page_no']) ? $input['page_no'] : 0;
+        $input['time_zone'] = !empty($input['time_zone'])?$input['time_zone']:0;  
         $this->loggedinUserDetails      = $this->referralsGateway->getLoggedInUser();
         $this->neoLoggedInUserDetails   = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid);
         $company = $this->enterpriseRepository->getUserCompanyMap( $this->loggedinUserDetails->id);
@@ -1699,11 +1710,9 @@ class PostGateway {
                 if(!empty($scheduleTimes[0]) && !empty($scheduleTimes[0][0])){
                     $scheduleTimes                  = $scheduleTimes[0][0];
                     $gmtstart_date                  = $scheduleTimes->start_date." " .$scheduleTimes->start_time;
-                    $gmt_start_on_date              = $this->appEncodeDecode->UserTimezone($gmtstart_date,$input['time_zone']);
-                    $campaign['gmt_start_on_date']  = !empty($gmt_start_on_date)?$gmt_start_on_date:'';
+                    $campaign['gmt_start_on_date']  = !empty($gmtstart_date)?$gmtstart_date:'';
                     $gmtend_date                    = $scheduleTimes->end_date." " .$scheduleTimes->end_time;
-                    $gmt_end_on_date                = $this->appEncodeDecode->UserTimezone($gmtend_date,$input['time_zone']);
-                    $campaign['gmt_end_on_date']    = !empty($gmt_end_on_date)?$gmt_end_on_date:'';
+                    $campaign['gmt_end_on_date']    = !empty($gmtend_date)?$gmtend_date:'';
                     $startdate                      = $scheduleTimes->start_date;
                     $campaign['start_on_date']      = !empty($startdate)?date('Y-m-d', strtotime($startdate)):'';
                     $enddate                        = $scheduleTimes->end_date;
@@ -1784,11 +1793,11 @@ class PostGateway {
                 $value = $value[0];
                 $schedule['schedule_id']    = $value->getID();
                 $gmtstart_date = $value->start_date." " .$value->start_time;
-                $gmt_start_on_date = $this->appEncodeDecode->UserTimezone($gmtstart_date,$input['time_zone']);
-                $schedule['gmt_start_on_date'] = !empty($gmt_start_on_date)?$gmt_start_on_date:'';
+                $schedule['gmt_start_on_date'] = !empty($gmtstart_date)?$gmtstart_date:'';
+//                $schedule['gmt_start_on_date'] = !empty($gmtstart_date)?date("D M d, Y H:i:s A", strtotime($this->appEncodeDecode->UserTimezone($gmtstart_date,$input['time_zone']))):'';
                 $gmtend_date = $value->end_date." " .$value->end_time;
-                $gmt_end_on_date = $this->appEncodeDecode->UserTimezone($gmtend_date,$input['time_zone']);
-                $schedule['gmt_end_on_date'] = !empty($gmt_end_on_date)?$gmt_end_on_date:'';
+                $schedule['gmt_end_on_date'] = !empty($gmtend_date)?$gmtend_date:'';
+//                $schedule['gmt_end_on_date'] = !empty($gmtend_date)?date("D M d, Y H:i:s A", strtotime($this->appEncodeDecode->UserTimezone($gmtend_date,$input['time_zone']))):'';
                 $currentDate = gmdate("Y-m-d H:i:s");
                 if($value->gmt_end_date < $currentDate ){
                     $schedule['status']    = 'CLOSED';
@@ -1911,7 +1920,8 @@ class PostGateway {
                 $record['one_way_status']   = $relation->one_way_status;
                 $record['resume_path']      = $relation->resume_path;
                 $record['resume_name']      = $relation->resume_original_name;
-                $record['created_at']       = date('M d, Y H:i:s',strtotime($relation->created_at));
+//                $record['created_at']       = date('M d, Y H:i:s',strtotime($relation->created_at));
+                $record['created_at']       = date('M d, Y H:i:s',strtotime($this->appEncodeDecode->UserTimezone($relation->created_at,$input['time_zone'])));
                 $record['awt_status']       = $relation->awaiting_action_status;
                 #get the user details here
                 $referralName = $userName = '';
@@ -2028,8 +2038,8 @@ class PostGateway {
                     $neoInput['resume_path'] = $renamedFileName;
                     }
                     $neoInput['resume_original_name'] = $input['resume_original_name'];
-//                    $neoInput['created_at'] = gmdate('Y-m-d H:i:s');
-                    $neoInput['created_at']     = $this->appEncodeDecode->UserTimezone(gmdate('Y-m-d H:i:s'),$input['time_zone']); 
+//                    $neoInput['created_at']     = $this->appEncodeDecode->UserTimezone(gmdate('Y-m-d H:i:s'),$input['time_zone']); 
+                    $neoInput['created_at']     = gmdate('Y-m-d H:i:s'); 
                     $neoInput['awaiting_action_status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
                     $neoInput['status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
                     $neoInput['relation_count'] = '1';
@@ -2227,7 +2237,7 @@ class PostGateway {
             $neoInput['status']             = Config::get('constants.POST.STATUSES.PENDING');
             $neoInput['created_by']         = $emailId;
             $neoInput['post_type']          = 'campaign';          
-            $relationAttrs['created_at']    = date("Y-m-d H:i:s");
+            $relationAttrs['created_at']    = gmdate("Y-m-d H:i:s");
             $relationAttrs['company_name']  = $input['company_name'];
             $relationAttrs['company_code']  = $input['company_code'];
             $createdPost = $this->neoPostRepository->createPostAndUserRelation($fromId,$neoInput, $relationAttrs);
@@ -2767,36 +2777,6 @@ class PostGateway {
                 $this->neoPostRepository->updatePostInviteCount($postId, $inviteCount);
             } 
         }
-    }
-    
-    public function testCamp($input) {
-        
-        $companyAry = array();
-        $CompanyAllCodes = $this->enterpriseRepository->getCompanyAllCodes();
-        foreach($CompanyAllCodes as $code){
-           $companyCode =  !empty($code->code)?$code->code:'';
-           if(!empty($companyCode)){ 
-                $campaignIdAry = array();
-                $campaigns   = $this->neoPostRepository->getCampaigns($code->code);
-                if(!empty($campaigns)){
-                    foreach ($campaigns as $value) {
-                        $bucketAry = array();
-                        $campaignId = !empty($value[0])?$value[0]:'';
-                        $bucketsRes   = $this->neoPostRepository->getCampaignBuckets($campaignId);
-                        foreach($bucketsRes as $buckets){
-                            $bucket = '';
-                            $bucket = (int)$buckets[0];
-                            $bucketAry[] = $bucket;
-                        }
-                        $bucket_ids = !empty(implode(",",$bucketAry))?implode(",",$bucketAry):'';
-                        $campaignsData   = $this->neoPostRepository->updateCampaigns($campaignId, $bucket_ids);
-                        $campaignIdAry[]=$campaignId;
-                    }
-                }
-                $companyAry[$companyCode] = $campaignIdAry;
-           }
-        }   
-        print_r($companyAry).exit;
     }
     
     public function getUserJobsCount($userEmailId, $companyCode) {

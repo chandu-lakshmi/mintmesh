@@ -1122,5 +1122,13 @@ class EnterpriseController extends \BaseController {
             }
             
 	}
+        
+        public function testLic()
+	{
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            $response = $this->EnterpriseGateway->testLic($inputUserData);
+            return \Response::json($response);
+	}
 }
 ?>
