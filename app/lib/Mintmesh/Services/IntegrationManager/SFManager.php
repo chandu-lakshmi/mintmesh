@@ -59,17 +59,6 @@ class SFManager extends IntegrationManager {
         return TRUE;
     }
     
-//    protected function getNeoUserByEmailId($userEmailId) {
-//        $return = array();
-//        $queryString = "match (u:User) where u.emailid='" . $userEmailId . "' return u";
-//        $query = new CypherQuery($this->client, $queryString);
-//        $result = $query->getResultSet();
-//        if (isset($result[0]) && isset($result[0][0])) {
-//            $return = $result[0][0];
-//        }
-//        return $return;
-//    }
-    
     public function processResponseData($responseBody, $jobId, $companyId) {
 
         $array = json_decode($responseBody, TRUE);
@@ -157,7 +146,7 @@ class SFManager extends IntegrationManager {
                 $neoInput['experience_range'] = !empty($neoInput['experience_range']) ? $neoInput['experience_range'] : $dfText;
                 $neoInput['industry'] = !empty($neoInput['industry']) ? $neoInput['industry'] : $dfText;
 
-                $relationAttrs['created_at'] = date("Y-m-d H:i:s");
+                $relationAttrs['created_at'] = gmdate("Y-m-d H:i:s");
                 $relationAttrs['company_name'] = $companyName;
                 $relationAttrs['company_code'] = $companyCode;
                  //print_r($neoInput).exit;
@@ -300,7 +289,7 @@ class SFManager extends IntegrationManager {
             $queryString = rtrim($queryString, ",");
             $queryString.="}";
         }
-        $queryString.="]-(u) set p.created_at='" . date("Y-m-d H:i:s") . "' ";
+        $queryString.="]-(u) set p.created_at='" . gmdate("Y-m-d H:i:s") . "' ";
         $queryString.=" , p.invited_count=0, p.total_referral_count=0, p.referral_accepted_count=0, p.referral_declined_count=0, p.referral_hired_count=0, p.referral_interviewed_count=0,p.unsolicited_count=0 return p";
         $query = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();

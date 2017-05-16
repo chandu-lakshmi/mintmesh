@@ -216,7 +216,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
                 $search = $this->appEncodeDecode->filterString($search);
                 $searchQuery =  "and (p.service_name =~ '(?i).*". $search .".*' or p.service_location =~ '(?i).*". $search .".*') ";
             }    
-            if($permission == '1' && $postby != '0'){
+            if(($permission == '1' && $postby != '0') || $permission == '0'){
                 $createdBy = " and p.created_by = '" . $email . "' ";
             }
             if (isset($input['request_type']) && $input['request_type'] != '2') {
