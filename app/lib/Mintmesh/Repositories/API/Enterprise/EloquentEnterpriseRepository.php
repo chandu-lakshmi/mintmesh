@@ -176,29 +176,37 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         {     
             $ipAddress = !empty($_SERVER['REMOTE_ADDR'])?$_SERVER['REMOTE_ADDR']:0;
             $createdAt = gmdate("Y-m-d H:i:s");
-            $allowedStatus = array('Active', 'Inactive', 'Separated');
             if (!empty($userId) && !empty($bucketId) && !empty($companyId))
             {
                 $contactsList = $this->getImportContactByEmailId($userId, $bucketId, $companyId);
                 $contactIsExist = $updatedRows = $result = array();
                 //checking email id already exist or not  
                 foreach ($contactsList as $obj){
-                    $contactIsExist[$obj->emailid] = $obj->employeeid;    
+                    $emailidLower = !empty($obj->emailid) ? strtolower($obj->emailid) :'';
+                    $contactIsExist[$emailidLower] = $obj->employeeid;    
                 }
                 $sql = "insert into contacts 
                         (`user_id`,`company_id`,`import_file_id`,`firstname`,`lastname`,`emailid`,`phone`,`employeeid`,`status`, `updated_by`,`created_at`,`created_by`,`ip_address`) values " ;
-				$inrt_sql = '';	
-				$i = 0;	
-				$insertResult = 0;
-				$updatedRows = 0;
+                $inrt_sql = '';	
+                $updatedRows = $insertResult = $i = 0;	
+                $limitExceeded = 0;
+                
                 foreach ($input as $key=>$val)
                 {                             
                     $employeeId  = !empty($val['employee_idother_id']) ? $val['employee_idother_id'] : '';
                     $cellPhone   = !empty($val['cell_phone']) ? $val['cell_phone'] : '';
                     $lastName    = !empty($val['last_name']) ? $val['last_name'] : '';
                     $status      = !empty($val['status']) ?  ucfirst(strtolower($val['status'])): 'Active';
-                    #set default status as Active
-                    if(!in_array($status, $allowedStatus)){
+                    
+                    #string contains at least 3 character. set default status as Active.
+                    $substr = substr($status, 0, 3);
+                    if($substr=='Act'){
+                        $status = 'Active';
+                    } else if($substr=='Ina'){
+                        $status = 'Inactive';
+                    } else if($substr=='Sep'){
+                        $status = 'Separated';
+                    } else {
                         $status = 'Active';
                     }
                      
@@ -210,10 +218,14 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                         $usersArr  = User::select('id')->where('emailid',$emailId)->get();
                         $users_id  = !empty($usersArr[0])?$usersArr[0]->id:0;
                         
-                        if(!array_key_exists($val['email_id'], $contactIsExist)){ 
+                        if(!array_key_exists(strtolower($val['email_id']), $contactIsExist)){ 
                             $employeeId = ($employeeId!='' && in_array($employeeId, $contactIsExist))?'':$employeeId; 
+                            #limit exceeded flag
+                            if(empty($availableNo)){
+                                $limitExceeded = 1;
+                            }
                             #check available contacts count here
-                            if($availableNo){
+                            if(!empty($availableNo) || $status == 'Separated'){
                                 $inrt_sql.="('".$users_id."','".$companyId."','".$importFileId."','".$firstName."','".$lastName."','".$emailId."','".$cellPhone."',";
                                 $inrt_sql.="'".$employeeId."','".$status."','".$userId."','".$createdAt."','".$userId."','".$ipAddress."')," ;
                                 $i++;
@@ -238,7 +250,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                                 } 
                             }
                             
-                            $employeeId = ($employeeId!='' && in_array($employeeId, $contactIsExist))?(($contactIsExist[$emailId]==$employeeId)?$employeeId:''):$employeeId;
+                            $employeeId = ($employeeId!='' && in_array($employeeId, $contactIsExist))?(($contactIsExist[strtolower($emailId)]==$employeeId)?$employeeId:''):$employeeId;
                             
                             $sqlQuery = "UPDATE contacts SET `user_id`='".$users_id."', `import_file_id` = '".$importFileId."',`firstname`='".$firstName."',`lastname`='".$lastName."',";
                             $sqlQuery.= " `phone`='".$cellPhone."',`employeeid`='".$employeeId."',`updated_by`='".$userId."'";
@@ -251,7 +263,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                             DB::statement($sqlQuery);
                             $updatedRows++;
                         }
-                    } 
+                    }
                     
                     if($i==500 && $inrt_sql!=''){
                             DB::statement($sql.trim($inrt_sql,','));
@@ -272,6 +284,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                 $result['insert'] = $insertResult;
                 $result['update'] = $updatedRows;
 		$result['importFileId'] = $importFileId;
+		$result['limitExceeded'] = $limitExceeded;
             } 
             return $result;    
         }

@@ -50,7 +50,7 @@ return array(
              "post_closed" => "Successfully Closed",
              "post_not_closed" => "Please close all pending referrals received for this service request",
              "no_posts" => "No Posts Found",
-             "no_referrals_found"=>"No referrals found",
+             "no_referrals_found"=>"No Referrals Found",
              "already_referred"=>"This contact has already been referred",
              "limit_crossed" => "You have reached maximum number of referrals for this request",
              "no_post" => "No Post Found",
@@ -138,10 +138,10 @@ return array(
              "error"=>"Invalid Token",
              "valid"=>"Validated",
              "same"=>"New password cannot be same as old password",
-             "codeexpired"=>"the Code has Expired"
+             "codeexpired"=>"The Code has Expired"
          ),
          "check_reset_password"=>array(
-             "success"=>"sucess",
+             "success"=>"Sucess",
              "failed"=>"Reset password link has expired"
          ),
         "import_contacts"=>array(
@@ -217,7 +217,7 @@ return array(
                 '23'=>'for your request', 
                 '24'=>'', 
                 '25'=>'', 
-                '27'=>' please check out the Refer page.', 
+                '27'=>' Please check out the Refer page.', 
                 '28'=>' event for jobs. Check out the refer page.',
                 '29'=>' for the position of',
                 '30'=>' for the position of',
@@ -235,42 +235,42 @@ return array(
             "error"=>"No Info Found"
          ),
          "payment"=>array(
-             "valid"=>"valid",
+             "valid"=>"Valid",
              "success"=>"Success",
              "failed"=>"Transaction Failed",
              "error"=>"Invalid Input",
-             "invalid_amount"=>"Invalid amount"
+             "invalid_amount"=>"Invalid Amount"
          ),
          "sms"=>array(
              "valid"=>"valid",
              "invalid_input"=>"Invalid Input",
              "success"=>"Successfully Processed",
-             "failed"=>"Failed to process",
-             "invalid_length"=>"Invalid Token. Unexpected length",
-             "otp_sent"=>"Code sent to your inbox",
-             "otp_validated"=>"Code validated successfully",
-             "max_reached"=>"Maximum number of codes reached",
+             "failed"=>"Failed to Process",
+             "invalid_length"=>"Invalid Token. Unexpected Length",
+             "otp_sent"=>"Code sent to your Inbox",
+             "otp_validated"=>"Code Validated Successfully",
+             "max_reached"=>"Maximum number of Codes reached",
              "user_exist"=>" A user is already existing with this phone number, kindly change your phone number."
          ),
 
         "reference_flow"=>array(
-            "success"=>"Successfully listed",
-            "invalid_input"=>"Invalid input"
+            "success"=>"Successfully Listed",
+            "invalid_input"=>"Invalid Input"
         ),
         "influencers"=>array(
-            "success"=>"Successfully listed",
+            "success"=>"Successfully Listed",
             "not_found"=>"No Influencer Found"
         ),
         "recruiters"=>array(
-            "success"=>"Successfully listed",
+            "success"=>"Successfully Listed",
             "not_found"=>"No Recruiter Found"
         ),
         "change_password"=>array(
-            "success"=>"Password changed successfully",
-            "failed"=>"Some error occured",
-            "confirmPasswordMismatch"=>"Confirm password mismatch",
-            "oldPasswordMismatch"=>"Old password mismatch",
-            "user_not_found"=>"User not found"
+            "success"=>"Password Changed Successfully",
+            "failed"=>"Some Error Occured",
+            "confirmPasswordMismatch"=>"Confirm Password Mismatch",
+            "oldPasswordMismatch"=>"Old Password Mismatch",
+            "user_not_found"=>"User not Found"
         ),
         "save_user_bank"=>array(
             "success"=>"Bank details added successfully",
@@ -316,9 +316,9 @@ return array(
             "success"=>"Successfully cached"
         ),
         "services"=>array(
-            'valid'=>'Successfully validated',
+            'valid'=>'Successfully Validated',
             'success'=>'Listed',
-            'error'=>'Invalid input',
+            'error'=>'Invalid Input',
             'not_found'=>'No Result Found'
         ),
         "you_are"=>array(
@@ -328,16 +328,16 @@ return array(
             'success'=>'Listed'
         ),
         "clear_memcache"=>array(
-            'success'=>'Memcache Cleared successfully',
+            'success'=>'Memcache Cleared Successfully',
             'dont_exist'=>'Cache for perticular key does not exist'
         ),
         "experience"=>array(
-            'success'=>'Successfully retrieved',
-            'failure'=>'Failed to retrieved'
+            'success'=>'Successfully Retrieved',
+            'failure'=>'Failed to Retrieved'
         ),
         "employment_types"=>array(
-            'success'=>'Successfully retrieved',
-            'failure'=>'Failed to retrieved'
+            'success'=>'Successfully Retrieved',
+            'failure'=>'Failed to Retrieved'
         ),
         'user_profiles_abstractions'=>array('basic'=>array('firstname','lastname','fullname','company','position','dp_path','emailid','phone','location'),
             'medium'=>array('job_function','position','phone','location','lastname','emailid','industry','fullname','firstname','dp_path','company',
@@ -358,7 +358,7 @@ return array(
             "valid"   => "Successfully Validated",
             "success" => "Successfully Done",
             "error" => "Failed To Process",
-            "no_referrals" => "No referrals Found",
+            "no_referrals" => "No Referrals Found",
        ) ,
 //                    'phoneverified','you_are','job_function_name','industry_name','you_are_name','profession_name')),
         "enterprise"=>array(
@@ -378,106 +378,106 @@ return array(
                 "welcome"      => "Welcome To MintMesh Enterprise"
         ),
      "companyDetails"=>array(
-               "success"                    => "successfully retrieved",
-               "no_details"                 => "no details found",
-               "bucket_success"             => "bucket successfully created",
-               "bucket_failure"             => "failed to create bucket",
-               "bucket_exsisted"            => "bucket name already exsisted",
-               "company_not_exists"         => "Invalid Company code",
+               "success"                    => "Successfully retrieved",
+               "no_details"                 => "No details found",
+               "bucket_success"             => "Bucket successfully created",
+               "bucket_failure"             => "Failed to create bucket",
+               "bucket_exsisted"            => "Bucket name already exsisted",
+               "company_not_exists"         => "Invalid Company Code",
                "company_already_connected"  => "Company already connected"
      ),
     'editContactList' => array(
-            "success"   =>  "successfully updated",
-            "failure"   =>  "failed to update",
+            "success"   =>  "Successfully updated",
+            "failure"   =>  "Failed to update",
             "file_format"       =>  "Invalid input file format.File extension should be:",
             "invalid_headers"   =>  "Invalid input file Headers",
-            "invalidempid"      =>  "empid already exists",          
-            "contactsLimitExceeded" =>  "your contacts limit is exceeded"          
+            "invalidempid"      =>  "Empid already exists",          
+            "contactsLimitExceeded" =>  "Your contacts limit is exceeded. Please contact support@mintmesh.com"          
     ),
     'deleteContact'   => array(
-            "success"  =>   "successfully deleted",
-            "failure"   =>   "Failed to delete"
+            "success"  =>   "Successfully Deleted",
+            "failure"   =>   "Failed to Delete"
     ),
     'editStatus'      => array(
-            "success"   =>   "status changed successfully",
-            "failure"   =>   "failed to update status"
+            "success"   =>   "Status changed Successfully",
+            "failure"   =>   "Failed to update status"
     ),
     'addContact'      => array(
-               "success"  =>  "contact added successfully",
-               "failure"  =>   "failed to add contact",
-               "contactExists"   => "contact already exists",
-               "contactUpdated"  =>  "contact updated successfully"
+               "success"  =>  "Contact added successfully",
+               "failure"  =>   "Failed to add contact",
+               "contactExists"   => "Contact already exists",
+               "contactUpdated"  =>  "Contact updated successfully"
     ),
     'getPermissions'   => array(
-                "success"  => "permissions successfully retrieved",
-                "failure"  => "no data found"
+                "success"  => "Permissions successfully retrieved",
+                "failure"  => "No Data Found"
     ),
     'addPermissions'   => array(
-                "success"  => "permissions added successfully",
-                "failure"  =>  "failed to add permissions",
-                "invalidUserId"  => "please provide valid user id"
+                "success"  => "Permissions added successfully",
+                "failure"  =>  "Failed to add permissions",
+                "invalidUserId"  => "Please provide valid user id"
     ),
     'getGroupPermissions' => array(
-                "success"  => "permissions retrieved successfully",
-                "failure"  =>  "failed to retrieve permissions",
-                "invalidUserId"  => "please provide valid user id"
+                "success"  => "Permissions retrieved successfully",
+                "failure"  =>  "Failed to retrieve permissions",
+                "invalidUserId"  => "Please provide valid user id"
     ),
     'addUser'    =>   array(
-                "success"  =>  "user added successfully",
-                "failure"   =>   "failed to add user",
-                "userexists" =>  "user already exists",
-                "edit"     => "user details updated successfully",
-                "emailidexists"  => "emailid already exists"
+                "success"  =>  "User added successfully",
+                "failure"   =>   "Failed to add user",
+                "userexists" =>  "User already exists",
+                "edit"     => "User details updated successfully",
+                "emailidexists"  => "Emailid already exists"
     ),
     'editUser'   =>   array(
-                "success"  =>  "user updated successfully",
-                "failure"   =>   "failed to update user",
-                "emailexists" => "emailid already exists"
+                "success"  =>  "User updated successfully",
+                "failure"   =>   "Failed to update user",
+                "emailexists" => "Emailid already exists"
     ),
     'getGroups'   =>   array(
-                "success"  =>  "successfully retrieved groups",
-                "failure"  =>  "no groups found"
+                "success"  =>  "Successfully retrieved Groups",
+                "failure"  =>  "No Groups Found"
     ),
     'addGroup'   =>   array(
-                "success"  =>  "group added successfully",
-                "failure"  =>   "failed to add group",
-                "groupExists"=>  "group name has already been taken"
+                "success"  =>  "Group added successfully",
+                "failure"  =>   "Failed to add group",
+                "groupExists"=>  "Group name has already been taken"
     ),
     'editGroup'   =>   array(
-                "success"  =>  "group updated successfully",
-                "failure"   =>   "failed to update group",
-                "groupExists"=>  "group name has already been taken",
-                "permissionserror" => "permissions cannot be edited"
+                "success"  =>  "Group updated successfully",
+                "failure"   =>   "Failed to update group",
+                "groupExists"=>  "Group name has already been taken",
+                "permissionserror" => "Permissions cannot be edited"
     ),
     'getUserPermissions' => array(
-                "success"  =>  "user permissions retrieved successfully",
-                "failure"   =>   "failed to retrieve user permissions",
+                "success"  =>  "User permissions retrieved successfully",
+                "failure"   =>   "Failed to retrieve user permissions",
     ),
     'updateUser' => array(
-                "success"  =>   "updated user details successfully",
-                "failure"  =>   "failed to update user details"
+                "success"  =>   "Updated user details successfully",
+                "failure"  =>   "Failed to update user details"
     ),
     'set_password'=>array(
              "success"=>"Password Created Successfully",
              "invalid"=>"Password Period Expired",
              "failed"=>"Some Error Occured",
              "error"=>"Invalid Token",
-             "codeexpired"=>"code has been expired"
+             "codeexpired"=>"Code has been expired"
     ),
     'campaigns'=>array(
-            "success"=>"successfully retrieved campaigns",
-            "no_campaigns"=>"no campaigns found",
-            "failure"=>"failed to retrieve campaigns"
+            "success"=>"Successfully retrieved campaigns",
+            "no_campaigns"=>"No campaigns found",
+            "failure"=>"Failed to retrieve campaigns"
     ),
     'campaignDetails'=>array(
-            "success"=>"successfully retrieved campaign details",
-            "no_campaigns"=>"no campaigns found",
-            "failure"=>"failed to retrieve campaign details"
+            "success"=>"Successfully retrieved campaign details",
+            "no_campaigns"=>"No campaigns found",
+            "failure"=>"Failed to retrieve campaign details"
     ),
     'updateNewPermission'=>array(
-            "success"=>"updated permission successfully",
-            "failure"=>"failed to update permission",
-            "not_admin"=>"not an admin user"
+            "success"=>"Updated permission successfully",
+            "failure"=>"Failed to update permission",
+            "not_admin"=>"Not an admin user"
         
     ),
     'rewards' => array(
@@ -487,53 +487,53 @@ return array(
     'deactivatepost' => array(
             "success" => "Successfully Closed",
             "failure" => "No posts found",
-            "no_permissions" => "permission not allowed to close the job"
+            "no_permissions" => "Permission not allowed to close the job"
             
             ),
      'candidates'=>array(
-            "success"=>"successfully retrieved candidates List",
-            "no_candidates"=>"no candidate records found",
-            "failure"=>"failed to retrieve candidates"
+            "success"=>"Successfully retrieved candidates List",
+            "no_candidates"=>"No candidate records found",
+            "failure"=>"Failed to retrieve candidates"
     ),
     'apply_job'=>array(
-            "success"=>"successfully referred",
-            "failure"=>"failed to refer",
-            "post_closed"=>"job is closed",
-            "referred"=>"candidate is already referred for the post.",
-            "referrer_invalid"=>"invalid referrer",
-            "invalid"=>"invalid reference id and post id"
+            "success"=>"Successfully referred",
+            "failure"=>"Failed to refer",
+            "post_closed"=>"Job is closed",
+            "referred"=>"Candidate is already referred for the post.",
+            "referrer_nvalid"=>"Invalid referrer",
+            "invalid"=>"Invalid reference id and post id"
     ),
     'apply_jobs_list'=>array(
-            "success"=>"successfully retrieved Jobs List",
-            "no_jobs"=>"no Jobs found",
-            "failure"=>"failed to retrieve Jobs List"
+            "success"=>"Successfully retrieved Jobs List",
+            "no_jobs"=>"No Jobs found",
+            "failure"=>"Failed to retrieve Jobs List"
     ),
     'apply_job_details'=>array(
-            "success"=>"successfully retrieved Job details",
-            "no_jobs"=>"no Jobs found",
-            "failure"=>"failed to retrieve Job details"
+            "success"=>"Successfully retrieved Job details",
+            "no_jobs"=>"No Jobs found",
+            "failure"=>"Failed to retrieve Job details"
     ),
     'company_integration'=>array(
-           "success"=>"successfully integrated",
-           "failure"=>"failed to integrated"
+           "success"=>"Successfully integrated",
+           "failure"=>"Failed to integrated"
     ),
      'hcm_details'=>array(
             "insert_success"    =>  "HCM details added successfully",
             "update_success"    =>  "HCM details successfully updated",
             "retrieve_success"  =>  "successfully retrieved HCM details",
             "hcm_name_isexist"  =>  "HCM name already exist",
-            "retrieve_failure"  =>  "failed to retrieve HCM details"
+            "retrieve_failure"  =>  "Failed to retrieve HCM details"
     ),
     'add_configuration'=>array(
-            "success"          => "successfully added",
-            "failure"          => "failed to add configuration details"
+            "success"          => "Successfully added",
+            "failure"          => "Failed to add configuration details"
     ),
     'edit_configuration'=>array(
-            "success"          => "successfully updated",
-            "failure"          => "failed to update configuration details"
+            "success"          => "Successfully updated",
+            "failure"          => "Failed to update configuration details"
     ),
     'configuration_details'=>array(
-            "success"          => "successfully retrieved configuration details",
-            "failure"          => "no details found"
+            "success"          => "Successfully retrieved configuration details",
+            "failure"          => "No details found"
     )
 );

@@ -352,9 +352,11 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       //add hcm
       Route::post("enterprise/add_edit_hcm", "API\Enterprise\EnterpriseController@addEditHcm");
       Route::post("enterprise/add_edit_zenefits_hcm", "API\Enterprise\EnterpriseController@addEditZenefitsHcm");
+      Route::post("enterprise/add_edit_icims_hcm", "API\Enterprise\EnterpriseController@addEditIcimsHcm");
       //view hcm
       Route::post("enterprise/get_hcm_list", "API\Enterprise\EnterpriseController@getHcmList");
       Route::post("enterprise/get_zenefits_hcm_list", "API\Enterprise\EnterpriseController@getZenefitsHcmList");
+      Route::post("enterprise/get_icims_hcm_list", "API\Enterprise\EnterpriseController@getIcimsHcmList");
       //view hcm
       Route::post("enterprise/get_hcm_partners", "API\Enterprise\EnterpriseController@getHcmPartners");
       // company all contacts

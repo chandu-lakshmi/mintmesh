@@ -960,6 +960,24 @@ class EnterpriseController extends \BaseController {
             }
             
 	}
+         /*
+        * Icims Adding and Updating
+        */
+        public function addEditIcimsHcm()
+	{
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->EnterpriseGateway->validateAddEditZenefitsHcmInput($inputUserData);
+            if($validation['status'] == 'success') {
+               $response = $this->EnterpriseGateway->addEditIcimsHcm($inputUserData);
+               return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+            
+	}
         /**
 	 * POST get Hcms List
          * 
@@ -995,6 +1013,23 @@ class EnterpriseController extends \BaseController {
             $validation = $this->EnterpriseGateway->validateGetZenefitsHcmListInput($inputUserData);
             if($validation['status'] == 'success') {
                $response = $this->EnterpriseGateway->getZenefitsHcmList($inputUserData);
+               return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+            
+	}
+        
+         public function getIcimsHcmList()
+	{
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            
+            // Validating user input data
+            $validation = $this->EnterpriseGateway->validateGetZenefitsHcmListInput($inputUserData);
+            if($validation['status'] == 'success') {
+               $response = $this->EnterpriseGateway->getIcimsHcmList($inputUserData);
                return \Response::json($response);
             } else {
                     // returning validation failure
@@ -1121,14 +1156,6 @@ class EnterpriseController extends \BaseController {
                 return \Response::json($validation);
             }
             
-	}
-        
-        public function testLic()
-	{
-            // Receiving user input data
-            $inputUserData = \Input::all();
-            $response = $this->EnterpriseGateway->testLic($inputUserData);
-            return \Response::json($response);
 	}
 }
 ?>

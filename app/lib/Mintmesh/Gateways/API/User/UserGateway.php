@@ -4969,6 +4969,7 @@ class UserGateway {
         {
             $notifications  = $returnNote = array();
             $page           = !empty($input['page'])?$input['page']:0;
+            $timeZone       = !empty($input['time_zone']) ? $input['time_zone'] : 0;
             $noteType       = !empty($input['notification_type'])?$input['notification_type']:'';
             $defaultName    = Lang::get('MINTMESH.user.non_mintmesh_user_name');
             $user           = $this->getLoggedInUser();
@@ -5029,12 +5030,13 @@ class UserGateway {
                         #new job notification
                         $postDetails  = $this->neoUserRepository->getPost($serviceId);
                         $extra_msg    = Lang::get('MINTMESH.notifications.extra_texts.'.$nTypeId) ;
+                        $created_at   = !empty($postDetails->created_at)?$postDetails->created_at:'';
                        
                         $noteAry['job_id']          = $serviceId;
                         $noteAry['service_name']    = !empty($postDetails->service_name)?$postDetails->service_name:'';
                         $noteAry['company_name']    = !empty($postDetails->company)?$postDetails->company:'';
                         $noteAry['created_by']      = !empty($postDetails->created_by)?$postDetails->created_by:'';
-                        $noteAry['created_at']      = !empty($postDetails->created_at)?$postDetails->created_at:'';
+                        $noteAry['created_at']      = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($created_at, $timeZone)));
                         $serviceName                = !empty($note->other_message)?trim($note->other_message):'';
                         $noteAry['notification']    = $noteAry['company_name']." ".$note->message." ".$noteAry['service_name'].$extra_msg;
                         #get company details here
@@ -5045,12 +5047,13 @@ class UserGateway {
                         #new campaign notification
                         $postDetails  = $this->neoUserRepository->getCampaign($serviceId);
                         $extra_msg    = Lang::get('MINTMESH.notifications.extra_texts.'.$nTypeId) ;
+                        $created_at   = !empty($postDetails->created_at)?$postDetails->created_at:'';
                         
                         $noteAry['campaign_id']     = $serviceId;
                         $noteAry['campaign_name']   = !empty($postDetails->campaign_name)?$postDetails->campaign_name:'';
                         $noteAry['campaign_type']   = !empty($postDetails->campaign_type)?$postDetails->campaign_type:'';
                         $noteAry['created_by']      = !empty($postDetails->created_by)?$postDetails->created_by:'';
-                        $noteAry['created_at']      = !empty($postDetails->created_at)?$postDetails->created_at:'';
+                        $noteAry['created_at']      = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($created_at, $timeZone)));
                         $companyCode                = !empty($postDetails->company_code)?$postDetails->company_code:'';
                         #get company details here
                         if($companyCode){

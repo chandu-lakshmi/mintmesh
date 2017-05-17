@@ -1913,7 +1913,7 @@ class EnterpriseGateway {
                         Queue::push('Mintmesh\Services\Queues\CreateEnterpriseContactsQueue', $pushData, 'IMPORT');
                     }
                 }
-                $return = TRUE;    
+                $return = $resultsSet;    
             }      
         }
         return $return;
@@ -1938,10 +1938,24 @@ class EnterpriseGateway {
                 $inputParams['company_code'] = $companyCode;
                 $result[] = $this->processUploadContacts($inputParams); 
             }
+            
         if(!empty($result)){
-            $responseCode    = self::SUCCESS_RESPONSE_CODE;
-            $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
-            $message = array('msg' => array(Lang::get('MINTMESH.editContactList.success')));
+            #check limit exceeded flag
+            $limitExceeded = FALSE;
+            foreach ($result as $value) {
+                if(!empty($value['limitExceeded'])){
+                    $limitExceeded = TRUE;
+                }
+            }
+            if($limitExceeded){
+                $responseCode    = self::ERROR_RESPONSE_CODE;
+                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                $message = array('msg' => array(Lang::get('MINTMESH.editContactList.contactsLimitExceeded')));
+            }  else {
+                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+                $message = array('msg' => array(Lang::get('MINTMESH.editContactList.success')));
+            }    
         } else {
            $responseCode    = self::ERROR_RESPONSE_CODE;
            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
@@ -3385,7 +3399,7 @@ class EnterpriseGateway {
             return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data, false);  
         }
         
-        public function testLic($input) {
+    public function testLic($input) {
             
             $companiesData = $this->enterpriseRepository->getAllCompaniesData();
             foreach ($companiesData as $key => $value) {
@@ -3401,6 +3415,110 @@ class EnterpriseGateway {
           exit;  
         }
         
+    public function addEditIcimsHcm($input){
+        
+        $message    = '';
+        $returnAry  = $data = $hcmAry = $hcmConfigPropAry = array();
+        $companyCode    = !empty($input['company_code'])?$input['company_code']:'';
+        #get the logged in user company details with company code here
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = !empty($companyDetails[0]->id)?$companyDetails[0]->id:0; 
+        $hcmId          = !empty($input['hcm_id'])?$input['hcm_id']:'';
+        $hcmUrl         = !empty($input['hcm_url'])?$input['hcm_url']:'';
+        $hcmUsername    = !empty($input['hcm_username'])?$input['hcm_username']:'';
+        $hcmPassword    = !empty($input['hcm_password'])?$input['hcm_password']:'';
+        $hcmRunStatus   = !empty($input['hcm_run_status'])?$input['hcm_run_status']:'';
+        #form the input for add and edit HCM config details
+        $hcmAry[0]['name']     = 'DCNAME';
+        $hcmAry[0]['value']    = $hcmUrl;
+        $hcmAry[1]['name']     = 'USERNAME';
+        $hcmAry[1]['value']    = $hcmUsername;
+        $hcmAry[2]['name']     = 'PASSWORD';
+        $hcmAry[2]['value']    = $hcmPassword;
+        #process HCM config Properties here
+        $hcmConfigPropAry   = $this->enterpriseRepository->setHcmConfigProperties($hcmId, $companyId, $hcmAry);
+        if(!empty($hcmConfigPropAry)){
+            if($hcmRunStatus){
+                #get Company Hcm Jobs for company_hcm_jobs_id
+                $checkHcmJobs = $this->enterpriseRepository->getCompanyHcmJobs($hcmId, $companyId);
+                $companyHcmJobsId = !empty($checkHcmJobs[0]->company_hcm_jobs_id)?$checkHcmJobs[0]->company_hcm_jobs_id:'';
+                if($companyHcmJobsId){
+                    #update HCM schedule run status here
+                    $hcmConfigPropAry   = $this->enterpriseRepository->updateHcmRunStatus($companyHcmJobsId, $hcmRunStatus);
+                }    
+            }
+            #form the success messahe here
+            if(!empty($hcmConfigPropAry['insert'])){
+                $message    = Lang::get('MINTMESH.hcm_details.insert_success');
+            }  else {
+                $message    = Lang::get('MINTMESH.hcm_details.update_success');
+            }
+            #get company HCMs details here
+            $getHcmJobs = $this->enterpriseRepository->checkCompanyHcmJobs($companyId, $hcmId);
+            $getHcmstatus = !empty($getHcmJobs[0]->status)?$getHcmJobs[0]->status:0;
+            $getHcmstatus = !empty($getHcmstatus)?'enable':'disable';
+            $getHcmList = $this->enterpriseRepository->getHcmList($companyId, $hcmId);
+            $hcmDetails = $this->formatHcmResult($getHcmList);
+            #form return company HCMs details
+            if(!empty($hcmDetails[0])){
+                $value = $hcmDetails[0];
+                $returnAry['hcm_id']   = $value['hcm_id'];
+                $returnAry['hcm_name'] = $value['name'];
+                $returnAry['hcm_url']  = $value['DCNAME'];
+                $returnAry['hcm_username'] = $value['USERNAME'];
+                $returnAry['hcm_password'] = $value['PASSWORD'];
+                $returnAry['hcm_status']   = $getHcmstatus; 
+            }
+            $data = $returnAry;
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array($message));
+        }else{
+          $responseCode   = self::ERROR_RESPONSE_CODE;
+          $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+          $responseMessage= array('msg' => array(Lang::get('MINTMESH.hcm_details.retrieve_failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data, false);    
+    }  
+         //To get Icims HCM Details 
+    public function getIcimsHcmList($input){
+        
+        $hcm_id = 3;
+        $returnAry = $data = $getHcmList = array();
+        $companyCode    = !empty($input['company_code'])?$input['company_code']:'';
+        #get the logged in user company details with company code here
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = !empty($companyDetails[0]->id)?$companyDetails[0]->id:0;
+        #get company HCMs List here
+        $getHcmJobs = $this->enterpriseRepository->checkCompanyHcmJobs($companyId, $hcm_id);
+        $getHcmstatus = !empty($getHcmJobs[0]->status)?$getHcmJobs[0]->status:0;
+        $getHcmstatus = !empty($getHcmstatus)?'enable':'disable';
+        $getHcmList = $this->enterpriseRepository->getHcmList($companyId, $hcm_id);
+       $hcmDetails = $this->formatHcmResult($getHcmList);
+        foreach ($hcmDetails as $value) {
+             $return = array();
+            $return['hcm_id']   = $value['hcm_id'];
+            $return['hcm_name'] = $value['name'];
+            $return['hcm_url']  = $value['DCNAME'];
+            $return['hcm_username'] = $value['USERNAME'];
+            $return['hcm_password'] = $value['PASSWORD'];
+            $return['hcm_status']   = $getHcmstatus;
+            $returnAry[] = $return;
+        }       
+        
+        if(!empty($returnAry)){
+            $data = $returnAry;
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.hcm_details.retrieve_success')));
+        }else{
+            $responseCode   = self::ERROR_RESPONSE_CODE;
+            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.hcm_details.retrieve_failure')));
+          }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data, false);    
+    }
+         
 }
 
 ?>

@@ -2405,6 +2405,7 @@ class PostGateway {
         $totalCount     = $readCount = 0;
         $compName       = '';
         $companyCode    = $input['company_code'];
+        $timeZone       = !empty($input['time_zone']) ? $input['time_zone'] : 0; 
         $page           = !empty($input['page_no'])?$input['page_no']:0;
         $search         = !empty($input['key'])?$input['key']:0;
         $resJobsList    = $refAry = $returnData =  $data = $companyDetails = $jobsListAry = $jobsCountAry = array();
@@ -2458,7 +2459,7 @@ class PostGateway {
                             $record['post_type']            = 'campaign';
                             $record['campaign_name']        = $jobsList->campaign_name;//'designers campaign';
                             $record['campaign_type']        = $jobsList->campaign_type;//'2-4 Years Exp';
-                            $record['campaign_date']        = $jobsList->created_at;//'2016-11-30 12:56:14';
+                            $record['campaign_date']        = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($jobsList->created_at, $timeZone)));//'2016-11-30 12:56:14';
                             $record['created_by']           = $jobsList->created_by;
                             #get campaign location
                             if($jobsList->location_type == 'online'){
@@ -2493,7 +2494,7 @@ class PostGateway {
                             $record['post_type']        = $jobsList->post_type;//'external';
                             $record['job_name']         = $jobsList->service_name;//'IOS DEVELOPER';
                             $record['job_location']     = $jobsList->service_location;//'bangalore, karnataka, india';
-                            $record['job_date']         = $jobsList->created_at;//'2016-12-28 12:26:42'; 
+                            $record['job_date']         = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($jobsList->created_at, $timeZone)));//'2016-12-28 12:26:42'; 
                             $record['created_by']       = $jobsList->created_by;
                             #get experience range name
                             $jobExperience = $this->referralsRepository->getExperienceRangeNameForPost($postId);
@@ -2562,6 +2563,7 @@ class PostGateway {
      public function getJobDetails($input){
        
         $postId     =  $input['post_id'];
+        $timeZone   = !empty($input['time_zone']) ? $input['time_zone'] : 0;
         $returnData =  $data = $referrals = $record = $referralsAry = $companyAry = $returnCompany = array();
         $encodeString   = Config::get('constants.MINTMESH_ENCCODE');
         $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
@@ -2602,7 +2604,7 @@ class PostGateway {
             $record['position_id']      = $jobData['position_id'];
             $record['job_description']  = $jobDesc;
             $record['created_by']       = $jobData['created_by'];
-            $record['created_at']       = $jobData['created_at'];
+            $record['created_at']       = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($jobData['created_at'], $timeZone)));;
             $record['company_name']     = !empty($jobData['company'])?$jobData['company']:'';
             #social job share link
             $refId      = $postId.'_'.$neoUserId;

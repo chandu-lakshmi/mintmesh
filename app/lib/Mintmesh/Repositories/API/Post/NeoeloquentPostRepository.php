@@ -266,7 +266,6 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
              if (!empty($limit) && !($limit < 0)) {
                 $queryString.=" skip " . $skip . " limit " . self::LIMIT;
             }  
-
             $query = new CypherQuery($this->client, $queryString);
             return $result[0][0] = $query->getResultSet();
         } else {

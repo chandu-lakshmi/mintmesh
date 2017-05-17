@@ -1193,6 +1193,7 @@ class ReferralsGateway {
         {
             $isReferredUser = false;
             $isNonMintmesh = 0 ;
+            $timeZone   = !empty($input['time_zone']) ? $input['time_zone'] : 0; 
             $this->loggedinUserDetails = $this->getLoggedInUser();
             $userId         = !empty($this->loggedinUserDetails->id)?$this->loggedinUserDetails->id:'';
             #log user activity here
@@ -1354,7 +1355,8 @@ class ReferralsGateway {
                     if (!empty($result[0][0]->one_way_status))
                     {
                         $returnArray["one_way_status"] = strtolower($result[0][0]->one_way_status) ;
-                        $returnArray["p1_updated_at"] = !empty($result[0][0]->p1_updated_at)?$result[0][0]->p1_updated_at:"";
+                        $p1_updated_at = !empty($result[0][0]->p1_updated_at)?$result[0][0]->p1_updated_at:"";
+                        $returnArray["p1_updated_at"] = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($p1_updated_at, $timeZone)));
                     }
                     else
                     {
@@ -1363,7 +1365,8 @@ class ReferralsGateway {
                     if (!empty($result[0][0]->completed_status))
                     {
                         $returnArray["complete_status"] = strtolower($result[0][0]->completed_status) ;
-                        $returnArray["p3_updated_at"] = !empty($result[0][0]->p3_updated_at)?$result[0][0]->p3_updated_at:"";
+                        $p3_updated_at = !empty($result[0][0]->p3_updated_at)?$result[0][0]->p3_updated_at:"";
+                        $returnArray["p3_updated_at"] = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($p3_updated_at, $timeZone)));
                     }
                     else
                     {
@@ -2251,6 +2254,7 @@ class ReferralsGateway {
         #variable declaration
         $campaignsAry   = $viewCampRes = $data = $campAry = array();
         $campaignId     = $input['campaign_id'];
+        $timeZone       = !empty($input['time_zone']) ? $input['time_zone'] : 0;
         $encodeString   = Config::get('constants.MINTMESH_ENCCODE');
         $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
         #get Logged In User Details  
@@ -2284,7 +2288,7 @@ class ReferralsGateway {
             $campAry['cmp_name']    = $companyName;
             #get campaign schedule and posts details
             $viewCampRes = $this->viewCampaign($campaignId);
-            $campAry['created_at']  = $campaign->created_at;
+            $campAry['created_at']  = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($campaign->created_at, $timeZone)));
             $campAry['posts_count'] = $viewCampRes['jobs_count'];
             #form location Details here
             if(strtolower($campAry['location_type']) == 'onsite'){
@@ -2335,6 +2339,7 @@ class ReferralsGateway {
         $referralsAry   = $companyDetails = $refAry = $returnAry = $data = array();
         $companyCode    = $input['company_code'];
         $page           = !empty($input['page_no'])?$input['page_no']:0;
+        $timeZone       = !empty($input['time_zone']) ? $input['time_zone'] : 0;
         $companyLogo    = '';
         #get Logged In User Details  
         $this->user     = $this->getLoggedInUser();
@@ -2357,11 +2362,11 @@ class ReferralsGateway {
                $refAry = array();
                $value  = isset($value[0])?$value[0]:'';
                $postId = !empty($value->getID())?$value->getID():'';
-               
+               $created_at = !empty($value->created_at)?$value->created_at:'';
                $refAry['post_id']       = $postId;
                $refAry['post_name']     = !empty($value->service_name)?$value->service_name:'';
                $refAry['location']      = !empty($value->service_location)?$value->service_location:'';
-               $refAry['created_at']    = !empty($value->created_at)?$value->created_at:'';
+               $refAry['created_at']    = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($created_at, $timeZone)));;
                #get the post reward details here
                $postRewards             = $this->getPostRewards($postId, $userCountry, $isEnterprise=1);
                $refAry['rewards']       = $postRewards;
