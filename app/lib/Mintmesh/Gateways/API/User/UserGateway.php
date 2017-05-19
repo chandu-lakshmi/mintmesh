@@ -5097,11 +5097,14 @@ class UserGateway {
                         $noteAry['notification']  = $fromUser->fullname." ".$note->message." ".$thirdName." ".$extra_msg;
                         $noteAry['dp_image']      = '';    
                     }
-                    
+                    $noteCreated_at = !empty($note->created_at) ? $note->created_at : '';
+                    if($noteCreated_at){
+                           $noteCreated_at = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($noteCreated_at, $timeZone)));
+                    }
                     $noteAry['other_name']   = $thirdName;
                     $noteAry['push_id']      = $note->id;
                     $noteAry['note_type']    = $note->note_type;                    
-                    $noteAry['notify_time']  = $note->created_at;
+                    $noteAry['notify_time']  = $noteCreated_at;
                     $noteAry['read_status']  = $note->status;
 
                     $returnNote[] = $noteAry;

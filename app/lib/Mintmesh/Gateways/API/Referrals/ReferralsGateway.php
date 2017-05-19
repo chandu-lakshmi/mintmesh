@@ -1378,10 +1378,13 @@ class ReferralsGateway {
                     {
                         $returnArray["complete_status"] = strtolower(Config::get('constants.REFERRALS.STATUSES.PENDING')) ;
                     }
-                    
+                    $p2_updated_at = !empty($result[0][0]->created_at)?$result[0][0]->created_at:"";
+                    if($p2_updated_at){
+                        $p2_updated_at = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($p2_updated_at, $timeZone)));
+                    }
                     $returnArray["optional_message"] = !empty($result[0][0]->message)?$result[0][0]->message:"";
                     $returnArray["bestfit_message"] = !empty($result[0][0]->bestfit_message)?$result[0][0]->bestfit_message:"";
-                    $returnArray["p2_updated_at"] = !empty($result[0][0]->created_at)?$result[0][0]->created_at:"";
+                    $returnArray["p2_updated_at"] = $p2_updated_at;
                     $returnArray["service_name"] = !empty($result[0][2]->service_name)?$result[0][2]->service_name:"";
                     $returnArray["service_description"] = !empty($result[0][2]->service)?$result[0][2]->service:"";
                     $returnArray["service_created_at"] = !empty($result[0][2]->created_at)?$result[0][2]->created_at:"";
@@ -2220,7 +2223,7 @@ class ReferralsGateway {
     }  
     
     
-    public function viewCampaign($campaignId='') {
+    public function viewCampaignApp($campaignId='',$timeZone='') {
         $campSchedule = $returnData = $scheduleRes = $postAry = $postsRes = array();
         #get Campaign Schedule here
         $scheduleRes   = $this->neoPostRepository->getCampaignSchedule($campaignId);
@@ -2244,7 +2247,11 @@ class ReferralsGateway {
                 $post['service_name']       = $postDetails['service_name'];
                 $post['experience_range']   = $postDetails['experience_range_name'];
                 $post['service_location']   = $postDetails['service_location'];
-                $post['created_at']         = $postDetails['created_at'];
+                $created_at = !empty($postDetails['created_at']) ? $postDetails['created_at'] : '';
+                if($created_at){
+                    $created_at = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($created_at, $timeZone)));
+                }
+                $post['created_at']         = $created_at;
                 $postAry[] = $post;
                 $vacancies += !empty($postDetails['no_of_vacancies'])?$postDetails['no_of_vacancies']:'';
             }
@@ -2274,7 +2281,7 @@ class ReferralsGateway {
         #get campaign result here
         $campaignsAry = $this->referralsRepository->getCampaigns($userEmail, $campaignId);
         
-        if(!empty($campaignsAry)){
+        if(!empty($campaignsAry) && isset($campaignsAry[0])){
             $campaign   = !empty($campaignsAry[0][0])?$campaignsAry[0][0]:'';
             $campRel    = !empty($campaignsAry[0][1])?$campaignsAry[0][1]:'';
             #get company details here
@@ -2293,7 +2300,7 @@ class ReferralsGateway {
             $campAry['cmp_logo']    = $companyLogo;
             $campAry['cmp_name']    = $companyName;
             #get campaign schedule and posts details
-            $viewCampRes = $this->viewCampaign($campaignId);
+            $viewCampRes = $this->viewCampaignApp($campaignId, $timeZone);
             $created_at = !empty($campaign->created_at) ? $campaign->created_at : '';
             if($created_at){
                 $created_at = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($created_at, $timeZone)));

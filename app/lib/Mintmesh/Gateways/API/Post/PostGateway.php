@@ -1866,7 +1866,7 @@ class PostGateway {
             if(!empty($b['data']['link_save']['link'])){
                 $url = $b['data']['link_save']['link'];
             }else{
-                \Log::info("<<<<<< Short Url not created >>>>>>");
+               // \Log::info("<<<<<< Short Url not created >>>>>>");
             }
         } catch (\RuntimeException $e) {
             return $url;
