@@ -1205,7 +1205,11 @@ class ReferralsGateway {
                 $returnArray = array();
                 if (!empty($result[0][0]) && !empty($result[0][1]))
                 {
-                    $returnArray['relation_updated_at'] = !empty($result[0][0]->updated_at)?$result[0][0]->updated_at:$result[0][0]->created_at ;
+                    $relation_updated_at = !empty($result[0][0]->updated_at)?$result[0][0]->updated_at:$result[0][0]->created_at;
+                    if($relation_updated_at){
+                       $relation_updated_at =  date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($relation_updated_at, $timeZone)));
+                    }
+                    $returnArray['relation_updated_at'] = $relation_updated_at;
                     $returnArray['p3_cv_path'] = !empty($result[0][0]->resume_path)?$result[0][0]->resume_path:"" ;
                     $returnArray['p3_cv_original_name'] = !empty($result[0][0]->resume_original_name)?$result[0][0]->resume_original_name:"Resume" ;
                     $returnArray['uploaded_by_p2'] = !empty($result[0][0]->uploaded_by_p2)?$result[0][0]->uploaded_by_p2:0 ;
@@ -1382,12 +1386,16 @@ class ReferralsGateway {
                     if($p2_updated_at){
                         $p2_updated_at = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($p2_updated_at, $timeZone)));
                     }
+                    $service_created_at = !empty($result[0][2]->created_at)?$result[0][2]->created_at:"";
+                    if($service_created_at){
+                       $service_created_at =  date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($service_created_at, $timeZone)));
+                    }
                     $returnArray["optional_message"] = !empty($result[0][0]->message)?$result[0][0]->message:"";
                     $returnArray["bestfit_message"] = !empty($result[0][0]->bestfit_message)?$result[0][0]->bestfit_message:"";
                     $returnArray["p2_updated_at"] = $p2_updated_at;
                     $returnArray["service_name"] = !empty($result[0][2]->service_name)?$result[0][2]->service_name:"";
                     $returnArray["service_description"] = !empty($result[0][2]->service)?$result[0][2]->service:"";
-                    $returnArray["service_created_at"] = !empty($result[0][2]->created_at)?$result[0][2]->created_at:"";
+                    $returnArray["service_created_at"] = $service_created_at;
                     $returnArray['points_awarded'] = Config::get('constants.POINTS.SEEK_REFERRAL') ;
                     //post details from web
                     $returnArray["service_from_web"] = !empty($result[0][2]->service_from_web)?$result[0][2]->service_from_web:0;

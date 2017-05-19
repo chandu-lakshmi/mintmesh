@@ -780,17 +780,10 @@ class PostGateway {
                 }
                 $cvPath = !empty($userDetails['cv_path'])?$userDetails['cv_path']:'';
                 $returnReferralDetails['status']                = $postRelDetails['one_way_status'];   
-                 $timeZone = !empty($input['time_zone'])?$input['time_zone']:0;   
-                 $createdAt        = $postRelDetails['created_at'];
-//                $createdAt = $this->appEncodeDecode->UserTimezone($postRelDetails['created_at'],$input['time_zone']); 
-                //$returnReferralDetails['created_at']            = \Carbon\Carbon::createFromTimeStamp(strtotime($this->appEncodeDecode->UserTimezone($createdAt,$timeZone)))->diffForHumans();
-				
-				$returnReferralDetails['created_at']            = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
-//                if(!empty($postRelDetails['p1_updated_at'])){
-//                $updatedAt = $postRelDetails['p1_updated_at'];
-//                $updatedAt = $this->appEncodeDecode->UserTimezone($postRelDetails['p1_updated_at'], $timeZone); 
-//                }
-                $returnReferralDetails['updated_at']            = !empty($postRelDetails['p1_updated_at'])?date("D M d, Y H:i:s", strtotime($this->appEncodeDecode->UserTimezone($postRelDetails['p1_updated_at'],$timeZone))):'';
+                $timeZone = !empty($input['time_zone'])?$input['time_zone']:0;   
+                $createdAt        = $postRelDetails['created_at'];		
+                $returnReferralDetails['created_at']            = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
+                $returnReferralDetails['updated_at']            = !empty($postRelDetails['p1_updated_at'])?date("D M d, Y h:i A", strtotime($this->appEncodeDecode->UserTimezone($postRelDetails['p1_updated_at'],$timeZone))):'';
                 $returnReferralDetails['referred_by']           = $neoReferrerDetails['emailid'];
                 $returnReferralDetails['resume_path']           = !empty($postRelDetails['resume_path'])?$postRelDetails['resume_path']:$cvPath;
                 $returnReferralDetails['resume_original_name']  = $postRelDetails['resume_original_name'];
@@ -807,8 +800,7 @@ class PostGateway {
                     }  else {
                         $returnReferralDetails['awaiting_action_by'] = '';
                     }
-//                    $returnReferralDetails['awaiting_action_updated_at'] = !empty($postRelDetails['awaiting_action_updated_at'])?date("D M d, Y H:i:s A", strtotime($postRelDetails['awaiting_action_updated_at'])):'';
-                    $returnReferralDetails['awaiting_action_updated_at'] = !empty($postRelDetails['awaiting_action_updated_at'])?date("D M d, Y H:i:s", strtotime($this->appEncodeDecode->UserTimezone($postRelDetails['awaiting_action_updated_at'],$timeZone))):'';
+                    $returnReferralDetails['awaiting_action_updated_at'] = !empty($postRelDetails['awaiting_action_updated_at'])?date("D M d, Y h:i A", strtotime($this->appEncodeDecode->UserTimezone($postRelDetails['awaiting_action_updated_at'],$timeZone))):'';
                     $returnReferralDetails['awaiting_action_status']     = !empty($postRelDetails['awaiting_action_status'])?$postRelDetails['awaiting_action_status']:'ACCEPTED';
                 }
                 $returnDetails[] = $returnReferralDetails;
@@ -1053,8 +1045,7 @@ class PostGateway {
             $response['awaiting_action_status']     =  !empty($relationDetails['awaiting_action_status'])?$relationDetails['awaiting_action_status']:'ACCEPTED';
             $response['awaiting_action_by']         =  !empty($relationDetails['awaiting_action_by'])?$userFirstName:'';
             $response['awaiting_action_updated_at'] =  !empty($relationDetails['awaiting_action_updated_at'])?$relationDetails['awaiting_action_updated_at']:date("d-m-Y");
-//            $response['awaiting_action_updated_at'] =  date("D M d, Y H:i:s A", strtotime($response['awaiting_action_updated_at']));
-            $response['awaiting_action_updated_at'] =  date("D M d, Y H:i:s", strtotime($this->appEncodeDecode->UserTimezone($response['awaiting_action_updated_at'],$timeZone)));
+            $response['awaiting_action_updated_at'] =  date("D M d, Y h:i A", strtotime($this->appEncodeDecode->UserTimezone($response['awaiting_action_updated_at'],$timeZone)));
             
             if (!empty($response)) {   
                 $message = array('msg' => array(Lang::get('MINTMESH.referrals.success')));
@@ -1923,7 +1914,7 @@ class PostGateway {
                 $record['resume_path']      = $relation->resume_path;
                 $record['resume_name']      = $relation->resume_original_name;
 //                $record['created_at']       = date('M d, Y H:i:s',strtotime($relation->created_at));
-                $record['created_at']       = date('M d, Y H:i:s',strtotime($this->appEncodeDecode->UserTimezone($relation->created_at,$input['time_zone'])));
+                $record['created_at']       = date('M d, Y h:i A',strtotime($this->appEncodeDecode->UserTimezone($relation->created_at,$input['time_zone'])));
                 $record['awt_status']       = $relation->awaiting_action_status;
                 #get the user details here
                 $referralName = $userName = '';
