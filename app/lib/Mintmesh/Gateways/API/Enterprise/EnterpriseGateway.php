@@ -1546,8 +1546,8 @@ class EnterpriseGateway {
                         $returnDetails['status']         = $postRelDetails['one_way_status'];
 //                        $createdAt = $this->appEncodeDecode->UserTimezone($postRelDetails['created_at'],$input['time_zone']); 
                         $createdAt = $postRelDetails['created_at'];
-//                        $returnDetails['created_at']     = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
-                        $returnDetails['created_at']     = \Carbon\Carbon::createFromTimeStamp(strtotime($this->appEncodeDecode->UserTimezone($createdAt,$input['time_zone'])))->diffForHumans();
+                        $returnDetails['created_at']     = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
+                        //$returnDetails['created_at']     = \Carbon\Carbon::createFromTimeStamp(strtotime($this->appEncodeDecode->UserTimezone($createdAt,$input['time_zone'])))->diffForHumans();
                         $returnDetails['referral']       = !empty($referralName)?$referralName:'The contact';
                         $returnDetails['referral_img']   = !empty($userDetails['dp_renamed_name'])?$userDetails['dp_renamed_name']:'';
                         $returnDetails['referred_by']    = !empty($referrerName)?$referrerName:$neoReferrerName;
@@ -1615,7 +1615,7 @@ class EnterpriseGateway {
                             $returnDetails['status']         =  $postRelDetails['one_way_status'];
 //                            $createdAt = $this->appEncodeDecode->UserTimezone($postRelDetails['created_at'],$input['time_zone']); 
                             $createdAt = $postRelDetails['awaiting_action_updated_at'];
-                            $returnDetails['created_at']     = \Carbon\Carbon::createFromTimeStamp(strtotime($this->appEncodeDecode->UserTimezone($createdAt,$input['time_zone'])))->diffForHumans();
+                            $returnDetails['created_at']     = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
                             $returnDetails['referral']       =  !empty($referralName)?$referralName:'The contact';
                             $returnDetails['referral_img']   =  !empty($userDetails['dp_renamed_name'])?$userDetails['dp_renamed_name']:'';
                             $returnDetails['referred_by']    =  !empty($referrerName)?$referrerName:$neoReferrerName;
@@ -1921,7 +1921,8 @@ class EnterpriseGateway {
     
     public function uploadContacts($input){ 
         
-        $result = array();
+        $result = $data = array();
+        $data['limit_exceeded'] = FALSE;
         $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser();
         $userId          = $this->loggedinUserDetails->id;
         $companyCode     = !empty($input['company_code'])?$input['company_code']:0;
@@ -1948,6 +1949,7 @@ class EnterpriseGateway {
                 }
             }
             if($limitExceeded){
+                $data['limit_exceeded'] = TRUE;
                 $responseCode    = self::ERROR_RESPONSE_CODE;
                 $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
                 $message = array('msg' => array(Lang::get('MINTMESH.editContactList.contactsLimitExceeded')));
@@ -1961,7 +1963,7 @@ class EnterpriseGateway {
            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
            $message = array('msg' => array(Lang::get('MINTMESH.editContactList.failure')));
         }   
-        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $message, array());
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $message, $data);
     }
     
     public function getExcelUniqueRows($allDataInSheet) {

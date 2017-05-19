@@ -103,7 +103,7 @@ class UserGateway {
                                 'msword'
                                 );
                 $this->resumeMaxSize = Config::get('constants.RESUME_MAX_SIZE');//file size max 750kb
-                date_default_timezone_set('Asia/Kolkata');
+                date_default_timezone_set('UTC');
         }
         // validation on user inputs for change password
         public function validateChangePassword($input) {            
@@ -2887,7 +2887,7 @@ class UserGateway {
                                     'for_mintmesh' => $is_mintmesh,
                                     'message' => Lang::get('MINTMESH.notifications.messages.'.$notificationType),
                                     'ip_address' => !empty($_SERVER['REMOTE_ADDR'])?$_SERVER['REMOTE_ADDR']:'',
-                                    'created_at' => date('Y-m-d H:i:s')
+                                    'created_at' => gmdate('Y-m-d H:i:s')
                                 ) ;
                             //add other status 1 to redirect to profile
                             if (in_array($notificationType, $this->directProfileRedirections))
@@ -5031,12 +5031,14 @@ class UserGateway {
                         $postDetails  = $this->neoUserRepository->getPost($serviceId);
                         $extra_msg    = Lang::get('MINTMESH.notifications.extra_texts.'.$nTypeId) ;
                         $created_at   = !empty($postDetails->created_at)?$postDetails->created_at:'';
-                       
+                        if($created_at){
+                            $created_at = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($created_at, $timeZone)));
+                        }
                         $noteAry['job_id']          = $serviceId;
                         $noteAry['service_name']    = !empty($postDetails->service_name)?$postDetails->service_name:'';
                         $noteAry['company_name']    = !empty($postDetails->company)?$postDetails->company:'';
                         $noteAry['created_by']      = !empty($postDetails->created_by)?$postDetails->created_by:'';
-                        $noteAry['created_at']      = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($created_at, $timeZone)));
+                        $noteAry['created_at']      = $created_at;
                         $serviceName                = !empty($note->other_message)?trim($note->other_message):'';
                         $noteAry['notification']    = $noteAry['company_name']." ".$note->message." ".$noteAry['service_name'].$extra_msg;
                         #get company details here
@@ -5048,12 +5050,15 @@ class UserGateway {
                         $postDetails  = $this->neoUserRepository->getCampaign($serviceId);
                         $extra_msg    = Lang::get('MINTMESH.notifications.extra_texts.'.$nTypeId) ;
                         $created_at   = !empty($postDetails->created_at)?$postDetails->created_at:'';
+                        if($created_at){
+                           $created_at = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($created_at, $timeZone)));
+                        }
                         
                         $noteAry['campaign_id']     = $serviceId;
                         $noteAry['campaign_name']   = !empty($postDetails->campaign_name)?$postDetails->campaign_name:'';
                         $noteAry['campaign_type']   = !empty($postDetails->campaign_type)?$postDetails->campaign_type:'';
                         $noteAry['created_by']      = !empty($postDetails->created_by)?$postDetails->created_by:'';
-                        $noteAry['created_at']      = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($created_at, $timeZone)));
+                        $noteAry['created_at']      = $created_at;
                         $companyCode                = !empty($postDetails->company_code)?$postDetails->company_code:'';
                         #get company details here
                         if($companyCode){

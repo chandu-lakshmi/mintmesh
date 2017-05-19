@@ -663,8 +663,8 @@ class PostGateway {
                 $returnPosts['post_type']   = $postDetails['post_type'];
                 $returnPosts['job_title']   = $postDetails['service_name'];
 //                $returnPosts['created_at']  = $postDetails['created_at'];
-                $returnPosts['created_at']  =  !empty($postDetails['created_at'])?date("D M d, Y H:i:s A", strtotime($this->appEncodeDecode->UserTimezone($postDetails['created_at'],$timeZone))):'';
-                $returnPosts['position_id'] = $postDetails['position_id'];
+                $returnPosts['created_at']  =  !empty($postDetails['created_at'])?date("D M d, Y H:i:s", strtotime($this->appEncodeDecode->UserTimezone($postDetails['created_at'],$timeZone))):'';
+                $returnPosts['position_id'] = !empty($postDetails['position_id'])? $postDetails['position_id']:'';
                 $returnPosts['status']      = $postDetails['status'];
                 $closeJobs = !empty($checkPermissions['close_jobs'])?$checkPermissions['close_jobs']:'';
                 if($postDetails['created_by'] == $this->loggedinEnterpriseUserDetails->emailid || $closeJobs == '1'){
@@ -780,15 +780,17 @@ class PostGateway {
                 }
                 $cvPath = !empty($userDetails['cv_path'])?$userDetails['cv_path']:'';
                 $returnReferralDetails['status']                = $postRelDetails['one_way_status'];   
-                $timeZone = !empty($input['time_zone'])?$input['time_zone']:0;   
+                 $timeZone = !empty($input['time_zone'])?$input['time_zone']:0;   
                  $createdAt        = $postRelDetails['created_at'];
 //                $createdAt = $this->appEncodeDecode->UserTimezone($postRelDetails['created_at'],$input['time_zone']); 
-                $returnReferralDetails['created_at']            = \Carbon\Carbon::createFromTimeStamp(strtotime($this->appEncodeDecode->UserTimezone($createdAt,$timeZone)))->diffForHumans();
+                //$returnReferralDetails['created_at']            = \Carbon\Carbon::createFromTimeStamp(strtotime($this->appEncodeDecode->UserTimezone($createdAt,$timeZone)))->diffForHumans();
+				
+				$returnReferralDetails['created_at']            = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
 //                if(!empty($postRelDetails['p1_updated_at'])){
 //                $updatedAt = $postRelDetails['p1_updated_at'];
 //                $updatedAt = $this->appEncodeDecode->UserTimezone($postRelDetails['p1_updated_at'], $timeZone); 
 //                }
-                $returnReferralDetails['updated_at']            = !empty($postRelDetails['p1_updated_at'])?date("D M d, Y H:i:s A", strtotime($this->appEncodeDecode->UserTimezone($postRelDetails['p1_updated_at'],$timeZone))):'';
+                $returnReferralDetails['updated_at']            = !empty($postRelDetails['p1_updated_at'])?date("D M d, Y H:i:s", strtotime($this->appEncodeDecode->UserTimezone($postRelDetails['p1_updated_at'],$timeZone))):'';
                 $returnReferralDetails['referred_by']           = $neoReferrerDetails['emailid'];
                 $returnReferralDetails['resume_path']           = !empty($postRelDetails['resume_path'])?$postRelDetails['resume_path']:$cvPath;
                 $returnReferralDetails['resume_original_name']  = $postRelDetails['resume_original_name'];
@@ -806,7 +808,7 @@ class PostGateway {
                         $returnReferralDetails['awaiting_action_by'] = '';
                     }
 //                    $returnReferralDetails['awaiting_action_updated_at'] = !empty($postRelDetails['awaiting_action_updated_at'])?date("D M d, Y H:i:s A", strtotime($postRelDetails['awaiting_action_updated_at'])):'';
-                    $returnReferralDetails['awaiting_action_updated_at'] = !empty($postRelDetails['awaiting_action_updated_at'])?date("D M d, Y H:i:s A", strtotime($this->appEncodeDecode->UserTimezone($postRelDetails['awaiting_action_updated_at'],$timeZone))):'';
+                    $returnReferralDetails['awaiting_action_updated_at'] = !empty($postRelDetails['awaiting_action_updated_at'])?date("D M d, Y H:i:s", strtotime($this->appEncodeDecode->UserTimezone($postRelDetails['awaiting_action_updated_at'],$timeZone))):'';
                     $returnReferralDetails['awaiting_action_status']     = !empty($postRelDetails['awaiting_action_status'])?$postRelDetails['awaiting_action_status']:'ACCEPTED';
                 }
                 $returnDetails[] = $returnReferralDetails;
@@ -1052,7 +1054,7 @@ class PostGateway {
             $response['awaiting_action_by']         =  !empty($relationDetails['awaiting_action_by'])?$userFirstName:'';
             $response['awaiting_action_updated_at'] =  !empty($relationDetails['awaiting_action_updated_at'])?$relationDetails['awaiting_action_updated_at']:date("d-m-Y");
 //            $response['awaiting_action_updated_at'] =  date("D M d, Y H:i:s A", strtotime($response['awaiting_action_updated_at']));
-            $response['awaiting_action_updated_at'] =  date("D M d, Y H:i:s A", strtotime($this->appEncodeDecode->UserTimezone($response['awaiting_action_updated_at'],$timeZone)));
+            $response['awaiting_action_updated_at'] =  date("D M d, Y H:i:s", strtotime($this->appEncodeDecode->UserTimezone($response['awaiting_action_updated_at'],$timeZone)));
             
             if (!empty($response)) {   
                 $message = array('msg' => array(Lang::get('MINTMESH.referrals.success')));
@@ -1172,7 +1174,7 @@ class PostGateway {
                     } 
                     $createdAt = $postRelDetails['created_at']; 
 //                    $createdAt = $this->appEncodeDecode->UserTimezone($postRelDetails['created_at'],$input['time_zone']); 
-                    $returnReferralDetails['created_at']            = \Carbon\Carbon::createFromTimeStamp(strtotime($this->appEncodeDecode->UserTimezone($createdAt,$timeZone)))->diffForHumans();
+                    $returnReferralDetails['created_at']            = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
                     $returnReferralDetails['referred_by']           = $neoReferrerDetails['emailid'];
                     $returnReferralDetails['referred_by_name']      = !empty($referrerName)?$referrerName:$neoReferrerName;
                     $returnReferralDetails['referred_by_dp_image']  = $neoReferrerDetails['dp_renamed_name'];
@@ -1793,21 +1795,21 @@ class PostGateway {
                 $value = $value[0];
                 $schedule['schedule_id']    = $value->getID();
                 $gmtstart_date = $value->start_date." " .$value->start_time;
-                $schedule['gmt_start_on_date'] = !empty($gmtstart_date)?$gmtstart_date:'';
-//                $schedule['gmt_start_on_date'] = !empty($gmtstart_date)?date("D M d, Y H:i:s A", strtotime($this->appEncodeDecode->UserTimezone($gmtstart_date,$input['time_zone']))):'';
+//                $schedule['gmt_start_on_date'] = !empty($gmtstart_date)?$gmtstart_date:'';
+                $schedule['gmt_start_on_date'] = !empty($value->gmt_start_date)?date("D M d, Y H:i:s A", strtotime($this->appEncodeDecode->UserTimezone($value->gmt_start_date,$input['time_zone']))):'';
                 $gmtend_date = $value->end_date." " .$value->end_time;
-                $schedule['gmt_end_on_date'] = !empty($gmtend_date)?$gmtend_date:'';
-//                $schedule['gmt_end_on_date'] = !empty($gmtend_date)?date("D M d, Y H:i:s A", strtotime($this->appEncodeDecode->UserTimezone($gmtend_date,$input['time_zone']))):'';
+//                $schedule['gmt_end_on_date'] = !empty($gmtend_date)?$gmtend_date:'';
+                $schedule['gmt_end_on_date'] = !empty($value->gmt_end_date)?date("D M d, Y H:i:s A", strtotime($this->appEncodeDecode->UserTimezone($value->gmt_end_date,$input['time_zone']))):'';
                 $currentDate = gmdate("Y-m-d H:i:s");
                 if($value->gmt_end_date < $currentDate ){
                     $schedule['status']    = 'CLOSED';
                 }else{
                      $schedule['status']    = 'OPEN';
                 }
-                $schedule['start_on_date']  = date('Y/m/d', strtotime($value->start_date));
-                $schedule['start_on_time']  = $value->start_time;
-                $schedule['end_on_date']    = date('Y/m/d', strtotime($value->end_date));
-                $schedule['end_on_time']    = $value->end_time;
+                $schedule['start_on_date']  = date('Y/m/d', strtotime($this->appEncodeDecode->UserTimezone($value->gmt_start_date,$input['time_zone'])));
+                $schedule['start_on_time']  = date('H:i', strtotime($this->appEncodeDecode->UserTimezone($value->gmt_start_date,$input['time_zone'])));;
+                $schedule['end_on_date']    = date('Y/m/d', strtotime($this->appEncodeDecode->UserTimezone($value->gmt_end_date,$input['time_zone'])));
+                $schedule['end_on_time']    = date('H:i', strtotime($this->appEncodeDecode->UserTimezone($value->gmt_end_date,$input['time_zone'])));;
                 $campSchedule[] = $schedule; 
             }
             //get Campaign Posts here
@@ -2455,11 +2457,15 @@ class PostGateway {
                             $campaignJobs = array();
                             #campaigns list 
                             $campaignId = $jobsList->getID();
+                            $created_at = !empty($jobsList->created_at) ? $jobsList->created_at :'';
+                            if($created_at){
+                               $created_at = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($created_at, $timeZone)));
+                            }
                             $record['campaign_id']          = $campaignId;
                             $record['post_type']            = 'campaign';
                             $record['campaign_name']        = $jobsList->campaign_name;//'designers campaign';
                             $record['campaign_type']        = $jobsList->campaign_type;//'2-4 Years Exp';
-                            $record['campaign_date']        = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($jobsList->created_at, $timeZone)));//'2016-11-30 12:56:14';
+                            $record['campaign_date']        = $created_at;//'2016-11-30 12:56:14';
                             $record['created_by']           = $jobsList->created_by;
                             #get campaign location
                             if($jobsList->location_type == 'online'){
@@ -2490,11 +2496,15 @@ class PostGateway {
                         }  else {
                             #jobs list
                             $postId                     = $jobsList->getID();
+                            $created_at = !empty($jobsList->created_at) ? $jobsList->created_at :'';
+                            if($created_at){
+                               $created_at = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($created_at, $timeZone)));
+                            }
                             $record['post_id']          = $postId;
                             $record['post_type']        = $jobsList->post_type;//'external';
                             $record['job_name']         = $jobsList->service_name;//'IOS DEVELOPER';
                             $record['job_location']     = $jobsList->service_location;//'bangalore, karnataka, india';
-                            $record['job_date']         = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($jobsList->created_at, $timeZone)));//'2016-12-28 12:26:42'; 
+                            $record['job_date']         = $created_at;//'2016-12-28 12:26:42'; 
                             $record['created_by']       = $jobsList->created_by;
                             #get experience range name
                             $jobExperience = $this->referralsRepository->getExperienceRangeNameForPost($postId);
@@ -2591,6 +2601,10 @@ class PostGateway {
             $relData = !empty($postResultAry[0][4])?$postResultAry[0][4]:'';
             $jobDesc = $jobData['job_description'];
             $jobDesc = trim(preg_replace('/ +/', ' ', preg_replace('/[^A-Za-z0-9 ]/', ' ', urldecode(html_entity_decode(strip_tags($jobDesc))))));
+            $created_at = !empty($jobData['created_at']) ? $jobData['created_at'] : '';
+            if($created_at){
+                $created_at = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($jobData['created_at'], $timeZone)));
+            }
             
             $record['post_id']          = $jobData['post_id'];
             $record['job_name']         = $jobData['service_name'];
@@ -2604,7 +2618,7 @@ class PostGateway {
             $record['position_id']      = $jobData['position_id'];
             $record['job_description']  = $jobDesc;
             $record['created_by']       = $jobData['created_by'];
-            $record['created_at']       = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($jobData['created_at'], $timeZone)));;
+            $record['created_at']       = $created_at;
             $record['company_name']     = !empty($jobData['company'])?$jobData['company']:'';
             #social job share link
             $refId      = $postId.'_'.$neoUserId;

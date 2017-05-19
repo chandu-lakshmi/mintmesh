@@ -257,6 +257,8 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                             #check update status
                             if($allowToUpdate){
                               $sqlQuery.=" ,`status`='".$status."' ";
+                            } else {
+                                $limitExceeded = 1;
                             }
                             $sqlQuery.= " WHERE `emailid` = '".$emailId."' and`company_id` ='".$companyId."'";
                             

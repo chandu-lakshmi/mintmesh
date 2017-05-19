@@ -1280,9 +1280,11 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
         }
         
         public function getResumeString($resumeJSONPath) {
-            $jsonString = file_get_contents($resumeJSONPath);
-            $resumeString = str_replace(array("\r\n","\r","\n","\\r","\\n","\\r\\n","\\n\\n")," ",$jsonString);
-            
+            $resumeString = '';
+            if(!empty($resumeJSONPath)){
+                $jsonString = file_get_contents($resumeJSONPath);
+                $resumeString = str_replace(array("\r\n","\r","\n","\\r","\\n","\\r\\n","\\n\\n")," ",$jsonString);
+            } 
             return $resumeString;
         }
         

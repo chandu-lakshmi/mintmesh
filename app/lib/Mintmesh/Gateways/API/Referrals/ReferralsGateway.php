@@ -1356,7 +1356,10 @@ class ReferralsGateway {
                     {
                         $returnArray["one_way_status"] = strtolower($result[0][0]->one_way_status) ;
                         $p1_updated_at = !empty($result[0][0]->p1_updated_at)?$result[0][0]->p1_updated_at:"";
-                        $returnArray["p1_updated_at"] = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($p1_updated_at, $timeZone)));
+                        if($p1_updated_at){
+                           $p1_updated_at =  date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($p1_updated_at, $timeZone)));
+                        }
+                        $returnArray["p1_updated_at"] = $p1_updated_at;
                     }
                     else
                     {
@@ -1366,7 +1369,10 @@ class ReferralsGateway {
                     {
                         $returnArray["complete_status"] = strtolower($result[0][0]->completed_status) ;
                         $p3_updated_at = !empty($result[0][0]->p3_updated_at)?$result[0][0]->p3_updated_at:"";
-                        $returnArray["p3_updated_at"] = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($p3_updated_at, $timeZone)));
+                        if($p3_updated_at){
+                            $p3_updated_at = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($p3_updated_at, $timeZone)));
+                        }
+                        $returnArray["p3_updated_at"] = $p3_updated_at ;
                     }
                     else
                     {
@@ -2288,7 +2294,11 @@ class ReferralsGateway {
             $campAry['cmp_name']    = $companyName;
             #get campaign schedule and posts details
             $viewCampRes = $this->viewCampaign($campaignId);
-            $campAry['created_at']  = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($campaign->created_at, $timeZone)));
+            $created_at = !empty($campaign->created_at) ? $campaign->created_at : '';
+            if($created_at){
+                $created_at = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($created_at, $timeZone)));
+            }
+            $campAry['created_at']  = $created_at;
             $campAry['posts_count'] = $viewCampRes['jobs_count'];
             #form location Details here
             if(strtolower($campAry['location_type']) == 'onsite'){
@@ -2363,10 +2373,13 @@ class ReferralsGateway {
                $value  = isset($value[0])?$value[0]:'';
                $postId = !empty($value->getID())?$value->getID():'';
                $created_at = !empty($value->created_at)?$value->created_at:'';
+               if($created_at){
+                   $created_at = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($created_at, $timeZone)));
+               }
                $refAry['post_id']       = $postId;
                $refAry['post_name']     = !empty($value->service_name)?$value->service_name:'';
                $refAry['location']      = !empty($value->service_location)?$value->service_location:'';
-               $refAry['created_at']    = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($created_at, $timeZone)));;
+               $refAry['created_at']    = $created_at;
                #get the post reward details here
                $postRewards             = $this->getPostRewards($postId, $userCountry, $isEnterprise=1);
                $refAry['rewards']       = $postRewards;
