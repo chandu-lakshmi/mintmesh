@@ -1757,9 +1757,11 @@ class ReferralsGateway {
         }
         public function getReferralsCash($input)
         {
+            $timeZone       = !empty($input['time_zone']) ? $input['time_zone'] : 0; 
             $this->loggedinUserDetails = $this->getLoggedInUser();
             $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
             $page=0;
+            
             if (!empty($input['page']))
             {
                 $page = $input['page'];
@@ -1783,10 +1785,16 @@ class ReferralsGateway {
                         $r['relation_count'] = isset($postDetailsR[0][0])?$postDetailsR[0][0]->relation_count:array();
                     }
                     $fromUser = $this->neoUserRepository->getNodeByEmailId($res->from_user);
+                    
+                    $last_modified_at = !empty($res->last_modified_at) ? $res->last_modified_at : '';
+                    if($last_modified_at){
+                        $last_modified_at = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($last_modified_at, $timeZone)));
+                    }
+                    
                     $r['from_email'] = $res->from_user;
                     $r['for_email'] = $res->for_user ;
                     $r['my_email'] = $res->to_user ;
-                    $r['created_at'] = $res->last_modified_at ;
+                    $r['created_at'] =  $last_modified_at;
                     $r['amount'] = $res->amount ;
                     if (!empty($this->neoLoggedInUserDetails->phone_country_name) && strtolower($this->neoLoggedInUserDetails->phone_country_name) == 'india')
                     {

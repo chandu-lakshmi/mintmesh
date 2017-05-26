@@ -115,6 +115,7 @@ return array(
                 "resume_attachment" => "emails.Api.User.resume_attachment",
                 "enterprise_contacts_invitation" => "emails.Api.User.enterprise_contacts_invitation",
                 "contacts_job_invitation" => "emails.Api.User.job_invitation",
+             "contacts_job_active_invitation" => "emails.Api.User.job_Active",
                 "contacts_campaign_invitation" => "emails.Api.User.campaign_invitation",
                 "user_activation" => "emails.Api.User.user_activation"
          ),
@@ -501,12 +502,14 @@ return array(
             "post_closed"=>"Job is closed",
             "referred"=>"Candidate is already referred for the post.",
             "referrer_nvalid"=>"Invalid referrer",
-            "invalid"=>"Invalid reference id and post id"
+            "invalid"=>"Invalid reference id and post id",
+            "user_separated"=>"This job is no longer available."
     ),
     'apply_jobs_list'=>array(
             "success"=>"Successfully retrieved Jobs List",
             "no_jobs"=>"No Jobs found",
-            "failure"=>"Failed to retrieve Jobs List"
+            "failure"=>"Failed to retrieve Jobs List",
+            "user_separated"=>"These jobs are no longer available."
     ),
     'apply_job_details'=>array(
             "success"=>"Successfully retrieved Job details",

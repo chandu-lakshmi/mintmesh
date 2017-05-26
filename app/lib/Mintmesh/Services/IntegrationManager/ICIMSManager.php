@@ -17,7 +17,7 @@ use DB,
     Lang;
 
 class ICIMSManager extends IntegrationManager {
-    
+
     protected $db_user, $db_pwd, $client, $appEncodeDecode, $db_host, $db_port;
     protected $userRepository, $guzzleClient;
     public $requestParams = array();
@@ -39,81 +39,63 @@ class ICIMSManager extends IntegrationManager {
         $this->guzzleClient = new guzzleClient();
         $this->appEncodeDecode = new APPEncode();
     }
-    
+
     public function intiateRequest($company_hcm_job_id) {
-        
+
         $integrationManager = new IntegrationManager();
         $companyJobDetail = $integrationManager->getCompanyHcmJobbyId($company_hcm_job_id);
         #scheduler enabled or disabled here
-        if(!empty($companyJobDetail) && $companyJobDetail->status == '1'){
+        if (!empty($companyJobDetail) && $companyJobDetail->status == '1') {
             $JobDetails = $integrationManager->getJobDetail($companyJobDetail->hcm_jobs_id);
             $companyJobConfigDetails = $integrationManager->getCompanyJobConfigs($JobDetails->hcm_id, $companyJobDetail->company_id);
             $requestParams = $integrationManager->composeRequestParams($JobDetails, $companyJobDetail, $companyJobConfigDetails);
 
             $this->requestParams = $requestParams;
             $return = $integrationManager->doRequest($requestParams);
-            $this->processResponseData($return, $companyJobDetail->hcm_jobs_id, $companyJobDetail->company_id, $requestParams);
+            $this->processResponseData($return, $company_hcm_job_id, $companyJobDetail->company_id, $requestParams);
             $integrationManager->updateLastProcessedTime($company_hcm_job_id, $companyJobDetail);
         }
         return TRUE;
     }
-    
+
     public function processResponseData($responseBody, $jobId, $companyId, $requestParams) {
-        
-       $integrationManager = new IntegrationManager();
+         $SFManager = new SFManager();
+        $integrationManager = new IntegrationManager();
         $array = json_decode($responseBody, TRUE);
-        $jobsInfo = $return = $arrayIcicms = array(); 
+        $jobsInfo = $return = $arrayIcicms = array();
         if (isset($array['searchResults'])) {
-        foreach ($array['searchResults'] as $key => $value) {
-            $jobsInfo = $this->doJobsRequest($value['self'],$requestParams);
-             $arrayIcicms[$key] = json_decode($jobsInfo, TRUE);
-                $return[$key]['jobUrl'] = $value['self'];  
-                $return[$key]['jobTitle'] = $arrayIcicms[$key]['header'][0]['value'];  
-                $return[$key]['jobId'] = substr($arrayIcicms[$key]['header'][1]['value'], 5);  
-                $return[$key]['numberofpositions'] = $arrayIcicms[$key]['header'][2]['value'];  
-                $return[$key]['joblocation'] = $arrayIcicms[$key]['header'][3]['value']; 
-                $return[$key]['jobpoststart'] = $arrayIcicms[$key]['header'][4]['value']; 
-                $return[$key]['positioncategory'] = $arrayIcicms[$key]['header'][5]['value']; 
-                $return[$key]['overview'] = strip_tags($arrayIcicms[$key]['description'][0]['value'] . $arrayIcicms[$key]['description'][1]['value'] . $arrayIcicms[$key]['description'][2]['value']); 
+             $companyDetails = $integrationManager->getCompanyDetails($companyId);
+        $companyDetails = $companyDetails[0];
+        $companyName = $companyDetails->name; //'company68';
+        $companyCode = $companyDetails->code; //510632;
+        $companyLogo = $companyDetails->logo; //510632;
+            foreach ($array['searchResults'] as $key => $value) {
+                $isNotExisted = $SFManager->checkJobExistedWithReqIdOrNot($value['id'], $companyCode, 'ICIMS');
+                if ($isNotExisted) {
+                $jobsInfo = $this->doJobsRequest($value['self'], $requestParams);
+                $arrayIcicms[$key] = json_decode($jobsInfo, TRUE);
+                $return[$key]['portalUrl'] = $value['portalUrl'];
+                $return[$key]['jobTitle'] = $arrayIcicms[$key]['header'][0]['value'];
+                $return[$key]['jobId'] = $value['id'];//substr($arrayIcicms[$key]['header'][1]['value'], 5);
+                $return[$key]['numberofpositions'] = $arrayIcicms[$key]['header'][2]['value'];
+                $return[$key]['joblocation'] = $arrayIcicms[$key]['header'][3]['value'];
+                $return[$key]['jobpoststart'] = $arrayIcicms[$key]['header'][4]['value'];
+                $return[$key]['positioncategory'] = $arrayIcicms[$key]['header'][5]['value'];
+                $return[$key]['overview'] = strip_tags($arrayIcicms[$key]['description'][0]['value'] . $arrayIcicms[$key]['description'][1]['value'] . $arrayIcicms[$key]['description'][2]['value']);
 //                $return[$key]['responsibilities'] = $arrayIcicms[$key]['description'][1]['value']; 
 //                $return[$key]['qualifications'] = $arrayIcicms[$key]['description'][2]['value']; 
-            
-        }
-       // print_r($return); die;
-       $this->createIcimsJob($return, $companyId, $jobId);
-        //$this->processJobsResponseData($return,$jobId, $companyId, $requestParams);
-       }
-        
-    }
-    
-    public function processJobsResponseData($jobsInfo,$jobId, $companyId, $requestParams) {
-        print_r($jobsInfo); die;
-         $return = array();
-        if (isset($jobsInfo)) {
-            foreach ($jobsInfo as $key => $value) {
-                $return[$key]['jobTitle'] = $value['header'][0]['value'];  
-                $return[$key]['jobId'] = $value['header'][1]['value'];  
-                $return[$key]['numberofpositions'] = $value['header'][2]['value'];  
-                $return[$key]['joblocation'] = $value['header'][3]['value']; 
-                $return[$key]['jobpoststart'] = $value['header'][4]['value']; 
-                $return[$key]['positioncategory'] = $value['header'][5]['value']; 
-                $return[$key]['overview'] = $value['description'][0]['value']; 
-                $return[$key]['responsibilities'] = $value['description'][1]['value']; 
-                $return[$key]['qualifications'] = $value['description'][2]['value']; 
             }
-         //print_r($return); die;
-            
+            }
+             $this->createIcimsJob($return, $companyId, $jobId);
         }
-
-        return true;
     }
-    
-     protected function doJobsRequest($api_url,$requestParams) {
+
+    protected function doJobsRequest($api_url, $requestParams) {
         // do request to hcm endpoints
-       $endPoint = $api_url;
+        $endPoint = $api_url;
         $request = $this->guzzleClient->get($endPoint);
         if (array_key_exists(self::USERNAME, $requestParams)) {
-            
+
             $username = $requestParams[self::USERNAME];
             $password = $requestParams[self::PASSWORD];
             \Log::info("ICICMS Endpoint hit : $endPoint");
@@ -126,20 +108,20 @@ class ICIMSManager extends IntegrationManager {
 
         try {
             $response = $request->send();
-            
+
             if ($response->isSuccessful() && $response->getStatusCode() == self::SUCCESS_RESPONSE_CODE) {
                 return $response->getBody();
             } else {
                 \Log::info("Error while getting response : $response->getInfo()");
             }
         } catch (ClientErrorResponseException $exception) {
-         
+
             $responseBody = $exception->getResponse()->getBody(true);
         }
-
     }
-    
+
     public function createIcimsJob($dataAry, $companyId, $jobId) {
+       // print_r($dataAry); die;
         $SFManager = new SFManager();
         $integrationManager = new IntegrationManager();
         $objCompany = new \stdClass();
@@ -168,22 +150,26 @@ class ICIMSManager extends IntegrationManager {
             $neoUser = $this->getNeoUserByEmailId($userEmailId);
             $fromId = !empty($neoUser->getID()) ? $neoUser->getID() : ''; //292819;
             $userData = $SFManager->getUserByEmail($userEmailId);
-            $this->user = !empty($userData[0])?$userData[0]:'';
+            $this->user = !empty($userData[0]) ? $userData[0] : '';
         }
+        // print_r($dataAry); die;
         if (!empty($dataAry)) {
+
             foreach ($dataAry as $row) {
                 $inviteCount = 0;
                 $neoInput = $relationAttrs = $postCompanyrelationAttrs = $neoCompanyBucketContacts = array();
                 $JobMappingFields = $integrationManager->getJobMappingFields($hcmJobId, $companyId);
+                // print_r($JobMappingFields); 
                 foreach ($JobMappingFields as $field) {
 
                     $neoInput[$field->destination_key] = !empty($row[$field->source_key]) ? $row[$field->source_key] : '';
                 }
+                // print_r($neoInput); die;
                 $neoInput['service_scope'] = "find_candidate";
                 $neoInput['service_from_web'] = 1;
-               
-                    $neoInput['employment_type'] = $dfText;
-               
+
+                $neoInput['employment_type'] = $dfText;
+
                 $neoInput['service_period'] = 'immediate';
                 $neoInput['service_type'] = 'global';
                 $neoInput['free_service'] = 1;
@@ -192,36 +178,36 @@ class ICIMSManager extends IntegrationManager {
                 }
                 $neoInput['service_cost'] = '';
                 $neoInput['company'] = $companyName;
-                $neoInput['job_description'] = ''; //job_description
+                $neoInput['job_description'] = $row['overview']; //job_description
                 $neoInput['skills'] = '';
                 $neoInput['status'] = Config::get('constants.POST.STATUSES.ACTIVE');
                 $neoInput['created_by'] = $userEmailId;
                 $neoInput['bucket_id'] = $bucketId;
                 $neoInput['post_type'] = 'external';
                 $neoInput['hcm_type'] = 'ICIMS';
-
                 $neoInput['job_function'] = (!empty($neoInput['job_function']) && !filter_var($neoInput['job_function'], FILTER_VALIDATE_INT)) ? $neoInput['job_function'] : $dfText;
                 $neoInput['experience_range'] = $dfText;
                 $neoInput['industry'] = $dfText;
-
+                $neoInput['service_name'] = $row['jobTitle'];
+                $neoInput['portalUrl'] = $row['portalUrl'];
                 $relationAttrs['created_at'] = date("Y-m-d H:i:s");
                 $relationAttrs['company_name'] = $companyName;
                 $relationAttrs['company_code'] = $companyCode;
+                
                 #get the extra information
-              //  $reqId = $neoInput['jobid'];
-               
-//                $isNotExisted = $SFManager->checkJobExistedWithReqIdOrNot($reqId);
-//                echo $isNotExisted; die;
+                $reqId = $neoInput['requistion_id'];
+
+//                $isNotExisted = $SFManager->checkJobExistedWithReqIdOrNot($reqId, $companyCode);
 //                if ($isNotExisted) {
-                   
+
                     //print_r($neoInput).exit;
                     $createdPost = $SFManager->createPostAndUserRelation($fromId, $neoInput, $relationAttrs);
-                    print_r($createdPost); die;
                     if (isset($createdPost[0]) && isset($createdPost[0][0])) {
                         $postId = $createdPost[0][0]->getID();
                     } else {
                         $postId = 0;
                     }
+                    
                     if (!empty($postId)) {
                         #map post and Rewards
                         $rewardsAttrs = $excludedList = array();
@@ -258,18 +244,18 @@ class ICIMSManager extends IntegrationManager {
                                 $pushData['notification_msg'] = $notificationMsg;
                                 $pushData['notification_log'] = 1; //for log the notification or not
                                 Queue::push('Mintmesh\Services\Queues\CreateEnterprisePostContactsRelation', $pushData, 'default');
-                                
+
                                 #send push notifications to all the contacts
-                                $notifyData   = array();
-                                $notifyData['serviceId']            = $postId;
-                                $notifyData['loggedinUserDetails']  = $this->user;
-                                $notifyData['neoLoggedInUserDetails'] = $objCompany;//obj
-                                $notifyData['includedList']     = array($contacts->emailid);
-                                $notifyData['excludedList']     = $excludedList;
-                                $notifyData['service_type']     = '';
+                                $notifyData = array();
+                                $notifyData['serviceId'] = $postId;
+                                $notifyData['loggedinUserDetails'] = $this->user;
+                                $notifyData['neoLoggedInUserDetails'] = $objCompany; //obj
+                                $notifyData['includedList'] = array($contacts->emailid);
+                                $notifyData['excludedList'] = $excludedList;
+                                $notifyData['service_type'] = '';
                                 $notifyData['service_location'] = '';
-                                $notifyData['notification_type']  = 27;
-                                $notifyData['service_name']       = $neoInput['service_name'];
+                                $notifyData['notification_type'] = 27;
+                                $notifyData['service_name'] = !empty($neoInput['service_name']) ? $neoInput['service_name'] : '';
                                 Queue::push('Mintmesh\Services\Queues\NewPostReferralQueue', $notifyData, 'Notification');
 
                                 #send email notifications to all the contacts
@@ -303,4 +289,5 @@ class ICIMSManager extends IntegrationManager {
         }
         return true;
     }
+
 }

@@ -628,7 +628,7 @@ class EnterpriseGateway {
                             $responseMsg = self::ERROR_RESPONSE_MESSAGE;
                             $message = array(Lang::get('MINTMESH.login.email_inactive'));
                             $data = array();
-                    }
+                        }
                     }else{
                     //  returning failure message
                         $responseCode = self::ERROR_RESPONSE_CODE;
@@ -1723,8 +1723,12 @@ class EnterpriseGateway {
                     #check available contact count here.
                     if(empty($available)){
                         $allowToUpdate = FALSE;
+                    } else {
+                        $this->enterpriseRepository->updateUserStatus($recordId);
                     }
                 } 
+            } else if ($status == 'Separated'){
+                $updated = $this->enterpriseRepository->deleteUserOauthAccessTokens($recordId);
             }
             #check allowToUpdate flag enable or disable.
             if($allowToUpdate){
@@ -1973,12 +1977,13 @@ class EnterpriseGateway {
             $arrUniqueImpId = $arrUniqueResults = array();
             foreach ($allDataInSheet as $rowKey => $rowVal) {
                 foreach ($rowVal as $cellKey => $cellVal) {
-                    $string_email = isset($cellVal[3]) ? $cellVal[3] : '';
+                    $string_email = isset($cellVal[3]) ? trim($cellVal[3]) : '';
 
                     if(!empty($string_email) && filter_var($string_email, FILTER_VALIDATE_EMAIL)){
 
                         $cellVal  = array_map('trim', $cellVal);
                         $email_id = str_replace("&nbsp;", '', $cellVal[3]);
+                        $email_id = trim($email_id);
 
                         $cellVal[0] = ($cellVal[0] !='' && in_array($cellVal[0],$arrUniqueImpId))?'':$cellVal[0];
 
@@ -2008,12 +2013,13 @@ class EnterpriseGateway {
         $companyCode = !empty($input['company_code'])?$input['company_code']:'';
         $bucketId    = !empty($input['bucket_id'])?$input['bucket_id']:'';
         $companyId   = !empty($input['company_id'])?$input['company_id']:'';
+        $contactEmailId = !empty($input['emailid'])?$this->appEncodeDecode->filterString(strtolower(trim($input['emailid']))):'';
         $inputParams['company_id']   = $companyId;
         $inputParams['user_id']      = $userId;
         $inputParams['bucket_id']    = $input['bucket_id'];
         $inputParams['firstname']    = !empty($input['firstname'])?$input['firstname']:'';      
         $inputParams['lastname']     = !empty($input['lastname'])?$input['lastname']:'';      
-        $inputParams['emailid']      = $contactEmailId = !empty($input['emailid'])?$this->appEncodeDecode->filterString(strtolower($input['emailid'])):'';      
+        $inputParams['emailid']      = $contactEmailId ;      
         $inputParams['phone']        = !empty($input['phone'])?$input['phone']:'';      
         $inputParams['status']       = $status = !empty($input['status'])?$input['status']:'Active';  
         $inputParams['employeeid']   = !empty($input['other_id'])?$input['other_id']:'';      
@@ -2026,7 +2032,7 @@ class EnterpriseGateway {
         $neoInput['firstname']   = $input['firstname'];
         $neoInput['lastname']    = $input['lastname'];
         $neoInput['phone']       = !empty($input['phone'])?$input['phone']:'';          
-        $neoInput['emailid']     = $this->appEncodeDecode->filterString(strtolower($input['emailid']));
+        $neoInput['emailid']     = $contactEmailId;
         $neoInput['employeeid']  = !empty($input['other_id'])?$input['other_id']:'';
         $neoInput['status']      = $status;  
         $checkContact = $this->enterpriseRepository->checkContact($inputParams);
@@ -2507,7 +2513,11 @@ class EnterpriseGateway {
        }else{
        $postDetails['fullname'] = $neoUsers->fullname;}
        $postDetails['location'] = isset($neoUsers->location)?$neoUsers->location:'';
+       if($neoUsers->status == 'Separated'){
+           $postDetails['status'] = 'Inactive';
+       }else{
        $postDetails['status'] = isset($neoUsers->status)?$neoUsers->status:'';
+       }
        $postDetails['designation'] = isset($neoUsers->designation)?$neoUsers->designation:'';
        $postDetails['photo'] = isset($neoUsers->photo)?$neoUsers->photo:'';
        $userDetails[] = $postDetails;
@@ -2888,7 +2898,8 @@ class EnterpriseGateway {
             foreach ($companyBucketJobs as $jobs){
                 #creating relation with each job
                 $pushData['postId']  = !empty($jobs[0])?$jobs[0]:'';
-                Queue::push('Mintmesh\Services\Queues\CompanyPostsAutoConnectWithContactQueue', $pushData, 'default');
+                //Queue::push('Mintmesh\Services\Queues\CompanyPostsAutoConnectWithContactQueue', $pushData, 'default');
+                $this->neoPostRepository->companyPostsAutoConnectWithContact($pushData);
             }
         }
         $companyBucketCampaigns  =  $this->neoEnterpriseRepository->getCompanyBucketCampaigns($companyCode, $bucketId);

@@ -839,42 +839,52 @@ class UserGateway {
             {
                 $neoUser =  $this->neoUserRepository->getNodeByEmailId($inputUserData['username']) ;
                 $loggedinUserDetails = $this->userRepository->getUserByEmail($inputUserData['username']);
-                $userId         = !empty($loggedinUserDetails->id)?$loggedinUserDetails->id:'';
-                #log user activity here
-                $this->userRepository->addUserActivityLogs($userId, $appType=1, $moduleType=12);
-                if($loggedinUserDetails->is_enterprise=='1'){
-                    $this->userRepository->updateIsEnterpriseStatus($loggedinUserDetails->emailid);
+                
+                if($loggedinUserDetails->status == 1){
+                    
+                    $userId         = !empty($loggedinUserDetails->id)?$loggedinUserDetails->id:'';
+                    #log user activity here
+                    $this->userRepository->addUserActivityLogs($userId, $appType=1, $moduleType=12);
+                    if($loggedinUserDetails->is_enterprise=='1'){
+                        $this->userRepository->updateIsEnterpriseStatus($loggedinUserDetails->emailid);
+                    }
+
+                    $remaning_days = $this->userRepository->getRemaningDays($inputUserData['username']);
+                    if (!empty($neoUser))
+                    {
+                        $userDetails = $this->formUserDetailsArray($neoUser) ;
+    //                    $loggedinUserDetails = $this->userRepository->getUserByEmail($inputUserData['username']);
+                        $userCountDetails = $this->getUserBadgeCounts($loggedinUserDetails,$userDetails['profile_completion_percentage']);
+                        foreach ($userCountDetails as $k=>$v){
+                            $userDetails[$k]=$v ;
+                        }
+                        $oauthResult['user'] = $userDetails ;
+                        $oauthResult['user']['remaning_days'] = $remaning_days;//$this->userRepository->getRemaningDays($userDetails['emailid']);
+                    }
+                    //create a relation for device token
+                    $deviceToken = $inputUserData['deviceToken'] ;
+                    $osType      = !empty($inputUserData['os_type'])?$inputUserData['os_type']:'';
+                    $this->neoUserRepository->mapToDevice($deviceToken, $inputUserData['username'], $osType) ;
+                    if($remaning_days->days != 0 || ($remaning_days->status && $remaning_days->emailverified)) {
+                        // returning success message
+                        $message = array('msg'=>array(Lang::get('MINTMESH.login.login_success')));
+                        $responseCode = self::SUCCESS_RESPONSE_CODE;
+                        $responseMsg = self::SUCCESS_RESPONSE_MESSAGE;
+                        $data = $oauthResult;
+                    } else {
+                        // returning failure message                      
+                        $responseCode = self::SUCCESS_RESPONSE_CODE;
+                        $responseMsg = self::SUCCESS_RESPONSE_MESSAGE;
+                        $message = array('msg'=>array(Lang::get('MINTMESH.login.email_inactive')));
+                        $data = $oauthResult;
+                    }
+                } else {
+                    $responseCode = self::ERROR_RESPONSE_CODE;
+                    $responseMsg = self::ERROR_RESPONSE_MESSAGE;
+                    $message = Lang::get('MINTMESH.login.inactive_user');
+                    $data = array();
                 }
                 
-                $remaning_days = $this->userRepository->getRemaningDays($inputUserData['username']);
-                if (!empty($neoUser))
-                {
-                    $userDetails = $this->formUserDetailsArray($neoUser) ;
-//                    $loggedinUserDetails = $this->userRepository->getUserByEmail($inputUserData['username']);
-                    $userCountDetails = $this->getUserBadgeCounts($loggedinUserDetails,$userDetails['profile_completion_percentage']);
-                    foreach ($userCountDetails as $k=>$v){
-                        $userDetails[$k]=$v ;
-                    }
-                    $oauthResult['user'] = $userDetails ;
-                    $oauthResult['user']['remaning_days'] = $remaning_days;//$this->userRepository->getRemaningDays($userDetails['emailid']);
-                }
-                //create a relation for device token
-                $deviceToken = $inputUserData['deviceToken'] ;
-                $osType      = !empty($inputUserData['os_type'])?$inputUserData['os_type']:'';
-                $this->neoUserRepository->mapToDevice($deviceToken, $inputUserData['username'], $osType) ;
-                if($remaning_days->days != 0 || ($remaning_days->status && $remaning_days->emailverified)) {
-                    // returning success message
-                    $message = array('msg'=>array(Lang::get('MINTMESH.login.login_success')));
-                    $responseCode = self::SUCCESS_RESPONSE_CODE;
-                    $responseMsg = self::SUCCESS_RESPONSE_MESSAGE;
-                    $data = $oauthResult;
-                } else {
-                    // returning failure message                      
-                    $responseCode = self::SUCCESS_RESPONSE_CODE;
-                    $responseMsg = self::SUCCESS_RESPONSE_MESSAGE;
-                    $message = array('msg'=>array(Lang::get('MINTMESH.login.email_inactive')));
-                    $data = $oauthResult;
-                }
             }
             else
             {
@@ -4243,6 +4253,7 @@ class UserGateway {
         public function getSpecificLevelInfo($input)
         {
             $returnResult = array();
+            $timeZone     = !empty($input['time_zone']) ? $input['time_zone'] : 0; 
             $loggedinUserDetails = $this->getLoggedInUser();
             if ($loggedinUserDetails)
             {
@@ -4251,9 +4262,13 @@ class UserGateway {
                 {
                     foreach ($result as $row)
                     {
+                        $created_at = !empty($row->created_at) ? $row->created_at : '';
+                        if($created_at){
+                            $created_at = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($created_at, $timeZone)));
+                        }
                         $arr = array() ;
                         $arr['credits'] = $row->points ;
-                        $arr['created_at'] = $row->created_at ;
+                        $arr['created_at'] = $created_at;
                         $arr['points_type'] = $row->point_type ;
                         if (!empty($row->user_email))
                         {

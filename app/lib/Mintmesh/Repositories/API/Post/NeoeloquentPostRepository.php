@@ -3,7 +3,7 @@
 namespace Mintmesh\Repositories\API\Post;
 
 use NeoEnterpriseUser;
-use DB;
+use DB,Queue;
 use Config, Lang;
 use Mintmesh\Repositories\BaseRepository;
 use Everyman\Neo4j\Query\ResultSet;
@@ -1251,6 +1251,37 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         $query = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
         return $result;
+    }
+    
+     public function companyPostsAutoConnectWithContact($pushData) {
+        #form the details here
+        $postId  = !empty($pushData['postId'])?$pushData['postId']:'';
+        $contactEmailId = !empty($pushData['contact_emailid'])?$pushData['contact_emailid']:'';
+        if(!empty($contactEmailId) && !empty($postId)){
+            $inviteCount = $this->getPostInviteCount($postId);
+            $relation    = $this->checkPostContactsRelation($postId, $contactEmailId);
+            #check the condition for duplicat job post here
+            if(empty($relation)){
+                #creating relation with each job
+                Queue::push('Mintmesh\Services\Queues\CreateEnterprisePostContactsRelation', $pushData, 'default');
+                $inviteCount+=1;
+                $this->updatePostInviteCount($postId, $inviteCount);
+            } 
+        }
+    }
+    
+    public function getUserByNeoID($neoId=0) {
+        
+        $return = 0;
+        if(!empty($neoId)){
+            $queryString = "MATCH (u:User) where ID(u)=".$neoId."  return u";
+            $query  = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if(isset($result[0]) && isset($result[0][0])){
+                $return = $result;
+            }
+        }
+        return $return; 
     }
 }
 

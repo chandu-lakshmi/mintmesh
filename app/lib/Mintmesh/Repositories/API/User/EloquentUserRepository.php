@@ -42,6 +42,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
                         "primary_phone"   =>$this->appEncodeDecode->filterString($input['phone']),
                         "login_source"   =>$this->appEncodeDecode->filterString($input['login_source']),
                         "password"  =>Hash::make($input['password']),
+                        "status"  =>1,
                         "emailactivationcode" => $emailActivationCode
             );
             return $this->user->create($user);

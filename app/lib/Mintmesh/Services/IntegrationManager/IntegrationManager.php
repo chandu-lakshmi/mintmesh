@@ -100,9 +100,13 @@ class IntegrationManager {
          $lastprocessedDate = gmdate("Y-m-d\TH:i:s\Z", strtotime($companyJobDetail->last_processed_at));
 
         if(array_key_exists(self::DCNAME, $returnRequestData)){
+       if($JobDetails->hcm_id == 1){
         $returnRequestData[self::API_END_POINT] = $returnRequestData[self::DCNAME] . $JobDetails->job_endpoint . $JobDetails->job_additional_params;
         $returnRequestData[self::API_END_POINT] .= '&$select=' . $JobDetails->job_params;
         $returnRequestData[self::API_END_POINT] .= '&$filter=lastModifiedDateTime ge datetimeoffset\'' . $lastprocessedDate . '\' and internalStatus eq \'Approved\'';
+            }else{
+                 $returnRequestData[self::API_END_POINT] = $returnRequestData[self::DCNAME] . $JobDetails->job_endpoint;
+            }
         }else{
             $returnRequestData[self::API_END_POINT] = $JobDetails->job_endpoint;
         }
@@ -162,6 +166,7 @@ class IntegrationManager {
         \Log::info("SF Endpoint hit : $endPoint"); 
 
         $data    = json_encode($data);
+        //\Log::info("SF doPost hit : $data"); 
         //print_r($data).exit;
         $request = $this->guzzleClient->post($endPoint, array('accept'=> 'application/json','Content-Type'=> 'application/json; charset=utf-8'),array());
         $request->setAuth($username, $password);

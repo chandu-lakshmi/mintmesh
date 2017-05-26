@@ -66,139 +66,145 @@ class job2 extends Command {
                 where cm.flag = '0' LIMIT 1");
         foreach ($mails as $mail) {
             $id = $mail->id;
-			if(file_exists($directory.'/'.$mail->fn_re)){
-            $parsefiles = $this->parseFile($directory.'/'.$mail->fn_re,$mail->cnt_type);
-            if(isset($parsefiles['email']) && count($parsefiles['email']) > 0){
-               $from = $parsefiles['email'][0];
-               $neoInput['referral_name'] = $parsefiles['name'][0];
-            }else{
-                $from = $mail->from;
-                $neoInput['referral_name'] = substr($from, 0, strpos($from, '@'));
-            }
-            $reply_vals = array(); 
-            $mail_params = explode("@", $mail->to);
-                                    if(is_array($mail_params) && count($mail_params) > 0 ){
-                                            //$reply_user=explode('<',$mail->from);
-                                                 
-                                            $u_id = $mail_params[0];
-                                            $mess_vals = explode("+", $u_id);
-                                            
-
-                                            foreach($mess_vals as $m_vals){
-                                                    $r = explode("=", $m_vals);
-                                                    if(isset($r[0]) && isset($r[1])){
-                                                            $reply_vals[$r[0]] = $r[1];
-                                                    }
-                                            
-                                            }
-                                    } 
-					$mail_parse_ref = isset($reply_vals['ref'])?MyEncrypt::decrypt_blowfish($reply_vals['ref'],C::get('constants.MINTMESH_ENCCODE')):0;  	
-				$mail_parse_ref_val = array_map('intval',explode('_',$mail_parse_ref));	
-            $neoInput['post_id'] = isset($mail_parse_ref_val[0])?$mail_parse_ref_val[0]:0;  
-            $postStatus = $this->getPost($neoInput);
-            if(isset($postStatus->status) && $postStatus->status == 'ACTIVE'){
-            //check candidate for job it is not decline
-            $checkCand_Not_exist = $this->checkCandidate($neoInput,$from);
-            if($checkCand_Not_exist){
-            $neoInput['uploaded_by_p2'] = '1';
-            $neoInput['referred_by_id'] = isset($mail_parse_ref_val[1])?$mail_parse_ref_val[1]:0;  
-            $checkRel = $this->checkRel($neoInput);
-            if(!empty($checkRel[0]) && isset($checkRel[0][0])){
-                 DB::statement("UPDATE cm_mails c set c.flag = '1' where c.id='" . $id . "'");
-                 $neoInput['referred_for'] = $checkRel[0][0]->user_emailid;
-                 $neoInput['referred_by'] = $checkRel[0][1]->emailid;
-                 $checkUser = $this->checkUser($from);
-                 if(!empty($checkUser[0]) && isset($checkUser[0][0])){
-                    $neoInput['referral'] = $checkUser[0][0];
+            if(file_exists($directory.'/'.$mail->fn_re)){
+                $parsefiles = $this->parseFile($directory.'/'.$mail->fn_re,$mail->cnt_type);
+                if(isset($parsefiles['email']) && count($parsefiles['email']) > 0){
+                   $from = $parsefiles['email'][0];
+                   $neoInput['referral_name'] = $parsefiles['name'][0];
                 }else{
-                    $createUser = $this->createUser($from,$neoInput);
-                    $neoInput['referral'] = $createUser[0][0];
+                    $from = $mail->from;
+                    $neoInput['referral_name'] = substr($from, 0, strpos($from, '@'));
                 }
-                //Log::info("<<<<<<<<<<<<<<<< In job2 >>>>>>>>>>>>>".print_r($neoInput,1));
-               /* $files = File::allFiles($directory);
-                foreach ($files as $file){*/
-                    $this->userFileUploader->source = $directory.$mail->fn_re;
-                    $this->userFileUploader->destination = Config::get('constants.S3BUCKET_NON_MM_REFER_RESUME');
-                    $renamedFileName = $this->userFileUploader->uploadToS3BySource($directory.$mail->fn_re);
-                    $neoInput['resume_path'] = $renamedFileName;
-               // }
-                $neoInput['resume_original_name'] = $mail->fn_or;
-                $neoInput['created_at'] = gmdate('Y-m-d H:i:s');
-                $neoInput['awaiting_action_status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
-                $neoInput['status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
-                $neoInput['relation_count'] = '1';
-                $neoInput['one_way_status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
-                $neoInput['completed_status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
-                $neoInput['awaiting_action_by'] = $neoInput['referred_for'];
-                $queryString = "Match (p:Post),(u:User)
-                                    where ID(p)=". $neoInput['post_id'] ." and u.emailid='" . $neoInput['referral'] . "'
-                                    create unique (u)-[r:" . Config::get('constants.REFERRALS.GOT_REFERRED');
-                if (!empty($neoInput)) {
-                    $queryString.="{";
-                    foreach ($neoInput as $k => $v) {
-                        $queryString.=$k.":'".$this->appEncodeDecode->filterString($v)."'," ;
-                    }
-                $queryString = rtrim($queryString, ",");
-                $queryString.="}";
-                }
-                $queryString.="]->(p) set p.total_referral_count = p.total_referral_count + 1, r.resume_parsed=0  return count(p)";
-			  
-                $query = new CypherQuery($this->client, $queryString);
-                $result = $query->getResultSet();
-            }else{
-                DB::statement("UPDATE cm_mails c set c.flag = '2' where c.id='" . $id . "'");
+                $reply_vals = array(); 
+                $mail_params = explode("@", $mail->to);
+                if(is_array($mail_params) && count($mail_params) > 0 ){
+                        //$reply_user=explode('<',$mail->from);
+                        $u_id = $mail_params[0];
+                        $mess_vals = explode("+", $u_id);
+                        foreach($mess_vals as $m_vals){
+                                $r = explode("=", $m_vals);
+                                if(isset($r[0]) && isset($r[1])){
+                                        $reply_vals[$r[0]] = $r[1];
+                                }
+                        }
+                } 
+                $mail_parse_ref = isset($reply_vals['ref'])?MyEncrypt::decrypt_blowfish($reply_vals['ref'],C::get('constants.MINTMESH_ENCCODE')):0;  	
+                $mail_parse_ref_val = array_map('intval',explode('_',$mail_parse_ref));	
+                $neoInput['post_id'] = isset($mail_parse_ref_val[0])?$mail_parse_ref_val[0]:0;  
                 
-            }
+                $postStatus = $this->getPost($neoInput);
+                if(isset($postStatus->status) && $postStatus->status == 'ACTIVE'){
+                    //check candidate for job it is not decline
+                    $checkCand_Not_exist = $this->checkCandidate($neoInput,$from);
+                    if($checkCand_Not_exist){
+                        $neoInput['uploaded_by_p2'] = '1';
+                        $neoInput['referred_by_id'] = $refById = isset($mail_parse_ref_val[1])?$mail_parse_ref_val[1]:0;  
+                        $checkRel     = $this->checkRel($neoInput);
+                        if(!empty($checkRel[0]) && isset($checkRel[0][0])){
+                            $companyCode  = !empty($checkRel[0][0]->company_code)?$checkRel[0][0]->company_code:'';
+                            #check user Separated Status here
+                            $separatedStatus = $this->checkReferredUserSeparatedStatus($refById, $companyCode);
+                            if($separatedStatus){
+                            
+                                DB::statement("UPDATE cm_mails c set c.flag = '1' where c.id='" . $id . "'");
+                                $neoInput['referred_for'] = $checkRel[0][0]->user_emailid;
+                                $neoInput['referred_by'] = $checkRel[0][1]->emailid;
+                                $checkUser = $this->checkUser($from);
+                                if(!empty($checkUser[0]) && isset($checkUser[0][0])){
+                                    $neoInput['referral'] = $checkUser[0][0];
+                                }else{
+                                    $createUser = $this->createUser($from,$neoInput);
+                                    $neoInput['referral'] = $createUser[0][0];
+                                }
+                                //Log::info("<<<<<<<<<<<<<<<< In job2 >>>>>>>>>>>>>".print_r($neoInput,1));
+                               /* $files = File::allFiles($directory);
+                                foreach ($files as $file){*/
+                                    $this->userFileUploader->source = $directory.$mail->fn_re;
+                                    $this->userFileUploader->destination = Config::get('constants.S3BUCKET_NON_MM_REFER_RESUME');
+                                    $renamedFileName = $this->userFileUploader->uploadToS3BySource($directory.$mail->fn_re);
+                                    $neoInput['resume_path'] = $renamedFileName;
+                               // }
+                                $neoInput['resume_original_name'] = $mail->fn_or;
+                                $neoInput['created_at'] = gmdate('Y-m-d H:i:s');
+                                $neoInput['awaiting_action_status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
+                                $neoInput['status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
+                                $neoInput['relation_count'] = '1';
+                                $neoInput['one_way_status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
+                                $neoInput['completed_status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
+                                $neoInput['awaiting_action_by'] = $neoInput['referred_for'];
+                                $queryString = "Match (p:Post),(u:User)
+                                                    where ID(p)=". $neoInput['post_id'] ." and u.emailid='" . $neoInput['referral'] . "'
+                                                    create unique (u)-[r:" . Config::get('constants.REFERRALS.GOT_REFERRED');
+                                if (!empty($neoInput)) {
+                                    $queryString.="{";
+                                    foreach ($neoInput as $k => $v) {
+                                        $queryString.=$k.":'".$this->appEncodeDecode->filterString($v)."'," ;
+                                    }
+                                $queryString = rtrim($queryString, ",");
+                                $queryString.="}";
+                                }
+                                $queryString.="]->(p) set p.total_referral_count = p.total_referral_count + 1, r.resume_parsed=0  return count(p)";
+
+                                $query = new CypherQuery($this->client, $queryString);
+                                $result = $query->getResultSet();
+                            }else{
+                                DB::statement("UPDATE cm_mails c set c.flag = '2' where c.id='" . $id . "'");
+
+                            }
+                        }else{
+                            DB::statement("UPDATE cm_mails c set c.flag = '2' where c.id='" . $id . "'");
+
+                        }
+                    }else{
+                        DB::statement("UPDATE cm_mails c set c.flag = '2' where c.id='" . $id . "'");
+                         //send mail
+                        //                $dataSet    = array();
+                        //                $email_sent = '';
+                        ////                $fullName   = $emailData['to_firstname'] . ' ' . $emailData['to_lastname'];
+                        ////                $dataSet['name']                = $fullName;
+                        //                $dataSet['email']               = $mail->from;
+                        ////                $dataSet['fromName']            = $emailData['from_firstname'];
+                        ////                $dataSet['company_name']        = $emailData['company_name'];
+                        ////                $dataSet['company_logo']        = '';
+                        ////                $dataSet['emailbody']           = 'just testing';
+                        ////                $dataSet['send_company_name']   = $emailData['company_name'];
+                        ////                $dataSet['reply_to']            = $emailData['reply_to'];//'karthik.jangeti+jid=55+ref=66@gmail.com';
+                        //        
+                        //                // set email required params
+                        //                $this->userEmailManager->templatePath   = Lang::get('MINTMESH.email_template_paths.enterprise_contacts_invitation');
+                        //                $this->userEmailManager->emailId        = $dataSet['email'];//target email id
+                        //                $this->userEmailManager->dataSet        = $dataSet;
+                        //                $this->userEmailManager->subject        = 'test error';
+                        ////                $this->userEmailManager->name           = $fullName;
+                        //                $email_sent = $this->userEmailManager->sendMail();
+                        //        
+                        //                //for email logs
+                        ////                $fromUserId  = $emailData['from_userid'];
+                        ////                $fromEmailId = $emailData['from_emailid'];
+                        ////                $companyCode = $emailData['company_code'];
+                        ////                $ipAddress   = $emailData['ip_address'];
+                        //                //log email status
+                        //                $emailStatus = 0;
+                        //                if (!empty($email_sent)) {
+                        //                    $emailStatus = 1;
+                        //                }
+                        //                $emailLog = array(
+                        //                'emails_types_id'   => 7,
+                        ////                'from_user'         => $fromUserId,
+                        ////                'from_email'        => $fromEmailId,
+                        //                'to_email'          => $this->appEncodeDecode->filterString(strtolower($dataSet['email'])),
+                        ////                'related_code'      => $companyCode,
+                        //                'sent'              => $emailStatus,
+                        //                'ip_address'        => $ipAddress
+                        //                );
+                        //                $this->userRepository->logEmail($emailLog);
+                    }
+                }else{
+                        DB::statement("UPDATE cm_mails c set c.flag = '2' where c.id='" . $id . "'");
+                }
             }else{
-                DB::statement("UPDATE cm_mails c set c.flag = '2' where c.id='" . $id . "'");
-                 //send mail
-//                $dataSet    = array();
-//                $email_sent = '';
-////                $fullName   = $emailData['to_firstname'] . ' ' . $emailData['to_lastname'];
-////                $dataSet['name']                = $fullName;
-//                $dataSet['email']               = $mail->from;
-////                $dataSet['fromName']            = $emailData['from_firstname'];
-////                $dataSet['company_name']        = $emailData['company_name'];
-////                $dataSet['company_logo']        = '';
-////                $dataSet['emailbody']           = 'just testing';
-////                $dataSet['send_company_name']   = $emailData['company_name'];
-////                $dataSet['reply_to']            = $emailData['reply_to'];//'karthik.jangeti+jid=55+ref=66@gmail.com';
-//        
-//                // set email required params
-//                $this->userEmailManager->templatePath   = Lang::get('MINTMESH.email_template_paths.enterprise_contacts_invitation');
-//                $this->userEmailManager->emailId        = $dataSet['email'];//target email id
-//                $this->userEmailManager->dataSet        = $dataSet;
-//                $this->userEmailManager->subject        = 'test error';
-////                $this->userEmailManager->name           = $fullName;
-//                $email_sent = $this->userEmailManager->sendMail();
-//        
-//                //for email logs
-////                $fromUserId  = $emailData['from_userid'];
-////                $fromEmailId = $emailData['from_emailid'];
-////                $companyCode = $emailData['company_code'];
-////                $ipAddress   = $emailData['ip_address'];
-//                //log email status
-//                $emailStatus = 0;
-//                if (!empty($email_sent)) {
-//                    $emailStatus = 1;
-//                }
-//                $emailLog = array(
-//                'emails_types_id'   => 7,
-////                'from_user'         => $fromUserId,
-////                'from_email'        => $fromEmailId,
-//                'to_email'          => $this->appEncodeDecode->filterString(strtolower($dataSet['email'])),
-////                'related_code'      => $companyCode,
-//                'sent'              => $emailStatus,
-//                'ip_address'        => $ipAddress
-//                );
-//                $this->userRepository->logEmail($emailLog);
+                    DB::statement("UPDATE cm_mails c set c.flag = '2' where c.id='" . $id . "'");
             }
-				}else{
-					DB::statement("UPDATE cm_mails c set c.flag = '2' where c.id='" . $id . "'");
-				}
-			}else{
-				DB::statement("UPDATE cm_mails c set c.flag = '2' where c.id='" . $id . "'");
-			}
         } 
         
     }
@@ -295,4 +301,54 @@ class job2 extends Command {
         }
         return $return;
     }
+    
+    public function checkReferredUserSeparatedStatus($refById='' ,$companyCode='') {
+        
+        $return = TRUE;
+        #get user details by reference id and post id
+        $neoUser     = $this->getUserByNeoID($refById);
+        $userDetails = !empty($neoUser[0][0]) ? $neoUser[0][0] : '';
+        if(isset($neoUser[0]) && isset($neoUser[0][0])){
+            #get company details by code
+            $companyDetails = $this->getCompanyDetailsByCode($companyCode);
+            $companyId = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+            #get Contact Current Status By EmailId
+            $currentStatus = $this->checkContactCurrentStatusByEmailId($companyId ,$userDetails->emailid);
+            if(empty($currentStatus)){
+                #if user is separated
+                $return = false;
+            }
+        }
+        return $return;
+    }
+    
+    public function getUserByNeoID($neoId=0) {
+        
+        $return = 0;
+        if(!empty($neoId)){
+            $queryString = "MATCH (u:User) where ID(u)=".$neoId."  return u";
+            $query  = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if(isset($result[0]) && isset($result[0][0])){
+                $return = $result;
+            }
+        }
+        return $return; 
+    }
+    
+    public function getCompanyDetailsByCode($companyCode=0){    
+            return DB::table('company')
+                   ->select('logo','id','name','employees_no')
+                   ->where('code', '=', $companyCode)->get();
+        }
+    
+    public function checkContactCurrentStatusByEmailId($companyId='',$emailId=''){
+        $result = 0;
+        if(!empty($companyId) && !empty($emailId)){
+            $sql = "select id from contacts where company_id ='".$companyId."' and emailid='".$emailId."' and (status = 'Active' or status='Inactive')" ;
+            $result = DB::Select($sql);
+        }
+        return $result;
+    }    
+        
 }

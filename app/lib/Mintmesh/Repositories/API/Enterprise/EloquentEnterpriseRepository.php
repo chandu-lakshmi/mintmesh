@@ -197,6 +197,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                     $cellPhone   = !empty($val['cell_phone']) ? $val['cell_phone'] : '';
                     $lastName    = !empty($val['last_name']) ? $val['last_name'] : '';
                     $status      = !empty($val['status']) ?  ucfirst(strtolower($val['status'])): 'Active';
+                    $emailId     = strtolower(trim($val['email_id']));
                     
                     #string contains at least 3 character. set default status as Active.
                     $substr = substr($status, 0, 3);
@@ -210,11 +211,10 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                         $status = 'Active';
                     }
                      
-                    if(!empty($val['first_name']) && filter_var($val['email_id'], FILTER_VALIDATE_EMAIL))
+                    if(!empty($val['first_name']) && filter_var($emailId, FILTER_VALIDATE_EMAIL))
                     {                    
                         $firstName = $this->appEncodeDecode->filterString($val['first_name']);
                         $lastName  = $this->appEncodeDecode->filterString($val['last_name']);
-                        $emailId   = $val['email_id'];
                         $usersArr  = User::select('id')->where('emailid',$emailId)->get();
                         $users_id  = !empty($usersArr[0])?$usersArr[0]->id:0;
                         
@@ -244,6 +244,9 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                                     #check available contact count here.
                                     if($availableNo){
                                         $availableNo--;
+                                        #status enable in users table for allow to login
+                                        $sql= "update users set status=1 WHERE `emailid` = '".$emailId."' ";
+                                        DB::statement($sql);
                                     } else {
                                         $allowToUpdate = FALSE;
                                     }
@@ -463,6 +466,62 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             $result = DB::Select($sql);
             return $result;
         }
+       
+        
+        
+        public function updateUserStatus($contactsId=0)
+        {
+            $query ="update users u  inner join contacts c on c.emailid = u. emailid set u.status=1
+                    where c.id='".$contactsId."' ";
+            DB::statement($query);
+            return true;
+        }   
+        public function deleteUserOauthAccessTokens($contactsId=0)
+        {   
+            $result= FALSE;
+            if($contactsId){
+                $sql = "select tok.id,u.id as user_id from users u
+                        inner join contacts c on c.emailid = u.emailid
+                        inner JOIN oauth_sessions s
+                        ON s.owner_id = u.id 
+                        inner JOIN oauth_access_tokens tok
+                        ON tok.session_id = s.id 
+                        where c.id='".$contactsId."'" ;
+               //echo $sql;exit;
+                $result = DB::Select($sql);
+                
+                foreach ($result as $value) {
+                    
+                    $this->deleteOauthRefreshTokens($value->id);
+                    $this->deleteOauthAccessTokens($value->id);
+                    $this->deleteOauthSessions($value->user_id);
+                    
+                }
+                $query ="update users u  inner join contacts c on c.emailid = u. emailid set u.status=0
+                        where c.id='".$contactsId."' ";
+                DB::statement($query);
+            }
+            return true;
+        }
+        
+        public function deleteOauthRefreshTokens($accessTokenId) {
+            $sql = "delete FROM oauth_refresh_tokens WHERE access_token_id = '".$accessTokenId."'";
+            $result = DB::statement($sql);
+            return $result;
+        }
+        public function deleteOauthAccessTokens($oauthAccessTokensId) {
+            $sql    = "delete FROM oauth_access_tokens WHERE id = '".$oauthAccessTokensId."'";
+            $result = DB::statement($sql);
+            return $result;
+        }
+        public function deleteOauthSessions($userId) {
+            
+            $sql = "delete FROM oauth_sessions 
+                    WHERE owner_id = '".$userId."'";
+            $result = DB::statement($sql);
+            return $result;
+        }
+        
         
         public function updateContactsList($input) {   
             $input['employeeid'] = strtoupper($input['other_id']);
