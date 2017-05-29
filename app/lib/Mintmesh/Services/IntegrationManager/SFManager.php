@@ -157,7 +157,7 @@ class SFManager extends IntegrationManager {
                     //\Log::info("Requistion id Empty:". print_r($row)); 
                 }
                 
-                $isNotExisted = $this->checkJobExistedWithReqIdOrNot($reqId, $companyCode);
+                $isNotExisted = $this->checkJobExistedWithReqIdOrNot($reqId, $companyCode, 'success factors');
                 
                 if ($isNotExisted) {
                    
@@ -348,10 +348,10 @@ class SFManager extends IntegrationManager {
         }
     }
 
-    public function checkJobExistedWithReqIdOrNot($reqId = '' , $company_code='') {
+    public function checkJobExistedWithReqIdOrNot($reqId = '' , $company_code='', $hcm_type) {
         $return = TRUE;
         if (!empty($reqId)) {
-            $queryString = "match (p:Post{hcm_type:'success factors'})-[POSTED_FOR]-(c:Company) where p.requistion_id='" . $reqId . "' and c.companyCode='". $company_code."' return p";
+            $queryString = "match (p:Post{hcm_type:'". $hcm_type ."'})-[POSTED_FOR]-(c:Company) where p.requistion_id='" . $reqId . "' and c.companyCode='". $company_code."' return p";
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             if (isset($result[0]) && isset($result[0][0])) {

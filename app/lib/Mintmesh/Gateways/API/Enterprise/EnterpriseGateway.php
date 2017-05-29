@@ -601,7 +601,7 @@ class EnterpriseGateway {
             if (!empty($loggedinUserDetails)) {
                 if($loggedinUserDetails['is_enterprise'] == 1 || $loggedinUserDetails['is_enterprise'] == 2)
                 {
-                    if($loggedinUserDetails->status == 1){
+                    if($loggedinUserDetails->status == 1 && $loggedinUserDetails->group_status == 1){
                         $input['group_id'] = $loggedinUserDetails->group_id;
                         $checkGroupStatus = $this->enterpriseRepository->checkGroupStatus($input['group_id']);
                     if(!empty($checkGroupStatus) && $checkGroupStatus[0]->status == 'Active'){
@@ -2186,7 +2186,7 @@ class EnterpriseGateway {
                     $data = $this->enterpriseRepository->companyUserMapping($input['user_id'],$input['company_id'], $input['company_code']);
                     $relationType = 'CONNECTED_TO_COMPANY';
                     $neoData = $this->neoEnterpriseRepository->mapUserCompany($input['emailid'], $input['company_code'],$relationType);
-                if($createdUser[0]->status == 'active'){
+                if($createdUser[0]->group_status == '1'){
                 $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.set_password');
                 $this->userEmailManager->emailId = $createdUser[0]->emailid;
                 $senderName =  $this->loggedinUserDetails->firstname .' via MintMesh';
@@ -2365,7 +2365,7 @@ class EnterpriseGateway {
             if(!$checkUser){
             $editedUser = $this->enterpriseRepository->editingUser($input);
             $user = $this->enterpriseRepository->getEnterpriseUserByEmail($input['emailid']);
-            if(!isset($user['resetactivationcode']) && $user['status'] == '1'){
+            if(!isset($user['resetactivationcode']) && $user['group_status'] == '1'){
                 $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.set_password');
                 $this->userEmailManager->emailId = $user['emailid'];
                 $senderName =  $this->loggedinUserDetails->firstname .' via MintMesh';
@@ -2467,7 +2467,7 @@ class EnterpriseGateway {
         $neoUserInput['emailid']        = $input['emailid'];
         $neoUserInput['is_enterprise']  = $input['is_enterprise'];
 //        $neoUserInput['location']  = $input['location'];
-        $neoUserInput['status']  = $input['status'];
+        $neoUserInput['group_status']  = $input['status'];
 //        $neoUserInput['designation']  = $input['designation'];
         $neoUserInput['photo']  = isset($input['photo'])?$input['photo']:'';
         $neoUserInput['photo_org_name']  = isset($input['photo_org_name'])?$input['photo_org_name']:'';
@@ -2513,10 +2513,10 @@ class EnterpriseGateway {
        }else{
        $postDetails['fullname'] = $neoUsers->fullname;}
        $postDetails['location'] = isset($neoUsers->location)?$neoUsers->location:'';
-       if($neoUsers->status == 'Separated'){
-           $postDetails['status'] = 'Inactive';
+       if($v->group_status == '1'){
+           $postDetails['status'] = 'Active';
        }else{
-       $postDetails['status'] = isset($neoUsers->status)?$neoUsers->status:'';
+            $postDetails['status'] = 'Inactive';
        }
        $postDetails['designation'] = isset($neoUsers->designation)?$neoUsers->designation:'';
        $postDetails['photo'] = isset($neoUsers->photo)?$neoUsers->photo:'';
@@ -3273,7 +3273,7 @@ class EnterpriseGateway {
                 $returnData['firstname'] = $v->firstname;
                 $returnData['lastname'] = $v->lastname;
                 $returnData['emailid'] = $v->emailid;
-                $returnData['status'] = $v->status;
+                $returnData['status'] = 'Active';
                 $returnResult[] = $returnData;
             }
             if(!empty($returnResult)){

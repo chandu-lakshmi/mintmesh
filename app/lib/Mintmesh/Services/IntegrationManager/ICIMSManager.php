@@ -83,7 +83,7 @@ class ICIMSManager extends IntegrationManager {
                 $return[$key]['positioncategory'] = $arrayIcicms[$key]['header'][5]['value'];
                 $return[$key]['overview'] = strip_tags($arrayIcicms[$key]['description'][0]['value'] . $arrayIcicms[$key]['description'][1]['value'] . $arrayIcicms[$key]['description'][2]['value']);
 //                $return[$key]['responsibilities'] = $arrayIcicms[$key]['description'][1]['value']; 
-//                $return[$key]['qualifications'] = $arrayIcicms[$key]['description'][2]['value']; 
+//                $return[$key]['qualifications'] = $arrayIcicms[$key]['description'][2]['value'];
             }
             }
              $this->createIcimsJob($return, $companyId, $jobId);
@@ -197,8 +197,8 @@ class ICIMSManager extends IntegrationManager {
                 #get the extra information
                 $reqId = $neoInput['requistion_id'];
 
-//                $isNotExisted = $SFManager->checkJobExistedWithReqIdOrNot($reqId, $companyCode);
-//                if ($isNotExisted) {
+                $isNotExisted = $SFManager->checkJobExistedWithReqIdOrNot($reqId, $companyCode, 'ICIMS');
+                if ($isNotExisted) {
 
                     //print_r($neoInput).exit;
                     $createdPost = $SFManager->createPostAndUserRelation($fromId, $neoInput, $relationAttrs);
@@ -284,7 +284,7 @@ class ICIMSManager extends IntegrationManager {
                         }
                         $SFManager->updatePostInviteCount($postId, $inviteCount);
                     }
-               // }
+                }
             }
         }
         return true;

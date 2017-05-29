@@ -497,7 +497,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                     $this->deleteOauthSessions($value->user_id);
                     
                 }
-                $query ="update users u  inner join contacts c on c.emailid = u. emailid set u.status=0
+                $query ="update users u  inner join contacts c on c.emailid = u. emailid set u.status=0,u.group_status=0
                         where c.id='".$contactsId."' ";
                 DB::statement($query);
             }
@@ -849,13 +849,20 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
     }
     
     public function addUser($input) {
+        
         // md5 the email id and attach with mintmesh constant for verification code
             $emailActivationCode = md5($input['emailid']."_".Config::get('constants.MINTMESH')) ;
            $date = gmdate('Y-m-d H:i:s');
+           if($input['status'] == 'Active'){
+               $input['status'] = '1';
+           }else{
+                 $input['status'] = '0';
+           }
             $user = array(
                         "firstname" => $this->appEncodeDecode->filterString($input['fullname']),
                         "emailid"   =>$this->appEncodeDecode->filterString(strtolower($input['emailid'])), 
-                        "status"   =>$this->appEncodeDecode->filterString(strtolower($input['status'])), 
+                        "group_status"   =>$this->appEncodeDecode->filterString(strtolower($input['status'])), 
+                        "status"   =>    '1', 
                         "is_enterprise"  =>$this->appEncodeDecode->filterString($input['is_enterprise']),
                         "group_id"  =>$this->appEncodeDecode->filterString($input['group_id']),
                         "emailactivationcode" => $emailActivationCode
@@ -870,8 +877,9 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
 //            if($result){
 //             return $input['user_id'];
 //            }
+           $input['group_status'] = $input['status'];
             $fields = '';
-            $field_set= array('firstname','status','emailid','group_id');
+            $field_set= array('firstname','group_status','emailid','group_id');
             foreach($input as $k=>$v){
                 $v = "'".$v."'";
                 if(in_array($k,$field_set))
@@ -884,7 +892,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             return $input['user_id'];
       }
     public function getUsers($companyCode,$groupId) {
-            return DB::select("select DISTINCT(u.id) as user_id,u.firstname as name, u.emailid, u.status,u.resetactivationcode from users u inner join company_user_mapping c on c.user_id=u.id where c.code='".$companyCode."' and u.group_id='".$groupId."' ORDER BY firstname");  
+            return DB::select("select DISTINCT(u.id) as user_id,u.firstname as name, u.emailid, u.status,u.group_status,u.resetactivationcode from users u inner join company_user_mapping c on c.user_id=u.id where c.code='".$companyCode."' and u.group_id='".$groupId."' ORDER BY firstname");  
     }
     
    // creating new Enterprise user Company Profile in storage
@@ -1347,6 +1355,16 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         $result = 0;
         if(!empty($companyId) && !empty($emailId)){
             $sql = "select id from contacts where company_id ='".$companyId."' and emailid='".$emailId."' and (status = 'Active' or status='Inactive')" ;
+            $result = DB::Select($sql);
+        }
+        return $result;
+    }
+    public function checkIfTheUserIsAdmin($companyId='',$emailId=''){
+        $result = 0;
+        if(!empty($companyId) && !empty($emailId)){
+            $sql = "select u.id from users u 
+                    inner join company c on c.created_by = u.id
+                    where u.emailid='".$emailId."' and c.id='".$companyId."'" ;
             $result = DB::Select($sql);
         }
         return $result;

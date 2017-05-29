@@ -17,7 +17,7 @@ class User extends Eloquent implements UserInterface, RemindableInterface {
         //the mysql database table used by user model
 	protected $table  = 'users';
 
-	protected $fillable = array('emailid','password','firstname','middlename','lastname','login_source','emailactivationcode','is_enterprise','primary_phone','status','activate_exp_date','group_id');
+	protected $fillable = array('emailid','password','firstname','middlename','lastname','login_source','emailactivationcode','is_enterprise','primary_phone','status','activate_exp_date','group_id','group_status');
         // Definig mysql connection
 	protected $connection = 'mysql';
         

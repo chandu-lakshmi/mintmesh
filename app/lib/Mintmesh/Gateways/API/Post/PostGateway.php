@@ -2968,8 +2968,14 @@ class PostGateway {
             #get Contact Current Status By EmailId
             $currentStatus = $this->enterpriseRepository->checkContactCurrentStatusByEmailId($companyId ,$userDetails->emailid);
             if(empty($currentStatus)){
-                #if user is separated
-                $return = false;
+                $ifAdminUser = $this->enterpriseRepository->checkIfTheUserIsAdmin($companyId ,$userDetails->emailid);
+                if($ifAdminUser){
+                    #if user is admin skip the contacts status
+                    $return = true;
+                } else {
+                    #if user is separated
+                    $return = false;
+                } 
             }
         }
         return $return;

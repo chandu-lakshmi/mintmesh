@@ -67,12 +67,14 @@
                                 <td>
                                     <table cellspacing="0" cellpadding="0" width="100%" >
                                         <tr>
-                                            <td><span style="font-size: 13px;">Please click the below link to apply</span></td>
+                                            <td><span style="font-size: 13px;">Your friend has referred you for this job. Please click the link below to apply.</span></td>
                                         </tr>
                                         <tr>
                                             <td>
                                                <a href="<?php echo $portalUrl ; ?>"><span style="font-size: 13px;padding: 8px 12px;"><?php echo $portalUrl; ?></span></a>
                                             </td>
+                                        </tr>
+                                        <tr height="22px">
                                         </tr>
                                     </table>
                                 </td>
