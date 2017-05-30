@@ -2000,7 +2000,7 @@ class PostGateway {
                 $record['resume_path']      = $relation->resume_path;
                 $record['resume_name']      = $relation->resume_original_name;
 //                $record['created_at']       = date('M d, Y H:i:s',strtotime($relation->created_at));
-                $record['created_at']       = date('M d, Y h:i A',strtotime($this->appEncodeDecode->UserTimezone($relation->created_at,$input['time_zone'])));
+                $record['created_at']       = date('M d, Y',strtotime($this->appEncodeDecode->UserTimezone($relation->created_at,$input['time_zone'])));
                 $record['awt_status']       = $relation->awaiting_action_status;
                 #get the user details here
                 $referralName = $userName = '';

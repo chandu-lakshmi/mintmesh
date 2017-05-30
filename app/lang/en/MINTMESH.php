@@ -40,8 +40,8 @@ return array(
                 "uploaded_large_file"=>"Uploaded file size is too large",
                 "invalid_file_format"=>"Uploaded file format not allowed",
                 "no_resume"=>"Please upload a resume",
-                'invalid_acess'=>'Invalid license number'
-                
+                'invalid_acess'=>'Invalid license number',
+                'server_access_denied'=>'Access denied to user!'
             ),
          "referrals"=>array(
              "valid"   => "Successfully Validated",
