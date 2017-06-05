@@ -365,6 +365,8 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       Route::post("enterprise/add_configuration", "API\Enterprise\EnterpriseController@addConfiguration");
       // get_configuration
       Route::post("enterprise/get_configuration", "API\Enterprise\EnterpriseController@getConfiguration");
+      // get_configuration
+      Route::post("enterprise/upload_resume", "API\Post\PostController@uploadResume");
 
 });
 

@@ -538,5 +538,10 @@ return array(
     'configuration_details'=>array(
             "success"          => "Successfully retrieved configuration details",
             "failure"          => "No details found"
+    ),
+    "upload_resume"=>array(             
+            "success"    => "Successfully Done",
+            "failure"    => "No details found",
+            "file_not_found"    => "File not found"
     )
 );

@@ -2,7 +2,7 @@
 use Lang;
 use Config ;
 abstract class FileUploader {
-        public $source, $destination ;
+        public $source, $destination , $documentid, $tenantid;
         
 
         public function __construct()
@@ -24,6 +24,27 @@ abstract class FileUploader {
             }
 
             
+        }
+        public function moveResume($source='')
+        {
+            $fileName = false;
+            if(file_exists($source)){
+                $fileinfo   = pathinfo($source);
+                $sourceFile = $source;
+                $ext = $fileinfo['extension'];
+                $fileName = $this->documentid.".".$ext;
+                $destination = $this->destination;
+                #create tenant directory not exists
+                if (!file_exists($destination)) {
+                    mkdir($destination, 0777);
+                }
+                #check if file exists in source
+                if(file_exists($source)){
+                    copy($source, $destination.$fileName);
+                    unlink($source);
+                }
+            }
+            return $fileName;
         }
       
             public function uploadToS3BySource($path) {
