@@ -1,7 +1,7 @@
 <?php namespace Mintmesh\Repositories\API\Enterprise;
 
 use User;
-use Company_Profile;
+use Company_Profile,Company_Resumes;
 use Groups;
 use Company_Contacts;
 use Emails_Logs;
@@ -16,12 +16,18 @@ use Mintmesh\Services\APPEncode\APPEncode ;
 class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseRepository {
 
         protected $user, $companyProfile, $CompanyContact,$groups;
-        protected $email, $level, $appEncodeDecode;
+        protected $email, $level, $appEncodeDecode, $companyResumes;
         
-        public function __construct(User $user,Company_Profile $companyProfile,Groups $groups,Company_Contacts $CompanyContact,
-                                    Emails_Logs $email, APPEncode $appEncodeDecode){ 
+        public function __construct(User $user,
+                                    Company_Profile $companyProfile,
+                                    Company_Resumes $companyResumes,
+                                    Groups $groups,
+                                    Company_Contacts $CompanyContact,
+                                    Emails_Logs $email, 
+                                    APPEncode $appEncodeDecode){ 
                 $this->user = $user;    
                 $this->companyProfile = $companyProfile; 
+                $this->companyResumes = $companyResumes; 
                 $this->groups = $groups; 
                 $this->companyContact = $CompanyContact;    
                 $this->appEncodeDecode = $appEncodeDecode ;       
@@ -1368,6 +1374,41 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             $result = DB::Select($sql);
         }
         return $result;
+    }
+    
+    // creating new Enterprise user Company mapping in storage
+    public function insertInCompanyResumes($companyId=0, $resumeName='', $userId=0, $source=0, $gotReferred=0)
+    {   
+        $createdAt = gmdate("Y-m-d H:i:s");
+        /*$sql = "insert into company_resumes (`company_id`,`file_original_name`,`status`,`file_from`,`got_referred_id`,`created_by`,`created_at`, `updated_at`)" ;
+        $sql.=" values('".$companyId."','".$resumeName."',1,'".$source."','".$gotReferred."','".$userId."','".$createdAt."','".$createdAt."')" ;
+        $result = DB::statement($sql)->insertGetId;
+        return $result;*/
+        
+        $companyResumes = array(
+                        "company_id"   => $companyId,
+                        "file_original_name"  => $resumeName,
+                        "status"        => 1,
+                        "file_from"     => $source,
+                        "got_referred_id"  => $gotReferred,
+                        "created_by"    => $userId,
+                        "created_at"    => $createdAt
+            );
+        return $this->companyResumes->create($companyResumes);
+    }
+    // creating new Enterprise user Company mapping in storage
+    public function updateCompanyResumes($documentId=0, $filesource='')
+    {   
+        $updatedAt = gmdate("Y-m-d H:i:s");
+        $companyResumes = array(
+                        "file_source"   => $filesource,
+                        "updated_at"    => $updatedAt
+            );
+        if($documentId){
+            $results = Company_Resumes::where ('id',$documentId)->update($companyResumes); 
+        }
+        
+       return $results;
     }
       
 }

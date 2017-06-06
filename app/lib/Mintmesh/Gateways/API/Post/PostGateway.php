@@ -228,6 +228,10 @@ class PostGateway {
     public function campaignJobsListInput($input) {
         return $this->doValidation('campaign_jobs_list', 'MINTMESH.user.valid');
     }
+    //validation on campaign jobs list
+    public function validateUploadResumeInput($input) {
+        return $this->doValidation('upload_resume', 'MINTMESH.user.valid');
+    }
  
     public function postJob($input) {
         
@@ -896,7 +900,7 @@ class PostGateway {
                                     
                                     //get user country 
                                     $userDetails = $this->neoUserRepository->getNodeByEmailId($relReferredBy) ;
-                                    $userPhoneCountry  = !empty($userDetails->phone_country_name)?$userDetails->phone_country_name:'';
+                                    $userPhoneCountry  = !empty($userDetails->phone_country_name)?$userDetails->phone_country_name:'us';
                                     $amount = $rewardsValue;
                                     $convertedAmount = 0;
                                     if(!empty($userPhoneCountry)){
@@ -2979,6 +2983,65 @@ class PostGateway {
             }
         }
         return $return;
+    }
+    
+    public function moveResume($resume='', $tenantId=0, $documentId=0)
+    {   
+        $renamedFileName = '';
+        if (!empty($resume) && !empty($tenantId) && !empty($documentId)){
+            #upload the file to s3
+            $this->userFileUploader->source = $resume ;
+            $this->userFileUploader->destination = public_path().Config::get('constants.UPLOAD_RESUME').$tenantId.'/' ;
+            $this->userFileUploader->documentid = $documentId;
+            $renamedFileName = $this->userFileUploader->moveResume($resume);
+        }
+        return $renamedFileName;
+    }
+    
+    public function uploadResume($input) {
+        
+        $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
+        $resumeFile  = !empty($input['resume']) ? $input['resume'] : '';
+        $resumeName  = !empty($input['resume_name']) ? $input['resume_name'] : '';
+        $data = $returnAry = array();
+        #get logged in user details here
+        $this->user = $this->getLoggedInEnterpriseUser();
+        $userId     = $this->user->id;
+        #get company details by code
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId   = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+        
+        if($resumeFile){
+            $source = 1;
+            #insert company resumes in company resumes table
+            $insertResult = $this->enterpriseRepository->insertInCompanyResumes($companyId, $resumeName, $userId, $source);
+            if($insertResult){
+                $documentId = $insertResult->id;
+                #file move to s3 folder
+                $returnAry['file_name'] = $fileName = $this->moveResume($resumeFile, $companyId, $documentId);
+                #form s3 path here
+                $s3Path = Config::get('constants.S3_DOWNLOAD_PATH').$companyId.'/'.$fileName;
+                #updte s3 path in company resumes table
+                $updateResult = $this->enterpriseRepository->updateCompanyResumes($documentId, $s3Path);
+                #return response data
+                $returnAry['document_id'] = $documentId;
+                $returnAry['resume_path'] = $s3Path;
+                $returnAry['resume_name'] = $insertResult->file_original_name;
+                $data = $returnAry;
+                $responseCode   = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseMessage= array('msg' => array(Lang::get('MINTMESH.upload_resume.success')));
+            } else {
+                $responseCode   = self::ERROR_RESPONSE_CODE;
+                $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+                $responseMessage= array('msg' => array(Lang::get('MINTMESH.upload_resume.failure')));
+            }
+        } else {
+            $responseCode   = self::ERROR_RESPONSE_CODE;
+            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.upload_resume.file_not_found')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
     
 }

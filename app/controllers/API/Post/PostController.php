@@ -499,6 +499,28 @@ class PostController extends \BaseController {
             }
         }
         
+         /**
+	 * get users invited job details
+         * 
+         * POST/upload_resume
+         * @param string $access_token the access token of enterprise app user
+	 * @return Response
+	 */
+        public function uploadResume()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->PostGateway->validateUploadResumeInput($inputUserData);
+            if($validation['status'] == 'success') {
+                $response = $this->PostGateway->uploadResume($inputUserData);
+                return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+        }
+        
 }
 
 ?>

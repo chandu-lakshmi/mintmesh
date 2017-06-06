@@ -198,6 +198,8 @@ return [
     'S3BUCKET_CAMPAIGN_IMAGES' => 'mintmesh/dev/campaignImages',
     'S3BUCKET_COMPANY_IMAGES' => 'mintmesh/dev/companyImages',
     'S3BUCKET_FILE' =>  'mintmesh/dev/files',
+    'UPLOAD_RESUME' => '/uploads/awss3_resumes/dev/',
+    'S3_DOWNLOAD_PATH' => 'https://s3-us-west-2.amazonaws.com/mintmesh/dev/',
     'BITLY_URL'   =>   'https://api-ssl.bitly.com/v3/user/link_save?access_token=',
     'BITLY_ACCESS_TOKEN' => 'b65a3bf8c767c8931eeaa067da88c2e2356f192e'
         

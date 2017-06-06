@@ -11,8 +11,20 @@
 |
 */
 /* Route related to API docs */
+//Route::get('zenfits', function() {
+//	echo 123;
+//});
+//Route::get('testzen','ZenController@testzen');
+Route::get('test','ZenefitsController@test');
+Route::get("getApp", "ZenefitsController@installMintmeshApp");
+Route::get('getApp', function(){
+    return Redirect::to('http://202.63.105.85/mmenterprise/getApp/zenefits');
+});
+Route::get("getAccesCode", "ZenefitsController@getAccesCode");
+Route::any("getAccessTokenRefreshToken", "ZenefitsController@getAccessTokenRefreshToken");
 
 Route::get('getMails','Email2Controller@getMails');
+Route::any('getOauthBasedOnClientId','HomeController@getOauthBasedOnClientId');
 Route::get('docs', function() {
 	return View::make('docs.v1.index');
 });
@@ -367,7 +379,9 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       Route::post("enterprise/add_configuration", "API\Enterprise\EnterpriseController@addConfiguration");
       // get_configuration
       Route::post("enterprise/get_configuration", "API\Enterprise\EnterpriseController@getConfiguration");
-      
+      // get_configuration
+      Route::post("enterprise/upload_resume", "API\Post\PostController@uploadResume");
+
 });
 
 
