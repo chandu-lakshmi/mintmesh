@@ -356,6 +356,8 @@ class EnterpriseGateway {
                 if (!empty($neoEnterpriseCompany) && !empty($neoEnterpriseUser)) {
                     //Creating relation between user and company in neo4j
                     $data = $this->neoEnterpriseRepository->mapUserCompany($neoEnterpriseUser->emailid, $neoEnterpriseCompany->companyCode);
+                    //Creating relation between company and unsolicited node in neo4j
+                    $unsolicited = $this->neoEnterpriseRepository->createUnsolicitedAndCompanyRelation($neoEnterpriseCompany->companyCode);
                 }
 
                 //send email to user with activation Code
@@ -3532,6 +3534,18 @@ class EnterpriseGateway {
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data, false);    
     }
          
+    
+    public function unsolicitedForOldCompanies() {
+        // checking for old companies without unsolicited nodes
+        $checkUnsolicitedCompanies = $this->neoEnterpriseRepository->checkUnsolicitedCompanies();
+        if(!empty($checkUnsolicitedCompanies)){
+            foreach($checkUnsolicitedCompanies as $companies){
+                //Adding unsolicited node and creating relation with company
+               $this->neoEnterpriseRepository->createUnsolicitedAndCompanyRelation($companies[0]->companyCode);
+            }
+        }
+        
+    }
 }
 
 ?>
