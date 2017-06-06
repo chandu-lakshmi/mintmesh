@@ -129,6 +129,8 @@ Route::group(array('prefix' => 'v1'), function() {
       Route::post("enterprise/company_integration", "API\Enterprise\EnterpriseController@companyIntegration");
       
       Route::post("enterprise/test_lic", "API\Enterprise\EnterpriseController@testLic");
+      //unsolicited node for old companies
+      Route::post("enterprise/unsolicited_old_companies", "API\Enterprise\EnterpriseController@unsolicitedForOldCompanies");
       
 });
 
@@ -365,7 +367,7 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       Route::post("enterprise/add_configuration", "API\Enterprise\EnterpriseController@addConfiguration");
       // get_configuration
       Route::post("enterprise/get_configuration", "API\Enterprise\EnterpriseController@getConfiguration");
-
+      
 });
 
 
