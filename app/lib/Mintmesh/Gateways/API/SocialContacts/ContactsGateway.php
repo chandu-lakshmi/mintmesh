@@ -823,5 +823,8 @@ class ContactsGateway {
             }
         }
    
+        public function getParsedResumeDocInfo($input) {
+          return  $this->contactsRepository->getParsedResumeInfo($input);
+        }
 }
 ?>

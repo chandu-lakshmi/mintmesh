@@ -68,6 +68,13 @@ class ContactsController extends \BaseController {
             }
         }
         
+        public function getParsedResumeDocInfo() {
+             $input = \Input::all();
+            if (!empty($input))
+            {
+            return $this->contactsGateway->getParsedResumeDocInfo($input);
+            }
+        }
 
 }
 ?>

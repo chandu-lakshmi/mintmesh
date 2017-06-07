@@ -25,6 +25,7 @@ Route::any("getAccessTokenRefreshToken", "ZenefitsController@getAccessTokenRefre
 
 Route::get('getMails','Email2Controller@getMails');
 Route::any('getOauthBasedOnClientId','HomeController@getOauthBasedOnClientId');
+Route::post('getParsedResumeDocInfo','API\SocialContacts\ContactsController@getParsedResumeDocInfo');
 Route::get('docs', function() {
 	return View::make('docs.v1.index');
 });
