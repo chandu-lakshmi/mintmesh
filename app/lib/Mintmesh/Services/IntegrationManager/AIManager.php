@@ -83,6 +83,7 @@ class AIManager {
                 \Log::info("Parser Resumes" . print_r($result_check, true));
                
                 if (!empty($result_check)) {
+                    
                     $sql = "UPDATE company_resumes SET status = '2',updated_at = '" . NOW() . "' WHERE company_id ='" . $data['tenant_id'] . "'";
                     DB::Statement($sql);
                 }
