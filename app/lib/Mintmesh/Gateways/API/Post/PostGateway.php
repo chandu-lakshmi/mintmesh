@@ -3013,13 +3013,14 @@ class PostGateway {
         
         if($resumeFile){
             $source = 1;
-            $s3Path = 'https://github.com/s3/test';
             #insert company resumes in company resumes table
             $insertResult = $this->enterpriseRepository->insertInCompanyResumes($companyId, $resumeName, $userId, $source);
             if($insertResult){
                 $documentId = $insertResult->id;
                 #file move to s3 folder
-                $returnAry['file_name']  = $this->moveResume($resumeFile, $companyId, $documentId);
+                $returnAry['file_name'] = $fileName = $this->moveResume($resumeFile, $companyId, $documentId);
+                #form s3 path here
+                $s3Path = Config::get('constants.S3_DOWNLOAD_PATH').$companyId.'/'.$fileName;
                 #updte s3 path in company resumes table
                 $updateResult = $this->enterpriseRepository->updateCompanyResumes($documentId, $s3Path);
                 #return response data
