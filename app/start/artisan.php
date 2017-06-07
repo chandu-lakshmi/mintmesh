@@ -18,3 +18,4 @@ Artisan::add(new testJob);
 Artisan::add(new hcmJob);
 Artisan::add(new zenefits);
 Artisan::add(new icims);
+Artisan::add(new parserResumes);
