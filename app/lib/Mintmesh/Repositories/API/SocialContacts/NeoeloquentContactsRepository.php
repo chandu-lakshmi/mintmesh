@@ -504,9 +504,8 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
     }
 
     public function getParsedResumeInfo($input) {
-        echo "test";
-//        $sql = "UPDATE company_resumes SET status = '2',updated_at = '" . NOW() . "' WHERE company_id ='" . $input['tenant_id'] . "'";
-//        DB::Statement($sql);
+        $sql = "UPDATE company_resumes SET status = '2',updated_at = '" . NOW() . "' WHERE company_id ='" . $input['tenant_id'] . "' AND id = '". $input['doc_id'] ."'";
+        DB::Statement($sql);
     }
 
 }
