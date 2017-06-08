@@ -2120,12 +2120,37 @@ class PostGateway {
                         $createUser = $this->job2->createUser($from,$input);
                         $neoInput['referral'] = $createUser[0][0];
                         }
-                         if (isset($input['cv']) && !empty($input['cv'])) {
-                        //upload the file
-                        $this->userFileUploader->source =  $input['cv'];
-                        $this->userFileUploader->destination = Config::get('constants.S3BUCKET_NON_MM_REFER_RESUME');
-                        $renamedFileName = $this->userFileUploader->uploadToS3BySource($input['cv']);
-                        $neoInput['resume_path'] = $renamedFileName;
+                        if (isset($input['cv']) && !empty($input['cv'])) {
+                            
+                            $resumeFile = $input['cv'];
+                            $originalFileName =  !empty($input['resume_original_name']) ? $input['resume_original_name'] : '';
+                            #get the user id by email for doc id
+                            $referredByEmail = !empty($checkRel[0][1]->emailid) ? $checkRel[0][1]->emailid : '';
+                            $sqlUser    = $this->userRepository->getUserByEmail($referredByEmail);
+                            $refUserId  = !empty($sqlUser->id)?$sqlUser->id:0;
+                            #get company details by code
+                            $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyDetils->companyCode);
+                            $companyId   = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+                            $source = 3;
+                            $renamedFileName = '';
+                            #insert company resumes in company resumes table
+                            $insertResult = $this->enterpriseRepository->insertInCompanyResumes($companyId, $originalFileName, $refUserId, $source);
+                            $documentId   = $insertResult->id;
+                            
+                            #file move to s3 folder
+                            $fileName = $this->moveResume($resumeFile, $companyId, $documentId);
+                            if($fileName){
+                                #form s3 path here
+                                $s3Path = Config::get('constants.S3_DOWNLOAD_PATH').$companyId.'/'.$fileName;
+                                #updte s3 path in company resumes table
+                                $updateResult = $this->enterpriseRepository->updateCompanyResumes($documentId, $s3Path);
+                                $renamedFileName = $s3Path;
+                            }    
+                            //upload the file
+                            /*$this->userFileUploader->source =  $input['cv'];
+                            $this->userFileUploader->destination = Config::get('constants.S3BUCKET_NON_MM_REFER_RESUME');
+                            $renamedFileName = $this->userFileUploader->uploadToS3BySource($input['cv']);*/
+                            $neoInput['resume_path'] = $renamedFileName;
                         }
                         $neoInput['resume_original_name'] = $input['resume_original_name'];
     //                    $neoInput['created_at']     = $this->appEncodeDecode->UserTimezone(gmdate('Y-m-d H:i:s'),$input['time_zone']); 
