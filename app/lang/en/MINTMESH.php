@@ -69,7 +69,7 @@ return array(
                  "login_credentials" => "Please login with your enterprise credentials",
                  "inactive_group" => "You are an inactive group user",
                  "inactive_user"  => "You are an inactive user",
-                 "contact_admin"  => "Something went wrong please contact administrator"
+                 "contact_admin"  => "Something went wrong please contact administrator support@mintmesh.com"
          ),
          "resendActivationLink" => array(
                 "success" => "Mail Sent Successfully",
