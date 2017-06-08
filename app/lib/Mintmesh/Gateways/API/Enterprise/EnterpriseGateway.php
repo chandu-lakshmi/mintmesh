@@ -434,6 +434,17 @@ class EnterpriseGateway {
 
             $returnResponse = $this->userRepository->getUserByEmail($response['data']['emailid']);
             $responseData = $this->enterpriseRepository->getUserCompanyMap($returnResponse['id']);
+            
+            if(!empty($input['company_code'])) {
+                if($input['company_code'] != $responseData->code) {
+                    // returning failure message
+                    $responseMessage = array(Lang::get('MINTMESH.user.failure'));
+                    $responseCode = self::ERROR_RESPONSE_CODE;
+                    $responseMsg = self::ERROR_RESPONSE_MESSAGE;
+                    $responseData = array();
+                    return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $responseData);
+                }
+            }
 
             $input['username']  = $returnResponse['emailid'];
             $input['emailid']   = $returnResponse['emailid'];
@@ -663,7 +674,8 @@ class EnterpriseGateway {
             // returning failure message                      
             $responseCode = self::ERROR_RESPONSE_CODE;
             $responseMsg = self::ERROR_RESPONSE_MESSAGE;
-            $message = array($oauthResult['error_description']);
+            //$message = array($oauthResult['error_description']);//removing error to hide server Exception for end user
+            $message = array(Lang::get('MINTMESH.login.contact_admin'));
             $data = array();
         }
         $message = array('msg' => $message);

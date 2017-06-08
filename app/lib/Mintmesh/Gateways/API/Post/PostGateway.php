@@ -3011,19 +3011,20 @@ class PostGateway {
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId   = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
         
-        if($resumeFile){
+        if(file_exists($resumeFile)){
             $source = 1;
             #insert company resumes in company resumes table
             $insertResult = $this->enterpriseRepository->insertInCompanyResumes($companyId, $resumeName, $userId, $source);
-            if($insertResult){
-                $documentId = $insertResult->id;
-                #file move to s3 folder
-                $returnAry['file_name'] = $fileName = $this->moveResume($resumeFile, $companyId, $documentId);
+            $documentId   = $insertResult->id;
+            #file move to s3 folder
+            $fileName = $this->moveResume($resumeFile, $companyId, $documentId);
+            if($fileName){
                 #form s3 path here
                 $s3Path = Config::get('constants.S3_DOWNLOAD_PATH').$companyId.'/'.$fileName;
                 #updte s3 path in company resumes table
                 $updateResult = $this->enterpriseRepository->updateCompanyResumes($documentId, $s3Path);
                 #return response data
+                $returnAry['file_name']   = $fileName;
                 $returnAry['document_id'] = $documentId;
                 $returnAry['resume_path'] = $s3Path;
                 $returnAry['resume_name'] = $insertResult->file_original_name;
@@ -3034,7 +3035,7 @@ class PostGateway {
             } else {
                 $responseCode   = self::ERROR_RESPONSE_CODE;
                 $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
-                $responseMessage= array('msg' => array(Lang::get('MINTMESH.upload_resume.failure')));
+                $responseMessage= array('msg' => array(Lang::get('MINTMESH.upload_resume.failed_to_upload')));
             }
         } else {
             $responseCode   = self::ERROR_RESPONSE_CODE;

@@ -68,7 +68,8 @@ return array(
                 "email_inactive" => "You are inactive please activate via email",
                  "login_credentials" => "Please login with your enterprise credentials",
                  "inactive_group" => "You are an inactive group user",
-                 "inactive_user"  => "You are an inactive user"
+                 "inactive_user"  => "You are an inactive user",
+                 "contact_admin"  => "Something went wrong please contact administrator"
          ),
          "resendActivationLink" => array(
                 "success" => "Mail Sent Successfully",
@@ -542,6 +543,7 @@ return array(
     "upload_resume"=>array(             
             "success"    => "Successfully Done",
             "failure"    => "No details found",
+            "failed_to_upload"  => "Failed to upload resume",
             "file_not_found"    => "File not found"
     )
 );

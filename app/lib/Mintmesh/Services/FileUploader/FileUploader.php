@@ -34,14 +34,19 @@ abstract class FileUploader {
                 $ext = $fileinfo['extension'];
                 $fileName = $this->documentid.".".$ext;
                 $destination = $this->destination;
-                #create tenant directory not exists
-                if (!file_exists($destination)) {
-                    mkdir($destination, 0777);
-                }
-                #check if file exists in source
-                if(file_exists($source)){
-                    copy($source, $destination.$fileName);
-                    unlink($source);
+                try {
+                        #create tenant directory not exists
+                        if (!file_exists($destination)) {
+                            mkdir($destination, 0777);
+                        }
+                        #check if file exists in source
+                        if(file_exists($source)){
+                            copy($source, $destination.$fileName);
+                            unlink($source);
+                        }
+                } catch (\Exception $e) {
+                    \Log::info("failed to upload resume (moveResume) Document id : ".$this->documentid.'| Exception : '.$e->getMessage());
+                    $fileName = false;
                 }
             }
             return $fileName;
