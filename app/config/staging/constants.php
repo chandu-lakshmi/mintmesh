@@ -180,6 +180,7 @@ return [
     'S3BUCKET_COMPANY_IMAGES' => 'mintmesh/stg/companyImages',
     'S3BUCKET_USER_IMAGE' => 'mintmesh/stg/userImage',
     'S3BUCKET_FILE' =>  'mintmesh/stg/files',
+    'S3UPLOAD_RESUME' => 'mintmeshresumedev/',
     'UPLOAD_RESUME' => '/uploads/awss3_resumes/',
     'S3_DOWNLOAD_PATH'  => 'https://s3-us-west-2.amazonaws.com/mintmeshresumedev/',
     'BITLY_URL'   =>   'https://api-ssl.bitly.com/v3/user/link_save?access_token=',

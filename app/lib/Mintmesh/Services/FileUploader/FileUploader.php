@@ -25,6 +25,7 @@ abstract class FileUploader {
 
             
         }
+        #tenant based resume move To S3
         public function moveResume($source='')
         {
             $fileName = false;
@@ -85,7 +86,32 @@ abstract class FileUploader {
 //            }
             
         }       
-      
+        #tenant based resume Upload To S3
+        public function resumeUploadToS3() {
+                        
+                $sourceFile     = $this->source->getpathName();
+                $sourceMimeType = $this->source->getmimeType();            
+                $ext = $this->source->getClientOriginalExtension();
+                $fileName = $this->documentid.".".$ext;
+
+                $s3 = \AWS::get('s3');                        
+                try {
+                        // Upload data.
+                        $result = $s3->putObject(array(
+                            'Bucket'        => $this->destination,
+                            'Key'           => $fileName,
+                            'Body'          => fopen($sourceFile,'r'),
+                            'ContentType'   => $sourceMimeType,
+                            'ACL'           => 'public-read',
+                        ));
+                                // Print the URL to the object.
+                        return $result['ObjectURL'];
+                } catch (S3Exception $e) {
+                        return $e->getMessage();
+                }
+            
+        } 
+        
         public function uploadToS3() {
                         
           //  if ($this->source->isValid()) {

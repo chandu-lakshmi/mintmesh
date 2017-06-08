@@ -1379,16 +1379,11 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
     // creating new Enterprise user Company mapping in storage
     public function insertInCompanyResumes($companyId=0, $resumeName='', $userId=0, $source=0, $gotReferred=0)
     {   
-        $createdAt = gmdate("Y-m-d H:i:s");
-        /*$sql = "insert into company_resumes (`company_id`,`file_original_name`,`status`,`file_from`,`got_referred_id`,`created_by`,`created_at`, `updated_at`)" ;
-        $sql.=" values('".$companyId."','".$resumeName."',1,'".$source."','".$gotReferred."','".$userId."','".$createdAt."','".$createdAt."')" ;
-        $result = DB::statement($sql)->insertGetId;
-        return $result;*/
-        
+        $createdAt = gmdate("Y-m-d H:i:s");   
         $companyResumes = array(
                         "company_id"   => $companyId,
                         "file_original_name"  => $resumeName,
-                        "status"        => 1,
+                        "status"        => 0,
                         "file_from"     => $source,
                         "got_referred_id"  => $gotReferred,
                         "created_by"    => $userId,
@@ -1402,6 +1397,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         $updatedAt = gmdate("Y-m-d H:i:s");
         $companyResumes = array(
                         "file_source"   => $filesource,
+                        "status"        => 1,
                         "updated_at"    => $updatedAt
             );
         if($documentId){

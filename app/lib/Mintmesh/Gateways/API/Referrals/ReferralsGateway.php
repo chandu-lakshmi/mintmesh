@@ -2027,6 +2027,7 @@ class ReferralsGateway {
             $this->loggedinUserDetails = $this->getLoggedInUser();
             $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
             $userEmail = $this->neoLoggedInUserDetails->emailid ;
+            $userId = $this->loggedinUserDetails->id;
             $relationCount = 1 ;
            //count for all relations
            $existingRelationCount = $this->referralsRepository->getReferralsCount(Config::get('constants.REFERRALS.GOT_REFERRED'), $input['post_id'], $userEmail, $input['refer_to']);
@@ -2035,7 +2036,19 @@ class ReferralsGateway {
                # process resume for hire a candidate service scope
                if (!empty($input['is_hire_candidate'])){
                    #process resume fields
-                   $resumeResult = $this->processResumeForRefer($input);
+                   if(!empty($isEnt)){
+                        $postId = !empty($input['post_id']) ? $input['post_id'] : '';
+                        $companyDetils = $this->neoPostRepository->getPostCompany($postId); 
+                        $companyDetils->companyCode;
+                        #get company details by code
+                        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyDetils->companyCode);
+                        $companyId   = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+                        #for enterprise app
+                        $resumeResult = $this->processResumeForEnterpriseRefer($input, $companyId, $userId);
+                   } else {
+                        #for consumer app
+                        $resumeResult = $this->processResumeForRefer($input);
+                   }
                    if (!$resumeResult['status']){
                        return $this->commonFormatter->formatResponse(406, "error", $resumeResult['message'], array()) ;
                    }else{
@@ -2182,6 +2195,46 @@ class ReferralsGateway {
                 $resumePathRes = $this->userGateway->uploadResumeForRefer($input['resume'],0);
             }else if(empty($input['refer_non_mm_email']) && !empty($input['resume'])){#for mintmesh with resume
                 $resumePathRes = $this->userGateway->uploadResumeForRefer($input['resume'],1);
+            }
+            #check for validation of resume
+            if ($returnBoolean && !in_array($resumePathRes, $this->resumeValidations)){# check if resume validations are fine
+                $resumePath = $resumePathRes ;
+                if ($uploaded!=0){//uploaded
+                    $resumeOriginalName = $input['resume']->getClientOriginalName();
+                }
+            }else if(in_array($resumePathRes, $this->resumeValidations)){
+                $returnBoolean = false ;
+                $message = Lang::get('MINTMESH.user.'.$resumePathRes);
+            }
+            $msg = array('msg'=>array($message)) ;
+            return array('status'=>$returnBoolean, 'uploaded'=>$uploaded, 'resume_path'=>$resumePath, 'message'=>$msg,'resume_original_name'=>$resumeOriginalName);
+            
+        }
+        
+        /*
+         * validate resume in refer contact
+         */
+        public function processResumeForEnterpriseRefer($input=array(), $companyId=0, $userId=0){
+            $returnBoolean = true;
+            $uploaded = 1;
+            $resumePath = $resumePathRes = $message = $resumeOriginalName = "";
+            $message = Lang::get('MINTMESH.user.no_resume');
+            if (!empty($input['refer_non_mm_email']) && empty($input['resume'])){#for non mintmesh with no resume
+                $returnBoolean = false;
+            }else if(empty($input['refer_non_mm_email']) && empty($input['resume'])){#for mintmesh with no resume
+               #check if the referring person is having resume attached
+                $resumePathResult = $this->neoUserRepository->getMintmeshUserResume($input['referring']);
+                if(empty($resumePathResult)){# if no resume uploaded in profile then ask for resume
+                    $returnBoolean = false;
+                }else{
+                    $uploaded = 0;
+                    $resumePath = $resumePathResult['cvRenamedName'];
+                    $resumeOriginalName = $resumePathResult['cvOriginalName'];
+                }
+            }else if(!empty($input['refer_non_mm_email']) && !empty($input['resume'])){#for non mintmesh with resume
+                $resumePathRes = $this->userGateway->uploadResumeForEnterpriseRefer($input['resume'], $companyId, $userId);
+            }else if(empty($input['refer_non_mm_email']) && !empty($input['resume'])){#for mintmesh with resume
+                $resumePathRes = $this->userGateway->uploadResumeForEnterpriseRefer($input['resume'], $companyId, $userId);
             }
             #check for validation of resume
             if ($returnBoolean && !in_array($resumePathRes, $this->resumeValidations)){# check if resume validations are fine
