@@ -534,7 +534,7 @@ class PostController extends \BaseController {
             // Validating user input data
             $validation = $this->PostGateway->validateDownloadResumeInput($inputUserData);
             if($validation['status'] == 'success') {
-                $response = $this->PostGateway->downloadResume();
+                $response = $this->PostGateway->downloadResume($inputUserData);
                 return \Response::json($response);
             } else {
                     // returning validation failure

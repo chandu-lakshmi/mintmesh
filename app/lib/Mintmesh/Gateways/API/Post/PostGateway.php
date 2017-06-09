@@ -3049,7 +3049,7 @@ class PostGateway {
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
     
-    public function downloadResume(){
+    public function downloadResume($input){
         $data = array();
        //retrieving resume details with input as id
         $resume = $this->enterpriseRepository->getResume($input['id']);
@@ -3070,6 +3070,7 @@ class PostGateway {
                 if (file_exists($file)) {
                     header('Content-Description: File Transfer');
                     header('Content-Type: application/octet-stream');
+//                    header('Content-Type: application/doc');
                     header('Content-Disposition: attachment; filename="'.basename($file).'"');
                     header('Expires: 0');
                     header('Cache-Control: must-revalidate');
