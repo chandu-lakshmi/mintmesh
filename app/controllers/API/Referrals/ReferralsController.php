@@ -560,13 +560,7 @@ class ReferralsController extends \BaseController {
             }
         }
         
-        public function getDownloadZipSelectedResumes() {
-            $inputUserData = \Input::all();
-            if(!empty($inputUserData))
-            {
-               $response = $this->referralsGateway->getZipResumesDownload($inputUserData);
-            }
-        }
+        
         
         
 }
