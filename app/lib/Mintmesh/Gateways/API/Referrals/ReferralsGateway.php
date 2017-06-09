@@ -2175,7 +2175,7 @@ class ReferralsGateway {
         foreach ($resumeFiles as $resumeValue) {
 
             $docId = $resumeValue['doc_id'];
-            $file = $resumeValue['file'];
+           // $file = $resumeValue['file'];
             $resumePathfile = $this->getResumeFilePath($docId, $companyId);
 
             foreach ($resumePathfile as $resumeFileInfo) {

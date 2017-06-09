@@ -25,8 +25,12 @@ Route::any("getAccessTokenRefreshToken", "ZenefitsController@getAccessTokenRefre
 
 Route::get('getMails','Email2Controller@getMails');
 Route::any('getOauthBasedOnClientId','HomeController@getOauthBasedOnClientId');
+
+//Download Resumes
 Route::any('getZipDownload','API\Referrals\ReferralsController@getDownloadZipSelectedResumes');
 Route::any('getResumeDownload','API\Referrals\ReferralsController@getFileDownload');
+
+
 Route::post('getParsedResumeDocInfo','API\SocialContacts\ContactsController@getParsedResumeDocInfo');
 Route::get('docs', function() {
 	return View::make('docs.v1.index');
