@@ -2470,5 +2470,48 @@ class ReferralsGateway {
         }
         return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data);
     }
+    
+        public function getZipResumesDownload($input) {
+        
+        set_time_limit(20000);
+        $referralsAry = $resumeFiles = $resumePathfile = $returnAry = $data = array();
+        $companyId = $input['company_id'];
+        $resumeFiles = $input['resumes'];//array('0' => array('doc_id' => '318', 'file' => '14458536323 1475060518.doc'), '1' => array('doc_id' => '319', 'file' => '14458536323 1475060518.doc'));
+        $i = 0;
+            $target_name = time();
+           $target_name .= '.zip';
+           //Zip PHP Class
+           $zip = new ZipArchive();
+            $tmp_file = tempnam('.','');
+            $zip->open($tmp_file, ZipArchive::CREATE);
+        foreach ($resumeFiles as $resumeValue) {
+
+            $docId = $resumeValue['doc_id'];
+            $file = $resumeValue['file'];
+            $resumePathfile = $this->getResumeFilePath($docId, $companyId);
+           
+            foreach ($resumePathfile as $resumeFileInfo) {
+                $returnAry[$i]['file_source'] = $resumeFileInfo->file_source;
+                $returnAry[$i]['file_original_name'] = $resumeFileInfo->file_original_name;
+               $download_file = file_get_contents($resumeFileInfo->file_source);
+            //var_dump($download_file);
+            $zip->addFromString(basename($resumeFileInfo->file_source),$download_file);
+            }
+            $i++;
+        }
+             # close zip
+            $zip->close();
+            header('Content-disposition: attachment; filename='.$target_name);
+            header('Content-type: application/zip');
+          //  header('Content-type: application/zip');
+            readfile($tmp_file);
+            unlink($tmp_file);
+        
+    }
+
+    public function getResumeFilePath($docId, $companyId) {
+        return $this->referralsRepository->getResumeFilePath($docId, $companyId);
+    }
+    
 }
 ?>
