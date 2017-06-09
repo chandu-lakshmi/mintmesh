@@ -1315,7 +1315,10 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
         return $return;
     }
 
-   
+    public function getResumeFilePath($docId, $companyId) {
+        $query = "SELECT file_source,file_original_name FROM company_resumes WHERE id = '" . $docId . "' AND company_id = '" . $companyId . "'";
+        return DB::select($query);
+    }
 
 }
 
