@@ -2161,7 +2161,7 @@ class ReferralsGateway {
 
     public function getZipResumesDownload($input) {
 
-        set_time_limit(20000);
+        set_time_limit(50000);
         $referralsAry = $resumeFiles = $resumePathfile = $returnAry = $data = array();
         $companyId = $input['company_id'];
         $resumeFiles = $input['resumes'];
@@ -2175,8 +2175,7 @@ class ReferralsGateway {
         $zip->open($tmp_file, ZipArchive::CREATE);
         foreach ($resumeFiles as $resumeValue) {
 
-            $docId = $resumeValue['doc_id'];
-           // $file = $resumeValue['file'];
+            $docId = $resumeValue;
             $resumePathfile = $this->getResumeFilePath($docId, $companyId);
 
             foreach ($resumePathfile as $resumeFileInfo) {
@@ -2192,7 +2191,6 @@ class ReferralsGateway {
         $zip->close();
         header('Content-disposition: attachment; filename=' . $target_name);
         header('Content-type: application/zip');
-        //  header('Content-type: application/zip');
         readfile($tmp_file);
         unlink($tmp_file);
     }
@@ -2202,15 +2200,33 @@ class ReferralsGateway {
     }
 
     public function getResumeDownload($input) {
-        //Time Limit Setup 
-        set_time_limit(20000);
-        $referralsAry = $resumeFiles = $resumePathfile = $returnAry = $data = array();
-        $companyId = $input['company_id'];
-        $doc_id = $input['doc_id'];
+      
+        $resumePathfile = array();
+        $companyId = 230; //$input['company_id'];
+        $doc_id = 901; //$input['doc_id'];
         $resumePathfile = $this->getResumeFilePath($doc_id, $companyId);
-        $download_file = file_get_contents($resumePathfile[0]->file_source);
-        header('Content-disposition: attachment; filename=' . $resumePathfile[0]->file_original_name);
-        header('Content-type: application/zip');
+        
+          set_time_limit(0);
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $resumePathfile[0]->file_source);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+    $r = curl_exec($ch);
+    curl_close($ch);
+    
+    header('Expires: 0'); // no cache
+    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+    header('Last-Modified: ' . gmdate('D, d M Y H:i:s', time()) . ' GMT');
+    header('Cache-Control: private', false);
+    header('Content-Type: application/force-download');
+    header('Content-Disposition: attachment; filename="' . $resumePathfile[0]->file_original_name . '"');
+    header('Content-Length: ' . strlen($r)); // provide file size
+    header('Connection: close');
+    echo $r;
+       
     }
 
 }
