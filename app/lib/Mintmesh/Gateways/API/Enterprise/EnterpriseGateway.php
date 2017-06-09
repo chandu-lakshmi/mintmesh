@@ -434,6 +434,17 @@ class EnterpriseGateway {
 
             $returnResponse = $this->userRepository->getUserByEmail($response['data']['emailid']);
             $responseData = $this->enterpriseRepository->getUserCompanyMap($returnResponse['id']);
+            
+            if(!empty($input['company_code'])) {
+                if($input['company_code'] != $responseData->code) {
+                    // returning failure message
+                    $responseMessage = array(Lang::get('MINTMESH.user.failure'));
+                    $responseCode = self::ERROR_RESPONSE_CODE;
+                    $responseMsg = self::ERROR_RESPONSE_MESSAGE;
+                    $responseData = array();
+                    return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $responseData);
+                }
+            }
 
             $input['username']  = $returnResponse['emailid'];
             $input['emailid']   = $returnResponse['emailid'];
@@ -663,7 +674,8 @@ class EnterpriseGateway {
             // returning failure message                      
             $responseCode = self::ERROR_RESPONSE_CODE;
             $responseMsg = self::ERROR_RESPONSE_MESSAGE;
-            $message = array($oauthResult['error_description']);
+            //$message = array($oauthResult['error_description']);//removing error to hide server Exception for end user
+            $message = array(Lang::get('MINTMESH.login.contact_admin'));
             $data = array();
         }
         $message = array('msg' => $message);
@@ -3052,11 +3064,12 @@ class EnterpriseGateway {
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId      = !empty($companyDetails[0]->id)?$companyDetails[0]->id:0; 
         $hcmId          = !empty($input['hcm_id'])?$input['hcm_id']:'';
-        $hcmAccessToken    = !empty($input['hcm_access_token'])?$input['hcm_access_token']:'';
+        $hcmCodeToken    = !empty($input['hcm_access_token'])?$input['hcm_access_token']:'';
         $hcmRunStatus   = !empty($input['hcm_run_status']) ? $input['hcm_run_status'] : '';
         #form the input for add and edit HCM config details
         $hcmAry[0]['name']     = 'Authorization';
-        $hcmAry[0]['value']    = $hcmAccessToken;
+        $hcmAry[0]['value']    = $hcmCodeToken;
+     
         
         #process HCM config Properties here
         $hcmConfigPropAry   = $this->enterpriseRepository->setHcmConfigProperties($hcmId, $companyId, $hcmAry);
@@ -3087,7 +3100,7 @@ class EnterpriseGateway {
                 $value = $hcmDetails[0];
                 $returnAry['hcm_id']   = $value['hcm_id'];
                 $returnAry['hcm_name'] = $value['name'];
-                $returnAry['hcm_access_token']  = $value['Authorization'];
+                $returnAry['hcm_code_token']  = !empty($value['hcm_access_token']) ? $value['hcm_access_token'] : '';
                 $returnAry['hcm_status']   = $getHcmstatus; 
             }
             $data = $returnAry;
@@ -3102,6 +3115,72 @@ class EnterpriseGateway {
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data, false);    
     }  
     
+    public function addEditZenefitsAccessToken($input,$companycode){
+        $input_zenefits = json_decode($input, TRUE);
+        //print_r($input_zenefits); die;
+        $message    = '';
+        $returnAry  = $data = $hcmAry = $hcmConfigPropAry = array();
+        $companyCode    = $companycode;//!empty($input['company_code'])?$input['company_code']:'';
+        #get the logged in user company details with company code here
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = !empty($companyDetails[0]->id)?$companyDetails[0]->id:0; 
+        $hcmId          = 2;//!empty($input['hcm_id'])?$input['hcm_id']:'';
+        $hcmAccesToken    = !empty($input_zenefits['access_token'])? ($input_zenefits['token_type'] . ' ' . $input_zenefits['access_token']) :'';
+        $hcmReferToken    = !empty($input_zenefits['refresh_token'])?$input_zenefits['refresh_token']:'';
+        $hcmExpToken    = !empty($input_zenefits['expires_in'])?$input_zenefits['expires_in']:'';
+        $hcmRunStatus   = !empty($input['hcm_run_status']) ? $input['hcm_run_status'] : '';
+        #form the input for add and edit HCM config details
+        $hcmAry[1]['name']     = 'Authorization';
+        $hcmAry[1]['value']    = $hcmAccesToken;
+        $hcmAry[2]['name']     = 'refresh_token';
+        $hcmAry[2]['value']    = $hcmReferToken;
+        $hcmAry[3]['name']     = 'created_in';
+        $hcmAry[3]['value']    = date("d-m-Y");
+       // print_r($hcmAry); die;
+        #process HCM config Properties here
+        $hcmConfigPropAry   = $this->enterpriseRepository->setHcmConfigProperties($hcmId, $companyId, $hcmAry);
+        if(!empty($hcmConfigPropAry)){
+            if($hcmRunStatus){
+                #get Company Hcm Jobs for company_hcm_jobs_id
+                $checkHcmJobs = $this->enterpriseRepository->getCompanyHcmJobs($hcmId, $companyId);
+                $companyHcmJobsId = !empty($checkHcmJobs[0]->company_hcm_jobs_id)?$checkHcmJobs[0]->company_hcm_jobs_id:'';
+                if($companyHcmJobsId){
+                    #update HCM schedule run status here
+                    $hcmConfigPropAry   = $this->enterpriseRepository->updateHcmRunStatus($companyHcmJobsId, $hcmRunStatus);
+                }    
+            }
+            #form the success messahe here
+            if(!empty($hcmConfigPropAry['insert'])){
+                $message    = Lang::get('MINTMESH.hcm_details.insert_success');
+            }  else {
+                $message    = Lang::get('MINTMESH.hcm_details.update_success');
+            }
+            #get company HCMs details here
+            $getHcmJobs = $this->enterpriseRepository->checkCompanyHcmJobs($companyId, $hcmId);
+            $getHcmstatus = !empty($getHcmJobs[0]->status) ? $getHcmJobs[0]->status : 0;
+            $getHcmstatus = !empty($getHcmstatus) ? 'enable' : 'disable';
+            $getHcmList = $this->enterpriseRepository->getHcmList($companyId, $hcmId);
+            $hcmDetails = $this->formatHcmResult($getHcmList);
+            #form return company HCMs details
+            if(!empty($hcmDetails[0])){
+                $value = $hcmDetails[0];
+                $returnAry['hcm_id']   = $value['hcm_id'];
+                $returnAry['hcm_name'] = $value['name'];
+                $returnAry['hcm_access_token']  = $hcmAccesToken;
+                $returnAry['hcm_refer_token']  = $hcmReferToken;
+                $returnAry['hcm_status']   = $getHcmstatus; 
+            }
+            $data = $returnAry;
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array($message));
+        }else{
+          $responseCode   = self::ERROR_RESPONSE_CODE;
+          $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+          $responseMessage= array('msg' => array(Lang::get('MINTMESH.hcm_details.retrieve_failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data, false);    
+    }
     
     public function formatHcmResult($getHcmList = array()){
         $mainAry = $hcmDetails = $return = array();
