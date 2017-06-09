@@ -2161,7 +2161,7 @@ class ReferralsGateway {
 
     public function getZipResumesDownload($input) {
 
-        set_time_limit(50000);
+        set_time_limit(0);
         $referralsAry = $resumeFiles = $resumePathfile = $returnAry = $data = array();
         $companyId = $input['company_id'];
         $resumeFiles = $input['resumes'];
