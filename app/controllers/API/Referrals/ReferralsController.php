@@ -568,6 +568,13 @@ class ReferralsController extends \BaseController {
             }
         }
         
+        public function getFileDownload() {
+            $inputUserData = \Input::all();
+            if(!empty($inputUserData))
+            {
+               $response = $this->referralsGateway->getResumeDownload($inputUserData);
+            } 
+        }
         
         
 }
