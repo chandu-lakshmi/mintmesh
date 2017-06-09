@@ -5,6 +5,8 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use DB as D;
 use Config as C;
+use User as U;
+use Company_Resumes as CR;
 use Mintmesh\Repositories\BaseRepository;
 use Everyman\Neo4j\Query\ResultSet;
 use Everyman\Neo4j\Client as NeoClient;
@@ -55,6 +57,7 @@ class job2 extends Command {
      * @return mixed
      */
     public function fire() {
+        
         DB::statement("insert into cron_details (type) values('job2')");
         $dir = __DIR__;
         $dir_array = explode('/', $dir, -2);
@@ -108,7 +111,7 @@ class job2 extends Command {
                             
                                 DB::statement("UPDATE cm_mails c set c.flag = '1' where c.id='" . $id . "'");
                                 $neoInput['referred_for'] = $checkRel[0][0]->user_emailid;
-                                $neoInput['referred_by'] = $checkRel[0][1]->emailid;
+                                $neoInput['referred_by']  = $relReferredBy = !empty($checkRel[0][1]->emailid) ? $checkRel[0][1]->emailid : '';
                                 $checkUser = $this->checkUser($from);
                                 if(!empty($checkUser[0]) && isset($checkUser[0][0])){
                                     $neoInput['referral'] = $checkUser[0][0];
@@ -116,14 +119,39 @@ class job2 extends Command {
                                     $createUser = $this->createUser($from,$neoInput);
                                     $neoInput['referral'] = $createUser[0][0];
                                 }
-                                //Log::info("<<<<<<<<<<<<<<<< In job2 >>>>>>>>>>>>>".print_r($neoInput,1));
-                               /* $files = File::allFiles($directory);
-                                foreach ($files as $file){*/
-                                    $this->userFileUploader->source = $directory.$mail->fn_re;
+                                $renamedFileName = '';
+                                $resumeFile = $directory.$mail->fn_re;
+                                if(file_exists($resumeFile)){
+                                    
+                                    #set resume original name
+                                    $resumeName = $mail->fn_or;
+                                    #get company details by code
+                                    $companyDetails = $this->getCompanyDetailsByCode($companyCode);
+                                    $companyId = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+                                    #get Referred user details
+                                    $sqlUser = $this->getUserByEmail($relReferredBy);        
+                                    $userId  = !empty($sqlUser->id)?$sqlUser->id:0;
+                                    $source  = 4;
+                                    #insert company resumes in company resumes table
+                                    $insertResult = $this->insertInCompanyResumes($companyId, $resumeName, $userId, $source);
+                                    $documentId   = $insertResult->id;
+                                    #upload the file to s3
+                                    $this->userFileUploader->source = $resumeFile ;
+                                    $this->userFileUploader->destination = public_path().Config::get('constants.UPLOAD_RESUME').$companyId.'/' ;
+                                    $this->userFileUploader->documentid  = $documentId;
+                                    $renamedFileName = $this->userFileUploader->moveResume($resumeFile);
+                                    if($renamedFileName){
+                                        #form s3 path here
+                                        $s3Path = Config::get('constants.S3_DOWNLOAD_PATH').$companyId.'/'.$renamedFileName;
+                                        #updte s3 path in company resumes table
+                                        $updateResult    = $this->enterpriseRepository->updateCompanyResumes($documentId, $s3Path);
+                                        $renamedFileName = $s3Path;
+                                    }
+                                    /*$this->userFileUploader->source = $directory.$mail->fn_re;
                                     $this->userFileUploader->destination = Config::get('constants.S3BUCKET_NON_MM_REFER_RESUME');
-                                    $renamedFileName = $this->userFileUploader->uploadToS3BySource($directory.$mail->fn_re);
-                                    $neoInput['resume_path'] = $renamedFileName;
-                               // }
+                                    $renamedFileName = $this->userFileUploader->uploadToS3BySource($directory.$mail->fn_re);*/
+                                }    
+                                $neoInput['resume_path'] = $renamedFileName;
                                 $neoInput['resume_original_name'] = $mail->fn_or;
                                 $neoInput['created_at'] = gmdate('Y-m-d H:i:s');
                                 $neoInput['awaiting_action_status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
@@ -349,6 +377,41 @@ class job2 extends Command {
             $result = DB::Select($sql);
         }
         return $result;
-    }    
+    }
+    
+    public function getUserByEmail($email) {
+        return u::whereRaw('emailid = ?', array($this->appEncodeDecode->filterString(strtolower($email))))->first();            
+    }
+    
+    // creating new Enterprise user Company mapping in storage
+    public function insertInCompanyResumes($companyId=0, $resumeName='', $userId=0, $source=0, $gotReferred=0)
+    {   
+        $createdAt = gmdate("Y-m-d H:i:s");   
+        $companyResumes = array(
+                        "company_id"   => $companyId,
+                        "file_original_name"  => $resumeName,
+                        "status"        => 0,
+                        "file_from"     => $source,
+                        "got_referred_id"  => $gotReferred,
+                        "created_by"    => $userId,
+                        "created_at"    => $createdAt
+            );
+        return CR::create($companyResumes);
+    }
+    // creating new Enterprise user Company mapping in storage
+    public function updateCompanyResumes($documentId=0, $filesource='')
+    {   
+        $updatedAt = gmdate("Y-m-d H:i:s");
+        $companyResumes = array(
+                        "file_source"   => $filesource,
+                        "status"        => 1,
+                        "updated_at"    => $updatedAt
+            );
+        if($documentId){
+            $results = CR::where ('id',$documentId)->update($companyResumes); 
+        }
+        
+       return $results;
+    }
         
 }

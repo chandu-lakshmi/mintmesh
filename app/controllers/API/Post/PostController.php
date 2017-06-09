@@ -521,6 +521,28 @@ class PostController extends \BaseController {
             }
         }
         
+        /**
+         * download resumes from s3
+         * POST/download_resumes
+         * @param string $access_token
+         * @param s3 path
+         */
+        
+        public function downloadResume() {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->PostGateway->validateDownloadResumeInput($inputUserData);
+            if($validation['status'] == 'success') {
+                $response = $this->PostGateway->downloadResume($inputUserData);
+                return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+        }
+        
+        
 }
 
 ?>

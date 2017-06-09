@@ -146,7 +146,7 @@ Route::group(array('prefix' => 'v1'), function() {
       Route::post("enterprise/test_lic", "API\Enterprise\EnterpriseController@testLic");
       //unsolicited node for old companies
       Route::post("enterprise/unsolicited_old_companies", "API\Enterprise\EnterpriseController@unsolicitedForOldCompanies");
-      
+         
 });
 
 //Route::group(array('prefix' => 'v1'), function() {
@@ -384,7 +384,9 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       Route::post("enterprise/get_configuration", "API\Enterprise\EnterpriseController@getConfiguration");
       // get_configuration
       Route::post("enterprise/upload_resume", "API\Post\PostController@uploadResume");
-
+      // download s3 file
+      Route::post("enterprise/download_resume", "API\Post\PostController@downloadResume");
+      
 });
 
 
