@@ -1411,8 +1411,4 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
        return $results;
     }
     
-    public function getResume($id=''){
-        return DB::table('company_resumes')  
-                ->where('id', '=', $id)->get();
-    }
 }

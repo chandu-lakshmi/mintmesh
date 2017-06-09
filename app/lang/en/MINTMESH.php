@@ -543,10 +543,5 @@ return array(
             "success"    => "Successfully uploaded",
             "failure"    => "No details found",
             "file_not_found"    => "File not found"
-    ),
-    "download_resume"=>array(
-            "success"    =>  "Successfully Done",
-            "failure"    =>   "Failed to download",
-            "resume_not_found"  => "Resume not found"
     )
 );
