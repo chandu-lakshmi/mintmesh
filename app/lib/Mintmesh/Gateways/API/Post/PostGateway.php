@@ -233,11 +233,6 @@ class PostGateway {
         return $this->doValidation('upload_resume', 'MINTMESH.user.valid');
     }
     
-    //validation on download resume
-    public function validateDownloadResumeInput($input) {
-        return $this->doValidation('download_resume', 'MINTMESH.user.valid');
-    }
- 
     public function postJob($input) {
         
         $objCompany  = new \stdClass();
