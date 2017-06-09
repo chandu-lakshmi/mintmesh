@@ -540,7 +540,7 @@ return array(
             "failure"          => "No details found"
     ),
     "upload_resume"=>array(             
-            "success"    => "Successfully Done",
+            "success"    => "Successfully uploaded",
             "failure"    => "No details found",
             "file_not_found"    => "File not found"
     ),
