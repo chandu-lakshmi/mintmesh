@@ -565,6 +565,7 @@ class ReferralsController extends \BaseController {
             if(!empty($inputUserData))
             {
                $response = $this->referralsGateway->getZipResumesDownload($inputUserData);
+               return $response;
             }
         }
         

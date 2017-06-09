@@ -60,6 +60,7 @@ class ZenefitsController extends BaseController {
         $response = json_decode($json_response);
         if ($response) {
             $response_zenefits = $this->EnterpriseGateway->addEditZenefitsAccessToken($json_response, $inputUserData['state']);
+            print_r($response_zenefits); die;
             return \Response::json($response_zenefits);
         } else {
             // returning validation failure
