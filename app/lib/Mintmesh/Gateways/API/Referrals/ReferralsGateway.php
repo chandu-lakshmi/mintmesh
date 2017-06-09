@@ -31,6 +31,7 @@ use Lang;
 use Config;
 use Log,
     Queue;
+use ZipArchive;
 
 class ReferralsGateway {
 
