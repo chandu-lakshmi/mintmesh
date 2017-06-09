@@ -233,11 +233,6 @@ class PostGateway {
         return $this->doValidation('upload_resume', 'MINTMESH.user.valid');
     }
     
-    //validation on download resume
-    public function validateDownloadResumeInput($input) {
-        return $this->doValidation('download_resume', 'MINTMESH.user.valid');
-    }
- 
     public function postJob($input) {
         
         $objCompany  = new \stdClass();
@@ -3049,47 +3044,6 @@ class PostGateway {
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
     
-    public function downloadResume($input){
-        $data = array();
-       //retrieving resume details with input as id
-        $resume = $this->enterpriseRepository->getResume($input['id']);
-        if($resume){
-        //download the resume from s3 bucket
-            $s3 =  \AWS::get('s3');
-            $file_path   = explode('/', $resume[0]->file_source);
-            $file_name   = end($file_path);
-            $bucket_name = $file_path[3].'/'.$file_path[4];
-            $saveAsPath = Config::get('constants.DOWNLOAD_RESUME').$resume[0]->file_original_name;
-            $result = $s3->getObject([
-                'Bucket' => $bucket_name,
-                'Key'    => $file_name,
-                'SaveAs' => $saveAsPath
-            ]);
-            if($result){
-                $file = $saveAsPath;
-                if (file_exists($file)) {
-                    header('Content-Description: File Transfer');
-                    header('Content-Type: application/octet-stream');
-//                    header('Content-Type: application/doc');
-                    header('Content-Disposition: attachment; filename="'.basename($file).'"');
-                    header('Expires: 0');
-                    header('Cache-Control: must-revalidate');
-                    header('Pragma: public');
-                    header('Content-Length: ' . filesize($file));
-                    return readfile($file);
-            }
-            }else{
-                $responseCode   = self::ERROR_RESPONSE_CODE;
-                $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
-                $responseMessage= array('msg' => array(Lang::get('MINTMESH.download_resume.failure')));
-            }
-        }else{
-            $responseCode   = self::ERROR_RESPONSE_CODE;
-            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage= array('msg' => array(Lang::get('MINTMESH.download_resume.resume_not_found')));
-        }
-        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);  
-    }
 }
 
 ?>

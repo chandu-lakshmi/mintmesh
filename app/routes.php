@@ -388,8 +388,6 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       Route::post("enterprise/get_configuration", "API\Enterprise\EnterpriseController@getConfiguration");
       // get_configuration
       Route::post("enterprise/upload_resume", "API\Post\PostController@uploadResume");
-      // download s3 file
-      Route::post("enterprise/download_resume", "API\Post\PostController@downloadResume");
       
 });
 
