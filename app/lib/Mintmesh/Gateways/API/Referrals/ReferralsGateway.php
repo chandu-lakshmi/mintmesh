@@ -9,7 +9,6 @@ namespace Mintmesh\Gateways\API\Referrals;
  * create the resource and do the validation. Also model just saves the
  * data and is not concerned with the validation.
  */
-use Illuminate\Support\Facades\Crypt;
 use Mintmesh\Repositories\API\Referrals\ReferralsRepository;
 use Mintmesh\Services\Validators\API\Referrals\ReferralsValidator;
 use Mintmesh\Repositories\API\User\NeoUserRepository;
@@ -2224,7 +2223,6 @@ class ReferralsGateway {
         header('Content-Length: ' . strlen($r)); // provide file size
         header('Connection: close');
         echo $r;
-         exit;
    
     }
 }
