@@ -201,6 +201,10 @@ return [
     'UPLOAD_RESUME' => '/uploads/awss3_resumes/',
     'S3_DOWNLOAD_PATH' => 'https://s3-us-west-2.amazonaws.com/mintmeshresumedev/',
     'BITLY_URL'   =>   'https://api-ssl.bitly.com/v3/user/link_save?access_token=',
-    'BITLY_ACCESS_TOKEN' => 'b65a3bf8c767c8931eeaa067da88c2e2356f192e'
+    'BITLY_ACCESS_TOKEN' => 'b65a3bf8c767c8931eeaa067da88c2e2356f192e',
+	'AIusername' => 'admin',
+    'AIpassword' => 'Aev54I0Av13bhCxM',
+    'Zenefits_client_id' => '5zr3cWgul9peKR3al1AZ65qcsbWC3JJr8jRd0IDU',
+    'Zenefits_client_secret' => '8eLr2WeIukzLVTjqJ3xaAeNFmLNGKDla1UdpRAwZxAdzlQEMdSnrRonqpiGbIm7HQhvvH4UnN8FmaCtVH9gxaKSyPntMwdcj80QBUKnBVA3rzPaJ8xIt1kDsvUVb8aKs'
         
 ];
