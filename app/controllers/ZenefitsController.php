@@ -13,6 +13,8 @@ class ZenefitsController extends BaseController {
 
     protected $userRepository, $guzzleClient, $IntegrationManager;
 
+    const SUCCESS_RESPONSE_CODE = 200;
+
     public function __construct(EnterpriseGateway $EnterpriseGateway) {
         $this->guzzleClient = new guzzleClient();
         $this->EnterpriseGateway = $EnterpriseGateway;
@@ -30,7 +32,7 @@ class ZenefitsController extends BaseController {
 
     public function getAccesCode() {
         $inputUserData = \Input::all();
-         if ($inputUserData) {
+        if ($inputUserData) {
             $info = $this->getAccessTokenRefreshToken($inputUserData);
             return Redirect::to('http://202.63.105.85/mmenterprise/getApp/zenefits');
         } else {
@@ -44,12 +46,12 @@ class ZenefitsController extends BaseController {
         $endPoint = "https://secure.zenefits.com/oauth2/token/";
 
 
-        $data['client_id'] = "5zr3cWgul9peKR3al1AZ65qcsbWC3JJr8jRd0IDU";
-        $data['client_secret'] = "8eLr2WeIukzLVTjqJ3xaAeNFmLNGKDla1UdpRAwZxAdzlQEMdSnrRonqpiGbIm7HQhvvH4UnN8FmaCtVH9gxaKSyPntMwdcj80QBUKnBVA3rzPaJ8xIt1kDsvUVb8aKs";
+        $data['client_id'] = Config::get('constants.Zenefits_client_id');
+        $data['client_secret'] = Config::get('constants.Zenefits_client_secret');
         $data['code'] = !empty($inputUserData['code']) ? $inputUserData['code'] : '';
         $data['grant_type'] = "authorization_code";
         $data['redirect_uri'] = "http://202.63.105.85/mintmesh/getAccesCode";
-        //$data1    = json_encode($data);
+        
         $curl_handle = curl_init();
         curl_setopt($curl_handle, CURLOPT_URL, $endPoint);
         curl_setopt($curl_handle, CURLOPT_RETURNTRANSFER, true);
@@ -60,7 +62,8 @@ class ZenefitsController extends BaseController {
         $response = json_decode($json_response);
         if ($response) {
             $response_zenefits = $this->EnterpriseGateway->addEditZenefitsAccessToken($json_response, $inputUserData['state']);
-            print_r($response_zenefits); die;
+            $this->getActiveApp($response_zenefits['data']['hcm_access_token']);
+
             return \Response::json($response_zenefits);
         } else {
             // returning validation failure
@@ -68,6 +71,45 @@ class ZenefitsController extends BaseController {
         }
     }
 
-    
+    public function getActiveApp($access_token) {
+
+        $endPoint = "https://api.zenefits.com/platform/company_installs";
+
+        $request = $this->guzzleClient->get($endPoint);
+        $request->setHeader('Authorization', $access_token);
+
+
+        try {
+            $response = $request->send();
+
+            if ($response->isSuccessful() && $response->getStatusCode() == self::SUCCESS_RESPONSE_CODE) {
+                $this->getChangeInstallStatus($access_token, $response->getBody());
+            } else {
+                \Log::info("Error while getting response : $response->getInfo()");
+            }
+        } catch (ClientErrorResponseException $exception) {
+
+            $responseBody = $exception->getResponse()->getBody(true);
+        }
+    }
+
+    public function getChangeInstallStatus($access_token, $response) {
+
+        $data = array();
+        $array = json_decode($response, TRUE);
+        $endPoint = $array['data']['data'][0]['url'] . "/status_changes";
+        $data['status'] = "ok";
+        
+        $authorization = "Authorization: ". $access_token;
+        $post = json_encode($data);
+        $process = curl_init($endPoint);
+        curl_setopt($process, CURLOPT_HTTPHEADER, array('Content-Type: application/json', $authorization));
+        curl_setopt($process, CURLOPT_POST, 1);
+        curl_setopt($process, CURLOPT_POSTFIELDS, $post);
+        curl_setopt($process, CURLOPT_RETURNTRANSFER, TRUE);
+        $return = curl_exec($process);
+        curl_close($process);
+        return TRUE;
+    }
 
 }
