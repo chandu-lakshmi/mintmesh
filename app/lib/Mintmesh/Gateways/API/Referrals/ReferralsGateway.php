@@ -9,6 +9,7 @@ namespace Mintmesh\Gateways\API\Referrals;
  * create the resource and do the validation. Also model just saves the
  * data and is not concerned with the validation.
  */
+use Illuminate\Support\Facades\Crypt;
 use Mintmesh\Repositories\API\Referrals\ReferralsRepository;
 use Mintmesh\Services\Validators\API\Referrals\ReferralsValidator;
 use Mintmesh\Repositories\API\User\NeoUserRepository;
@@ -2169,7 +2170,7 @@ class ReferralsGateway {
         $i = 0;
         $target_name = time();
         $target_name .= '.zip';
-
+        
         //Zip PHP Class
         $zip = new ZipArchive();
         $tmp_file = tempnam('.', '');
@@ -2192,6 +2193,7 @@ class ReferralsGateway {
         $zip->close();
         header('Content-disposition: attachment; filename=' . $target_name);
         header('Content-type: application/zip');
+        print_r($tmp_file).exit;
         readfile($tmp_file);
         unlink($tmp_file);
     }
@@ -2203,10 +2205,9 @@ class ReferralsGateway {
     public function getResumeDownload($input) {
         $resumePathfile = array();
         $companyId = 230; //$input['company_id'];
-        $doc_id = 901; //$input['doc_id'];
+        $doc_id = 322; //$input['doc_id'];
         $resumePathfile = $this->getResumeFilePath($doc_id, $companyId);
         set_time_limit(0);
-
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $resumePathfile[0]->file_source);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
@@ -2220,11 +2221,13 @@ class ReferralsGateway {
         header('Cache-Control: private', false);
         header('Content-Type: application/force-download');
         header('Content-Disposition: attachment; filename="' . $resumePathfile[0]->file_original_name . '"');
+//        header('Content-Transfer-Encoding: binary');
         header('Content-Length: ' . strlen($r)); // provide file size
         header('Connection: close');
-        readfile($r);
+        echo $r;
+         exit;
+   
     }
-
 }
 
 ?>
