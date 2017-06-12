@@ -2193,7 +2193,6 @@ class ReferralsGateway {
         $zip->close();
         header('Content-disposition: attachment; filename=' . $target_name);
         header('Content-type: application/zip');
-        print_r($tmp_file).exit;
         readfile($tmp_file);
         unlink($tmp_file);
     }
