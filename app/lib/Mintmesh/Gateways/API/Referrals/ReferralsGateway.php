@@ -2201,12 +2201,10 @@ class ReferralsGateway {
     }
 
     public function getResumeDownload($input) {
-
         $resumePathfile = array();
         $companyId = 230; //$input['company_id'];
         $doc_id = 901; //$input['doc_id'];
         $resumePathfile = $this->getResumeFilePath($doc_id, $companyId);
-
         set_time_limit(0);
 
         $ch = curl_init();
@@ -2217,7 +2215,6 @@ class ReferralsGateway {
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
         $r = curl_exec($ch);
         curl_close($ch);
-
         header('Expires: 0'); // no cache
         header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
         header('Cache-Control: private', false);
@@ -2225,7 +2222,7 @@ class ReferralsGateway {
         header('Content-Disposition: attachment; filename="' . $resumePathfile[0]->file_original_name . '"');
         header('Content-Length: ' . strlen($r)); // provide file size
         header('Connection: close');
-        echo $r;
+        readfile($r);
     }
 
 }
