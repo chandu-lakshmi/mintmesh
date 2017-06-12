@@ -2163,13 +2163,16 @@ class ReferralsGateway {
 
         set_time_limit(0);
         $referralsAry = $resumeFiles = $resumePathfile = $returnAry = $data = array();
-        $companyId = $input['company_id'];
+        $companyCode = !empty($input['company_id']) ? $input['company_id'] : '';
+        #get company details by code
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
         $resumeFiles = $input['resumes'];
         $resumeFiles = explode(",", $resumeFiles);
         $i = 0;
         $target_name = time();
         $target_name .= '.zip';
-        
+
         //Zip PHP Class
         $zip = new ZipArchive();
         $tmp_file = tempnam('.', '');
@@ -2190,8 +2193,16 @@ class ReferralsGateway {
         }
         # close zip
         $zip->close();
-        header('Content-disposition: attachment; filename=' . $target_name);
+         header('Content-Description: File Transfer');
         header('Content-type: application/zip');
+         header('Content-disposition: attachment; filename=' . $target_name);
+        header('Content-Transfer-Encoding: binary');
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+        header('Content-Length: ' . filesize($tmp_file));
+        ob_clean();
+        flush();
         readfile($tmp_file);
         unlink($tmp_file);
     }
@@ -2201,30 +2212,44 @@ class ReferralsGateway {
     }
 
     public function getResumeDownload($input) {
+
         $resumePathfile = array();
-        $companyId = 230; //$input['company_id'];
-        $doc_id = 322; //$input['doc_id'];
+        $companyCode = !empty($input['company_id']) ? $input['company_id'] : '';
+        #get company details by code
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+        $doc_id = $input['doc_id'];
         $resumePathfile = $this->getResumeFilePath($doc_id, $companyId);
+
         set_time_limit(0);
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $resumePathfile[0]->file_source);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-        $r = curl_exec($ch);
+        
+        $url = $resumePathfile[0]->file_source;
+        $file = basename($url);
+
+        $fp = fopen($file, 'w');
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_FILE, $fp);
+
+        $data = curl_exec($ch);
+
         curl_close($ch);
-        header('Expires: 0'); // no cache
-        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-        header('Cache-Control: private', false);
-        header('Content-Type: application/force-download');
-        header('Content-Disposition: attachment; filename="' . $resumePathfile[0]->file_original_name . '"');
-//        header('Content-Transfer-Encoding: binary');
-        header('Content-Length: ' . strlen($r)); // provide file size
-        header('Connection: close');
-        echo $r;
-   
+        fclose($fp);
+
+        header('Content-Description: File Transfer');
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename=' . $resumePathfile[0]->file_original_name);
+        header('Content-Transfer-Encoding: binary');
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+        header('Content-Length: ' . filesize($file));
+        ob_clean();
+        flush();
+        readfile($file);
+
     }
+
 }
 
 ?>
