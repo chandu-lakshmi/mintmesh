@@ -83,7 +83,10 @@ class ZenefitsController extends BaseController {
             $response = $request->send();
 
             if ($response->isSuccessful() && $response->getStatusCode() == self::SUCCESS_RESPONSE_CODE) {
-                $this->getChangeInstallStatus($access_token, $response->getBody());
+                 $array = json_decode($response->getBody(), TRUE);
+                $endPoint = $array['data']['data'][0]['url'] . "/status_changes";
+               $this->getCurl($access_token, $endPoint);
+               $this->getChangePersonStatus($access_token);
             } else {
                 \Log::info("Error while getting response : $response->getInfo()");
             }
@@ -93,11 +96,47 @@ class ZenefitsController extends BaseController {
         }
     }
 
-    public function getChangeInstallStatus($access_token, $response) {
-
+   
+    
+    public function getPersonSubscriptionIds($access_token) {
         $data = array();
+        $endPoint = "https://api.zenefits.com/platform/person_subscriptions";//$array['data']['data'][0]['person_subscriptions']['url'] . "/status_changes";
+       
+        $request = $this->guzzleClient->get($endPoint);
+        $request->setHeader('Authorization', $access_token);
+
+
+        try {
+            $response = $request->send();
+
+            if ($response->isSuccessful() && $response->getStatusCode() == self::SUCCESS_RESPONSE_CODE) {
+               return $response->getBody();
+            } else {
+                \Log::info("Error while getting response : $response->getInfo()");
+            }
+        } catch (ClientErrorResponseException $exception) {
+
+            $responseBody = $exception->getResponse()->getBody(true);
+        }
+    }
+    
+    public function getChangePersonStatus($access_token) {
+        $response =  $this->getPersonSubscriptionIds($access_token);
         $array = json_decode($response, TRUE);
-        $endPoint = $array['data']['data'][0]['url'] . "/status_changes";
+        $next_url = $array['data']['next_url'];
+        $url = $array['data']['url'];
+        if($array['data']['data']){
+         foreach($array['data']['data'] as $apiUrl){
+             $endPoint = $url . "/" . $apiUrl['id'] . "/status_changes/";
+             $this->getCurl($access_token, $endPoint);
+         }
+        }
+        return TRUE;
+    }
+
+    public function getCurl($access_token, $endPoint) {
+        
+        $data = array();
         $data['status'] = "ok";
         
         $authorization = "Authorization: ". $access_token;
@@ -111,5 +150,4 @@ class ZenefitsController extends BaseController {
         curl_close($process);
         return TRUE;
     }
-
 }
