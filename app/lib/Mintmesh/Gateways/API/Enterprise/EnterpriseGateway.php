@@ -605,8 +605,16 @@ class EnterpriseGateway {
         try {
             $oauthResult = $this->authorizer->issueAccessToken();
         } catch (\Exception $e) {
+            $error_code = $e->getCode();
             $oauthResult['error_description'] = $e->getMessage();
+            if(!empty($error_code)){
+                $oauthResult['error_description'] = Lang::get('MINTMESH.login.contact_admin');
+            } else {
+                $oauthResult['error_description'] = Lang::get('MINTMESH.login.login_failure');
+            }
+            
         }
+        
         //check if access code is returned by oauth
         if (isset($oauthResult['access_token'])) {
             $loggedinUserDetails = $this->enterpriseRepository->getEnterpriseUserByEmail($inputUserData['username']);
@@ -674,8 +682,8 @@ class EnterpriseGateway {
             // returning failure message                      
             $responseCode = self::ERROR_RESPONSE_CODE;
             $responseMsg = self::ERROR_RESPONSE_MESSAGE;
-            //$message = array($oauthResult['error_description']);//removing error to hide server Exception for end user
-            $message = array(Lang::get('MINTMESH.login.contact_admin'));
+            $message = array($oauthResult['error_description']);//removing error to hide server Exception for end user
+            //$message = array(Lang::get('MINTMESH.login.contact_admin'));
             $data = array();
         }
         $message = array('msg' => $message);
