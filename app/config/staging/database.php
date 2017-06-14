@@ -60,8 +60,8 @@ return array(
 
 		'mysql' => array(
 			'driver'    => 'mysql',
-			'host'      => 'localhost',
-			'database'  => 'mintmesh',
+			'host'      => '192.168.1.103',
+			'database'  => 'mintmesh2',
 			'username'  => 'mintmesh',
 			'password'  => 'm!ntm35h',
 			'charset'   => 'utf8',

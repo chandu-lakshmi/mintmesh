@@ -573,7 +573,7 @@ class ReferralsController extends \BaseController {
             $inputUserData = \Input::all();
             if(!empty($inputUserData))
             {
-               $response = $this->referralsGateway->getResumeDownload($inputUserData);
+               return $response = $this->referralsGateway->getResumeDownload($inputUserData);
             } 
         }
         

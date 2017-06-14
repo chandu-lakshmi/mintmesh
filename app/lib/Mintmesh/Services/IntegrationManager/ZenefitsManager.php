@@ -72,10 +72,9 @@ class ZenefitsManager extends IntegrationManager {
 
         $data['grant_type'] = "refresh_token";
         $data['refresh_token'] = $refresh_token;
-        $data['client_id'] = "5zr3cWgul9peKR3al1AZ65qcsbWC3JJr8jRd0IDU";
-        $data['client_secret'] = "8eLr2WeIukzLVTjqJ3xaAeNFmLNGKDla1UdpRAwZxAdzlQEMdSnrRonqpiGbIm7HQhvvH4UnN8FmaCtVH9gxaKSyPntMwdcj80QBUKnBVA3rzPaJ8xIt1kDsvUVb8aKs";
-
-        //$data1    = json_encode($data);
+        $data['client_id'] = Config::get('constants.Zenefits_client_id');
+        $data['client_secret'] = Config::get('constants.Zenefits_client_secret');
+       
         $curl_handle = curl_init();
         curl_setopt($curl_handle, CURLOPT_URL, $endPoint);
         curl_setopt($curl_handle, CURLOPT_RETURNTRANSFER, true);
@@ -101,8 +100,6 @@ class ZenefitsManager extends IntegrationManager {
         $hcmAccesToken = !empty($response->access_token) ? ($response->token_type . ' ' . $response->access_token) : '';
         $hcmReferToken = !empty($response->refresh_token) ? $response->refresh_token : '';
         $hcmExpToken = !empty($response->expires_in) ? $response->expires_in : '';
-        //  print_r($response); die;
-
         $hcmAry[1]['name'] = 'Authorization';
         $hcmAry[1]['value'] = $hcmAccesToken;
         $hcmAry[2]['name'] = 'refresh_token';
@@ -112,18 +109,13 @@ class ZenefitsManager extends IntegrationManager {
 
         foreach ($hcmAry as $key => $value) {
            $name = $value['name'];
-           // $this->updateHCMConfig($companyId, $hcmId, $value['name'], $value['value']);
              $sql = "UPDATE hcm_config_properties SET config_name = '".$value['name'] ."',config_value = '". $value['value'] . "' WHERE company_id ='" . $companyId ."' AND hcm_id ='" . $hcmId ."' AND config_name = '" . $name ."'";
-           
              DB::Statement($sql); 
         }
        
        
     }
-
-    public function updateHCMConfig($companyId, $hcmId, $name, $value) {
-       
-    }
+  
     public function processResponseData($responseBody, $jobId, $companyId) {
 
         $array = json_decode($responseBody, TRUE);

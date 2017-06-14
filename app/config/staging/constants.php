@@ -13,7 +13,7 @@ return [
     'USER_EXPIRY_HR'=>48,
     'MNT_VERSION'=>"v1",
     'MNT_FROM_NAME'=>'Mintmesh',
-    'MM_ENTERPRISE_URL'=>'http://enterprisestaging.mintmesh.com',
+    'MM_ENTERPRISE_URL'=>'http://202.63.105.85/mmenterprise',
     'MNT_DEEP_LINK_IOS'=>'mintmeshstg://',
     'MNT_ENT_DEEP_LINK_IOS'=>'mintmeshenterprise://',
     'MNT_DEEP_LINK_ANDROID'=>'http://mintmeshstg/',
