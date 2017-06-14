@@ -3629,6 +3629,7 @@ class EnterpriseGateway {
             foreach($checkUnsolicitedCompanies as $companies){
                 //Adding unsolicited node and creating relation with company
                $this->neoEnterpriseRepository->createUnsolicitedAndCompanyRelation($companies[0]->companyCode);
+               echo $companies[0]->companyCode.',';
             }
         }
         

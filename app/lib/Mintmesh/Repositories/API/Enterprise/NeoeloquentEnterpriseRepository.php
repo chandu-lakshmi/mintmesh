@@ -122,10 +122,10 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
     public function createUnsolicitedAndCompanyRelation($companyCode=''){
         $relation = Config::get('constants.RELATIONS_TYPES.COMPANY_UNSOLICITED');
         $input['service_name']  =  Config::get('constants.REFERRALS.STATUSES.UNSOLICITED');
-        $input['company_code']  = $companyCode;
+        $input['companyCode']  = $companyCode;
         $input['created_at']    = $relationAttrs['created_at']  = gmdate("Y-m-d H:i:s");
-        if(!empty( $input['company_code'] )){
-          $queryString = "MATCH (c:Company{companyCode:'".$input['company_code']."'})
+        if(!empty( $input['companyCode'] )){
+          $queryString = "MATCH (c:Company{companyCode:'".$input['companyCode']."'})
                             CREATE (u:Unsolicited";
             if (!empty($input)) {
             $queryString.="{";
