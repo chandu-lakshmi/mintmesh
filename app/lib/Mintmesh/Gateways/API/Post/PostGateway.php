@@ -232,6 +232,10 @@ class PostGateway {
     public function validateUploadResumeInput($input) {
         return $this->doValidation('upload_resume', 'MINTMESH.user.valid');
     }
+    //validation on Not Parsed Resumes
+    public function validateNotParsedResumes($input) {
+        return $this->doValidation('not_parsed_resumes', 'MINTMESH.user.valid');
+    }
     
     public function postJob($input) {
         
@@ -3040,6 +3044,40 @@ class PostGateway {
             $responseCode   = self::ERROR_RESPONSE_CODE;
             $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
             $responseMessage= array('msg' => array(Lang::get('MINTMESH.upload_resume.file_not_found')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+    }
+    
+    public function notParsedResumes($input) {
+        
+        $returnAry = $data = array();
+        $authKey = !empty($input['authentication_key']) ? $input['authentication_key'] : '' ;
+        
+        if($authKey === '107857d5d4be08e5e2dc51ef141e0924'){
+            
+            $status=1;  
+            $result = $this->enterpriseRepository->getNotParsedCompanyResumesByStatus($status);
+            foreach ($result as $row) {
+                $return = array();
+                $return['doc_id']    = $row->id;
+                $return['tenant_id'] = $row->company_id;
+                $return['file_path'] = $row->file_source;
+                $returnAry[] =  $return;
+            }
+            if($returnAry){
+                    $data = $returnAry;
+                    $responseCode   = self::SUCCESS_RESPONSE_CODE;
+                    $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                    $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+            } else {
+                $responseCode   = self::ERROR_RESPONSE_CODE;
+                $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+                $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            }
+        } else {
+            $responseCode   = self::ERROR_RESPONSE_CODE;
+            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.auth_key_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }

@@ -90,6 +90,9 @@ class PostValidator extends Validator {
             'company_code'  => 'required',
             'resume'        => 'required',
             'resume_name'   => 'required',
+        ),
+        'not_parsed_resumes' => array(
+            'authentication_key'  => 'required'
         )
     );
 

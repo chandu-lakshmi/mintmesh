@@ -1380,11 +1380,6 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
     public function insertInCompanyResumes($companyId=0, $resumeName='', $userId=0, $source=0, $gotReferred=0)
     {   
         $createdAt = gmdate("Y-m-d H:i:s");
-        /*$sql = "insert into company_resumes (`company_id`,`file_original_name`,`status`,`file_from`,`got_referred_id`,`created_by`,`created_at`, `updated_at`)" ;
-        $sql.=" values('".$companyId."','".$resumeName."',1,'".$source."','".$gotReferred."','".$userId."','".$createdAt."','".$createdAt."')" ;
-        $result = DB::statement($sql)->insertGetId;
-        return $result;*/
-        
         $companyResumes = array(
                         "company_id"   => $companyId,
                         "file_original_name"  => $resumeName,
@@ -1409,6 +1404,14 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         }
         
        return $results;
+    }
+    
+    public function getNotParsedCompanyResumesByStatus($status=1) {
+        $return = FALSE;
+        if($status){
+            $return = Company_Resumes::where ('status',$status)->get();
+        }
+        return $return;
     }
     
 }
