@@ -11,6 +11,8 @@ use Guzzle\Http\Client as guzzleClient;
 use Guzzle\Http\Exception\ClientErrorResponseException;
 use GuzzleHttp\Message\ResponseInterface;
 use lib\Parser\MyEncrypt;
+use Company_Resumes as CR;
+use User as U;
 use DB,
     Config,
     Queue,
@@ -81,14 +83,161 @@ class AIManager {
                 curl_close($process);
                 $result_check = json_decode($return, TRUE);
                 \Log::info("Parser Resumes" . print_r($result_check, true));
-               
+                
                 if (!empty($result_check)) {
-                    
-                    $sql = "UPDATE company_resumes SET status = '2',updated_at = '" . NOW() . "' WHERE company_id ='" . $data['tenant_id'] . "'";
-                    DB::Statement($sql);
+                
+                    $param = array();
+                    $param['doc_id']    = $docData->id;
+                    $param['tenant_id'] = $docData->company_id;
+                    $param['email_id']  = !empty($result_check['email']) ? $result_check['email'] : '';
+                    $param['name']      = !empty($result_check['name']) ? $result_check['name'] : '';
+                    $param['phone']     = !empty($result_check['phone']) ? $result_check['phone'] : '';
+                    #create Unsolicited Referrals here
+                    $unsolicitedAry = $this->createUnsolicitedReferrals($param);
                 }
             }
         }
         return TRUE;
     }
+    
+    public function createUnsolicitedReferrals($param) {
+        
+        $return   = $neoInput = $user = array();
+        $docId    = !empty($param['doc_id']) ? $param['doc_id'] : 0;
+        $emailId  = !empty($param['email_id']) ? $param['email_id'] : '';
+        
+        $companyResumes = $this->getCompanyResumesDetailsByDocId($docId);
+        
+        if(!empty($companyResumes) && !empty($emailId)){
+            #get the user details with emailid
+            $userNode       = $this->getUserNodeByEmailId($emailId);   
+            $companyCode    = $companyResumes->code;
+            $referred_for   = $companyResumes->emailid;
+            $statusPending  = Config::get('constants.REFERRALS.STATUSES.PENDING');
+            #check if the user node already exists or not
+            if(empty($userNode)){
+                #form the user data
+                $name = !empty($param['name']) ? $param['name'] : '';
+                $user['firstname']  = $name;
+                $user['fullname']   = $name;
+                $user['emailid']    = $emailId;
+                $user['phone']      = !empty($param['phone']) ? $param['phone'] : ''; 
+                #creating User Node in db
+                $this->createUserNode($user);
+            }
+            #form the referral details input here
+            $neoInput['referral']               = $emailId;
+            $neoInput['referred_by']            = $referred_for;
+            $neoInput['resume_path']            = $companyResumes->file_source;                
+            $neoInput['resume_original_name']   = $companyResumes->file_original_name;
+            $neoInput['created_at']             = gmdate('Y-m-d H:i:s'); 
+            $neoInput['relation_count']         = '1';
+            $neoInput['status']                 = $statusPending;
+            $neoInput['completed_status']       = $statusPending;
+            $neoInput['awaiting_action_status'] = $statusPending;
+            $neoInput['awaiting_action_by']     = $referred_for;
+            $neoInput['one_way_status']         = Config::get('constants.REFERRALS.STATUSES.UNSOLICITED');
+            #create got referred relation here
+            $gotReferredId = $this->createUnsolicitedReferralsRelation($companyCode, $emailId, $neoInput);
+            $this->updateCompanyResumes($docId, $gotReferredId);
+        }
+        return TRUE;
+    }
+    
+    public function getUserNodeByEmailId($emailID='') {
+        
+        $return = FALSE;
+        if($emailID){
+            $queryString = "MATCH (u:User) WHERE u.emailid='".$emailID."' RETURN u";
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if(isset($result[0]) && isset($result[0][0])){
+                $return = $result[0][0];
+            }
+        }
+        return $return;
+    }
+    
+    public function createUserNode($input) {
+        
+        $return = FALSE;
+        if(!empty($input['emailid'])){
+            $queryString = "CREATE (n:User {";
+            foreach ($input as $k => $v) {
+                if ($k == 'emailid')
+                    $v = strtolower($v);
+                $queryString.=$k . ":'" . $this->appEncodeDecode->filterString($v) . "',";
+            }
+            $queryString = rtrim($queryString, ",");
+            $queryString.=" }) return n";            
+            $query = new CypherQuery($this->client, $queryString);
+            $return = $query->getResultSet();
+        }
+        return $return;
+    }
+    
+    public function createUnsolicitedReferralsRelation($companyCode='', $emailid='', $relationAttrs=array()) {
+        
+        $return = FALSE;
+        if(!empty($companyCode) && !empty($emailid)){
+            $relation = Config::get('constants.REFERRALS.GOT_REFERRED');
+            $queryString = "MATCH (c:Company{companyCode:'".$companyCode."'})<-[:COMPANY_UNSOLICITED]-(n:Unsolicited),(u:User{emailid:'".$emailid."'}) ";
+            $queryString.=" create (u)-[r:" . $relation;
+            if (!empty($relationAttrs)) {
+                $queryString.="{";
+                foreach ($relationAttrs as $k => $v) {
+                    $queryString.=$k . ":'" . $this->appEncodeDecode->filterString($v) . "',";
+                }
+                $queryString = rtrim($queryString, ",");
+                $queryString.="}";
+            }
+            $queryString.="]->(n) return r";
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if(isset($result[0]) && isset($result[0][0])){
+                $return = $result[0][0]->getID();
+            }
+        }
+        return $return;
+    }
+    
+    public function getCompanyResumesDetailsByDocId($documentId=0){
+        $return = FALSE;
+        if(!empty($documentId)){
+            $sql = "select r.id, r.file_source, r.file_original_name, c.code, u.emailid from company_resumes r
+                    left join company c on c.id=r.company_id
+                    left join users u on u.id=r.created_by
+                    where r.id='".$documentId."' " ;
+            $result = DB::Select($sql);
+            if(!empty($result[0]))
+                $return = $result[0];
+        }
+        return $return;
+    }
+    
+    public function getCompanyResumesByDocId($documentId=0) {
+        $return = FALSE;
+        if($documentId){
+            $result = CR::where ('id',$documentId)->get();
+            if(isset($result[0]))
+                $return = $result[0];
+        }
+        return $return;
+    }
+    
+    public function updateCompanyResumes($documentId=0, $gotReferredId=0)
+    {   
+        $results   = FALSE;
+        $updatedAt = gmdate("Y-m-d H:i:s");
+        $companyResumes = array(
+                        "status"            => 2,
+                        "got_referred_id"   => $gotReferredId,
+                        "updated_at"        => $updatedAt
+                    );
+        if($documentId){
+            $results = CR::where ('id',$documentId)->update($companyResumes); 
+        }
+       return $results;
+    }
+     
 }
