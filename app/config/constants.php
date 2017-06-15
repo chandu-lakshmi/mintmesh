@@ -205,6 +205,7 @@ return [
     'BITLY_ACCESS_TOKEN' => 'b65a3bf8c767c8931eeaa067da88c2e2356f192e',
     'AIusername' => 'admin',
     'AIpassword' => 'Aev54I0Av13bhCxM',
+    'AI_AUTHENTICATION_KEY' => '107857d5d4be08e5e2dc51ef141e0924',
     'Zenefits_client_id' => '5zr3cWgul9peKR3al1AZ65qcsbWC3JJr8jRd0IDU',
     'Zenefits_client_secret' => '8eLr2WeIukzLVTjqJ3xaAeNFmLNGKDla1UdpRAwZxAdzlQEMdSnrRonqpiGbIm7HQhvvH4UnN8FmaCtVH9gxaKSyPntMwdcj80QBUKnBVA3rzPaJ8xIt1kDsvUVb8aKs'
 ];

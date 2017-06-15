@@ -3051,11 +3051,11 @@ class PostGateway {
     public function notParsedResumes($input) {
         
         $returnAry = $data = array();
-        $authKey = !empty($input['authentication_key']) ? $input['authentication_key'] : '' ;
+        $authKey   = !empty($input['authentication_key']) ? $input['authentication_key'] : '' ;
         
-        if($authKey === '107857d5d4be08e5e2dc51ef141e0924'){
-            
-            $status=1;  
+        if($authKey === Config::get('constants.AI_AUTHENTICATION_KEY')){
+            #get the not yet parsed resumes list
+            $status =1;  
             $result = $this->enterpriseRepository->getNotParsedCompanyResumesByStatus($status);
             foreach ($result as $row) {
                 $return = array();
@@ -3068,16 +3068,16 @@ class PostGateway {
                     $data = $returnAry;
                     $responseCode   = self::SUCCESS_RESPONSE_CODE;
                     $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
-                    $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+                    $responseMessage= Lang::get('MINTMESH.not_parsed_resumes.success');
             } else {
                 $responseCode   = self::ERROR_RESPONSE_CODE;
                 $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
-                $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+                $responseMessage= Lang::get('MINTMESH.not_parsed_resumes.failure');
             }
         } else {
             $responseCode   = self::ERROR_RESPONSE_CODE;
             $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.auth_key_failure')));
+            $responseMessage= Lang::get('MINTMESH.not_parsed_resumes.auth_key_failure');
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }

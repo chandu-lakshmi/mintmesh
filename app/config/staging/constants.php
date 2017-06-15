@@ -181,6 +181,7 @@ return [
     'S3BUCKET_USER_IMAGE' => 'mintmesh/stg/userImage',
     'S3BUCKET_FILE' =>  'mintmesh/stg/files',
     'UPLOAD_RESUME' => '/uploads/awss3_resumes/',
+    'AI_AUTHENTICATION_KEY' => '107857d5d4be08e5e2dc51ef141e0924',
     'S3_DOWNLOAD_PATH'  => 'https://s3-us-west-2.amazonaws.com/mintmeshresumedev/',
     'BITLY_URL'   =>   'https://api-ssl.bitly.com/v3/user/link_save?access_token=',
     'BITLY_ACCESS_TOKEN' => 'b65a3bf8c767c8931eeaa067da88c2e2356f192e'
