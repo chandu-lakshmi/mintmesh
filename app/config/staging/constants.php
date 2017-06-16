@@ -13,7 +13,7 @@ return [
     'USER_EXPIRY_HR'=>48,
     'MNT_VERSION'=>"v1",
     'MNT_FROM_NAME'=>'Mintmesh',
-    'MM_ENTERPRISE_URL'=>'http://enterprisestaging.mintmesh.com',
+    'MM_ENTERPRISE_URL'=>'http://202.63.105.85/mmenterprise',
     'MNT_DEEP_LINK_IOS'=>'mintmeshstg://',
     'MNT_ENT_DEEP_LINK_IOS'=>'mintmeshenterprise://',
     'MNT_DEEP_LINK_ANDROID'=>'http://mintmeshstg/',
@@ -181,6 +181,7 @@ return [
     'S3BUCKET_USER_IMAGE' => 'mintmesh/stg/userImage',
     'S3BUCKET_FILE' =>  'mintmesh/stg/files',
     'UPLOAD_RESUME' => '/uploads/awss3_resumes/',
+    'AI_AUTHENTICATION_KEY' => '107857d5d4be08e5e2dc51ef141e0924',
     'S3_DOWNLOAD_PATH'  => 'https://s3-us-west-2.amazonaws.com/mintmeshresumedev/',
     'BITLY_URL'   =>   'https://api-ssl.bitly.com/v3/user/link_save?access_token=',
     'BITLY_ACCESS_TOKEN' => 'b65a3bf8c767c8931eeaa067da88c2e2356f192e'

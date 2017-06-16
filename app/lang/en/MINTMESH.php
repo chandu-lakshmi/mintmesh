@@ -544,5 +544,10 @@ return array(
             "success"    => "Successfully uploaded",
             "failure"    => "No details found",
             "file_not_found"    => "File not found"
+    ),
+    "not_parsed_resumes"=>array(             
+            "success"    => "Successfully listed",
+            "failure"    => "No records found",
+            "auth_key_failure"    => "Invalid authentication key"
     )
 );
