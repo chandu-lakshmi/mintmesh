@@ -2094,11 +2094,14 @@ class ReferralsGateway {
 
     public function urlShortner($url) {
         $bitly = Config::get('constants.BITLY_URL') . Config::get('constants.BITLY_ACCESS_TOKEN') . '&longUrl=' . $url;
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $bitly);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $response = curl_exec($ch);
-        curl_close($ch);
+//        $ch = curl_init();
+//        curl_setopt($ch, CURLOPT_URL, $bitly);
+//        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+//        $response = curl_exec($ch);
+//        curl_close($ch);
+        $fp='';
+        $type = '1';
+        $response = $this->curlCall($bitly,$fp,$type=1);
         $b = (array) json_decode($response, TRUE);
         if (!empty($b['data']['link_save']['link'])) {
             $return = $b['data']['link_save']['link'];
@@ -2227,15 +2230,16 @@ class ReferralsGateway {
         $file = basename($url);
 
         $fp = fopen($file, 'w');
-
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_FILE, $fp);
-
-        $data = curl_exec($ch);
-
-        curl_close($ch);
+//        $ch = curl_init($url);
+//        curl_setopt($ch, CURLOPT_FILE, $fp);
+//
+//        $data = curl_exec($ch);
+//
+//        curl_close($ch);
+       $type= '2';
+       $data =  $this->curlCall($url,$fp,$type);
         fclose($fp);
-
+        
         header('Content-Description: File Transfer');
         header('Content-Type: application/octet-stream');
         header('Content-Disposition: attachment; filename=' . $resumePathfile[0]->file_original_name);
@@ -2249,7 +2253,24 @@ class ReferralsGateway {
         readfile($file);
 
     }
-
+    
+    public function curlCall($url='',$fp='',$type=''){
+        $data1 = '';
+        $fp1 = !empty($fp)?$fp:0;
+        if($url){
+            $ch = curl_init($url);
+            if($type == '2'){
+                curl_setopt($ch, CURLOPT_FILE, $fp1);
+            }else if($type == '1'){
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            }
+        $data1 = curl_exec($ch);
+        curl_close($ch);
+        return $data1;
+        }
+    }
+           
 }
 
 ?>

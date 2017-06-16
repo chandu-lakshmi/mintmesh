@@ -1938,11 +1938,14 @@ class PostGateway {
         
         $bitly = Config::get('constants.BITLY_URL').Config::get('constants.BITLY_ACCESS_TOKEN').'&longUrl='.$url;
         try{
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $bitly);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            $response  = curl_exec($ch);
-            curl_close($ch);
+//            $ch = curl_init();
+//            curl_setopt($ch, CURLOPT_URL, $bitly);
+//            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+//            $response  = curl_exec($ch);
+//            curl_close($ch);
+            $fp='';
+            $type = '1';
+            $response = $this->referralsGateway->curlCall($bitly,$fp,$type=1);
             $b = (array) json_decode($response, TRUE);
             if(!empty($b['data']['link_save']['link'])){
                 $url = $b['data']['link_save']['link'];
