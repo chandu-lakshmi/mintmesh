@@ -883,74 +883,65 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
        return $return; 
     }
     
-    public function getCompanyAllReferrals($emailId='', $companyCode='', $search='', $page=0,$filters = '')
+    public function getCompanyAllReferrals($emailId='', $companyCode='', $search='', $page=0, $filters = '')
     {
        $return = FALSE;
        if (!empty($emailId) && !empty($companyCode))
        {
-           $userEmail = $this->appEncodeDecode->filterString(strtolower($emailId));
-           $skip = $limit = 0;
-           if (!empty($page)){
+            $searchQuery = $filterQuery = $limitQuery ='';
+            $userEmail = $this->appEncodeDecode->filterString(strtolower($emailId));
+            $skip = $limit = 0;
+            if (!empty($page)){
                $limit = $page*10 ;
                $skip = $limit - 10 ;
-           }
-
-           $queryString = "MATCH (c:Company)<-[:POSTED_FOR|COMPANY_UNSOLICITED]-(p)<-[r:GOT_REFERRED]-(u) where c.companyCode='".$companyCode."' ";
-           if (!empty($search)){
-              $queryString.=" and (p.service_name =~ '(?i).*". $search .".*' ";
-
-              if($search[0] == 'd' || $search[0] == 'u'){
-                  $queryString .= "or r.one_way_status =~ '(?i).*". $search .".*'";    
-              }else{
-                  $queryString .= "or r.awaiting_action_status =~ '(?i).*". $search .".*'";
-              }
-              $queryString .= ") ";
-           }
-           if(!empty($filters)){
-                    $queryString .= "and (";
+            }
+            #form filters logic here
+            if(!empty($filters)){
+                $filterQuery = " and (";
                 if(in_array("Accepted",$filters)){
-                    $queryString .= "r.awaiting_action_status='ACCEPTED' "; 
+                    $filterQuery .= "r.awaiting_action_status='ACCEPTED' or "; 
                 }
                 if(in_array("Declined",$filters)){
-                    if(in_array("Accepted",$filters)){
-                        $queryString .= "or ";
-                    }
-                    $queryString .= "r.one_way_status='DECLINED' "; 
+                    $filterQuery .= "r.one_way_status='DECLINED' or "; 
                 }
                 if(in_array("Unsolicited",$filters)){
-                    if(in_array("Accepted",$filters) || in_array("Declined",$filters)){
-                        $queryString .= "or ";
-                    }
-                    $queryString .= "r.one_way_status='UNSOLICITED' "; 
+                    $filterQuery .= "r.one_way_status='UNSOLICITED' or "; 
                 }
                 if(in_array("Interviewed",$filters)){
-                    if(in_array("Accepted",$filters) || in_array("Declined",$filters) || in_array("Unsolicited",$filters)){
-                        $queryString .= "or ";
-                    }
-                    $queryString .= "r.awaiting_action_status='INTERVIEWED' "; 
+                    $filterQuery .= "r.awaiting_action_status='INTERVIEWED' or "; 
                 }
                 if(in_array("Offered",$filters)){
-                    if(in_array("Accepted",$filters) || in_array("Declined",$filters) || in_array("Unsolicited",$filters) || in_array("Interviewed",$filters)){
-                        $queryString .= "or ";
-                    }
-                    $queryString .= " r.awaiting_action_status='OFFERED' "; 
+                    $filterQuery .= " r.awaiting_action_status='OFFERED' or "; 
                 }
                 if(in_array("Hired",$filters)){
-                    if(in_array("Accepted",$filters) || in_array("Declined",$filters) || in_array("Unsolicited",$filters) || in_array("Interviewed",$filters) || in_array("Offered",$filters)){
-                        $queryString .= "or ";
-                    }
-                    $queryString .= "r.awaiting_action_status='HIRED' "; 
+                    $filterQuery .= "r.awaiting_action_status='HIRED' "; 
                 }
-                $queryString .= ")";
-           }
-           $queryString.=" return p,u,r order by r.created_at desc";
-           if (!empty($limit) && !($limit < 0))
-           {
-               $queryString.=" skip ".$skip." limit ".self::LIMIT ;
-           }
-           //echo $queryString;exit;
-           $query = new CypherQuery($this->client, $queryString);
-           $result = $query->getResultSet(); 
+                $filterQuery = rtrim($filterQuery, " or ");
+                $filterQuery .= ")";
+            }    
+            #form the search logic here
+            if (!empty($search)){
+                $searchQuery =" and (p.service_name =~ '(?i).*". $search .".*' ";
+                if($search[0] == 'd' || $search[0] == 'u'){
+                    $searchQuery .= "or r.one_way_status =~ '(?i).*". $search .".*')";    
+                }else{
+                    $searchQuery .= "or r.awaiting_action_status =~ '(?i).*". $search .".*')";
+                }
+            }
+            #form the limit logic here
+            if (!empty($limit) && !($limit < 0)) {
+                $limitQuery = " skip " . $skip . " limit " . self::LIMIT;
+            }
+            $baseQuery = "MATCH (c:Company{companyCode:'".$companyCode."'})<-[:POSTED_FOR|COMPANY_UNSOLICITED]-(p)<-[r:GOT_REFERRED]-(u) where c.companyCode='".$companyCode."' ";        
+            #query string formation here
+            $queryString = $baseQuery.$searchQuery.$filterQuery;
+            $queryString .= " WITH count(p) AS cnt ";
+            $queryString .= $baseQuery.$searchQuery.$filterQuery;
+            $queryString .= " WITH p,u,r,cnt ORDER BY p.created_at DESC ".$limitQuery;
+            $queryString .= " return p,u,r,cnt ";
+            //echo $queryString;exit;
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet(); 
             if($result->count())
                $return = $result;  
         } 
