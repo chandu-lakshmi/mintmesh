@@ -108,7 +108,8 @@ class job2 extends Command {
                             #check user Separated Status here
                             $separatedStatus = $this->checkReferredUserSeparatedStatus($refById, $companyCode);
                             if($separatedStatus){
-                            
+                                
+                                $gotReferredId = 0;
                                 DB::statement("UPDATE cm_mails c set c.flag = '1' where c.id='" . $id . "'");
                                 $neoInput['referred_for'] = $checkRel[0][0]->user_emailid;
                                 $neoInput['referred_by']  = $relReferredBy = !empty($checkRel[0][1]->emailid) ? $checkRel[0][1]->emailid : '';
@@ -143,14 +144,13 @@ class job2 extends Command {
                                     if($renamedFileName){
                                         #form s3 path here
                                         $s3Path = Config::get('constants.S3_DOWNLOAD_PATH').$companyId.'/'.$renamedFileName;
-                                        #updte s3 path in company resumes table
-                                        $updateResult    = $this->enterpriseRepository->updateCompanyResumes($documentId, $s3Path);
                                         $renamedFileName = $s3Path;
                                     }
                                     /*$this->userFileUploader->source = $directory.$mail->fn_re;
                                     $this->userFileUploader->destination = Config::get('constants.S3BUCKET_NON_MM_REFER_RESUME');
                                     $renamedFileName = $this->userFileUploader->uploadToS3BySource($directory.$mail->fn_re);*/
                                 }    
+                                $neoInput['document_id'] = $documentId;
                                 $neoInput['resume_path'] = $renamedFileName;
                                 $neoInput['resume_original_name'] = $mail->fn_or;
                                 $neoInput['created_at'] = gmdate('Y-m-d H:i:s');
@@ -175,6 +175,12 @@ class job2 extends Command {
 
                                 $query = new CypherQuery($this->client, $queryString);
                                 $result = $query->getResultSet();
+                                if(isset($result[0]) && !empty($result[0][1])){
+                                    $gotReferredId = $result[0][1];
+                                }
+                                #updte s3 path in company resumes table
+                                $updateResult    = $this->enterpriseRepository->updateCompanyResumes($documentId, $renamedFileName, $gotReferredId);
+                                
                             }else{
                                 DB::statement("UPDATE cm_mails c set c.flag = '2' where c.id='" . $id . "'");
 
@@ -399,13 +405,14 @@ class job2 extends Command {
         return CR::create($companyResumes);
     }
     // creating new Enterprise user Company mapping in storage
-    public function updateCompanyResumes($documentId=0, $filesource='')
+    public function updateCompanyResumes($documentId=0, $filesource='', $gotReferredId = 0)
     {   
         $updatedAt = gmdate("Y-m-d H:i:s");
         $companyResumes = array(
-                        "file_source"   => $filesource,
-                        "status"        => 1,
-                        "updated_at"    => $updatedAt
+                        "file_source"       => $filesource,
+                        "status"            => 1,
+                        "got_referred_id"   => $gotReferredId,
+                        "updated_at"        => $updatedAt
             );
         if($documentId){
             $results = CR::where ('id',$documentId)->update($companyResumes); 

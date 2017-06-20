@@ -102,13 +102,15 @@ class AIManager {
     
     public function createUnsolicitedReferrals($param) {
         
+        $gotReferredId = 0;
         $return   = $neoInput = $user = array();
         $docId    = !empty($param['doc_id']) ? $param['doc_id'] : 0;
         $emailId  = !empty($param['email_id']) ? $param['email_id'] : '';
         
         $companyResumes = $this->getCompanyResumesDetailsByDocId($docId);
+        $gotReferredId  = !empty($companyResumes->got_referred_id) ? $companyResumes->got_referred_id : 0;
         
-        if(!empty($companyResumes) && !empty($emailId)){
+        if(!empty($companyResumes) && !empty($emailId) && empty($gotReferredId)){
             #get the user details with emailid
             $userNode       = $this->getUserNodeByEmailId($emailId);   
             $companyCode    = $companyResumes->code;
@@ -126,6 +128,7 @@ class AIManager {
                 $this->createUserNode($user);
             }
             #form the referral details input here
+            $neoInput['document_id']            = $docId;
             $neoInput['referral']               = $emailId;
             $neoInput['referred_by']            = $referred_for;
             $neoInput['resume_path']            = $companyResumes->file_source;                
@@ -204,7 +207,7 @@ class AIManager {
     public function getCompanyResumesDetailsByDocId($documentId=0){
         $return = FALSE;
         if(!empty($documentId)){
-            $sql = "select r.id, r.file_source, r.file_original_name, c.code, u.emailid from company_resumes r
+            $sql = "select r.id, r.file_source, r.file_original_name, c.code, u.emailid, r.got_referred_id from company_resumes r
                     left join company c on c.id=r.company_id
                     left join users u on u.id=r.created_by
                     where r.id='".$documentId."' " ;

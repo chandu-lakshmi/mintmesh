@@ -1728,7 +1728,7 @@ class ReferralsGateway {
         #if enterprise user flag
         $isEnt = !empty($input['is_ent']) ? $input['is_ent'] : 0;
         $referNonMintmesh = $nonMintmeshPhoneRefer = 0;
-        $uploadedByP2 = 0;
+        $uploadedByP2 = $documentId = 0;
         $p3CvOriginalName = "";
         $referResumePath = "";
         $this->loggedinUserDetails = $this->getLoggedInUser();
@@ -1751,6 +1751,7 @@ class ReferralsGateway {
                     $companyId = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
                     #for enterprise app
                     $resumeResult = $this->processResumeForEnterpriseRefer($input, $companyId, $userId);
+                    $documentId   = !empty($resumeResult['document_id']) ? $resumeResult['document_id'] : 0;
                 } else {
                     #for consumer app
                     $resumeResult = $this->processResumeForRefer($input);
@@ -1823,6 +1824,7 @@ class ReferralsGateway {
                 }
             }
             $relationAttrs = array();
+            $relationAttrs['document_id'] = $documentId;
             $relationAttrs['referred_by'] = strtolower($userEmail);
             $relationAttrs['referred_for'] = strtolower($input['refer_to']);
             $relationAttrs['created_at'] = gmdate("Y-m-d H:i:s");
@@ -1844,6 +1846,12 @@ class ReferralsGateway {
                 $result = $this->referralsRepository->referContact($userEmail, $input['refer_to'], $input['referring'], $input['post_id'], $relationAttrs);
             }
             if (!empty($result)) {
+                
+                #update Got Referred Id in CompanyResumes table
+                if (isset($result[0]) && !empty($result[0][1])) {
+                    $gotReferredId = $result[0][1];
+                    $this->enterpriseRepository->updateCompanyResumesWithGotReferredId($documentId, $gotReferredId);
+                }
 //                  if self referrence
                 if ($this->loggedinUserDetails->emailid == $input['referring']) {
                     $notificationType = 23;
@@ -1910,10 +1918,12 @@ class ReferralsGateway {
      */
 
     public function processResumeForEnterpriseRefer($input = array(), $companyId = 0, $userId = 0) {
-        $returnBoolean = true;
-        $uploaded = 1;
-        $resumePath = $resumePathRes = $message = $resumeOriginalName = "";
-        $message = Lang::get('MINTMESH.user.no_resume');
+        
+        $documentId     = 0;
+        $returnBoolean  = true;
+        $uploaded       = 1;
+        $resumePath     = $resumePathRes = $message = $resumeOriginalName = "";
+        $message        = Lang::get('MINTMESH.user.no_resume');
         if (!empty($input['refer_non_mm_email']) && empty($input['resume'])) {#for non mintmesh with no resume
             $returnBoolean = false;
         } else if (empty($input['refer_non_mm_email']) && empty($input['resume'])) {#for mintmesh with no resume
@@ -1927,9 +1937,13 @@ class ReferralsGateway {
                 $resumeOriginalName = $resumePathResult['cvOriginalName'];
             }
         } else if (!empty($input['refer_non_mm_email']) && !empty($input['resume'])) {#for non mintmesh with resume
-            $resumePathRes = $this->userGateway->uploadResumeForEnterpriseRefer($input['resume'], $companyId, $userId);
+            $responseAry    = $this->userGateway->uploadResumeForEnterpriseRefer($input['resume'], $companyId, $userId);
+            $documentId     = !empty($responseAry['document_id']) ? $responseAry['document_id'] : 0;
+            $resumePathRes  = $responseAry['response'];
         } else if (empty($input['refer_non_mm_email']) && !empty($input['resume'])) {#for mintmesh with resume
-            $resumePathRes = $this->userGateway->uploadResumeForEnterpriseRefer($input['resume'], $companyId, $userId);
+            $responseAry    = $this->userGateway->uploadResumeForEnterpriseRefer($input['resume'], $companyId, $userId);
+            $documentId     = !empty($responseAry['document_id']) ? $responseAry['document_id'] : 0;
+            $resumePathRes  = $responseAry['response'];
         }
         #check for validation of resume
         if ($returnBoolean && !in_array($resumePathRes, $this->resumeValidations)) {# check if resume validations are fine
@@ -1942,7 +1956,7 @@ class ReferralsGateway {
             $message = Lang::get('MINTMESH.user.' . $resumePathRes);
         }
         $msg = array('msg' => array($message));
-        return array('status' => $returnBoolean, 'uploaded' => $uploaded, 'resume_path' => $resumePath, 'message' => $msg, 'resume_original_name' => $resumeOriginalName);
+        return array('status' => $returnBoolean, 'uploaded' => $uploaded, 'resume_path' => $resumePath, 'message' => $msg, 'resume_original_name' => $resumeOriginalName, 'document_id' => $documentId);
     }
 
     public function getPostRewards($postId = '', $userCountry = '', $isEnterprise = 0) {

@@ -254,7 +254,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             $queryString = rtrim($queryString, ",");
             $queryString.="}";
         }
-        $queryString.="]->(p) set p.total_referral_count = p.total_referral_count + 1 , r.resume_parsed =0 return count(p)";
+        $queryString.="]->(p) set p.total_referral_count = p.total_referral_count + 1 , r.resume_parsed =0 return count(p),ID(r)";
         $query = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
         if (isset($result[0]) && isset($result[0][0])) {
@@ -687,12 +687,12 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             $queryString = rtrim($queryString, ",");
             $queryString.="}";
         }
-        $queryString.="]->(p) set p.total_referral_count = p.total_referral_count + 1 , r.resume_parsed =0 return count(p)";
+        $queryString.="]->(p) set p.total_referral_count = p.total_referral_count + 1 , r.resume_parsed =0 return count(p),ID(r)";
         //echo $queryString;exit;
         $query = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
         if (isset($result[0]) && isset($result[0][0])) {
-            return $result[0][0];
+            return $result;
         } else {
             return 0;
         }

@@ -4908,7 +4908,7 @@ class UserGateway {
             
             if (!empty($resume))
             {
-                $response="";
+                $response = array();
                 $originalFileName      =  $resume->getClientOriginalName();
                 $originalFileExtension =  $resume->getClientOriginalExtension();
                 $originalFileSize      =  $resume->getClientSize();
@@ -4928,18 +4928,19 @@ class UserGateway {
                         $this->userFileUploader->destination = $bucketSource ;
                         $this->userFileUploader->documentid = $documentId;
                         $renamedFileName = $this->userFileUploader->resumeUploadToS3();
-                        $response  = $renamedFileName;
+                        $response['document_id']  = $documentId;
+                        $response['response']     = $renamedFileName;
                         #update s3 path in company resumes table
                         $updateResult = $this->enterpriseRepository->updateCompanyResumes($documentId, $renamedFileName);
                    }
                    else
                    {
-                      $response = "uploaded_large_file";   
+                      $response['response'] = "uploaded_large_file";   
                    }        
                }
                else
                {
-                  $response = "invalid_file_format";
+                  $response['response'] = "invalid_file_format";
                }
             }
             return $response ;

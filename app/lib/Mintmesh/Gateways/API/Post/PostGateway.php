@@ -2006,6 +2006,7 @@ class PostGateway {
                 }else{
                     $record['service_name']   = 'Not Tagged';  
                 }
+                $record['document_id']      = !empty($relation->document_id) ? $relation->document_id : 0;
                 $record['one_way_status']   = $relation->one_way_status;
                 $record['resume_path']      = $relation->resume_path;
                 $record['resume_name']      = $relation->resume_original_name;

@@ -1414,4 +1414,17 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         return $return;
     }
     
+    public function updateCompanyResumesWithGotReferredId($documentId = 0, $gotReferredId = 0)
+    {   
+        $updatedAt = gmdate("Y-m-d H:i:s");
+        $companyResumes = array(
+                        "got_referred_id"   => $gotReferredId,
+                        "updated_at"        => $updatedAt
+            );
+        if($documentId){
+            $results = Company_Resumes::where ('id',$documentId)->update($companyResumes); 
+        }
+       return $results;
+    }
+    
 }
