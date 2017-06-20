@@ -23,9 +23,6 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
         $this->db_pwd = Config::get('database.connections.neo4j.password');
         $this->db_host = Config::get('database.connections.neo4j.host');
         $this->db_port = Config::get('database.connections.neo4j.port');
-        //\Log::info("db password used".$this->db_pwd);
-        //\Log::info("db username used".$this->db_user);
-        //$this->db_pwd = "m!ntm35h";
         $this->client = new NeoClient($this->db_host, $this->db_port);
         $this->appEncodeDecode = $appEncodeDecode;
         $this->client->getTransport()->setAuth($this->db_user, $this->db_pwd);
@@ -33,33 +30,6 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
 
     public function createContactAndRelation($fromId, $neoInput = array(), $relationAttrs = array()) {
         try {
-            /* $queryString = "MATCH (u:User:Mintmesh)
-              WHERE ID(u) = ".$fromId."
-              CREATE UNIQUE (m:User ";
-              if (!empty($neoInput))
-              {
-              $queryString.="{";
-              foreach ($neoInput as $k=>$v)
-              {
-              if ($k == 'emailid')
-              $v= strtolower ($v);
-              $queryString.=$k.":'".$this->appEncodeDecode->filterString($v)."'," ;
-              }
-              $queryString = rtrim($queryString, ",") ;
-              $queryString.="}";
-              }
-              $queryString.=")<-[:".Config::get('constants.RELATIONS_TYPES.IMPORTED');
-              if (!empty($relationAttrs))
-              {
-              $queryString.="{";
-              foreach ($relationAttrs as $k=>$v)
-              {
-              $queryString.=$k.":'".$this->appEncodeDecode->filterString($v)."'," ;
-              }
-              $queryString = rtrim($queryString, ",") ;
-              $queryString.="}";
-              }
-              $queryString.="]-(u)" ; */
             $nodeEmailId = (!empty($neoInput['emailid'])) ? $this->appEncodeDecode->filterString(strtolower($neoInput['emailid'])) : '';
             $queryString = "MATCH (u:User:Mintmesh) WHERE ID(u) = " . $fromId . " "
                     . "MERGE (m:User { emailid: '" . $nodeEmailId . "'}) "
@@ -74,7 +44,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
             }
             $queryString.="merge (m)<-[:" . Config::get('constants.RELATIONS_TYPES.IMPORTED');
             if (!empty($relationAttrs)) {
-                $relationAttrs['created_at'] = date("m-d-Y H:i:s A");
+                $relationAttrs['created_at'] = gmdate("m-d-Y H:i:s A");
                 $queryString.="{";
                 foreach ($relationAttrs as $k => $v) {
                     $queryString.=$k . ":'" . $this->appEncodeDecode->filterString($v) . "',";
@@ -83,10 +53,8 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
                 $queryString.="}";
             }
             $queryString.="]-(u)";
-            //echo $queryString ;
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
-            //$result = NeoUser::whereIn('emailid', $emails)->get();
             if ($result->count()) {
                 return $result;
             } else {
@@ -111,17 +79,9 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
             $emailsIds = !empty($emailsIds) ? "'" . $emailsIds . "'" : '';
             $phoneString = !empty($phones) ? implode("','", $phones) : '';
             $phoneString = !empty($phoneString) ? "'" . $phoneString . "'" : '';
-            //\Log::info("<<<<<<<<<<<<<<<<<<<<<<  In getExisting contacts before >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
-            /* $queryString = "START node=node:node_auto_index('emailid:*') 
-              where node.emailid in[".$emailsIds."]
-              RETURN node" ; */
-            //and ('Mintmesh' IN labels(u) OR  'Imported' IN labels(u) OR 'User' IN labels(u))
             $queryString = "Match (u:User:Mintmesh) where u.emailid IN [" . $emailsIds . "] or replace(u.phone, '-', '') IN[" . $phoneString . "]  return distinct(u) order by lower(u.firstname) ";
-            //\Log::info("<<<<<<<<<<<<<<<<<<<<<<  get existing users query >>>>>>>>>>>>>>>>>>>>> ".$queryString);
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
-            // \Log::info("<<<<<<<<<<<<<<<<<<<<<<  In getExisting contacts before >>>>>>>>>>>>>>>>>>>>> ".$queryString.date('H:i:s'));
-            //$result = NeoUser::whereIn('emailid', $emails)->get();
             if ($result->count()) {
                 return $result;
             } else {
@@ -159,7 +119,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
                                 where ID(m)=" . $toUserId . "  and n.emailid='" . $fromUserEmailId . "'
                                 merge (n)-[r:" . Config::get('constants.RELATIONS_TYPES.IMPORTED');
 
-            $queryString.="]->(m)  set r.created_at='" . date("m-d-Y H:i:s A") . "'";
+            $queryString.="]->(m)  set r.created_at='" . gmdate("m-d-Y H:i:s A") . "'";
             //set other relations
             if (!empty($relationAttrs)) {
                 $queryString.=" , ";
@@ -169,56 +129,10 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
                 $queryString = rtrim($queryString, ',');
             }
             $queryString.=' return r';
-            //\Log::info("--relate query-----".$queryString);
-            //echo $queryString ; exit;
             $query = new CypherQuery($this->client, $queryString);
             return $result = $query->getResultSet();
         }
     }
-
-    /*  public function relateContacts($fromUser , $toUser , $relationAttrs = array())
-      {
-      $toUserId = $toUser['id']->getId() ;
-      if (!empty($fromUser) && !empty($toUser) && $toUserId != $fromUser->id )//ignore if same user
-      {
-      //check if relation is already existing
-      $importRel = $this->checkImportRelation($fromUser->id, $toUserId);
-      if (count($importRel)) //update
-      {
-      $queryString = "Match (n:User)-[r]->(m:User)
-      where ID(m)=".$toUserId."  and ID(n)=".$fromUser->id;
-      $queryString.= " and n-[:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."]->m" ;
-      //$queryString = "Match (n:User {id:".$fromUser->id."})-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."]
-      //                ->(m:User {id:".$toUserId."}) " ;
-
-      }
-      else //create
-      {
-      $queryString = "Match (m:User), (n:User)
-      where ID(m)=".$toUserId."  and ID(n)=".$fromUser->id."
-      create (n)-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."]->(m)";
-      }
-      // Match (n:User)-[r]->(m:User) where ID(m)=6478  and ID(n)=6472 and n-[:IMPORTED]->m
-
-      $queryString.=" set r.created_at='".date("m-d-Y H:i:s A")."'";
-      //set other relations
-      if (!empty($relationAttrs))
-      {
-      $queryString.=" , " ;
-      foreach ($relationAttrs as $atrName=>$atrVal)
-      {
-      $queryString.="r.".$atrName."='".$this->appEncodeDecode->filterString($atrVal)."',";
-      }
-      $queryString = rtrim($queryString,',');
-      }
-      echo $queryString ; exit;
-      $query = new CypherQuery($this->client, $queryString);
-      return $result = $query->getResultSet();
-
-      }
-
-      }
-     */
 
     public function checkImportRelation($fromId = "", $toId = "") {
         $queryString = "Match (n:User:Mintmesh)-[r]->(m:User)
@@ -302,36 +216,6 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
     public function createNodeAndRelationForPhoneContacts($from, $neoInput = array(), $relationAttrs = array(), $isImported = 0) {
         $from = $this->appEncodeDecode->filterString(strtolower($from));
         try {
-            /* $queryString = "MATCH (u:User:Mintmesh)
-              WHERE u.emailid = '".$from."'
-              CREATE (m:NonMintmesh";
-              if (!empty($isImported)){//add imported label if created from import contacts
-              $queryString.=":Imported";
-              }
-              if (!empty($neoInput))
-              {
-              $queryString.="{";
-              foreach ($neoInput as $k=>$v)
-              {
-              if ($k == 'emailid')
-              $v= strtolower ($v);
-              $queryString.=$k.":'".$this->appEncodeDecode->filterString($v)."'," ;
-              }
-              $queryString = rtrim($queryString, ",") ;
-              $queryString.="}";
-              }
-              $queryString.=")<-[:".Config::get('constants.RELATIONS_TYPES.IMPORTED');
-              if (!empty($relationAttrs))
-              {
-              $queryString.="{";
-              foreach ($relationAttrs as $k=>$v)
-              {
-              $queryString.=$k.":'".$this->appEncodeDecode->filterString($v)."'," ;
-              }
-              $queryString = rtrim($queryString, ",") ;
-              $queryString.="}";
-              }
-              $queryString.="]-(u)" ; */
             $nodePhoneNumber = $neoInput['phone']; //(!empty($neoInput['phone']))?$this->appEncodeDecode->filterString(strtolower($neoInput['phone'])):'';
             $queryString = "MATCH (u:User:Mintmesh) WHERE u.emailid = '" . $from . "' "
                     . "MERGE (m:NonMintmesh";
@@ -350,7 +234,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
             }
             $queryString.=" merge (m)<-[:" . Config::get('constants.RELATIONS_TYPES.IMPORTED');
             if (!empty($relationAttrs)) {
-                $relationAttrs['created_at'] = date("m-d-Y H:i:s A");
+                $relationAttrs['created_at'] = gmdate("m-d-Y H:i:s A");
                 $queryString.="{";
                 foreach ($relationAttrs as $k => $v) {
                     $queryString.=$k . ":'" . $this->appEncodeDecode->filterString($v) . "',";
@@ -359,10 +243,8 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
                 $queryString.="}";
             }
             $queryString.="]-(u)";
-            //echo $queryString ; exit;
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
-            //$result = NeoUser::whereIn('emailid', $emails)->get();
             if ($result->count()) {
                 return $result;
             } else {
@@ -455,18 +337,10 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
             $emailsIds = !empty($emailsIds) ? "'" . $emailsIds . "'" : '';
             $phoneString = !empty($phones) ? implode("','", $phones) : '';
             $phoneString = !empty($phoneString) ? "'" . $phoneString . "'" : '';
-            //\Log::info("<<<<<<<<<<<<<<<<<<<<<<  In getExisting contacts before >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
-            /* $queryString = "START node=node:node_auto_index('emailid:*') 
-              where node.emailid in[".$emailsIds."]
-              RETURN node" ; */
-            //and ('Mintmesh' IN labels(u) OR  'Imported' IN labels(u) OR 'User' IN labels(u))
             $queryString = "Match (u) where u.emailid IN [" . $emailsIds . "] or replace(u.phone, '-', '') IN[" . $phoneString . "]  "
                     . " and ('Imported' IN labels(u) OR 'User' IN labels(u)) return distinct(u)";
-            //echo $queryString ;exit;
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
-            // \Log::info("<<<<<<<<<<<<<<<<<<<<<<  In getExisting contacts before >>>>>>>>>>>>>>>>>>>>> ".$queryString.date('H:i:s'));
-            //$result = NeoUser::whereIn('emailid', $emails)->get();
             if ($result->count()) {
                 return $result;
             } else {
@@ -491,15 +365,9 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
                                 delete rel
                                 
                          )";
-        //echo $queryString ;exit;
         $query = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
         //form an array for all the referrals to updae notifications_logs table
-        /* if (!empty($result)){
-          foreach ($result as $res){
-          $returnArray[]=array('referred_by'=>$res[0]->referred_by, 'created_by'=>$res[0]->created_by, 'post_id'=>$res[1][0]);
-          }
-          } */
         return true;
     }
 

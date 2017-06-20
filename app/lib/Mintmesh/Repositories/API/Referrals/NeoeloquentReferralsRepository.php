@@ -1305,7 +1305,6 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
             $queryString = "match (u)-[r:GOT_REFERRED]->(p:Post)-[r1:POSTED_FOR]->(c:Company) 
                             where r.referred_by='" . $userEmail . "' and c.companyCode='" . $companyCode . "'
                             return distinct(p),r1,c order by p.created_at desc";
-            //echo $queryString;exit;
             if (!empty($limit) && !($limit < 0)) {
                 $queryString.=" skip " . $skip . " limit " . self::LIMIT;
             }
@@ -1315,8 +1314,8 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
         return $return;
     }
 
-    public function getResumeFilePath($docId, $companyId) {
-        $query = "SELECT file_source,file_original_name FROM company_resumes WHERE id = '" . $docId . "' AND company_id = '" . $companyId . "'";
+    public function getResumeFilePath($docId=0, $companyId=0) {
+        $query = "SELECT file_source,file_original_name FROM company_resumes WHERE id = ".$docId." AND company_id = ".$companyId."";
         return DB::select($query);
     }
 

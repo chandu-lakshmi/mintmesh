@@ -185,6 +185,12 @@ return [
     'AI_AUTHENTICATION_KEY' => '107857d5d4be08e5e2dc51ef141e0924',
     'S3_DOWNLOAD_PATH'  => 'https://s3-us-west-2.amazonaws.com/mintmeshresumedev/',
     'BITLY_URL'   =>   'https://api-ssl.bitly.com/v3/user/link_save?access_token=',
-    'BITLY_ACCESS_TOKEN' => 'b65a3bf8c767c8931eeaa067da88c2e2356f192e'
+    'BITLY_ACCESS_TOKEN' => 'b65a3bf8c767c8931eeaa067da88c2e2356f192e',
+    'AI_GET_PARSED_RESUME' => 'http://54.68.58.181/resumematcher/get_parsed_resume',
+    'ZENEFITS_OAUTH2_TOKEN' => 'https://secure.zenefits.com/oauth2/token/',
+    'ZENEFITS_GETAPP_URL'=>'http://202.63.105.85/mmenterprise/getApp/zenefits',
+    'ZENEFITS_GETACCESCODE_URL'=>'http://202.63.105.85/mintmesh/getAccesCode',
+    'ZENEFITS_COMPANY_INSTALLS'=>'https://api.zenefits.com/platform/company_installs',
+    'ZENEFITS_PERSON_SUBSCRIPTIONS'=>'https://api.zenefits.com/platform/person_subscriptions'
         
 ];

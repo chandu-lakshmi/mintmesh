@@ -11,10 +11,7 @@
 |
 */
 /* Route related to API docs */
-//Route::get('zenfits', function() {
-//	echo 123;
-//});
-//Route::get('testzen','ZenController@testzen');
+
 Route::get('test','ZenefitsController@test');
 Route::get("getApp", "ZenefitsController@installMintmeshApp");
 Route::get('getApp', function(){

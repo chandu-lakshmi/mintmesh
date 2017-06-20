@@ -15,8 +15,12 @@ use Illuminate\Support\Facades\Hash;
 use Mintmesh\Services\APPEncode\APPEncode ;
 class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseRepository {
 
-        protected $user, $companyProfile, $CompanyContact,$groups;
-        protected $email, $level, $appEncodeDecode, $companyResumes;
+    protected $user, $companyProfile, $CompanyContact,$groups;
+    protected $email, $level, $appEncodeDecode, $companyResumes;
+        
+    const COMPANY_RESUME_STATUS = 0;
+    const COMPANY_RESUME_S3_MOVED_STATUS = 1;
+    const COMPANY_RESUME_AI_PARSED_STATUS = 2;
         
         public function __construct(User $user,
                                     Company_Profile $companyProfile,
@@ -1383,7 +1387,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         $companyResumes = array(
                         "company_id"   => $companyId,
                         "file_original_name"  => $resumeName,
-                        "status"        => 1,
+                        "status"        => self::COMPANY_RESUME_S3_MOVED_STATUS,
                         "file_from"     => $source,
                         "got_referred_id"  => $gotReferred,
                         "created_by"    => $userId,

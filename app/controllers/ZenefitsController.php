@@ -14,6 +14,7 @@ class ZenefitsController extends BaseController {
     protected $userRepository, $guzzleClient, $IntegrationManager;
 
     const SUCCESS_RESPONSE_CODE = 200;
+    const GET_CURL_STATUS = 'ok';
 
     public function __construct(EnterpriseGateway $EnterpriseGateway) {
         $this->guzzleClient = new guzzleClient();
@@ -34,7 +35,7 @@ class ZenefitsController extends BaseController {
         $inputUserData = \Input::all();
         if ($inputUserData) {
             $info = $this->getAccessTokenRefreshToken($inputUserData);
-            return Redirect::to('http://202.63.105.85/mmenterprise/getApp/zenefits');
+            return Redirect::to(Config::get('constants.ZENEFITS_GETAPP_URL'));
         } else {
             // returning validation failure
             return \Response::json($validation);
@@ -43,14 +44,14 @@ class ZenefitsController extends BaseController {
 
     public function getAccessTokenRefreshToken($inputUserData) {
         $data = array();
-        $endPoint = "https://secure.zenefits.com/oauth2/token/";
+        $endPoint = Config::get('constants.ZENEFITS_OAUTH2_TOKEN');
 
 
         $data['client_id'] = Config::get('constants.Zenefits_client_id');
         $data['client_secret'] = Config::get('constants.Zenefits_client_secret');
         $data['code'] = !empty($inputUserData['code']) ? $inputUserData['code'] : '';
         $data['grant_type'] = "authorization_code";
-        $data['redirect_uri'] = "http://202.63.105.85/mintmesh/getAccesCode";
+        $data['redirect_uri'] = Config::get('constants.ZENEFITS_GETACCESCODE_URL');
         
         $curl_handle = curl_init();
         curl_setopt($curl_handle, CURLOPT_URL, $endPoint);
@@ -73,7 +74,7 @@ class ZenefitsController extends BaseController {
 
     public function getActiveApp($access_token) {
 
-        $endPoint = "https://api.zenefits.com/platform/company_installs";
+        $endPoint = Config::get('constants.ZENEFITS_COMPANY_INSTALLS');
 
         $request = $this->guzzleClient->get($endPoint);
         $request->setHeader('Authorization', $access_token);
@@ -100,7 +101,7 @@ class ZenefitsController extends BaseController {
     
     public function getPersonSubscriptionIds($access_token) {
         $data = array();
-        $endPoint = "https://api.zenefits.com/platform/person_subscriptions";//$array['data']['data'][0]['person_subscriptions']['url'] . "/status_changes";
+        $endPoint = Config::get('constants.ZENEFITS_PERSON_SUBSCRIPTIONS');
        
         $request = $this->guzzleClient->get($endPoint);
         $request->setHeader('Authorization', $access_token);
@@ -137,7 +138,7 @@ class ZenefitsController extends BaseController {
     public function getCurl($access_token, $endPoint) {
         
         $data = array();
-        $data['status'] = "ok";
+        $data['status'] = self::GET_CURL_STATUS;
         
         $authorization = "Authorization: ". $access_token;
         $post = json_encode($data);

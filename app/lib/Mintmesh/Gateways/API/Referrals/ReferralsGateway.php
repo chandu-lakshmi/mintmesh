@@ -39,6 +39,8 @@ class ReferralsGateway {
     const SUCCESS_RESPONSE_MESSAGE = 'success';
     const ERROR_RESPONSE_CODE = 403;
     const ERROR_RESPONSE_MESSAGE = 'error';
+    const CURL_CALL_TYPE = 1;
+    const CURL_CALL_TYPE_FILE = 2;
 
     protected $referralsRepository, $referralsValidator, $neoUserRepository, $userRepository;
     protected $authorizer, $appEncodeDecode, $paymentRepository, $paymentGateway, $neoPostRepository, $postGateway;
@@ -2108,14 +2110,9 @@ class ReferralsGateway {
 
     public function urlShortner($url) {
         $bitly = Config::get('constants.BITLY_URL') . Config::get('constants.BITLY_ACCESS_TOKEN') . '&longUrl=' . $url;
-//        $ch = curl_init();
-//        curl_setopt($ch, CURLOPT_URL, $bitly);
-//        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-//        $response = curl_exec($ch);
-//        curl_close($ch);
-        $fp='';
-        $type = '1';
-        $response = $this->curlCall($bitly,$fp,$type=1);
+        $fp = '';
+        $type = self::CURL_CALL_TYPE;
+        $response = $this->curlCall($bitly, $fp, $type);
         $b = (array) json_decode($response, TRUE);
         if (!empty($b['data']['link_save']['link'])) {
             $return = $b['data']['link_save']['link'];
@@ -2239,19 +2236,11 @@ class ReferralsGateway {
         $resumePathfile = $this->getResumeFilePath($doc_id, $companyId);
 
         set_time_limit(0);
-        
-        $url = $resumePathfile[0]->file_source;
+        $url  = $resumePathfile[0]->file_source;
         $file = basename($url);
-
-        $fp = fopen($file, 'w');
-//        $ch = curl_init($url);
-//        curl_setopt($ch, CURLOPT_FILE, $fp);
-//
-//        $data = curl_exec($ch);
-//
-//        curl_close($ch);
-       $type= '2';
-       $data =  $this->curlCall($url,$fp,$type);
+        $fp   = fopen($file, 'w');
+        $type = self::CURL_CALL_TYPE_FILE;
+        $data =  $this->curlCall($url,$fp,$type);
         fclose($fp);
         
         header('Content-Description: File Transfer');
@@ -2270,17 +2259,17 @@ class ReferralsGateway {
     
     public function curlCall($url='',$fp='',$type=''){
         $data1 = '';
-        $fp1 = !empty($fp)?$fp:0;
+        $fp1 = !empty($fp) ? $fp : 0;
         if($url){
             $ch = curl_init($url);
-            if($type == '2'){
+            if($type == self::CURL_CALL_TYPE_FILE){
                 curl_setopt($ch, CURLOPT_FILE, $fp1);
-            }else if($type == '1'){
+            }else if($type == self::CURL_CALL_TYPE){
                 curl_setopt($ch, CURLOPT_URL, $url);
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             }
-        $data1 = curl_exec($ch);
-        curl_close($ch);
+            $data1 = curl_exec($ch);
+            curl_close($ch);
         return $data1;
         }
     }

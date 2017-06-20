@@ -208,5 +208,12 @@ return [
     'AIpassword' => 'Aev54I0Av13bhCxM',
     'AI_AUTHENTICATION_KEY' => '107857d5d4be08e5e2dc51ef141e0924',
     'Zenefits_client_id' => '5zr3cWgul9peKR3al1AZ65qcsbWC3JJr8jRd0IDU',
-    'Zenefits_client_secret' => '8eLr2WeIukzLVTjqJ3xaAeNFmLNGKDla1UdpRAwZxAdzlQEMdSnrRonqpiGbIm7HQhvvH4UnN8FmaCtVH9gxaKSyPntMwdcj80QBUKnBVA3rzPaJ8xIt1kDsvUVb8aKs'
+    'Zenefits_client_secret' => '8eLr2WeIukzLVTjqJ3xaAeNFmLNGKDla1UdpRAwZxAdzlQEMdSnrRonqpiGbIm7HQhvvH4UnN8FmaCtVH9gxaKSyPntMwdcj80QBUKnBVA3rzPaJ8xIt1kDsvUVb8aKs',
+    'AI_GET_PARSED_RESUME' => 'http://54.68.58.181/resumematcher/get_parsed_resume',
+    'ZENEFITS_OAUTH2_TOKEN' => 'https://secure.zenefits.com/oauth2/token/',
+    'ZENEFITS_GETAPP_URL'=>'http://202.63.105.85/mmenterprise/getApp/zenefits',
+    'ZENEFITS_GETACCESCODE_URL'=>'http://202.63.105.85/mintmesh/getAccesCode',
+    'ZENEFITS_COMPANY_INSTALLS'=>'https://api.zenefits.com/platform/company_installs',
+    'ZENEFITS_PERSON_SUBSCRIPTIONS'=>'https://api.zenefits.com/platform/person_subscriptions'
+    
 ];

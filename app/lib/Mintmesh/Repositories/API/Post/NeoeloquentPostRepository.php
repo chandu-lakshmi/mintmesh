@@ -874,7 +874,6 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
            {
                $queryString.=" skip ".$skip." limit ".self::LIMIT ;
            }
-           //echo $queryString;exit;
            $query = new CypherQuery($this->client, $queryString);
            $result = $query->getResultSet(); 
             if($result->count())
@@ -939,7 +938,6 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
             $queryString .= $baseQuery.$searchQuery.$filterQuery;
             $queryString .= " WITH p,u,r,cnt ORDER BY p.created_at DESC ".$limitQuery;
             $queryString .= " return p,u,r,cnt ";
-            //echo $queryString;exit;
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet(); 
             if($result->count())

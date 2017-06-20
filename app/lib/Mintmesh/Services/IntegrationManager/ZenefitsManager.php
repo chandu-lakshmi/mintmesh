@@ -26,6 +26,10 @@ class ZenefitsManager extends IntegrationManager {
     const API_END_POINT = 'API_END_POINT';
     const AuthorizationHeader = 'Authorization';
     const API_LOCAL_URL = 'https://api.zenefits.com/core/';
+    const EXPIRY_DAYS_LIMIT = 29;
+    const REFRESH_TOKEN = 'refresh_token';
+    const AUTHORIZATION = 'Authorization';
+    const CREATED_IN = 'created_in';
 
     public function __construct() {
         $this->db_user = Config::get('database.connections.neo4j.username');
@@ -50,9 +54,9 @@ class ZenefitsManager extends IntegrationManager {
             $requestParams = $integrationManager->composeRequestParams($JobDetails, $companyJobDetail, $companyJobConfigDetails);
             $this->requestParams = $requestParams;
             $expirationDate = $requestParams['created_in'];
-            $toDay = strtotime("d-m-Y");
+            $toDay = gmdate("Y-m-d H:i:s");
             $difference = abs($toDay - $expirationDate);
-            if ($difference <= 29) {
+            if ($difference <= self::EXPIRY_DAYS_LIMIT) {
                 $return = $integrationManager->doRequest($requestParams);
             } else {
                 $this->getRefreshToken($requestParams['refresh_token'], $companyJobDetail->company_id);
@@ -68,9 +72,9 @@ class ZenefitsManager extends IntegrationManager {
 
     public function getRefreshToken($refresh_token, $ccode) {
         $data = array();
-        $endPoint = "https://secure.zenefits.com/oauth2/token/";
+        $endPoint = Config::get('constants.ZENEFITS_OAUTH2_TOKEN');
 
-        $data['grant_type'] = "refresh_token";
+        $data['grant_type'] = self::REFRESH_TOKEN;
         $data['refresh_token'] = $refresh_token;
         $data['client_id'] = Config::get('constants.Zenefits_client_id');
         $data['client_secret'] = Config::get('constants.Zenefits_client_secret');
@@ -100,11 +104,11 @@ class ZenefitsManager extends IntegrationManager {
         $hcmAccesToken = !empty($response->access_token) ? ($response->token_type . ' ' . $response->access_token) : '';
         $hcmReferToken = !empty($response->refresh_token) ? $response->refresh_token : '';
         $hcmExpToken = !empty($response->expires_in) ? $response->expires_in : '';
-        $hcmAry[1]['name'] = 'Authorization';
+        $hcmAry[1]['name'] = self::AUTHORIZATION;
         $hcmAry[1]['value'] = $hcmAccesToken;
-        $hcmAry[2]['name'] = 'refresh_token';
+        $hcmAry[2]['name'] = self::REFRESH_TOKEN;
         $hcmAry[2]['value'] = $hcmReferToken;
-        $hcmAry[3]['name'] = 'created_in';
+        $hcmAry[3]['name'] = self::CREATED_IN;
         $hcmAry[3]['value'] = date("d-m-Y");
 
         foreach ($hcmAry as $key => $value) {
@@ -113,7 +117,7 @@ class ZenefitsManager extends IntegrationManager {
              DB::Statement($sql); 
         }
        
-       
+       return TRUE;
     }
   
     public function processResponseData($responseBody, $jobId, $companyId) {
@@ -163,7 +167,7 @@ class ZenefitsManager extends IntegrationManager {
 
 
         foreach ($empInfo as $key => $value) {
-            $query = "Select * from contacts where emailid = '" . $value['work_email'] . "' AND company_id ='" . $companyId . "'";
+            $query = "Select id from contacts where emailid = '" . $value['work_email'] . "' AND company_id ='" . $companyId . "'";
             $existEailidAndCompanyId = DB::select($query);
 
             if (count($existEailidAndCompanyId) == 0) {

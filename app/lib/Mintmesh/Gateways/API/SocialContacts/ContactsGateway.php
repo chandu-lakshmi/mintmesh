@@ -194,8 +194,6 @@ class ContactsGateway {
                             $mintUsers[]=$mintUser;
                         }
                          #7 pushing the data to queue
-                          //  Log::info("push data".print_r($pushData, true));
-                         //Queue::push('Mintmesh\Services\Queues\CreateOrRelateContactsQueue', $pushData, 'IMPORT');
                         #8 response to client
                         $responseMessage = Lang::get('MINTMESH.import_contacts.success');                    
                         $responseCode    = self::SUCCESS_RESPONSE_CODE;
@@ -207,8 +205,6 @@ class ContactsGateway {
                     } else { #empty contact ends here 
                         #no nodes present fresh contact import
                         # all the contacts need to be imported
-                        //Log::info("push data".print_r($pushData, true));
-                        //Queue::push('Mintmesh\Services\Queues\CreateOrRelateContactsQueue', $pushData, 'IMPORT');
                         $responseMessage = Lang::get('MINTMESH.import_contacts.success');                    
                         $responseCode    = self::SUCCESS_RESPONSE_CODE;
                         $responseStatus  = self::SUCCESS_RESPONSE_MESSAGE;
@@ -255,8 +251,6 @@ class ContactsGateway {
                         $contacts = json_decode($input['contacts']); //$input['contacts'] ;
                         if (!empty($contacts) && is_array($contacts))
                         {
-                            //delete all imported contacts
-                            //Queue::push('Mintmesh\Services\Queues\DeleteContactQueue', array('emailid'=>$this->loggedinUserDetails->emailid), 'IMPORT');
                             $deletedResult = $this->contactsRepository->deleteImportedContacts($this->loggedinUserDetails->emailid);
                             $mintmeshEmails = $processedEmails = array();
                             if ($deletedResult){// process afer delete contact is done
@@ -269,9 +263,7 @@ class ContactsGateway {
                                     //format the phone numbers
                                     $userPhone = !empty($fromUser->phone)?$fromUser->phone:'';
                                     $phones = $this->formatPhoneNumbers($phones, $userPhone);
-                                    // \Log::info("<<<<<<<<<<<<<<<<<<<<<<  In getExisting contacts before >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
                                     $result = $this->contactsRepository->getExistingContacts($emails, $phones);
-                                   // \Log::info("<<<<<<<<<<<<<<<<<<<<<<  In getExisting contacts after >>>>>>>>>>>>>>>>>>>>> ".date('H:i:s'));
                                     if (!empty($result))
                                     {
                                         foreach ($result as $res)//process each contacts 
@@ -328,9 +320,8 @@ class ContactsGateway {
                                     $pushData['phones']=$phones;
                                     $pushData['contact']=$contact;
                                     $pushData['fromUser']=$this->neoLoggedInUserDetails;
-                                    //$jobData = $pushData ;
                                     Queue::push('Mintmesh\Services\Queues\CreateOrRelateContactsQueue', $pushData, 'IMPORT');
-                                    //$this->checkToCreateOrRelateContacts($jobData['emails'], $jobData['phones'], $jobData['contact'], $jobData['fromUser']) ;
+                                    
                                 }
                             }
                             $tmp = Array(); 
@@ -377,8 +368,7 @@ class ContactsGateway {
             $autoConnectedUsers = array();
             if (!empty($user_ids) && !empty($userEmail))
             {
-                //foreach ($emails as $email)
-                //{
+                
                     $autoConnectPeople = $this->neoUserRepository->getAutoconnectUsers($userEmail, $user_ids, $userPhone);
                     if (!empty($autoConnectPeople))
                     {
@@ -397,7 +387,6 @@ class ContactsGateway {
                             }
                         }
                     }
-                //}
             }
             return $autoConnectedUsers ;
             
@@ -423,17 +412,9 @@ class ContactsGateway {
                     $fullname = '';
                     $neoInput['fullname'] = '';
                     $neoInput['emailid'] = $email;
-                    //$neoInput['secondary_emails'] = isset($emails)?$emails:array('0');
                     $neoInput['phone'] = isset($phones[0])?$phones[0]:'';
-                    //$neoInput['secondary_phones'] = isset($phones)?$phones:array('0');
                     try{
                         $relationAttrs = $this->formRelationAttributes($contact);
-                        /*$pushData = array();
-                        $pushData['from_user_id'] = $fromUser->id ;
-                        $pushData['neoInput']=$neoInput;
-                        $pushData['relationAttrs']=$relationAttrs;
-                        Queue::push('Mintmesh\Services\Queues\ContactsQueue', $pushData, 'IMPORT');
-                        */
                         $this->contactsRepository->createContactAndRelation($fromUser->id, $neoInput, $relationAttrs) ;
                     }
                     catch(\RuntimeException $e)
@@ -736,14 +717,7 @@ class ContactsGateway {
                     $neoInput['phone'] = $phone;
                     try{
                         $relationAttrs = $this->formRelationAttributes($contact);
-                        /*$pushData = array();
-                        $pushData['from_user_email'] = $fromEmail ;
-                        $pushData['neoInput']=$neoInput;
-                        $pushData['relationAttrs']=$relationAttrs;
-                        Queue::push('Mintmesh\Services\Queues\NonMintmeshContactsQueue', $pushData, 'IMPORT');
-                        */
                         $this->contactsRepository->createNodeAndRelationForPhoneContacts($fromEmail, $neoInput, $relationAttrs,1);
-                        //$toUser =  $this->contactsRepository->createContactAndRelation($fromUser->id, $neoInput, $relationAttrs) ;
                     }
                     catch(\RuntimeException $e)
                     {
@@ -772,54 +746,7 @@ class ContactsGateway {
                     //create nodes for each phone number
                     $createResult = $this->createNonMembersNodesForPhone($fromUser->emailid, $phones, $contact);
                 }
-                /*$contactsResult = $this->contactsRepository->getExistingNonMintmeshContacts($emails, $phones);
-                if (!empty($contactsResult)){
-                    $existingEmails = array();
-                    $existingPhones = array();
-                    foreach ($contactsResult as $c){
-                        $toUser = $c ;
-                        $relationAttrs = $this->formRelationAttributes($contact);
-                        //create relation for users
-                        try{
-                            if (!in_array($toUser['id']->getId(), $this->processedContacts)){
-                                //print_r($this->processedContacts);
-                                $relation = $this->contactsRepository->relateContacts($fromUser, $toUser, $relationAttrs);  
-                                $this->processedContacts[]=$toUser['id']->getId() ;
-                            }
-                        }
-                        catch(\RuntimeException $e)
-                        {
-                        }
-                        $existingEmails[] = $c[0]->emailid ;
-                        $existingPhones[] = str_replace('-', '', $c[0]->phone) ;
-                        //create nodes for remaining users
-                        $stringedEmails = array();
-                        foreach ($emails as $e)
-                        {
-                            $stringedEmails[] = $this->appEncodeDecode->filterString(strtolower($e)) ;
-                        }
-                        $remainingContacts = array_diff($stringedEmails, $existingEmails) ;
-                        $createResult =$this->createNonMembersNodes($fromUser->emailid, $remainingContacts, $contact);
-                        //create remaining phone contacts for phone
-                        $remainingPhones = array_diff($phones, $existingPhones) ;
-                        $createResult = $this->createNonMembersNodesForPhone($fromUser->emailid, $remainingPhones, $contact);
-                    }
-                }
-                else{
-                    //create contact and relations
-                    //create nodes for emailids
-                    if (!empty($contact->emails) && is_array($contact->emails) && !in_array($fromUser->emailid,$contact->emails))
-                    {
-                        //create nodes for each email id
-                        $createResult = $this->createNonMembersNodes($fromUser->emailid, $emails, $contact);
-                    }
-                    //create nodes for phone numbers
-                    if (!empty($contact->phones) && is_array($contact->phones) && !in_array($fromUser->phone,$contact->phones))
-                    {
-                        //create nodes for each phone number
-                        $createResult = $this->createNonMembersNodesForPhone($fromUser->emailid, $phones, $contact);
-                    }
-                }*/
+                
             }
         }
    

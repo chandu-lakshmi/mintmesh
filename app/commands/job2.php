@@ -32,6 +32,10 @@ class job2 extends Command {
      * @var string
      */
     protected $description = 'GotReferred creation';
+    
+    const COMPANY_RESUME_STATUS = 0;
+    const COMPANY_RESUME_S3_MOVED_STATUS = 1;
+    const COMPANY_RESUME_AI_PARSED_STATUS = 2;
 
     /**
      * Create a new command instance.
@@ -396,7 +400,7 @@ class job2 extends Command {
         $companyResumes = array(
                         "company_id"   => $companyId,
                         "file_original_name"  => $resumeName,
-                        "status"        => 0,
+                        "status"        => self::COMPANY_RESUME_STATUS,
                         "file_from"     => $source,
                         "got_referred_id"  => $gotReferred,
                         "created_by"    => $userId,
@@ -410,7 +414,7 @@ class job2 extends Command {
         $updatedAt = gmdate("Y-m-d H:i:s");
         $companyResumes = array(
                         "file_source"       => $filesource,
-                        "status"            => 1,
+                        "status"            => self::COMPANY_RESUME_S3_MOVED_STATUS,
                         "got_referred_id"   => $gotReferredId,
                         "updated_at"        => $updatedAt
             );

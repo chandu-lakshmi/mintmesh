@@ -28,6 +28,8 @@ class AIManager {
     const API_END_POINT = 'API_END_POINT';
     const AuthorizationHeader = 'Authorization';
     const API_LOCAL_URL = 'https://api.zenefits.com/core/';
+    const COMPANY_RESUME_S3_MOVED_STATUS = 1;
+    const COMPANY_RESUME_AI_PARSED_STATUS = 2;
 
     public function __construct() {
         $this->db_user = Config::get('database.connections.neo4j.username');
@@ -42,25 +44,25 @@ class AIManager {
     }
 
     public function getResumesByStatus($status) {
-          $query = "SELECT * FROM company_resumes WHERE status = '" . $status . "'";
+          $query = "SELECT id, company_id, file_original_name FROM company_resumes WHERE status = '" . $status . "'";
           $result = DB::select($query);
           return $result;
         }
         
     public function getResumesUpdateStatus() {
         
-        //Set Time limit to execute
+        #Set Time limit to execute
         set_time_limit(0);
+        $status = self::COMPANY_RESUME_S3_MOVED_STATUS;
+        #Get Status from company_resumes
+        $result = $this->getResumesByStatus($status);
         
-        //Get Status from company_resumes
-        $result = $this->getResumesByStatus($status = 1);
+        #API call from API for Parsed Resume
+        $endPoint = Config::get('constants.AI_GET_PARSED_RESUME');
         
-        //API call from API for Parsed Resume
-        $endPoint = "http://54.68.58.181/resumematcher/get_parsed_resume";
-        
-        //Username and Passwords of AI server
-        $username = Config::get('constants.AIusername');//"admin";
-        $password = Config::get('constants.AIpassword');//"Aev54I0Av13bhCxM";
+        #Username and Passwords of AI server
+        $username = Config::get('constants.AIusername');
+        $password = Config::get('constants.AIpassword');
         
         $data = array();
         
@@ -108,41 +110,46 @@ class AIManager {
         $emailId  = !empty($param['email_id']) ? $param['email_id'] : '';
         
         $companyResumes = $this->getCompanyResumesDetailsByDocId($docId);
-        $gotReferredId  = !empty($companyResumes->got_referred_id) ? $companyResumes->got_referred_id : 0;
         
-        if(!empty($companyResumes) && !empty($emailId) && empty($gotReferredId)){
+        if(!empty($companyResumes) && !empty($emailId)){
             #get the user details with emailid
             $userNode       = $this->getUserNodeByEmailId($emailId);   
             $companyCode    = $companyResumes->code;
             $referred_for   = $companyResumes->emailid;
+            $gotReferredId  = !empty($companyResumes->got_referred_id) ? $companyResumes->got_referred_id : 0;
             $statusPending  = Config::get('constants.REFERRALS.STATUSES.PENDING');
-            #check if the user node already exists or not
-            if(empty($userNode)){
-                #form the user data
-                $name = !empty($param['name']) ? $param['name'] : '';
-                $user['firstname']  = $name;
-                $user['fullname']   = $name;
-                $user['emailid']    = $emailId;
-                $user['phone']      = !empty($param['phone']) ? $param['phone'] : ''; 
-                #creating User Node in db
-                $this->createUserNode($user);
-            }
-            #form the referral details input here
-            $neoInput['document_id']            = $docId;
-            $neoInput['referral']               = $emailId;
-            $neoInput['referred_by']            = $referred_for;
-            $neoInput['resume_path']            = $companyResumes->file_source;                
-            $neoInput['resume_original_name']   = $companyResumes->file_original_name;
-            $neoInput['created_at']             = gmdate('Y-m-d H:i:s'); 
-            $neoInput['relation_count']         = '1';
-            $neoInput['status']                 = $statusPending;
-            $neoInput['completed_status']       = $statusPending;
-            $neoInput['awaiting_action_status'] = $statusPending;
-            $neoInput['awaiting_action_by']     = $referred_for;
-            $neoInput['one_way_status']         = Config::get('constants.REFERRALS.STATUSES.UNSOLICITED');
-            #create got referred relation here
-            $gotReferredId = $this->createUnsolicitedReferralsRelation($companyCode, $emailId, $neoInput);
-            $this->updateCompanyResumes($docId, $gotReferredId);
+            if(empty($gotReferredId)){
+                #check if the user node already exists or not
+                if(empty($userNode)){
+                    #form the user data
+                    $name = !empty($param['name']) ? $param['name'] : '';
+                    $user['firstname']  = $name;
+                    $user['fullname']   = $name;
+                    $user['emailid']    = $emailId;
+                    $user['phone']      = !empty($param['phone']) ? $param['phone'] : ''; 
+                    #creating User Node in db
+                    $this->createUserNode($user);
+                }
+                #form the referral details input here
+                $neoInput['document_id']            = $docId;
+                $neoInput['referral']               = $emailId;
+                $neoInput['referred_by']            = $referred_for;
+                $neoInput['resume_path']            = $companyResumes->file_source;                
+                $neoInput['resume_original_name']   = $companyResumes->file_original_name;
+                $neoInput['created_at']             = gmdate('Y-m-d H:i:s'); 
+                $neoInput['relation_count']         = '1';
+                $neoInput['status']                 = $statusPending;
+                $neoInput['completed_status']       = $statusPending;
+                $neoInput['awaiting_action_status'] = $statusPending;
+                $neoInput['awaiting_action_by']     = $referred_for;
+                $neoInput['one_way_status']         = Config::get('constants.REFERRALS.STATUSES.UNSOLICITED');
+                #create got referred relation here
+                $gotReferredId = $this->createUnsolicitedReferralsRelation($companyCode, $emailId, $neoInput);
+                $this->updateCompanyResumes($docId, $gotReferredId);
+            } else {
+                #update company resumes status
+                $this->updateCompanyResumesStatus($docId);
+            }    
         }
         return TRUE;
     }
@@ -233,8 +240,22 @@ class AIManager {
         $results   = FALSE;
         $updatedAt = gmdate("Y-m-d H:i:s");
         $companyResumes = array(
-                        "status"            => 2,
+                        "status"            => self::COMPANY_RESUME_AI_PARSED_STATUS,
                         "got_referred_id"   => $gotReferredId,
+                        "updated_at"        => $updatedAt
+                    );
+        if($documentId){
+            $results = CR::where ('id',$documentId)->update($companyResumes); 
+        }
+       return $results;
+    }
+    
+    public function updateCompanyResumesStatus($documentId = 0)
+    {   
+        $results   = FALSE;
+        $updatedAt = gmdate("Y-m-d H:i:s");
+        $companyResumes = array(
+                        "status"            => self::COMPANY_RESUME_AI_PARSED_STATUS,
                         "updated_at"        => $updatedAt
                     );
         if($documentId){
