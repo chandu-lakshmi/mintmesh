@@ -258,7 +258,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
         $query = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
         if (isset($result[0]) && isset($result[0][0])) {
-            return $result[0][0];
+            return $result;
         } else {
             return 0;
         }
