@@ -3049,7 +3049,7 @@ class PostGateway {
         
         $returnAry = $data = array();
         $authKey   = !empty($input['authentication_key']) ? $input['authentication_key'] : '' ;
-        
+        \Log::info("Ping Not Parsed Resumes API" . gmdate('Y-m-d H:i:s'));
         if($authKey === Config::get('constants.AI_AUTHENTICATION_KEY')){
             #get the not yet parsed resumes list
             $status =1;  
