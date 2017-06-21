@@ -1387,7 +1387,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         $companyResumes = array(
                         "company_id"   => $companyId,
                         "file_original_name"  => $resumeName,
-                        "status"        => self::COMPANY_RESUME_S3_MOVED_STATUS,
+                        "status"        => self::COMPANY_RESUME_STATUS,
                         "file_from"     => $source,
                         "got_referred_id"  => $gotReferred,
                         "created_by"    => $userId,
@@ -1401,6 +1401,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         $updatedAt = gmdate("Y-m-d H:i:s");
         $companyResumes = array(
                         "file_source"   => $filesource,
+                        "status"        => self::COMPANY_RESUME_S3_MOVED_STATUS,
                         "updated_at"    => $updatedAt
             );
         if($documentId){

@@ -34,6 +34,7 @@ class job2 extends Command {
     protected $description = 'GotReferred creation';
     
     const COMPANY_RESUME_STATUS = 0;
+    const SOURCE_FROM_EMAIL_REPLY = 4;
     const COMPANY_RESUME_S3_MOVED_STATUS = 1;
     const COMPANY_RESUME_AI_PARSED_STATUS = 2;
 
@@ -136,7 +137,7 @@ class job2 extends Command {
                                     #get Referred user details
                                     $sqlUser = $this->getUserByEmail($relReferredBy);        
                                     $userId  = !empty($sqlUser->id)?$sqlUser->id:0;
-                                    $source  = 4;
+                                    $source  = self::SOURCE_FROM_EMAIL_REPLY;
                                     #insert company resumes in company resumes table
                                     $insertResult = $this->insertInCompanyResumes($companyId, $resumeName, $userId, $source);
                                     $documentId   = $insertResult->id;
@@ -150,9 +151,6 @@ class job2 extends Command {
                                         $s3Path = Config::get('constants.S3_DOWNLOAD_PATH').$companyId.'/'.$renamedFileName;
                                         $renamedFileName = $s3Path;
                                     }
-                                    /*$this->userFileUploader->source = $directory.$mail->fn_re;
-                                    $this->userFileUploader->destination = Config::get('constants.S3BUCKET_NON_MM_REFER_RESUME');
-                                    $renamedFileName = $this->userFileUploader->uploadToS3BySource($directory.$mail->fn_re);*/
                                 }    
                                 $neoInput['document_id'] = $documentId;
                                 $neoInput['resume_path'] = $renamedFileName;
