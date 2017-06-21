@@ -936,7 +936,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
             $queryString = $baseQuery.$searchQuery.$filterQuery;
             $queryString .= " WITH count(p) AS cnt ";
             $queryString .= $baseQuery.$searchQuery.$filterQuery;
-            $queryString .= " WITH p,u,r,cnt ORDER BY p.created_at DESC ".$limitQuery;
+            $queryString .= " WITH p,u,r,cnt ORDER BY r.created_at DESC ".$limitQuery;
             $queryString .= " return p,u,r,cnt ";
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet(); 
