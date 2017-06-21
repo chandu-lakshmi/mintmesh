@@ -797,6 +797,7 @@ class PostGateway {
                 $returnReferralDetails['referred_by_dp_image']  = $neoReferrerDetails['dp_renamed_name'];
                 $returnReferralDetails['confidence_score']      = !empty($postRelDetails['overall_score'])?$postRelDetails['overall_score']:0;
                 $returnReferralDetails['name']                  = !empty($referralName)?$referralName:'The contact';
+                $returnReferralDetails['document_id']           = !empty($postRelDetails['document_id']) ? $postRelDetails['document_id'] : 0;
                 // awaiting Action Details
                 if($status == 'ACCEPTED'){ 
                     if(!empty($postRelDetails['awaiting_action_by'])){
@@ -2067,7 +2068,8 @@ class PostGateway {
     public function applyJob($input){
         
      if(!empty($input['post_id']) && isset($input['post_id']) && !empty($input['reference_id']) && isset($input['reference_id'])){
-         
+        
+        $documentId = 0; 
         $input['time_zone'] = !empty($input['timeZone'])?$input['timeZone']:0; 
         $input['referred_by_id'] = $reference_id = $input['reference_id'];
         $postId =  $input['post_id'];
@@ -2133,9 +2135,14 @@ class PostGateway {
                         else{
                             $neoInput['one_way_status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
                         }
-                        $referredCandidate = $this->neoPostRepository->referCandidate($neoInput,$input);
+                        $referredCandidate = $this->neoPostRepository->referCandidate($neoInput, $input);
                         if($referredCandidate){
-                             if(!empty($input['department']) && isset($input['department'])){
+                            #update got referred relation id company resumes table
+                            if(isset($referredCandidate[0]) && !empty($referredCandidate[0][2]) && !empty($documentId)){
+                                $gotReferredId = $referredCandidate[0][2];
+                                $this->enterpriseRepository->updateCompanyResumesWithGotReferredId($documentId, $gotReferredId);
+                            }
+                            if(!empty($input['department']) && isset($input['department'])){
                              #map job_function if provided
                              $userId = $referredCandidate[0][1]->getID();
                              $jfResult = $this->neoPostRepository->mapJobFunctionToUser($input['department'], $userId, Config::get('constants.REFERRALS.ASSIGNED_JOB_FUNCTION'));

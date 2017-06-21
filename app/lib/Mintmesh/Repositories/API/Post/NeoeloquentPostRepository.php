@@ -966,7 +966,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
                     if($neoInput['one_way_status'] == 'UNSOLICITED'){
                         $queryString .= ",p.unsolicited_count = p.unsolicited_count + 1";
                     }
-                    $queryString .=  " return count(p),u";
+                    $queryString .=  " return count(p),u,ID(r)";
                     $query = new CypherQuery($this->client, $queryString);
                     $result = $query->getResultSet();
                     return $result;
