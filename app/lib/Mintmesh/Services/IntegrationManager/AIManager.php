@@ -159,6 +159,7 @@ class AIManager {
         
         $return = FALSE;
         if($emailID){
+            $emailID = strtolower($emailID);
             $queryString = "MATCH (u:User) WHERE u.emailid='".$emailID."' RETURN u";
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
@@ -191,6 +192,7 @@ class AIManager {
         
         $return = FALSE;
         if(!empty($companyCode) && !empty($emailid)){
+            $emailid  = strtolower($emailid);
             $relation = Config::get('constants.REFERRALS.GOT_REFERRED');
             $queryString = "MATCH (c:Company{companyCode:'".$companyCode."'})<-[:COMPANY_UNSOLICITED]-(n:Unsolicited),(u:User{emailid:'".$emailid."'}) ";
             $queryString.=" create (u)-[r:" . $relation;
