@@ -70,7 +70,8 @@ class AIManager {
             foreach ($result as $docData) {
                 $pos = strpos($docData->file_original_name, ".");
                 $data['tenant_id'] = $docData->company_id;
-                $data['doc_id'] = $docData->id . "." . substr($docData->file_original_name, $pos + 1);
+                //$data['doc_id'] = $docData->id . "." . substr($docData->file_original_name, $pos + 1);
+                $data['doc_id'] = $docData->id;
 
                 $post = json_encode($data);
                 $process = curl_init($endPoint);
