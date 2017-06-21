@@ -898,22 +898,22 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
             if(!empty($filters)){
                 $filterQuery = " and (";
                 if(in_array("Accepted",$filters)){
-                    $filterQuery .= "r.awaiting_action_status='ACCEPTED' or "; 
+                    $filterQuery .= "r.awaiting_action_status='".Config::get('constants.REFERRALS.STATUSES.ACCEPTED')."' or "; 
                 }
                 if(in_array("Declined",$filters)){
-                    $filterQuery .= "r.one_way_status='DECLINED' or "; 
+                    $filterQuery .= "r.one_way_status='".Config::get('constants.REFERRALS.STATUSES.DECLINED')."' or "; 
                 }
                 if(in_array("Unsolicited",$filters)){
-                    $filterQuery .= "r.one_way_status='UNSOLICITED' or "; 
+                    $filterQuery .= "r.one_way_status='".Config::get('constants.REFERRALS.STATUSES.UNSOLICITED')."' or "; 
                 }
                 if(in_array("Interviewed",$filters)){
-                    $filterQuery .= "r.awaiting_action_status='INTERVIEWED' or "; 
+                    $filterQuery .= "r.awaiting_action_status='".Config::get('constants.REFERRALS.STATUSES.INTERVIEWED')."' or "; 
                 }
                 if(in_array("Offered",$filters)){
-                    $filterQuery .= " r.awaiting_action_status='OFFERED' or "; 
+                    $filterQuery .= " r.awaiting_action_status='".Config::get('constants.REFERRALS.STATUSES.OFFERED')."' or "; 
                 }
                 if(in_array("Hired",$filters)){
-                    $filterQuery .= "r.awaiting_action_status='HIRED' "; 
+                    $filterQuery .= "r.awaiting_action_status='".Config::get('constants.REFERRALS.STATUSES.HIRED')."' "; 
                 }
                 $filterQuery = rtrim($filterQuery, " or ");
                 $filterQuery .= ")";

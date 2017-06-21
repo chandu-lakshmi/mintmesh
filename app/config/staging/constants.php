@@ -114,7 +114,10 @@ return [
                 'DECLINED'=>'DECLINED',
                 'ACTIVE'=>'ACTIVE',
                 'CLOSED'=>'CLOSED',
-                'COMPLETED'=>'COMPLETED'
+                'COMPLETED'=>'COMPLETED',
+                'INTERVIEWED' => 'INTERVIEWED',
+                'OFFERED' => 'OFFERED',
+                'HIRED' => 'HIRED'
         ],
         'ASSIGNED_INDUSTRY'=>'ASSIGNED_INDUSTRY',
         'ASSIGNED_JOB_FUNCTION'=>'ASSIGNED_JOB_FUNCTION',
