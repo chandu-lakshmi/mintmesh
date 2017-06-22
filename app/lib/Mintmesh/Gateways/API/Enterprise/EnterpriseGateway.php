@@ -41,6 +41,9 @@ class EnterpriseGateway {
     const SUCCESS_RESPONSE_MESSAGE = 'success';
     const ERROR_RESPONSE_CODE = 403;
     const ERROR_RESPONSE_MESSAGE = 'error';
+    const REFRESH_TOKEN = 'refresh_token';
+    const AUTHORIZATION = 'Authorization';
+    const CREATED_IN = 'created_in';
 
     protected $userRepository, $enterpriseRepository, $enterpriseValidator, $userFileUploader, $commonFormatter, $authorizer, $appEncodeDecode, $neoEnterpriseRepository;
     protected $allowedHeaders, $allowedExcelExtensions, $createdNeoUser, $referralsGateway, $contactsRepository,$referralsRepository,$myExcel;
@@ -329,7 +332,6 @@ class EnterpriseGateway {
             $input['contacts_limit'] = !empty($accessCode[0]->contacts_limit)?$accessCode[0]->contacts_limit:0;
             $createdGroup = $this->enterpriseRepository->createGroup();
             $input['group_id'] = $createdGroup['id'];
-//            $createPermissions = $this->enterpriseRepository->createPermissions($input);
             //Inserting user details entry in mysql DB
             $createdUser = $this->enterpriseRepository->createEnterpriseUser($input);
             $input['mysql_id'] = $createdUser['id'];
@@ -356,6 +358,8 @@ class EnterpriseGateway {
                 if (!empty($neoEnterpriseCompany) && !empty($neoEnterpriseUser)) {
                     //Creating relation between user and company in neo4j
                     $data = $this->neoEnterpriseRepository->mapUserCompany($neoEnterpriseUser->emailid, $neoEnterpriseCompany->companyCode);
+                    //Creating relation between company and unsolicited node in neo4j
+                    $unsolicited = $this->neoEnterpriseRepository->createUnsolicitedAndCompanyRelation($neoEnterpriseCompany->companyCode);
                 }
 
                 //send email to user with activation Code
@@ -432,6 +436,17 @@ class EnterpriseGateway {
 
             $returnResponse = $this->userRepository->getUserByEmail($response['data']['emailid']);
             $responseData = $this->enterpriseRepository->getUserCompanyMap($returnResponse['id']);
+            
+            if(!empty($input['company_code'])) {
+                if($input['company_code'] != $responseData->code) {
+                    // returning failure message
+                    $responseMessage = array(Lang::get('MINTMESH.user.failure'));
+                    $responseCode = self::ERROR_RESPONSE_CODE;
+                    $responseMsg = self::ERROR_RESPONSE_MESSAGE;
+                    $responseData = array();
+                    return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $responseData);
+                }
+            }
 
             $input['username']  = $returnResponse['emailid'];
             $input['emailid']   = $returnResponse['emailid'];
@@ -473,30 +488,6 @@ class EnterpriseGateway {
     public function updateCompanyProfile($input) {
         $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser();
         $responseCode = $responseMsg = $responseMessage = $responseData = "";
-//        if (isset($input['images']) && !empty($input['images'])) {
-//
-//            $images = $input['images'];
-//            foreach ($images as $val) {
-//                $val = $this->createFileObject($val);
-//                $originalFileName = $val->getClientOriginalName();
-//                //upload the file
-//                $this->userFileUploader->source = $val;
-//                $this->userFileUploader->destination = Config::get('constants.S3BUCKET_COMPANY_IMAGES');
-//                $renamedFileName = $this->userFileUploader->uploadToS3();
-//                $val = $renamedFileName;
-//                $responseData['images'][] = $val;
-//            }
-//        }
-//        if (isset($input['company_logo']) && !empty($input['company_logo'])) {
-//            $fileName = $this->createFileObject($input['company_logo']);
-//            $originalFileName = $fileName->getClientOriginalName();
-//            //upload the file
-//            $this->userFileUploader->source = $fileName;
-//            $this->userFileUploader->destination = Config::get('constants.S3BUCKET_COMPANY_LOGO');
-//            $renamedFileName = $this->userFileUploader->uploadToS3();
-//            $input['company_logo'] = $renamedFileName;
-//            $responseData['company_logo'] = $renamedFileName;
-//        }
         $input['description'] = !empty($input['description'])?$this->appEncodeDecode->filterString($input['description']):'';
         if (isset($input['logo_image']) && !empty($input['logo_image'])) {
             //upload the file
@@ -592,8 +583,16 @@ class EnterpriseGateway {
         try {
             $oauthResult = $this->authorizer->issueAccessToken();
         } catch (\Exception $e) {
+            $error_code = $e->getCode();
             $oauthResult['error_description'] = $e->getMessage();
+            if(!empty($error_code)){
+                $oauthResult['error_description'] = Lang::get('MINTMESH.login.contact_admin');
+            } else {
+                $oauthResult['error_description'] = Lang::get('MINTMESH.login.login_failure');
+            }
+            
         }
+        
         //check if access code is returned by oauth
         if (isset($oauthResult['access_token'])) {
             $loggedinUserDetails = $this->enterpriseRepository->getEnterpriseUserByEmail($inputUserData['username']);
@@ -650,18 +649,13 @@ class EnterpriseGateway {
                     $data = array();
                 }
                
-//            } else {
-//                // returning failure message                      
-//                $responseCode = self::SUCCESS_RESPONSE_CODE;
-//                $responseMsg = self::SUCCESS_RESPONSE_MESSAGE;
-//                $message = array(Lang::get('MINTMESH.login.email_inactive'));
-//                $data = $oauthResult;
             }
         } else {
             // returning failure message                      
             $responseCode = self::ERROR_RESPONSE_CODE;
             $responseMsg = self::ERROR_RESPONSE_MESSAGE;
-            $message = array($oauthResult['error_description']);
+            $message = array($oauthResult['error_description']);//removing error to hide server Exception for end user
+            //$message = array(Lang::get('MINTMESH.login.contact_admin'));
             $data = array();
         }
         $message = array('msg' => $message);
@@ -742,9 +736,7 @@ class EnterpriseGateway {
         $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser();
         $arrResults = array();
         $createdAt = gmdate("Y-m-d H:i:s");
-        //print_r($input).exit;
         $inputFile = $this->createFileObject($input['contacts_file']);
-        //$inputFile = $input['contacts_file'];
         $inputFileExtension = $inputFile->getClientOriginalExtension();
         $inputFileSize = $inputFile->getClientSize();
         $userId = $this->loggedinUserDetails->id;
@@ -801,7 +793,6 @@ class EnterpriseGateway {
 
                 if (!empty($resultsSet)) {
                     //get the Import Contacts List By Instance Id
-                    //$contactsList = $this->enterpriseRepository->getImportContactsListByInstanceId($userId, $bucketId, $companyId, $instanceId);
 
                     //get the Import Contacts List By Import File Id
                     $contactsList = $this->enterpriseRepository->getContactsListByFileId($companyId, $importFileId);
@@ -825,9 +816,6 @@ class EnterpriseGateway {
                         $pushData['bucket_id'] = $bucketId;
                         $pushData['company_code'] = $companyCode;
                         $pushData['loggedin_emailid'] = $this->loggedinUserDetails->emailid;
-
-                        //$this->createContactNodes($pushData);
-                        //$this->checkToCreateEnterpriseContactsQueue($pushData['firstname'],$pushData['lastname'],$pushData['emailid'],$pushData['contact_number'],$pushData['other_id'],$pushData['status'],$pushData['bucket_id'],$pushData['company_code'],$pushData['loggedin_emailid']);
 
                         Queue::push('Mintmesh\Services\Queues\CreateEnterpriseContactsQueue', $pushData, 'IMPORT');
                     }
@@ -979,7 +967,6 @@ class EnterpriseGateway {
         $relationAttrs['company_code']      = $companyCode = $contactNode['company_code'];
         $relationAttrs['loggedin_emailid']  = $emailId = $contactNode['loggedin_emailid'];
         $relationAttrs['created_at']        = gmdate("Y-m-d H:i:s");
-         //\Log::info("<<<<<<<<<<<<<<<< In Queue >>>>>>>>>>>>>".print_r($neoInput,1));
         try {
             $this->neoEnterpriseRepository->createContactNodes($bucketId, $neoInput, $relationAttrs);
             $this->neoEnterpriseRepository->companyAutoConnect($neoInput['emailid'], $relationAttrs);
@@ -1103,8 +1090,6 @@ class EnterpriseGateway {
                 $dataSet = array();
                 $dataSet['name'] = $neoUserDetails['fullname'];
                 //set reset code
-                //set timezone of mysql if different servers are being used
-                //date_default_timezone_set('America/Los_Angeles');
                 $currentTime = date('Y-m-d h:i:s');
                 $email = md5($input['emailid']);
                 $code = $this->userGateway->base_64_encode($currentTime, $email);
@@ -1163,7 +1148,6 @@ class EnterpriseGateway {
         $passwordData = $this->userRepository->getresetcodeNpassword($email);
         if (!empty($email) && !empty($passwordData) && $passwordData->resetactivationcode == $input['code']) {
             //set timezone of mysql if different servers are being used
-            //date_default_timezone_set('America/Los_Angeles');
             $expiryTime = date('Y-m-d H:i:s', strtotime($sentTime . " +" . Config::get('constants.MNT_USER_EXPIRY_HR') . " hours"));
             //check if expiry time is valid
             if (strtotime($expiryTime) > strtotime(gmdate('Y-m-d H:i:s'))) {
@@ -1230,7 +1214,6 @@ class EnterpriseGateway {
         $userEmailId = $this->loggedinUserDetails->emailid;
          $userId     = !empty($this->loggedinUserDetails->id)?$this->loggedinUserDetails->id:'';
         #log user activity here
-        //$this->userRepository->addUserActivityLogs($userId, $appType=1, $moduleType=9);
         $companyCode = $input['company_code'];
         
         $returnDetails  = $return = $data = array();
@@ -1338,8 +1321,6 @@ class EnterpriseGateway {
         $requestType = !empty($input['request_type'])?$input['request_type']:'';
         
         if($filterLimit == 360){
-            //$year = date('Y');
-            //$filterLimit = date('Y-m-d H:i:s', mktime(0, 0, 0, 1, 1, $year)); //current year first month    
             $filterLimit = date('Y-m-d H:i:s', strtotime('-1 year'));    
         } elseif ($filterLimit == 30) {
             $filterLimit = date('Y-m-d H:i:s', strtotime('-1 month'));
@@ -1427,10 +1408,6 @@ class EnterpriseGateway {
         $rewardsCount = $contactsCount = $jobsReachCount = $companyInvitedCount = 0;
         $filterLimit    = empty($filterLimit)?date('Y-m-d H:i:s', strtotime('-1 month')):$filterLimit;//default 30 days
         //CONTACTS ENGAGEMENT
-        //$companyInvitedCount = $this->enterpriseRepository->companyInvitedCount($userId, $companyId, $filterLimit);
-        //$downloadedCount     = $this->enterpriseRepository->companyInvitedCount($userId, $companyId, $filterLimit, TRUE);
-        //$downloadedCount     = $this->enterpriseRepository->appDownloadCount($companyId);
-        
         $downloadedCount        = $this->enterpriseRepository->appActiveUserCount($userId, $companyId, $filterLimit);
         $companyInvitedCount    = $this->enterpriseRepository->appActiveContactsCount($companyId);
         $downloadedCount        = !empty($downloadedCount[0]->count)?$downloadedCount[0]->count:0;
@@ -1501,7 +1478,6 @@ class EnterpriseGateway {
     public function getCompanyUserPostReferrals($userEmailId, $companyCode, $filterLimit,$input,$companyId){
         
         $return = $returnDetails = $referralDetails = $returnReferralDetails = array();
-//        $postDetails = $this->neoEnterpriseRepository->getCompanyUserPostReferrals($userEmailId);
         $postDetails = $this->neoEnterpriseRepository->getCompanyUserPostReferrals($companyCode);
         if(!empty($postDetails)){
             
@@ -1544,10 +1520,8 @@ class EnterpriseGateway {
                         $neoReferrerName = !empty($neoReferrerDetails['fullname'])?$neoReferrerDetails['fullname']:$neoReferrerDetails['firstname'];
                         $returnDetails['job_title']      = !empty($postDetails['service_name']) ? $postDetails['service_name'] : 'See Job Description';
                         $returnDetails['status']         = $postRelDetails['one_way_status'];
-//                        $createdAt = $this->appEncodeDecode->UserTimezone($postRelDetails['created_at'],$input['time_zone']); 
                         $createdAt = $postRelDetails['created_at'];
                         $returnDetails['created_at']     = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
-                        //$returnDetails['created_at']     = \Carbon\Carbon::createFromTimeStamp(strtotime($this->appEncodeDecode->UserTimezone($createdAt,$input['time_zone'])))->diffForHumans();
                         $returnDetails['referral']       = !empty($referralName)?$referralName:'The contact';
                         $returnDetails['referral_img']   = !empty($userDetails['dp_renamed_name'])?$userDetails['dp_renamed_name']:'';
                         $returnDetails['referred_by']    = !empty($referrerName)?$referrerName:$neoReferrerName;
@@ -1613,7 +1587,6 @@ class EnterpriseGateway {
                         
                             $returnDetails['job_title']      =  $postDetails['service_name'];
                             $returnDetails['status']         =  $postRelDetails['one_way_status'];
-//                            $createdAt = $this->appEncodeDecode->UserTimezone($postRelDetails['created_at'],$input['time_zone']); 
                             $createdAt = $postRelDetails['awaiting_action_updated_at'];
                             $returnDetails['created_at']     = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
                             $returnDetails['referral']       =  !empty($referralName)?$referralName:'The contact';
@@ -1660,7 +1633,6 @@ class EnterpriseGateway {
                 } 
                 //set the return response here
                 $record['name']     = !empty($referrerName)?$referrerName:!empty($neoReferrerName)?$neoReferrerName:'The contact';
-//                $record['name']     = !empty($referralUser->fullname)?$referralUser->fullname:'';
                 $record['image']    = !empty($neoReferredByDetails->dp_renamed_name)?$neoReferredByDetails->dp_renamed_name:'';
                 $record['designation'] = !empty($designation)?$designation:'';
                 $record['count']       = $referralsCount;
@@ -1760,7 +1732,6 @@ class EnterpriseGateway {
         $deleted = $this->enterpriseRepository->deleteContact($record);
         }
         if($deleted){
-//        $neodeleted = $this->neoEnterpriseRepository->deleteContact($deleted[0]->emailid);
           $message = array('msg' => array(Lang::get('MINTMESH.deleteContact.success')));
         }else{
             $message = array('msg' => array(Lang::get('MINTMESH.deleteContact.failure')));
@@ -1889,14 +1860,12 @@ class EnterpriseGateway {
 		$importFileId = $this->enterpriseRepository->getFileId($inputFile,$userId);
                 #get excel sheet unique rows filter
 		$arrUniqueResults = $this->getExcelUniqueRows($allDataInSheet);
-                //print_r($arrUniqueResults).exit;
                 #company available contacts count verification here  
                 $availableNo = $this->getCompanyAvailableContactsCount($companyCode);
                 #importing contacts to Mysql db
                 $resultsSet   = $this->enterpriseRepository->uploadContacts($arrUniqueResults, $userId, $bucketId, $companyId, $importFileId, $availableNo);    
                 $employeesNo  = $resultsSet['insert'];
-                #log the company subscriptions here
-                //$this->addCompanySubscriptionsLog($companyId, $employeesNo);
+                #log the company subscriptions here                
                 #get the Import Contacts List By Instance Id
                 $contactsList = $this->enterpriseRepository->getContactsListByFileId($companyId, $importFileId);
                 
@@ -2048,7 +2017,6 @@ class EnterpriseGateway {
                     $result    = $this->enterpriseRepository->addContact($inputParams); 
                     if(!empty($result)){ 
                         $employeesNo = 1;
-                        //$this->addCompanySubscriptionsLog($companyId, $employeesNo);
                         $neoResult = $this->neoEnterpriseRepository->createContactNodes($input['bucket_id'],$neoInput,$relationAttrs);
                         $neoResult = $this->neoEnterpriseRepository->companyAutoConnect($neoInput['emailid'],$relationAttrs);
                         #check company bucket active jobs and create relation between user & job
@@ -2196,11 +2164,8 @@ class EnterpriseGateway {
                 $dataSet['company_name'] = $companyDetails->name;
                 $dataSet['send_company_name'] = $senderName;
                 //set reset code
-                //set timezone of mysql if different servers are being used
-                //date_default_timezone_set('America/Los_Angeles');
                 $currentTime = date('Y-m-d h:i:s');
                 $email = md5($createdUser[0]->emailid);
-//                $activationcode = $createdUser[0]['emailactivationcode'];
                 $code = $this->userGateway->base_64_encode($currentTime, $email);
                 $dataSet['hrs'] = Config::get('constants.USER_EXPIRY_HR');
                 $dataSet['send_company_name'] = $this->loggedinUserDetails->firstname;
@@ -2272,13 +2237,11 @@ class EnterpriseGateway {
                 $dataSet['send_company_name'] = $senderName;
                 //set reset code
                 //set timezone of mysql if different servers are being used
-                //date_default_timezone_set('America/Los_Angeles');
                 $currentTime = date('Y-m-d h:i:s');
                 $email = md5($checkUser['emailid']);
 //                $activationcode = $createdUser[0]['emailactivationcode'];
                 $code = $this->userGateway->base_64_encode($currentTime, $email);
                 $dataSet['hrs'] = Config::get('constants.USER_EXPIRY_HR');
-//                $dataSet['send_company_name'] = $this->loggedinUserDetails->firstname;
                 $companyName = explode(' ', $companyDetails->name);
                 $dataSet['link'] = Config::get('constants.MM_ENTERPRISE_URL') . "/company/$companyName[0]/$companyDetails->code"; //comment it for normal flow of deep linki.e without http
                 $this->userEmailManager->dataSet = $dataSet;
@@ -2342,8 +2305,6 @@ class EnterpriseGateway {
                 $input['status'] = '1';
             }
             $input['is_enterprise'] = 1;
-//            $checkUser = $this->enterpriseRepository->getEnterpriseUserByEmail($input['emailid']);
-//            if(empty($checkUser)){
              $input['company_code'] = $companyDetails->code;
              $input['company_id'] = $companyDetails->company_id;
              $input['firstname'] = $input['fullname'];
@@ -2376,10 +2337,8 @@ class EnterpriseGateway {
                 $dataSet['send_company_name'] = $senderName;
                 //set reset code
                 //set timezone of mysql if different servers are being used
-                //date_default_timezone_set('America/Los_Angeles');
                 $currentTime = date('Y-m-d h:i:s');
                 $email = md5($user['emailid']);
-//                $activationcode = $createdUser[0]['emailactivationcode'];
                 $code = $this->userGateway->base_64_encode($currentTime, $email);
                 $dataSet['hrs'] = Config::get('constants.USER_EXPIRY_HR');
                 $dataSet['send_company_name'] = $this->loggedinUserDetails->firstname;
@@ -2434,19 +2393,6 @@ class EnterpriseGateway {
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
             $message = array('msg' => array(Lang::get('MINTMESH.editUser.failure'))); 
             }
-//            }
-//            $updateEnterpriseUser = $this->enterpriseRepository->updateEnterpriseUser($input['emailid']);
-//             if($updateEnterpriseUser){
-//                  $data = array();
-//                $responseCode    = self::SUCCESS_RESPONSE_CODE;
-//                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
-//                $message = array('msg' => array(Lang::get('MINTMESH.addUser.success')));
-//             }else{
-//                  $data = array();
-//                 $responseCode    = self::ERROR_RESPONSE_CODE;
-//                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-//                $message = array('msg' => array(Lang::get('MINTMESH.addUser.failure'))); 
-//             }
             }else{
             $data = array();
             $responseCode    = self::ERROR_RESPONSE_CODE;
@@ -2466,9 +2412,7 @@ class EnterpriseGateway {
         $neoUserInput['fullname']       = $input['fullname'];
         $neoUserInput['emailid']        = $input['emailid'];
         $neoUserInput['is_enterprise']  = $input['is_enterprise'];
-//        $neoUserInput['location']  = $input['location'];
         $neoUserInput['group_status']  = $input['status'];
-//        $neoUserInput['designation']  = $input['designation'];
         $neoUserInput['photo']  = isset($input['photo'])?$input['photo']:'';
         $neoUserInput['photo_org_name']  = isset($input['photo_org_name'])?$input['photo_org_name']:'';
         $neoUserInput['mysql_id']  = $input['user_id'];
@@ -2504,7 +2448,6 @@ class EnterpriseGateway {
        }else{
             $postDetails['expired'] = (int)'0';
        }
-//       $postDetails['user_id'] = $neoUsers->mysql_id;
        $postDetails['user_id'] =  $v->user_id;
        $contactDetails = $this->enterpriseRepository->getContactByEmailId($neoUsers->emailid,$companyid);
        $postDetails['emailid'] = $neoUsers->emailid;
@@ -2658,8 +2601,7 @@ class EnterpriseGateway {
         //to get resetactivationcode 
         $passwordData = $this->userRepository->getresetcodeNpassword($email);
         if (!empty($email) && !empty($passwordData) && $passwordData->resetactivationcode == $input['code']) {
-            //set timezone of mysql if different servers are being used
-            //date_default_timezone_set('America/Los_Angeles');
+            //set timezone of mysql if different servers are being used            
             $expiryTime = date('Y-m-d H:i:s', strtotime($sentTime . " +" . Config::get('constants.USER_EXPIRY_HR') . " hours"));
             //check if expiry time is valid
             if (strtotime($expiryTime) > strtotime(gmdate('Y-m-d H:i:s'))) {
@@ -2840,7 +2782,6 @@ class EnterpriseGateway {
          $dataSet['send_company_name'] = $senderName;
        //set reset code
        //set timezone of mysql if different servers are being used
-       //date_default_timezone_set('America/Los_Angeles');
           $currentTime = date('Y-m-d h:i:s');
           $email = md5($userDetails['emailid']);
          $code = $this->userGateway->base_64_encode($currentTime, $email);
@@ -2898,7 +2839,6 @@ class EnterpriseGateway {
             foreach ($companyBucketJobs as $jobs){
                 #creating relation with each job
                 $pushData['postId']  = !empty($jobs[0])?$jobs[0]:'';
-                //Queue::push('Mintmesh\Services\Queues\CompanyPostsAutoConnectWithContactQueue', $pushData, 'default');
                 $this->neoPostRepository->companyPostsAutoConnectWithContact($pushData);
             }
         }
@@ -3050,11 +2990,12 @@ class EnterpriseGateway {
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId      = !empty($companyDetails[0]->id)?$companyDetails[0]->id:0; 
         $hcmId          = !empty($input['hcm_id'])?$input['hcm_id']:'';
-        $hcmAccessToken    = !empty($input['hcm_access_token'])?$input['hcm_access_token']:'';
+        $hcmCodeToken    = !empty($input['hcm_access_token'])?$input['hcm_access_token']:'';
         $hcmRunStatus   = !empty($input['hcm_run_status']) ? $input['hcm_run_status'] : '';
         #form the input for add and edit HCM config details
         $hcmAry[0]['name']     = 'Authorization';
-        $hcmAry[0]['value']    = $hcmAccessToken;
+        $hcmAry[0]['value']    = $hcmCodeToken;
+     
         
         #process HCM config Properties here
         $hcmConfigPropAry   = $this->enterpriseRepository->setHcmConfigProperties($hcmId, $companyId, $hcmAry);
@@ -3085,7 +3026,7 @@ class EnterpriseGateway {
                 $value = $hcmDetails[0];
                 $returnAry['hcm_id']   = $value['hcm_id'];
                 $returnAry['hcm_name'] = $value['name'];
-                $returnAry['hcm_access_token']  = $value['Authorization'];
+                $returnAry['hcm_code_token']  = !empty($value['hcm_access_token']) ? $value['hcm_access_token'] : '';
                 $returnAry['hcm_status']   = $getHcmstatus; 
             }
             $data = $returnAry;
@@ -3100,6 +3041,71 @@ class EnterpriseGateway {
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data, false);    
     }  
     
+    public function addEditZenefitsAccessToken($input,$companycode){
+        $input_zenefits = json_decode($input, TRUE);
+        $message    = '';
+        $returnAry  = $data = $hcmAry = $hcmConfigPropAry = array();
+        $companyCode    = $companycode;
+        #get the logged in user company details with company code here
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = !empty($companyDetails[0]->id)?$companyDetails[0]->id:0; 
+        $hcmId          = 2;//!empty($input['hcm_id'])?$input['hcm_id']:'';
+        $hcmAccesToken    = !empty($input_zenefits['access_token'])? ($input_zenefits['token_type'] . ' ' . $input_zenefits['access_token']) :'';
+        $hcmReferToken    = !empty($input_zenefits['refresh_token'])?$input_zenefits['refresh_token']:'';
+        $hcmExpToken    = !empty($input_zenefits['expires_in'])?$input_zenefits['expires_in']:'';
+        $hcmRunStatus   = !empty($input['hcm_run_status']) ? $input['hcm_run_status'] : '';
+        #form the input for add and edit HCM config details
+        $hcmAry[1]['name']     = self::AUTHORIZATION;
+        $hcmAry[1]['value']    = $hcmAccesToken;
+        $hcmAry[2]['name']     = self::REFRESH_TOKEN;
+        $hcmAry[2]['value']    = $hcmReferToken;
+        $hcmAry[3]['name']     = self::CREATED_IN;
+        $hcmAry[3]['value']    = gmdate("Y-m-d H:i:s");
+       
+        #process HCM config Properties here
+        $hcmConfigPropAry   = $this->enterpriseRepository->setHcmConfigProperties($hcmId, $companyId, $hcmAry);
+        if(!empty($hcmConfigPropAry)){
+            if($hcmRunStatus){
+                #get Company Hcm Jobs for company_hcm_jobs_id
+                $checkHcmJobs = $this->enterpriseRepository->getCompanyHcmJobs($hcmId, $companyId);
+                $companyHcmJobsId = !empty($checkHcmJobs[0]->company_hcm_jobs_id)?$checkHcmJobs[0]->company_hcm_jobs_id:'';
+                if($companyHcmJobsId){
+                    #update HCM schedule run status here
+                    $hcmConfigPropAry   = $this->enterpriseRepository->updateHcmRunStatus($companyHcmJobsId, $hcmRunStatus);
+                }    
+            }
+            #form the success messahe here
+            if(!empty($hcmConfigPropAry['insert'])){
+                $message    = Lang::get('MINTMESH.hcm_details.insert_success');
+            }  else {
+                $message    = Lang::get('MINTMESH.hcm_details.update_success');
+            }
+            #get company HCMs details here
+            $getHcmJobs = $this->enterpriseRepository->checkCompanyHcmJobs($companyId, $hcmId);
+            $getHcmstatus = !empty($getHcmJobs[0]->status) ? $getHcmJobs[0]->status : 0;
+            $getHcmstatus = !empty($getHcmstatus) ? 'enable' : 'disable';
+            $getHcmList = $this->enterpriseRepository->getHcmList($companyId, $hcmId);
+            $hcmDetails = $this->formatHcmResult($getHcmList);
+            #form return company HCMs details
+            if(!empty($hcmDetails[0])){
+                $value = $hcmDetails[0];
+                $returnAry['hcm_id']   = $value['hcm_id'];
+                $returnAry['hcm_name'] = $value['name'];
+                $returnAry['hcm_access_token']  = $hcmAccesToken;
+                $returnAry['hcm_refer_token']  = $hcmReferToken;
+                $returnAry['hcm_status']   = $getHcmstatus; 
+            }
+            $data = $returnAry;
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array($message));
+        }else{
+          $responseCode   = self::ERROR_RESPONSE_CODE;
+          $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+          $responseMessage= array('msg' => array(Lang::get('MINTMESH.hcm_details.retrieve_failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data, false);    
+    }
     
     public function formatHcmResult($getHcmList = array()){
         $mainAry = $hcmDetails = $return = array();
@@ -3532,6 +3538,19 @@ class EnterpriseGateway {
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data, false);    
     }
          
+    
+    public function unsolicitedForOldCompanies() {
+        // checking for old companies without unsolicited nodes
+        $checkUnsolicitedCompanies = $this->neoEnterpriseRepository->checkUnsolicitedCompanies();
+        if(!empty($checkUnsolicitedCompanies)){
+            foreach($checkUnsolicitedCompanies as $companies){
+                //Adding unsolicited node and creating relation with company
+               $this->neoEnterpriseRepository->createUnsolicitedAndCompanyRelation($companies[0]->companyCode);
+               echo $companies[0]->companyCode.',';
+            }
+        }
+        
+    }
 }
 
 ?>

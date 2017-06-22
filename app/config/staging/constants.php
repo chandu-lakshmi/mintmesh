@@ -13,7 +13,7 @@ return [
     'USER_EXPIRY_HR'=>48,
     'MNT_VERSION'=>"v1",
     'MNT_FROM_NAME'=>'Mintmesh',
-    'MM_ENTERPRISE_URL'=>'http://enterprisestaging.mintmesh.com',
+    'MM_ENTERPRISE_URL'=>'http://202.63.105.85/mmenterprise',
     'MNT_DEEP_LINK_IOS'=>'mintmeshstg://',
     'MNT_ENT_DEEP_LINK_IOS'=>'mintmeshenterprise://',
     'MNT_DEEP_LINK_ANDROID'=>'http://mintmeshstg/',
@@ -114,7 +114,10 @@ return [
                 'DECLINED'=>'DECLINED',
                 'ACTIVE'=>'ACTIVE',
                 'CLOSED'=>'CLOSED',
-                'COMPLETED'=>'COMPLETED'
+                'COMPLETED'=>'COMPLETED',
+                'INTERVIEWED' => 'INTERVIEWED',
+                'OFFERED' => 'OFFERED',
+                'HIRED' => 'HIRED'
         ],
         'ASSIGNED_INDUSTRY'=>'ASSIGNED_INDUSTRY',
         'ASSIGNED_JOB_FUNCTION'=>'ASSIGNED_JOB_FUNCTION',
@@ -179,6 +182,18 @@ return [
     'S3BUCKET_COMPANY_LOGO' => 'mintmesh/stg/companyLogo',
     'S3BUCKET_COMPANY_IMAGES' => 'mintmesh/stg/companyImages',
     'S3BUCKET_USER_IMAGE' => 'mintmesh/stg/userImage',
-    'S3BUCKET_FILE' =>  'mintmesh/stg/files'
+    'S3BUCKET_FILE' =>  'mintmesh/stg/files',
+    'UPLOAD_RESUME' => '/uploads/awss3_resumes/',
+    'S3UPLOAD_RESUME' => 'mintmeshresumedev/',
+    'AI_AUTHENTICATION_KEY' => '107857d5d4be08e5e2dc51ef141e0924',
+    'S3_DOWNLOAD_PATH'  => 'https://s3-us-west-2.amazonaws.com/mintmeshresumedev/',
+    'BITLY_URL'   =>   'https://api-ssl.bitly.com/v3/user/link_save?access_token=',
+    'BITLY_ACCESS_TOKEN' => 'b65a3bf8c767c8931eeaa067da88c2e2356f192e',
+    'AI_GET_PARSED_RESUME' => 'http://54.68.58.181/resumematcher/get_parsed_resume',
+    'ZENEFITS_OAUTH2_TOKEN' => 'https://secure.zenefits.com/oauth2/token/',
+    'ZENEFITS_GETAPP_URL'=>'http://202.63.105.85/mmenterprise/getApp/zenefits',
+    'ZENEFITS_GETACCESCODE_URL'=>'http://202.63.105.85/mintmesh/getAccesCode',
+    'ZENEFITS_COMPANY_INSTALLS'=>'https://api.zenefits.com/platform/company_installs',
+    'ZENEFITS_PERSON_SUBSCRIPTIONS'=>'https://api.zenefits.com/platform/person_subscriptions'
         
 ];

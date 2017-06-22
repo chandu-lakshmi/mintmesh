@@ -85,6 +85,14 @@ class PostValidator extends Validator {
         ),
         'get_job_details' => array(
             'post_id'        => 'required'
+        ),
+        'upload_resume' => array(
+            'company_code'  => 'required',
+            'resume'        => 'required',
+            'resume_name'   => 'required',
+        ),
+        'not_parsed_resumes' => array(
+            'authentication_key'  => 'required'
         )
     );
 

@@ -16,7 +16,7 @@ interface ContactsRepository {
       */
      public function getNodeDetails($email, $phone);
      
-     
+     public function getParsedResumeInfo($input); 
 
 }
 ?>

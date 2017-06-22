@@ -19,13 +19,17 @@ use DB,
 class ZenefitsManager extends IntegrationManager {
 
     protected $db_user, $db_pwd, $client, $appEncodeDecode, $db_host, $db_port;
-    protected $userRepository, $guzzleClient;
+    protected $userRepository, $guzzleClient, $enterpriseRepository;
     public $requestParams = array();
 
     const SUCCESS_RESPONSE_CODE = 200;
     const API_END_POINT = 'API_END_POINT';
     const AuthorizationHeader = 'Authorization';
     const API_LOCAL_URL = 'https://api.zenefits.com/core/';
+    const EXPIRY_DAYS_LIMIT = 29;
+    const REFRESH_TOKEN = 'refresh_token';
+    const AUTHORIZATION = 'Authorization';
+    const CREATED_IN = 'created_in';
 
     public function __construct() {
         $this->db_user = Config::get('database.connections.neo4j.username');
@@ -49,14 +53,73 @@ class ZenefitsManager extends IntegrationManager {
             $companyJobConfigDetails = $integrationManager->getCompanyJobConfigs($JobDetails->hcm_id, $companyJobDetail->company_id);
             $requestParams = $integrationManager->composeRequestParams($JobDetails, $companyJobDetail, $companyJobConfigDetails);
             $this->requestParams = $requestParams;
-
-            $return = $integrationManager->doRequest($requestParams);
+            $expirationDate = $requestParams['created_in'];
+            $toDay = gmdate("Y-m-d H:i:s");
+            $difference = abs($toDay - $expirationDate);
+            if ($difference <= self::EXPIRY_DAYS_LIMIT) {
+                $return = $integrationManager->doRequest($requestParams);
+            } else {
+                $this->getRefreshToken($requestParams['refresh_token'], $companyJobDetail->company_id);
+                $requestParams1 = $integrationManager->composeRequestParams($JobDetails, $companyJobDetail, $companyJobConfigDetails);
+                $this->requestParams = $requestParams1;
+                $return = $integrationManager->doRequest($requestParams);
+            }
             $this->processResponseData($return, $companyJobDetail->hcm_jobs_id, $companyJobDetail->company_id);
             $integrationManager->updateLastProcessedTime($company_hcm_job_id, $companyJobDetail);
         }
         return TRUE;
     }
 
+    public function getRefreshToken($refresh_token, $ccode) {
+        $data = array();
+        $endPoint = Config::get('constants.ZENEFITS_OAUTH2_TOKEN');
+
+        $data['grant_type'] = self::REFRESH_TOKEN;
+        $data['refresh_token'] = $refresh_token;
+        $data['client_id'] = Config::get('constants.Zenefits_client_id');
+        $data['client_secret'] = Config::get('constants.Zenefits_client_secret');
+       
+        $curl_handle = curl_init();
+        curl_setopt($curl_handle, CURLOPT_URL, $endPoint);
+        curl_setopt($curl_handle, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl_handle, CURLOPT_POSTFIELDS, $data);
+        curl_setopt($curl_handle, CURLOPT_SSL_VERIFYPEER, false); //disable SSL check
+        $json_response = curl_exec($curl_handle);
+        curl_close($curl_handle);
+        $response = json_decode($json_response);
+        if ($response) {
+            $response_zenefits = $this->updateZenefitsAccessToken($response, $ccode);
+            return \Response::json($response_zenefits);
+        } else {
+            // returning validation failure
+            return \Response::json($validation);
+        }
+    }
+
+    public function updateZenefitsAccessToken($zenefitsRefresstoken, $ccode) {
+        $response = $zenefitsRefresstoken;
+        $hcmAry = array();
+        $companyId = $ccode;
+        $hcmId = 2; //!empty($input['hcm_id'])?$input['hcm_id']:'';
+        $hcmAccesToken = !empty($response->access_token) ? ($response->token_type . ' ' . $response->access_token) : '';
+        $hcmReferToken = !empty($response->refresh_token) ? $response->refresh_token : '';
+        $hcmExpToken = !empty($response->expires_in) ? $response->expires_in : '';
+        $hcmAry[1]['name'] = self::AUTHORIZATION;
+        $hcmAry[1]['value'] = $hcmAccesToken;
+        $hcmAry[2]['name'] = self::REFRESH_TOKEN;
+        $hcmAry[2]['value'] = $hcmReferToken;
+        $hcmAry[3]['name'] = self::CREATED_IN;
+        $hcmAry[3]['value'] = date("d-m-Y");
+
+        foreach ($hcmAry as $key => $value) {
+           $name = $value['name'];
+             $sql = "UPDATE hcm_config_properties SET config_name = '".$value['name'] ."',config_value = '". $value['value'] . "' WHERE company_id ='" . $companyId ."' AND hcm_id ='" . $hcmId ."' AND config_name = '" . $name ."'";
+             DB::Statement($sql); 
+        }
+       
+       return TRUE;
+    }
+  
     public function processResponseData($responseBody, $jobId, $companyId) {
 
         $array = json_decode($responseBody, TRUE);
@@ -104,45 +167,45 @@ class ZenefitsManager extends IntegrationManager {
 
 
         foreach ($empInfo as $key => $value) {
-                $query = "Select * from contacts where emailid = '" . $value['work_email'] . "' AND company_id ='" . $companyId . "'";
-                $existEailidAndCompanyId = DB::select($query);
+            $query = "Select id from contacts where emailid = '" . $value['work_email'] . "' AND company_id ='" . $companyId . "'";
+            $existEailidAndCompanyId = DB::select($query);
 
-                if (count($existEailidAndCompanyId) == 0) {
-                    $status = !empty($value['status']) ? $value['status'] : 'Inactive';
-                    $first_name = !empty($value['first_name']) ? $value['first_name'] : '';
-                    $last_name = !empty($value['last_name']) ? $value['last_name'] : '';
-                    $work_email = !empty($value['work_email']) ? $value['work_email'] : '';
-                    $work_phone = !empty($value['work_phone']) ? $value['work_phone'] : '';
-                    $id = !empty($value['id']) ? $value['id'] : '';
-                    $query = "INSERT INTO contacts (firstname, lastname, emailid, phone, company_id, import_file_id, employeeid, status, updated_by,created_by, ip_address)
+            if (count($existEailidAndCompanyId) == 0) {
+                $status = !empty($value['status']) ? $value['status'] : 'Inactive';
+                $first_name = !empty($value['first_name']) ? $value['first_name'] : '';
+                $last_name = !empty($value['last_name']) ? $value['last_name'] : '';
+                $work_email = !empty($value['work_email']) ? $value['work_email'] : '';
+                $work_phone = !empty($value['work_phone']) ? $value['work_phone'] : '';
+                $id = !empty($value['id']) ? $value['id'] : '';
+                $query = "INSERT INTO contacts (firstname, lastname, emailid, phone, company_id, import_file_id, employeeid, status, updated_by,created_by, ip_address)
                             VALUES ('" . $first_name . "', '" . $last_name . "', '" . $work_email . "','" . $work_phone . "', '" . $companyId . "', '0', '" . $id . "', '" . $status . "', '0', '0', '0')";
-                    DB::Statement($query);
-                    #Assign Bucket
-                    $lastInsertId = DB::getPdo()->lastInsertId();
+                DB::Statement($query);
+                #Assign Bucket
+                $lastInsertId = DB::getPdo()->lastInsertId();
 
-                    $bucket_insert = "INSERT INTO buckets_contacts (bucket_id, contact_id, company_id) VALUES ('" . $bucketId . "','" . $lastInsertId . "','" . $companyId . "')";
-                    DB::Statement($bucket_insert);
-                    #create contact  
-                    $pushData = array();
-                    $pushData['firstname'] = $value['first_name'];
-                    $pushData['lastname'] = $value['last_name'];
-                    $pushData['emailid'] = $this->appEncodeDecode->filterString(strtolower($value['work_email']));
-                    $pushData['contact_number'] = !empty($value['work_phone']) ? $value['work_phone'] : '';
-                    $pushData['other_id'] = !empty($value['id']) ? $value['id'] : '';
-                    $pushData['status'] = !empty($value['status']) ? $value['status'] : 'unknown';
-                    $pushData['bucket_id'] = $bucketId;
-                    $pushData['company_code'] = $companyCode;
-                    $pushData['loggedin_emailid'] = $userEmailid;
-                    Queue::push('Mintmesh\Services\Queues\CreateEnterpriseContactsQueue', $pushData, 'IMPORT');
-                } else if (count($existEailidAndCompanyId) > 0) {
-                     $status = !empty($value['status']) ? $value['status'] : 'Inactive';
-                    $first_name = !empty($value['first_name']) ? $value['first_name'] : '';
-                    $last_name = !empty($value['last_name']) ? $value['last_name'] : '';
-                    $work_phone = !empty($value['work_phone']) ? $value['work_phone'] : '';
-                    $query = "UPDATE contacts SET firstname = '" . $first_name . "', lastname = '" . $last_name . "', phone = '" . $work_phone . "', status= '" . $status . "' WHERE id ='" . $existEailidAndCompanyId[0]->id . "'";
-                    DB::Statement($query);
-                }
-            
+                $bucket_insert = "INSERT INTO buckets_contacts (bucket_id, contact_id, company_id) VALUES ('" . $bucketId . "','" . $lastInsertId . "','" . $companyId . "')";
+                DB::Statement($bucket_insert);
+                #create contact  
+                $pushData = array();
+                $pushData['firstname'] = $value['first_name'];
+                $pushData['lastname'] = $value['last_name'];
+                $pushData['emailid'] = $this->appEncodeDecode->filterString(strtolower($value['work_email']));
+                $pushData['contact_number'] = !empty($value['work_phone']) ? $value['work_phone'] : '';
+                $pushData['other_id'] = !empty($value['id']) ? $value['id'] : '';
+                $pushData['status'] = !empty($value['status']) ? $value['status'] : 'unknown';
+                $pushData['bucket_id'] = $bucketId;
+                $pushData['company_code'] = $companyCode;
+                $pushData['loggedin_emailid'] = $userEmailid;
+                Queue::push('Mintmesh\Services\Queues\CreateEnterpriseContactsQueue', $pushData, 'IMPORT');
+            } else if (count($existEailidAndCompanyId) > 0) {
+                $status = !empty($value['status']) ? $value['status'] : 'Inactive';
+                $first_name = !empty($value['first_name']) ? $value['first_name'] : '';
+                $last_name = !empty($value['last_name']) ? $value['last_name'] : '';
+                $work_phone = !empty($value['work_phone']) ? $value['work_phone'] : '';
+                $query = "UPDATE contacts SET firstname = '" . $first_name . "', lastname = '" . $last_name . "', phone = '" . $work_phone . "', status= '" . $status . "' WHERE id ='" . $existEailidAndCompanyId[0]->id . "'";
+                DB::Statement($query);
+            }
+
             \Log::info("Successfully");
         }
         return true;

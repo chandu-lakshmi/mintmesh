@@ -4,6 +4,7 @@ namespace API\Post;
 
 use Mintmesh\Gateways\API\Post\PostGateway;
 use Illuminate\Support\Facades\Redirect;
+use Mintmesh\Services\IntegrationManager\AIManager;
 use OAuth;
 use Auth;
 use Lang,
@@ -13,9 +14,10 @@ use View;
 
 class PostController extends \BaseController {
 
-    public function __construct(PostGateway $PostGateway) {
+    public function __construct(PostGateway $PostGateway, AIManager $AIManager) {
 
         $this->PostGateway = $PostGateway;
+        $this->AIManager = $AIManager;
     }
 
     /**
@@ -498,6 +500,65 @@ class PostController extends \BaseController {
                 return \Response::json($validation);
             }
         }
+        
+         /**
+	 * get users invited job details
+         * 
+         * POST/upload_resume
+         * @param string $access_token the access token of enterprise app user
+	 * @return Response
+	 */
+        public function uploadResume()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->PostGateway->validateUploadResumeInput($inputUserData);
+            if($validation['status'] == 'success') {
+                $response = $this->PostGateway->uploadResume($inputUserData);
+                return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+        }
+         /**
+	 * get users invited job details
+         * 
+         * POST/upload_resume
+         * @param string $access_token the access token of enterprise app user
+	 * @return Response
+	 */
+        public function getResumesUpdateStatus()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            $response = $this->AIManager->getResumesUpdateStatus($inputUserData);
+            return \Response::json($response);
+        }
+        
+         /**
+	 * get users invited job details
+         * 
+         * POST/upload_resume
+         * @param string $access_token the access token of enterprise app user
+	 * @return Response
+	 */
+        public function notParsedResumes()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->PostGateway->validateNotParsedResumes($inputUserData);
+            if($validation['status'] == 'success') {
+                $response = $this->PostGateway->notParsedResumes($inputUserData);
+                return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+        }
+        
         
 }
 

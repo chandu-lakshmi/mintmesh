@@ -1,7 +1,7 @@
 <?php namespace Mintmesh\Repositories\API\Enterprise;
 
 use User;
-use Company_Profile;
+use Company_Profile,Company_Resumes;
 use Groups;
 use Company_Contacts;
 use Emails_Logs;
@@ -15,13 +15,23 @@ use Illuminate\Support\Facades\Hash;
 use Mintmesh\Services\APPEncode\APPEncode ;
 class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseRepository {
 
-        protected $user, $companyProfile, $CompanyContact,$groups;
-        protected $email, $level, $appEncodeDecode;
+    protected $user, $companyProfile, $CompanyContact,$groups;
+    protected $email, $level, $appEncodeDecode, $companyResumes;
         
-        public function __construct(User $user,Company_Profile $companyProfile,Groups $groups,Company_Contacts $CompanyContact,
-                                    Emails_Logs $email, APPEncode $appEncodeDecode){ 
+    const COMPANY_RESUME_STATUS = 0;
+    const COMPANY_RESUME_S3_MOVED_STATUS = 1;
+    const COMPANY_RESUME_AI_PARSED_STATUS = 2;
+        
+        public function __construct(User $user,
+                                    Company_Profile $companyProfile,
+                                    Company_Resumes $companyResumes,
+                                    Groups $groups,
+                                    Company_Contacts $CompanyContact,
+                                    Emails_Logs $email, 
+                                    APPEncode $appEncodeDecode){ 
                 $this->user = $user;    
                 $this->companyProfile = $companyProfile; 
+                $this->companyResumes = $companyResumes; 
                 $this->groups = $groups; 
                 $this->companyContact = $CompanyContact;    
                 $this->appEncodeDecode = $appEncodeDecode ;       
@@ -1369,5 +1379,57 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         }
         return $result;
     }
-      
+    
+    // creating new Enterprise user Company mapping in storage
+    public function insertInCompanyResumes($companyId=0, $resumeName='', $userId=0, $source=0, $gotReferred=0)
+    {   
+        $createdAt = gmdate("Y-m-d H:i:s");
+        $companyResumes = array(
+                        "company_id"   => $companyId,
+                        "file_original_name"  => $resumeName,
+                        "status"        => self::COMPANY_RESUME_STATUS,
+                        "file_from"     => $source,
+                        "got_referred_id"  => $gotReferred,
+                        "created_by"    => $userId,
+                        "created_at"    => $createdAt
+            );
+        return $this->companyResumes->create($companyResumes);
+    }
+    // creating new Enterprise user Company mapping in storage
+    public function updateCompanyResumes($documentId=0, $filesource='')
+    {   
+        $updatedAt = gmdate("Y-m-d H:i:s");
+        $companyResumes = array(
+                        "file_source"   => $filesource,
+                        "status"        => self::COMPANY_RESUME_S3_MOVED_STATUS,
+                        "updated_at"    => $updatedAt
+            );
+        if($documentId){
+            $results = Company_Resumes::where ('id',$documentId)->update($companyResumes); 
+        }
+        
+       return $results;
+    }
+    
+    public function getNotParsedCompanyResumesByStatus($status=1) {
+        $return = FALSE;
+        if($status){
+            $return = Company_Resumes::where ('status',$status)->get();
+        }
+        return $return;
+    }
+    
+    public function updateCompanyResumesWithGotReferredId($documentId = 0, $gotReferredId = 0)
+    {   
+        $updatedAt = gmdate("Y-m-d H:i:s");
+        $companyResumes = array(
+                        "got_referred_id"   => $gotReferredId,
+                        "updated_at"        => $updatedAt
+            );
+        if($documentId){
+            $results = Company_Resumes::where ('id',$documentId)->update($companyResumes); 
+        }
+       return $results;
+    }
+    
 }

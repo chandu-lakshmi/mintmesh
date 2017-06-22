@@ -559,8 +559,23 @@ class ReferralsController extends \BaseController {
                 return \Response::json($validation);
             }
         }
+      
+        public function getDownloadZipSelectedResumes() {
+            $inputUserData = \Input::all();
+            if(!empty($inputUserData))
+            {
+               $response = $this->referralsGateway->getZipResumesDownload($inputUserData);
+               return $response;
+            }
+        }
         
-        
+        public function getFileDownload() {
+            $inputUserData = \Input::all();
+            if(!empty($inputUserData))
+            {
+               return $response = $this->referralsGateway->getResumeDownload($inputUserData);
+            } 
+        }
         
         
 }

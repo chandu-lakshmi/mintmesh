@@ -12,7 +12,23 @@
 */
 /* Route related to API docs */
 
+Route::get('test','ZenefitsController@test');
+Route::get("getApp", "ZenefitsController@installMintmeshApp");
+Route::get('getApp', function(){
+    return Redirect::to('http://202.63.105.85/mmenterprise/getApp/zenefits');
+});
+Route::get("getAccesCode", "ZenefitsController@getAccesCode");
+Route::any("getAccessTokenRefreshToken", "ZenefitsController@getAccessTokenRefreshToken");
+
 Route::get('getMails','Email2Controller@getMails');
+Route::any('getOauthBasedOnClientId','HomeController@getOauthBasedOnClientId');
+
+//Download Resumes
+Route::any('getZipDownload','API\Referrals\ReferralsController@getDownloadZipSelectedResumes');
+Route::any('getResumeDownload','API\Referrals\ReferralsController@getFileDownload');
+
+
+Route::post('getParsedResumeDocInfo','API\SocialContacts\ContactsController@getParsedResumeDocInfo');
 Route::get('docs', function() {
 	return View::make('docs.v1.index');
 });
@@ -129,7 +145,10 @@ Route::group(array('prefix' => 'v1'), function() {
       Route::post("enterprise/company_integration", "API\Enterprise\EnterpriseController@companyIntegration");
       
       Route::post("enterprise/test_lic", "API\Enterprise\EnterpriseController@testLic");
-      
+      //unsolicited node for old companies
+      Route::post("enterprise/unsolicited_old_companies", "API\Enterprise\EnterpriseController@unsolicitedForOldCompanies");
+      Route::post("enterprise/not_parsed_resumes", "API\Post\PostController@notParsedResumes");
+         
 });
 
 //Route::group(array('prefix' => 'v1'), function() {
@@ -365,7 +384,10 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       Route::post("enterprise/add_configuration", "API\Enterprise\EnterpriseController@addConfiguration");
       // get_configuration
       Route::post("enterprise/get_configuration", "API\Enterprise\EnterpriseController@getConfiguration");
-
+      // get_configuration
+      Route::post("enterprise/upload_resume", "API\Post\PostController@uploadResume");
+      Route::post("enterprise/get_resumes_update_status", "API\Post\PostController@getResumesUpdateStatus");
+      
 });
 
 

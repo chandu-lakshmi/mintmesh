@@ -68,7 +68,8 @@ return array(
                 "email_inactive" => "You are inactive please activate via email",
                  "login_credentials" => "Please login with your enterprise credentials",
                  "inactive_group" => "You are an inactive group user",
-                 "inactive_user"  => "You are an inactive user"
+                 "inactive_user"  => "You are an inactive user",
+                 "contact_admin"  => "Something went wrong. Please contact your administrator."
          ),
          "resendActivationLink" => array(
                 "success" => "Mail Sent Successfully",
@@ -538,5 +539,15 @@ return array(
     'configuration_details'=>array(
             "success"          => "Successfully retrieved configuration details",
             "failure"          => "No details found"
+    ),
+    "upload_resume"=>array(             
+            "success"    => "Successfully uploaded",
+            "failure"    => "No details found",
+            "file_not_found"    => "File not found"
+    ),
+    "not_parsed_resumes"=>array(             
+            "success"    => "Successfully listed",
+            "failure"    => "No records found",
+            "auth_key_failure"    => "Invalid authentication key"
     )
 );

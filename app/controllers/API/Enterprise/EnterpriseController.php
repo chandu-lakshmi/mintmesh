@@ -1157,5 +1157,13 @@ class EnterpriseController extends \BaseController {
             }
             
 	}
+        
+        /*script to add unsolicited node for old companies
+         * 
+         */
+        public function unsolicitedForOldCompanies() {
+             $response = $this->EnterpriseGateway->unsolicitedForOldCompanies();
+               return \Response::json($response);    
+        }
 }
 ?>

@@ -119,6 +119,42 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
         }
     }
 
+    public function createUnsolicitedAndCompanyRelation($companyCode=''){
+        $relation = Config::get('constants.RELATIONS_TYPES.COMPANY_UNSOLICITED');
+        $input['service_name']  =  Config::get('constants.REFERRALS.STATUSES.UNSOLICITED');
+        $input['companyCode']  = $companyCode;
+        $input['created_at']    = $relationAttrs['created_at']  = gmdate("Y-m-d H:i:s");
+        if(!empty( $input['companyCode'] )){
+          $queryString = "MATCH (c:Company{companyCode:'".$input['companyCode']."'})
+                            CREATE (u:Unsolicited";
+            if (!empty($input)) {
+            $queryString.="{";
+            foreach ($input as $k => $v) {
+                $v = strtolower($v);
+                $queryString.=$k . ":'" . $this->appEncodeDecode->filterString($v) . "',";
+            }
+            $queryString = rtrim($queryString, ",");
+            $queryString.="}";
+        }
+        $queryString.=")-[:" . $relation;
+        if (!empty($relationAttrs)) {
+            $queryString.="{";
+            foreach ($relationAttrs as $k => $v) {
+                $queryString.=$k . ":'" . $this->appEncodeDecode->filterString($v) . "',";
+            }
+            $queryString = rtrim($queryString, ",");
+            $queryString.="}";
+        }
+        $queryString.="]->(c) return u";
+        $query = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();
+        if ($result->count()) {
+            return $result;
+        } else {
+            return false;
+        }
+        }
+    }
     public function createNeoNewBucket($input = array(), $bucketId = '') {
         if (!empty($input['bucket_name']) && !empty($bucketId)) {
             $queryString = "CREATE (n:Contact_bucket) set n.name='" . $input['bucket_name'] . "', n.mysql_id='" . $bucketId . "',n.type='" . $input['default'] . "' ";
@@ -564,6 +600,12 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
         return $result;
     }
     
+    public function checkUnsolicitedCompanies() {
+        $queryString = "MATCH (c:Company) WHERE not ((c)<-[:COMPANY_UNSOLICITED]-(:Unsolicited)) RETURN c";
+        $query = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();
+        return $result ;
+    }
 }
 
 ?>
