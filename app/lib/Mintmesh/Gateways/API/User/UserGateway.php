@@ -4912,8 +4912,6 @@ class UserGateway {
                 $originalFileName      =  $resume->getClientOriginalName();
                 $originalFileExtension =  $resume->getClientOriginalExtension();
                 $originalFileSize      =  $resume->getClientSize();
-                //$bucketSource = Config::get('constants.S3BUCKET_NON_MM_REFER_RESUME') ;
-                $bucketSource = Config::get('constants.S3UPLOAD_RESUME').$companyId.'/' ;
                  //cheking file format              
                if(in_array($originalFileExtension, $this->allowedResumeExtensions)){
                    //cheking file size
@@ -4925,13 +4923,15 @@ class UserGateway {
                         $documentId   = $insertResult->id;
                         #upload the file
                         $this->userFileUploader->source = $resume ;
-                        $this->userFileUploader->destination = $bucketSource ;
+                        $this->userFileUploader->destination = public_path().Config::get('constants.UPLOAD_RESUME').$companyId.'/';
                         $this->userFileUploader->documentid = $documentId;
                         $renamedFileName = $this->userFileUploader->resumeUploadToS3();
+                        #form s3 path here
+                        $s3Path = Config::get('constants.S3_DOWNLOAD_PATH').$companyId.'/'.$renamedFileName;
                         $response['document_id']  = $documentId;
                         $response['response']     = $renamedFileName;
                         #update s3 path in company resumes table
-                        $updateResult = $this->enterpriseRepository->updateCompanyResumes($documentId, $renamedFileName);
+                        $updateResult = $this->enterpriseRepository->updateCompanyResumes($documentId, $s3Path);
                    }
                    else
                    {
