@@ -39,6 +39,8 @@ class UserGateway {
     const SUCCESS_RESPONSE_MESSAGE = 'success';
     const ERROR_RESPONSE_CODE = 403;
     const ERROR_RESPONSE_MESSAGE = 'error';
+    const SOURCE_FROM_MOBILE_UPLOAD = 2;
+    
     protected $userRepository, $neoUserRepository,$paymentRepository, $contactsRepository;    
     protected $authorizer, $appEncodeDecode;
     protected $userValidator,$contactsGateway, $referralsGateway;
@@ -4917,7 +4919,7 @@ class UserGateway {
                    //cheking file size
                    if($originalFileSize <= $this->resumeMaxSize ){
                         
-                        $source = 2;
+                        $source = self::SOURCE_FROM_MOBILE_UPLOAD;
                         #insert company resumes in company resumes table
                         $insertResult = $this->enterpriseRepository->insertInCompanyResumes($companyId, $originalFileName, $userId, $source);
                         $documentId   = $insertResult->id;
@@ -4926,21 +4928,21 @@ class UserGateway {
                         $this->userFileUploader->destination = public_path().Config::get('constants.UPLOAD_RESUME').$companyId.'/';
                         $this->userFileUploader->documentid = $documentId;
                         $renamedFileName = $this->userFileUploader->resumeUploadToS3();
-                        #form s3 path here
-                        $s3Path = Config::get('constants.S3_DOWNLOAD_PATH').$companyId.'/'.$renamedFileName;
-                        $response['document_id']  = $documentId;
-                        $response['response']     = $renamedFileName;
-                        #update s3 path in company resumes table
-                        $updateResult = $this->enterpriseRepository->updateCompanyResumes($documentId, $s3Path);
-                   }
-                   else
-                   {
+                        if($renamedFileName){
+                            #form s3 path here
+                            $s3Path = Config::get('constants.S3_DOWNLOAD_PATH').$companyId.'/'.$renamedFileName;
+                            $response['document_id']  = $documentId;
+                            $response['response']     = $renamedFileName;
+                            #update s3 path in company resumes table
+                            $updateResult = $this->enterpriseRepository->updateCompanyResumes($documentId, $s3Path);
+                        } else {
+                            $response['response'] = "invalid_file_format";
+                        }
+                   } else {
                       $response['response'] = "uploaded_large_file";   
                    }        
-               }
-               else
-               {
-                  $response['response'] = "invalid_file_format";
+               } else {
+                    $response['response'] = "invalid_file_format";
                }
             }
             return $response ;

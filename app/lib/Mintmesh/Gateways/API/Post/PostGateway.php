@@ -3009,18 +3009,24 @@ class PostGateway {
                 $documentId = $insertResult->id;
                 #file move to s3 folder
                 $returnAry['file_name'] = $fileName = $this->moveResume($resumeFile, $companyId, $documentId);
-                #form s3 path here
-                $s3Path = Config::get('constants.S3_DOWNLOAD_PATH').$companyId.'/'.$fileName;
-                #updte s3 path in company resumes table
-                $updateResult = $this->enterpriseRepository->updateCompanyResumes($documentId, $s3Path);
-                #return response data
-                $returnAry['document_id'] = $documentId;
-                $returnAry['resume_path'] = $s3Path;
-                $returnAry['resume_name'] = $insertResult->file_original_name;
-                $data = $returnAry;
-                $responseCode   = self::SUCCESS_RESPONSE_CODE;
-                $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
-                $responseMessage= array('msg' => array(Lang::get('MINTMESH.upload_resume.success')));
+                if($fileName){
+                    #form s3 path here
+                    $s3Path = Config::get('constants.S3_DOWNLOAD_PATH').$companyId.'/'.$fileName;
+                    #updte s3 path in company resumes table
+                    $updateResult = $this->enterpriseRepository->updateCompanyResumes($documentId, $s3Path);
+                    #return response data
+                    $returnAry['document_id'] = $documentId;
+                    $returnAry['resume_path'] = $s3Path;
+                    $returnAry['resume_name'] = $insertResult->file_original_name;
+                    $data = $returnAry;
+                    $responseCode   = self::SUCCESS_RESPONSE_CODE;
+                    $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                    $responseMessage= array('msg' => array(Lang::get('MINTMESH.upload_resume.success'))); 
+                } else {
+                    $responseCode   = self::ERROR_RESPONSE_CODE;
+                    $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+                    $responseMessage= array('msg' => array(Lang::get('MINTMESH.upload_resume.failure')));
+                }
             } else {
                 $responseCode   = self::ERROR_RESPONSE_CODE;
                 $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
