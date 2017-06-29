@@ -2475,7 +2475,8 @@ class PostGateway {
                     }else{
                         $campaignLocation = 'online';
                     }
-                    $campaignJobsList      = $this->neoPostRepository->getCampaignPosts($input['campaign_id'],$page,$search_for);
+                    $status = Config::get('constants.REFERRALS.STATUSES.ACTIVE');
+                    $campaignJobsList      = $this->neoPostRepository->getCampaignPosts($input['campaign_id'], $page, $search_for, $status);
                     foreach ($campaignJobsList as $result){
                         $record         = array();
                         $postRes        = $result[0];//post details 

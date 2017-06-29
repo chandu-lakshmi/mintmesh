@@ -2744,7 +2744,7 @@ class EnterpriseGateway {
             $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
             $userEmail = $this->neoLoggedInUserDetails->emailid ;
             $postId = $input['post_id'] ;
-            $checkPermissions = $this->enterpriseRepository->getUserPermissions($this->neoLoggedInUserDetails->group_id,$input);
+            $checkPermissions = $this->enterpriseRepository->getUserPermissions($this->loggedinUserDetails->group_id,$input);
             $closeJobs = !empty($checkPermissions['close_jobs'])?$checkPermissions['close_jobs']:'';
             $posts = $this->neoPostRepository->getPosts($postId);
             if($closeJobs == 1 || $posts->created_by == $userEmail)
