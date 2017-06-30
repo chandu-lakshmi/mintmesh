@@ -1466,7 +1466,8 @@ class PostGateway {
         #redirect email links
           $dataSet['view_jobs_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/share?ref=" . $refCode."";
           $dataSet['bittly_link']    = $emailData['bittly_url'];;
-          $dataSet['view_jobs_link_web']      = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/web?ref=" . $refCode."";
+          //$dataSet['view_jobs_link_web']      = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/web?ref=" . $refCode."";
+          $dataSet['view_jobs_link_web']      = "http://202.63.105.85/mmenterprise_sapdemo/email/all-campaigns/web?ref=" . $refCode."";
         #set email required params
         $this->userEmailManager->templatePath   = Lang::get('MINTMESH.email_template_paths.contacts_campaign_invitation');
         $this->userEmailManager->emailId        = $emailData['to_emailid'];//target email id
