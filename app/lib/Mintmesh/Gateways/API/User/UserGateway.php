@@ -376,7 +376,11 @@ class UserGateway {
                 }
                 $deviceToken = $input['deviceToken'] ;
                 $this->neoUserRepository->mapToDevice($deviceToken, $input['emailid'], $osType) ;
-
+                
+                #update user mobile number with latest from mobile registration
+                if(!empty($input['is_ent'])){
+                    $this->updateCompanyUserPhoneNumber($input['emailid'], $input['phone']);
+                }
 
                 if (!empty($createdUser)) {
                     //add battle card for phone verification
@@ -1446,8 +1450,13 @@ class UserGateway {
                         'created_at' => date('Y-m-d H:i:s')
                     ) ;
                     $t = $this->userRepository->logNotification($notificationLog);
+                    #update mobile number in company contacts table
+                    if(!empty($input['is_ent'])){
+                        $this->updateCompanyUserPhoneNumber($this->loggedinUserDetails->emailid, $neoInput['phone']);
+                    }
                 }
                 $updatedNeoUser =  $this->neoUserRepository->updateUser($neoInput) ;
+               
                 if (!empty($input['job_function']))
                 {
                     //remove the job function associated
@@ -5187,6 +5196,19 @@ class UserGateway {
            $count = 1; 
            $notificationsCount  = $this->userRepository->getBellNotifications($emailId, $count);
            return count($notificationsCount);   
+        }
+        
+        public function updateCompanyUserPhoneNumber($emailId = '', $phone = '') {
+            
+                #get the user connected company details here
+                $companyDetailsAry      = $this->neoEnterpriseRepository->connectedCompanyDetails($emailId);
+                $companyCode            = !empty($companyDetailsAry->companyCode) ? $companyDetailsAry->companyCode : 0;
+                #get the contact Id by emailid and company code
+                $companyContactDetails  = $this->enterpriseRepository->getCompanyContactsId($emailId, $companyCode);
+                $contactId              = !empty($companyContactDetails[0]->id) ? $companyContactDetails[0]->id : 0;
+                #update user phone number in company contacts table
+                $companyContactDetails  = $this->enterpriseRepository->updateCompanyContactPhoneNumber($contactId, $phone);
+            return true;
         }
 
 }

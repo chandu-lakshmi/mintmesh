@@ -1432,4 +1432,27 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
        return $results;
     }
     
+    public function getCompanyContactsId($emailId = '', $companyCode = '') {
+        
+        $result = 0;
+        if(!empty($companyCode) && !empty($emailId)){
+            $sql = "select n.id from contacts n
+                    left join company m on m.id = n.company_id  
+                    where n.emailid='".$emailId."' and m.code='".$companyCode."' " ;
+            $result = DB::Select($sql);
+        }
+        return $result;
+    }
+    
+    public function updateCompanyContactPhoneNumber($contactId = 0, $phone = '') {
+        
+        $result = FALSE;
+        if(!empty($contactId) && !empty($phone)) {
+            $result =  DB::table('contacts')
+                    ->where('id', $contactId)  
+                    ->update(array('phone' => $phone));
+        }
+        return $result; 
+    }
+    
 }
