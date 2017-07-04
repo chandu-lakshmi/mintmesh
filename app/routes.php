@@ -41,10 +41,7 @@ Route::get('/', function()
 {
 	return View::make('hello');
 });
-Route::get('/forgot', function()
-{
-	return View::make('forgot-password/forgot');
-});
+
 Route::get('/terms', function()
 {
 	return View::make('landings/terms');
@@ -516,6 +513,11 @@ Route::group(array('prefix' => 'v1/ent'), function() {
     //check phone existance
     Route::post("checkPhoneExistance", "API\EnterpriseApp\EnterpriseAppController@checkPhoneExistance");
     Route::post("user/check_reset_password", "API\EnterpriseApp\EnterpriseAppController@checkResetPassword");
+    
+    Route::get('/forgot_password', function()
+    {
+        return View::make('forgot-password/forgot');
+    });
 });
 Route::group(array('prefix' => 'v1/ent', 'before' => 'oauth'), function() {
     //logout
