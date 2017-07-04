@@ -2000,7 +2000,7 @@ class EnterpriseGateway {
         $relationAttrs['lastname']          = !empty($input['lastname'])?$input['lastname']:'';    
         $neoInput['firstname']   = $input['firstname'];
         $neoInput['lastname']    = $input['lastname'];
-        $neoInput['phone']       = !empty($input['phone'])?$input['phone']:'';          
+        $neoInput['contact_number'] = !empty($input['phone'])?$input['phone']:'';          
         $neoInput['emailid']     = $contactEmailId;
         $neoInput['employeeid']  = !empty($input['other_id'])?$input['other_id']:'';
         $neoInput['status']      = $status;  
