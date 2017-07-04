@@ -1167,7 +1167,7 @@ class UserGateway {
                     $appLinkCoded = $this->base_64_encode("", $appLink) ; //comment it for normal flow of deep linki.e without http
                     $dataSet['hrs'] = Config::get('constants.MNT_USER_EXPIRY_HR');
                     #reset password from app
-                    $dataSet['link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/redirect_to_app/".$appLinkCoded ;//comment it for normal flow of deep linki.e without http
+                    $dataSet['app_link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/redirect_to_app/".$appLinkCoded ;//comment it for normal flow of deep linki.e without http
                     #reset password from web
                     $dataSet['web_link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/ent/forgot_password?code=".$code ;
                     $this->userEmailManager->dataSet = $dataSet;
