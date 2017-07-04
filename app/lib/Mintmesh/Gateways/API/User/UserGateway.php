@@ -1158,7 +1158,6 @@ class UserGateway {
                     $dataSet['name'] =$neoUserDetails['firstname'];
                     //set reset code
                     //set timezone of mysql if different servers are being used
-                    //date_default_timezone_set('America/Los_Angeles');
                     $currentTime =  date('Y-m-d H:i:s');
                     $email = md5($input['emailid']) ;
                     $code = $this->base_64_encode($currentTime, $email) ;
@@ -1166,9 +1165,11 @@ class UserGateway {
                     $deep_link = $this->getDeepLinkScheme($deep_link_type, $isEnt);
                     $appLink = $deep_link.Config::get('constants.MNT_VERSION')."/user/reset_password/".$code ;
                     $appLinkCoded = $this->base_64_encode("", $appLink) ; //comment it for normal flow of deep linki.e without http
-                    //$dataSet['link'] = $appLink ;//remove comment it for normal flow of deep linki.e without http
                     $dataSet['hrs'] = Config::get('constants.MNT_USER_EXPIRY_HR');
+                    #reset password from app
                     $dataSet['link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/redirect_to_app/".$appLinkCoded ;//comment it for normal flow of deep linki.e without http
+                    #reset password from web
+                    $dataSet['web_link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/user/reset_password/".$code ;
                     $this->userEmailManager->dataSet = $dataSet;
                     $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.forgot_password');
                     $this->userEmailManager->name = $neoUserDetails['fullname'];

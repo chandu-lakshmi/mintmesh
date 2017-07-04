@@ -1085,7 +1085,7 @@ class EnterpriseGateway {
             $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($input['emailid']);
             if (!empty($userDetails) && $userDetails['emailverified'] == 1) {
                 // set email required params
-                $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.forgot_password');
+                $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.enterprise_forgot_password');
                 $this->userEmailManager->emailId = $input['emailid'];
                 $dataSet = array();
                 $dataSet['name'] = $neoUserDetails['fullname'];

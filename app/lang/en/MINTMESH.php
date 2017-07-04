@@ -98,6 +98,7 @@ return array(
                 "enterprise_welcome" => "emails.Api.User.enterprise_welcome",
                 "user_introduction" => "emails.Api.User.introduction",
                 "forgot_password" => "emails.Api.User.forgot_password",
+                "enterprise_forgot_password" => "emails.Api.User.enterprise_forgot_password",
                 "set_password" => "emails.Api.User.set_password",
                 "join_invitation" => "emails.Api.User.join_invitation",
                 "payout_success_admin" => "emails.Api.Payment.payout_success_admin",
