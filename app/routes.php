@@ -41,6 +41,10 @@ Route::get('/', function()
 {
 	return View::make('hello');
 });
+Route::get('/forgot', function()
+{
+	return View::make('forgot-password/forgot');
+});
 Route::get('/terms', function()
 {
 	return View::make('landings/terms');
