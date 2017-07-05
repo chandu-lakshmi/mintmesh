@@ -135,13 +135,13 @@ return array(
             "activate_user"=>"Please activate your account"
          ),
          "reset_password"=>array(
-             "success"=>"New Password Set Successfully",
+             "success"=>"New Password set successfully. Please login to your Enterprise Mobile Application.",
              "invalid"=>"Reset Password Period Expired",
              "failed"=>"Some Error Occured",
              "error"=>"Invalid Token",
              "valid"=>"Validated",
              "same"=>"New password cannot be same as old password",
-             "codeexpired"=>"The Code has Expired"
+             "codeexpired"=>"Reset Password link has expired"
          ),
          "check_reset_password"=>array(
              "success"=>"Sucess",

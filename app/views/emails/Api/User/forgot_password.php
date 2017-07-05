@@ -35,7 +35,7 @@
 <!--          <a style="color:#FFFFFF;text-decoration:none;font-family: 'arial', sans-serif;font-size:20px;padding-top:10px;padding-bottom:10px;padding-right:15px;padding-left:15px;display:inline-block; background:#269b7b; width:auto; margin:0px auto; border-radius:5px; line-height:20px; " href="<?php echo $web_link ; ?>" target="_blank">Web Reset Password</a>-->
           <a style="color:#FFFFFF;text-decoration:none;font-family: 'arial', sans-serif;font-size:20px;padding-top:10px;padding-bottom:10px;padding-right:15px;padding-left:15px;display:inline-block; background:#269b7b; width:auto; margin:0px auto; border-radius:5px; line-height:20px; " href="<?php echo $app_link ; ?>" target="_blank">Reset Password</a> 
       </p>
-      <p>If that above link doesn't,  work please <a href="<?php echo $web_link; ?>" target="_blank">click here</a></p>
+      <p>If the above link doesn't work, please <a href="<?php echo $web_link; ?>" target="_blank">click here.</a></p>
     </td>
   </tr>
   <tr>
