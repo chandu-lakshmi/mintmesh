@@ -298,6 +298,10 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
        Route::post("enterprise/contacts_upload", "API\Enterprise\EnterpriseController@enterpriseContactsUpload");
        //enterprise create new bucket
        Route::post("enterprise/create_bucket", "API\Enterprise\EnterpriseController@createBucket");
+       
+       //Update Bucket By Dinesh Pitla
+       Route::post("enterprise/update_bucket", "API\Enterprise\EnterpriseController@updateBucket");
+       
        //enterprise contacts upload
        Route::post("enterprise/upload_contacts", "API\Enterprise\EnterpriseController@uploadContacts");
        //enterprise validate Contacts input File Headers

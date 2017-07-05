@@ -95,6 +95,10 @@ class AIManager {
                     $param['email_id']  = !empty($result_check['email']) ? $result_check['email'] : '';
                     $param['name']      = !empty($result_check['name']) ? $result_check['name'] : '';
                     $param['phone']     = !empty($result_check['phone']) ? $result_check['phone'] : '';
+                   // $param['error']     = !empty($result_check['error']) ? $result_check['error'] : '';
+                    if(!empty($result_check['error'])){
+                        $this->updateCompanyResumesStatus($docId,$status=3, $result_check['error']);
+                    }
                     #create Unsolicited Referrals here
                     $unsolicitedAry = $this->createUnsolicitedReferrals($param);
                 }
@@ -148,8 +152,9 @@ class AIManager {
                 $gotReferredId = $this->createUnsolicitedReferralsRelation($companyCode, $emailId, $neoInput);
                 $this->updateCompanyResumes($docId, $gotReferredId);
             } else {
+                $status = self::COMPANY_RESUME_AI_PARSED_STATUS;
                 #update company resumes status
-                $this->updateCompanyResumesStatus($docId);
+                $this->updateCompanyResumesStatus($docId,$status,$error="");
             }    
         }
         return TRUE;
@@ -253,13 +258,14 @@ class AIManager {
        return $results;
     }
     
-    public function updateCompanyResumesStatus($documentId = 0)
+    public function updateCompanyResumesStatus($documentId = 0,$status,$error)
     {   
         $results   = FALSE;
         $updatedAt = gmdate("Y-m-d H:i:s");
         $companyResumes = array(
-                        "status"            => self::COMPANY_RESUME_AI_PARSED_STATUS,
-                        "updated_at"        => $updatedAt
+                        "status"            => $status,
+                        "updated_at"        => $updatedAt,
+                        "error_msg"         => $error
                     );
         if($documentId){
             $results = CR::where ('id',$documentId)->update($companyResumes); 

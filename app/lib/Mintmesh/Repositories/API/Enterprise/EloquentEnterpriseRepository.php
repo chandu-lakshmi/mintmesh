@@ -129,6 +129,23 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             } 
             return $result; 
          }
+         
+         public function updateExistBucket($userId, $id, $companyId,$bucketStatus, $createdAt){
+            
+            $result = false;
+            $ipAddress = !empty($_SERVER['REMOTE_ADDR'])?$_SERVER['REMOTE_ADDR']:0;
+            if (!empty($userId) && !empty($companyId) && !empty($bucketName))
+            {   
+                //$sql = "insert into import_contacts_buckets (`user_id`,`company_id`,`name`)" ;
+                $sql = "UPDATE buckets SET (`updated_by`='". $userId ."', `company_id`='". $companyId ."',`status`='". $bucketStatus ."',`created_at`='".$createdAt."',`ip_address`'".$ipAddress."') WHERE `id` = '".$id."'";
+               
+                DB::statement($sql);
+                $last_insert_id = DB::Select("SELECT LAST_INSERT_ID() as last_id"); 
+                $result = $last_insert_id[0]->last_id;
+            } 
+            return $result; 
+         }
+         
         public function isBucketExist($userId, $companyId, $bucketName){
             
             $response = false;
@@ -315,7 +332,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             $sql = 'SELECT b.name AS bucket_name,b.id as bucket_id, COUNT(DISTINCT bc.contact_id) AS count
                     FROM buckets b
                     LEFT JOIN buckets_contacts bc ON bc.bucket_id=b.id AND bc.company_id="'.$params['company_id'].'"
-                    WHERE 1 AND (b.company_id = "'.$params['company_id'].'" OR b.company_id = "0")
+                    WHERE 1 AND (b.company_id = "'.$params['company_id'].'" OR b.company_id = "0") AND status = "1"
                     GROUP BY b.id';
             $result = DB::select($sql);     
         return $result;

@@ -1793,6 +1793,29 @@ class EnterpriseGateway {
         return $this->commonFormatter->formatResponse(200, "success", $message, $data);
     }
     
+    public function updateBucket($input){ 
+        
+        $response = $data = $setData = array();
+        $createdAt = gmdate("Y-m-d H:i:s");
+        $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser();
+        $userEmailId    = $this->loggedinUserDetails->emailid;
+        $userId         = $this->loggedinUserDetails->id;
+        $companyCode    = !empty($input['company_code'])?$input['company_code']:0;
+        $bucket     = !empty($input['bucket_name'])?$input['bucket_name']:'';
+        $bucketStatus     = 2;//!empty($input['status'])?$input['status']:'';
+        $bucketId     = !empty($input['id'])?$input['id']:'';
+        $bucketName = $this->appEncodeDecode->filterString($bucket);
+        // get the logged in user company details with company code here
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = !empty($companyDetails[0]->id)?$companyDetails[0]->id:0; 
+       // $isBucketExist  = $this->enterpriseRepository->isBucketExist($userId, $companyId, $bucketName);
+       
+            //update bucket in MySql here
+            $bucketId = $this->enterpriseRepository->updateExistBucket($userId, $bucketId, $companyId,$bucketStatus, $createdAt);
+         
+        return $this->commonFormatter->formatResponse(200, "success", $message);
+    }
+    
     public function validateContactsFileHeaders($input){ 
         
         $responseCode       = self::ERROR_RESPONSE_CODE;
