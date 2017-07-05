@@ -30,6 +30,7 @@ class AIManager {
     const API_LOCAL_URL = 'https://api.zenefits.com/core/';
     const COMPANY_RESUME_S3_MOVED_STATUS = 1;
     const COMPANY_RESUME_AI_PARSED_STATUS = 2;
+    const COMPANY_RESUME_AI_ERROR_STATUS = 2;
 
     public function __construct() {
         $this->db_user = Config::get('database.connections.neo4j.username');
@@ -97,7 +98,7 @@ class AIManager {
                     $param['phone']     = !empty($result_check['phone']) ? $result_check['phone'] : '';
                    // $param['error']     = !empty($result_check['error']) ? $result_check['error'] : '';
                     if(!empty($result_check['error'])){
-                        $this->updateCompanyResumesStatus($docId,$status=3, $result_check['error']);
+                        $this->updateCompanyResumesStatus($param['doc_id'],$status=self::COMPANY_RESUME_AI_ERROR_STATUS, $result_check['error']);
                     }
                     #create Unsolicited Referrals here
                     $unsolicitedAry = $this->createUnsolicitedReferrals($param);
