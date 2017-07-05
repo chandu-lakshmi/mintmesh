@@ -169,6 +169,10 @@ class EnterpriseGateway {
     public function validateupdateCreateBucket($input) {
         return $this->doValidation('create_bucket', 'MINTMESH.user.valid');
     }
+    //validation on Create update Bucket input
+    public function validateupdateUpdateBucket($input) {
+        return $this->doValidation('update_bucket', 'MINTMESH.user.valid');
+    }
     //validation on contacts input file
     public function validateFileInput($input) {
         return $this->doValidation('contacts_file', 'MINTMESH.user.valid');
@@ -1794,7 +1798,6 @@ class EnterpriseGateway {
     }
     
     public function updateBucket($input){ 
-        
         $response = $data = $setData = array();
         $createdAt = gmdate("Y-m-d H:i:s");
         $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser();
