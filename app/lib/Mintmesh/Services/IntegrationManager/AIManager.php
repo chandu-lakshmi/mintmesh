@@ -30,7 +30,7 @@ class AIManager {
     const API_LOCAL_URL = 'https://api.zenefits.com/core/';
     const COMPANY_RESUME_S3_MOVED_STATUS = 1;
     const COMPANY_RESUME_AI_PARSED_STATUS = 2;
-    const COMPANY_RESUME_AI_ERROR_STATUS = 2;
+    const COMPANY_RESUME_AI_ERROR_STATUS = 3;
 
     public function __construct() {
         $this->db_user = Config::get('database.connections.neo4j.username');
