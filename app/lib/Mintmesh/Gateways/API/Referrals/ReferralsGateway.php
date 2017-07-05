@@ -1874,6 +1874,152 @@ class ReferralsGateway {
             return $this->commonFormatter->formatResponse(200, "success", $message, array());
         }
     }
+    
+    public function enterpriseReferContact($input) {
+
+        #if enterprise user flag
+        $isEnt = !empty($input['is_ent']) ? $input['is_ent'] : 0;
+        $referNonMintmesh = $nonMintmeshPhoneRefer = 0;
+        $uploadedByP2 = $documentId = 0;
+        $p3CvOriginalName = $referResumePath = "";
+        
+        $this->loggedinUserDetails = $this->getLoggedInUser();
+        $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid);
+        $userEmail  = $this->neoLoggedInUserDetails->emailid;
+        $userId     = $this->loggedinUserDetails->id;
+        $relationCount = 1;
+        #count for all relations
+        $existingRelationCount = $this->referralsRepository->getReferralsCount(Config::get('constants.REFERRALS.GOT_REFERRED'), $input['post_id'], $userEmail, $input['refer_to']);
+        if ($existingRelationCount < Config::get('constants.REFERRALS.MAX_REFERRALS')) {
+            # process resume for hire a candidate service scope
+            if (!empty($input['is_hire_candidate'])) {
+                #process resume fields
+                $postId = !empty($input['post_id']) ? $input['post_id'] : '';
+                $companyDetils = $this->neoPostRepository->getPostCompany($postId);
+                $companyDetils->companyCode;
+                #get company details by code
+                $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyDetils->companyCode);
+                $companyId = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+                #for enterprise app
+                $resumeResult = $this->processResumeForEnterpriseRefer($input, $companyId, $userId);
+                $documentId   = !empty($resumeResult['document_id']) ? $resumeResult['document_id'] : 0;
+                    
+                if (!$resumeResult['status']) {
+                    return $this->commonFormatter->formatResponse(406, "error", $resumeResult['message'], array());
+                } else {
+                    $referResumePath = $resumeResult['resume_path'];
+                    $uploadedByP2 = $resumeResult['uploaded'];
+                    $p3CvOriginalName = $resumeResult['resume_original_name'];
+                }
+            }
+            if (!empty($input['refer_non_mm_email']) && !empty($input['referring'])) {
+                $nonMintmeshPhoneRefer = 1;
+            }
+            //continue only when the request count is in limit
+            //create a relation between the post and user
+            $oldRelationCount = $this->referralsRepository->getOldRelationsCount($input['post_id'], $input['referring'], $nonMintmeshPhoneRefer);
+            if (!empty($oldRelationCount)) {
+                $relationCount = $oldRelationCount + 1;
+                //$message = array('msg'=>array(Lang::get('MINTMESH.referrals.already_referred')));
+                //return $this->commonFormatter->formatResponse(406, "error", $message, array()) ;
+            }
+
+            if (!empty($input['refer_non_mm_email']) && !empty($input['referring'])) {//non mintmesh and refer 
+                if (!empty($input['referring_phone_no'])) {//create node for this and relate
+                    $input['referring'] = $this->appEncodeDecode->formatphoneNumbers(strtolower($input['referring']));
+
+                    $nonMintmeshContactExist = $this->contactsRepository->getNonMintmeshContact($input['referring']);
+                    //$nonMintmeshContactExist = $this->appEncodeDecode->formatphoneNumbers($input['referring']);
+                    //print_r($nonMintmeshContactExist).exit;
+                    $phoneContactInput = $phoneContactRelationInput = array();
+                    $phoneContactInput['firstname'] = $phoneContactInput['lastname'] = $phoneContactInput['fullname'] = "";
+                    $phoneContactRelationInput['firstname'] = !empty($input['referring_user_firstname']) ? $this->appEncodeDecode->filterString($input['referring_user_firstname']) : '';
+                    $phoneContactRelationInput['lastname'] = !empty($input['referring_user_lastname']) ? $this->appEncodeDecode->filterString($input['referring_user_lastname']) : '';
+                    $phoneContactRelationInput['fullname'] = $phoneContactRelationInput['firstname'] . " " . $phoneContactRelationInput['lastname'];
+                    $phoneContactInput['phone'] = !empty($input['referring']) ? $this->appEncodeDecode->formatphoneNumbers($input['referring']) : '';
+                    if (!empty($nonMintmeshContactExist)) {
+                        //create import relation
+                        $relationCreated = $this->contactsRepository->relateContacts($this->neoLoggedInUserDetails, $nonMintmeshContactExist[0], $phoneContactRelationInput, 1);
+                    } else {
+                        $importedContact = $this->contactsRepository->createNodeAndRelationForPhoneContacts($userEmail, $phoneContactInput, $phoneContactRelationInput);
+                    }
+                    //send sms invitation to p3
+                    #not send to enterprise user 
+                    if (empty($isEnt)) {
+                        $smsInput = array();
+                        $smsInput['numbers'] = json_encode(array($phoneContactInput['phone']));
+                        $otherUserDetails = $this->neoUserRepository->getNodeByEmailId($input['refer_to']);
+                        $smsInput['other_name'] = !empty($otherUserDetails->fullname) ? $otherUserDetails->fullname : "";
+                        $smsInput['sms_type'] = 3;
+                        $smsSent = $this->smsGateway->sendSMSForReferring($smsInput);
+                    }
+                    $referNonMintmesh = 1;
+                } else {
+                    //check if p2 imported p3
+                    $isImported = $this->contactsRepository->getContactByEmailid($input['referring']);
+                    if (empty($isImported)) {
+                        $message = array('msg' => array(Lang::get('MINTMESH.referrals.no_import')));
+                        return $this->commonFormatter->formatResponse(406, "error", $message, array());
+                    } else {//send invitation email to p3
+                        #not send to enterprise user 
+                        if (empty($isEnt)) {
+                            $postInvitationArray = array();
+                            $postInvitationArray['emails'] = json_encode(array($input['referring']));
+                            $postInvitationArray['post_id'] = $input['post_id'];
+                            $invited = $this->contactsGateway->sendPostReferralInvitations($postInvitationArray);
+                        }
+                    }
+                }
+            }
+            $relationAttrs = array();
+            $relationAttrs['document_id'] = $documentId;
+            $relationAttrs['referred_by'] = strtolower($userEmail);
+            $relationAttrs['referred_for'] = strtolower($input['refer_to']);
+            $relationAttrs['created_at'] = gmdate("Y-m-d H:i:s");
+            $relationAttrs['status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
+            $relationAttrs['one_way_status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
+            if (!empty($input['message'])) {
+                $relationAttrs['message'] = $input['message'];
+            }
+            if (!empty($input['bestfit_message'])) {
+                $relationAttrs['bestfit_message'] = $input['bestfit_message'];
+            }
+            $relationAttrs['relation_count'] = $relationCount;
+            $relationAttrs['resume_path'] = $referResumePath;
+            $relationAttrs['uploaded_by_p2'] = $uploadedByP2;
+            $relationAttrs['resume_original_name'] = $p3CvOriginalName;
+            if (!empty($referNonMintmesh)) {
+                $result = $this->referralsRepository->referContactByPhone($userEmail, $input['refer_to'], $input['referring'], $input['post_id'], $relationAttrs);
+            } else {
+                $result = $this->referralsRepository->referContact($userEmail, $input['refer_to'], $input['referring'], $input['post_id'], $relationAttrs);
+            }
+            if (!empty($result)) {
+                
+                #update Got Referred Id in CompanyResumes table
+                if (isset($result[0]) && !empty($result[0][1])) {
+                    $gotReferredId = $result[0][1];
+                    $this->enterpriseRepository->updateCompanyResumesWithGotReferredId($documentId, $gotReferredId);
+                }
+//                  if self referrence
+                if ($this->loggedinUserDetails->emailid == $input['referring']) {
+                    $notificationType = 23;
+                } else {
+                    $notificationType = 10;
+                }
+                //send notification to the person who created post
+                $this->userGateway->sendNotification($this->loggedinUserDetails, $this->neoLoggedInUserDetails, $input['refer_to'], $notificationType, array('extra_info' => $input['post_id']), array('other_user' => $input['referring'], 'p3_non_mintmesh' => 1));
+                $message = array('msg' => array(Lang::get('MINTMESH.referrals.success')));
+                return $this->commonFormatter->formatResponse(200, "success", $message, array());
+            } else {
+                $message = array('msg' => array(Lang::get('MINTMESH.referrals.closed_post')));
+                return $this->commonFormatter->formatResponse(406, "error", $message, array());
+            }
+        } else {
+            //return limit crossed message
+            $message = array('msg' => array(Lang::get('MINTMESH.referrals.limit_crossed')));
+            return $this->commonFormatter->formatResponse(200, "success", $message, array());
+        }
+    }
 
     /*
      * validate resume in refer contact
@@ -1921,36 +2067,36 @@ class ReferralsGateway {
 
     public function processResumeForEnterpriseRefer($input = array(), $companyId = 0, $userId = 0) {
         
-        $documentId     = 0;
+        $documentId     = $uploaded = 0;
         $returnBoolean  = true;
-        $uploaded       = 1;
         $resumePath     = $resumePathRes = $message = $resumeOriginalName = "";
-        $message        = Lang::get('MINTMESH.user.no_resume');
-        if (!empty($input['refer_non_mm_email']) && empty($input['resume'])) {#for non mintmesh with no resume
-            $returnBoolean = false;
-        } else if (empty($input['refer_non_mm_email']) && empty($input['resume'])) {#for mintmesh with no resume
-            #check if the referring person is having resume attached
-            $resumePathResult = $this->neoUserRepository->getMintmeshUserResume($input['referring']);
-            if (empty($resumePathResult)) {# if no resume uploaded in profile then ask for resume
-                $returnBoolean = false;
-            } else {
-                $uploaded = 0;
-                $resumePath = $resumePathResult['cvRenamedName'];
-                $resumeOriginalName = $resumePathResult['cvOriginalName'];
-            }
-        } else if (!empty($input['refer_non_mm_email']) && !empty($input['resume'])) {#for non mintmesh with resume
+        
+        if (!empty($input['refer_non_mm_email']) && !empty($input['resume'])) {
+            #for non mintmesh user with resume
+            $uploaded = 1;
             $responseAry    = $this->userGateway->uploadResumeForEnterpriseRefer($input['resume'], $companyId, $userId);
             $documentId     = !empty($responseAry['document_id']) ? $responseAry['document_id'] : 0;
             $resumePathRes  = $responseAry['response'];
-        } else if (empty($input['refer_non_mm_email']) && !empty($input['resume'])) {#for mintmesh with resume
+            
+        } else if (empty($input['refer_non_mm_email']) && !empty($input['resume'])) {
+            #for mintmesh user with resume    
+            $uploaded = 1;
             $responseAry    = $this->userGateway->uploadResumeForEnterpriseRefer($input['resume'], $companyId, $userId);
             $documentId     = !empty($responseAry['document_id']) ? $responseAry['document_id'] : 0;
             $resumePathRes  = $responseAry['response'];
+            
+        } else if (empty($input['refer_non_mm_email']) && empty($input['resume'])) {
+            #for mintmesh user with no resume
+            $resumePathResult   = $this->neoUserRepository->getMintmeshUserResume($input['referring']);
+            $resumePath         = !empty($resumePathResult['cvRenamedName']) ? $resumePathResult['cvRenamedName'] : '';
+            $resumeOriginalName = !empty($resumePathResult['cvOriginalName']) ? $resumePathResult['cvOriginalName'] : '';
+            
         }
         #check for validation of resume
-        if ($returnBoolean && !in_array($resumePathRes, $this->resumeValidations)) {# check if resume validations are fine
+        if (!in_array($resumePathRes, $this->resumeValidations)) {
+            # check if resume validations are fine
             $resumePath = $resumePathRes;
-            if ($uploaded != 0) {//uploaded
+            if ($uploaded == 1) {//uploaded
                 $resumeOriginalName = $input['resume']->getClientOriginalName();
             }
         } else if (in_array($resumePathRes, $this->resumeValidations)) {

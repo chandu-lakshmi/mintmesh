@@ -615,7 +615,7 @@ class EnterpriseAppController extends \BaseController {
             $validation = $this->referralsGateway->validatereferContact($inputUserData);
             if($validation['status'] == 'success') {
                 $inputUserData['is_ent'] = TRUE;
-                $response = $this->referralsGateway->referContactV2($inputUserData);
+                $response = $this->referralsGateway->enterpriseReferContact($inputUserData);
                 return \Response::json($response);
             } else {
                     // returning validation failure
