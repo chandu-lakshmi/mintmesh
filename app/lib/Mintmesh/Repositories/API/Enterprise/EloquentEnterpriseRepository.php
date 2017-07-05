@@ -329,10 +329,10 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         }
         
         public function getCompanyBucketsList($params){
-            $sql = 'SELECT b.name AS bucket_name,b.id as bucket_id, COUNT(DISTINCT bc.contact_id) AS count
+            $sql = 'SELECT b.name AS bucket_name,b.id as bucket_id, COUNT(DISTINCT bc.contact_id) AS count,b.company_id as company_id 
                     FROM buckets b
                     LEFT JOIN buckets_contacts bc ON bc.bucket_id=b.id AND bc.company_id="'.$params['company_id'].'"
-                    WHERE 1 AND (b.company_id = "'.$params['company_id'].'" OR b.company_id = "0") AND status = "1"
+                    WHERE 1 AND (b.company_id = "'.$params['company_id'].'" OR b.company_id = "0") AND b.status = "1"
                     GROUP BY b.id';
             $result = DB::select($sql);     
         return $result;

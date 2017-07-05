@@ -861,6 +861,7 @@ class EnterpriseGateway {
                 $record['bucket_id']   = (int)$result->bucket_id;
                 $record['bucket_name'] = $result->bucket_name;
                 $record['count']       = $result->count;
+                $record['company_id']       = $result->company_id;
                 array_push($bucketsListArr,$record);
             }  
             $totalCountObj = $this->enterpriseRepository->contactsCount($params);
