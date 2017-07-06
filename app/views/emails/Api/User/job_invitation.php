@@ -83,7 +83,7 @@
                                         <tr><td width="20%" style="color:#939393;padding:5px 0;vertical-align:top;">Location:</td><td width="80%" style="color:#252525;padding:5px 0;"><?php echo $location ; ?></td></tr>
                                         <tr><td style="color:#939393;padding:5px 0;vertical-align:top;">Job Description:</td></tr>
                                         <tr><td colspan="2" style="padding:5px 0;">
-                                                <pre style="line-height: 1.5;width: 507px;white-space: pre-line;border: 0;background: transparent;margin: 0;padding: 0;padding-top: 5px;font-size: inherit;font-family: inherit;">
+                                                <pre style="line-height: 1.5;width: 507px;white-space: pre-line;border: 0;background: transparent;margin: 0;padding: 0;font-family:Arial, Helvetica, sans-serif;font-size:14px;">
                                                  <?php echo $job_description ; ?>   
                                                 </pre>
                                             </td>
