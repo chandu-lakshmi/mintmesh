@@ -1879,15 +1879,17 @@ class ReferralsGateway {
 
         #if enterprise user flag
         $isEnt = !empty($input['is_ent']) ? $input['is_ent'] : 0;
-        $referNonMintmesh = $nonMintmeshPhoneRefer = 0;
-        $uploadedByP2 = $documentId = 0;
-        $p3CvOriginalName = $referResumePath = "";
+        $referNonMintmesh   = $nonMintmeshPhoneRefer = 0;
+        $uploadedByP2       = $documentId = 0;
+        $p3CvOriginalName   = $referResumePath = "";
+        $relationCount      = 1;
         
-        $this->loggedinUserDetails = $this->getLoggedInUser();
-        $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid);
-        $userEmail  = $this->neoLoggedInUserDetails->emailid;
-        $userId     = $this->loggedinUserDetails->id;
-        $relationCount = 1;
+        $this->loggedinUserDetails      = $this->getLoggedInUser();
+        $this->neoLoggedInUserDetails   = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid);
+        $userEmail      = $this->neoLoggedInUserDetails->emailid;
+        $userId         = $this->loggedinUserDetails->id;
+        $isSelfReferral = ($this->loggedinUserDetails->emailid == $input['referring']) ? 1 : 0;
+            
         #count for all relations
         $existingRelationCount = $this->referralsRepository->getReferralsCount(Config::get('constants.REFERRALS.GOT_REFERRED'), $input['post_id'], $userEmail, $input['refer_to']);
         if ($existingRelationCount < Config::get('constants.REFERRALS.MAX_REFERRALS')) {
@@ -1907,55 +1909,43 @@ class ReferralsGateway {
                 if (!$resumeResult['status']) {
                     return $this->commonFormatter->formatResponse(406, "error", $resumeResult['message'], array());
                 } else {
-                    $referResumePath = $resumeResult['resume_path'];
-                    $uploadedByP2 = $resumeResult['uploaded'];
-                    $p3CvOriginalName = $resumeResult['resume_original_name'];
+                    $referResumePath    = $resumeResult['resume_path'];
+                    $uploadedByP2       = $resumeResult['uploaded'];
+                    $p3CvOriginalName   = $resumeResult['resume_original_name'];
                 }
             }
             if (!empty($input['refer_non_mm_email']) && !empty($input['referring'])) {
-                $nonMintmeshPhoneRefer = 1;
+                $nonMintmeshPhoneRefer = 1;//continue only when the request count is in limit
             }
-            //continue only when the request count is in limit
-            //create a relation between the post and user
+            #create a relation between the post and user
             $oldRelationCount = $this->referralsRepository->getOldRelationsCount($input['post_id'], $input['referring'], $nonMintmeshPhoneRefer);
             if (!empty($oldRelationCount)) {
                 $relationCount = $oldRelationCount + 1;
-                //$message = array('msg'=>array(Lang::get('MINTMESH.referrals.already_referred')));
-                //return $this->commonFormatter->formatResponse(406, "error", $message, array()) ;
             }
-
-            if (!empty($input['refer_non_mm_email']) && !empty($input['referring'])) {//non mintmesh and refer 
-                if (!empty($input['referring_phone_no'])) {//create node for this and relate
-                    $input['referring'] = $this->appEncodeDecode->formatphoneNumbers(strtolower($input['referring']));
-
-                    $nonMintmeshContactExist = $this->contactsRepository->getNonMintmeshContact($input['referring']);
-                    //$nonMintmeshContactExist = $this->appEncodeDecode->formatphoneNumbers($input['referring']);
-                    //print_r($nonMintmeshContactExist).exit;
+            #non mintmesh and refer 
+            if (!empty($input['refer_non_mm_email']) && !empty($input['referring'])) {
+                #create node for this and relate
+                if (!empty($input['referring_phone_no'])) {
+                    
                     $phoneContactInput = $phoneContactRelationInput = array();
                     $phoneContactInput['firstname'] = $phoneContactInput['lastname'] = $phoneContactInput['fullname'] = "";
+                    
+                    $input['referring']         = $this->appEncodeDecode->formatphoneNumbers(strtolower($input['referring']));
+                    $nonMintmeshContactExist    = $this->contactsRepository->getNonMintmeshContact($input['referring']);
+                    
                     $phoneContactRelationInput['firstname'] = !empty($input['referring_user_firstname']) ? $this->appEncodeDecode->filterString($input['referring_user_firstname']) : '';
-                    $phoneContactRelationInput['lastname'] = !empty($input['referring_user_lastname']) ? $this->appEncodeDecode->filterString($input['referring_user_lastname']) : '';
-                    $phoneContactRelationInput['fullname'] = $phoneContactRelationInput['firstname'] . " " . $phoneContactRelationInput['lastname'];
-                    $phoneContactInput['phone'] = !empty($input['referring']) ? $this->appEncodeDecode->formatphoneNumbers($input['referring']) : '';
+                    $phoneContactRelationInput['lastname']  = !empty($input['referring_user_lastname']) ? $this->appEncodeDecode->filterString($input['referring_user_lastname']) : '';
+                    $phoneContactRelationInput['fullname']  = $phoneContactRelationInput['firstname'] . " " . $phoneContactRelationInput['lastname'];
+                    $phoneContactInput['phone']             = !empty($input['referring']) ? $this->appEncodeDecode->formatphoneNumbers($input['referring']) : '';
+                    #create import relation
                     if (!empty($nonMintmeshContactExist)) {
-                        //create import relation
                         $relationCreated = $this->contactsRepository->relateContacts($this->neoLoggedInUserDetails, $nonMintmeshContactExist[0], $phoneContactRelationInput, 1);
                     } else {
                         $importedContact = $this->contactsRepository->createNodeAndRelationForPhoneContacts($userEmail, $phoneContactInput, $phoneContactRelationInput);
                     }
-                    //send sms invitation to p3
-                    #not send to enterprise user 
-                    if (empty($isEnt)) {
-                        $smsInput = array();
-                        $smsInput['numbers'] = json_encode(array($phoneContactInput['phone']));
-                        $otherUserDetails = $this->neoUserRepository->getNodeByEmailId($input['refer_to']);
-                        $smsInput['other_name'] = !empty($otherUserDetails->fullname) ? $otherUserDetails->fullname : "";
-                        $smsInput['sms_type'] = 3;
-                        $smsSent = $this->smsGateway->sendSMSForReferring($smsInput);
-                    }
                     $referNonMintmesh = 1;
                 } else {
-                    //check if p2 imported p3
+                    #check if p2 imported p3
                     $isImported = $this->contactsRepository->getContactByEmailid($input['referring']);
                     if (empty($isImported)) {
                         $message = array('msg' => array(Lang::get('MINTMESH.referrals.no_import')));
@@ -1971,43 +1961,50 @@ class ReferralsGateway {
                     }
                 }
             }
+            #Neo4j GOT_REFERRED relation attributes
             $relationAttrs = array();
-            $relationAttrs['document_id'] = $documentId;
-            $relationAttrs['referred_by'] = strtolower($userEmail);
-            $relationAttrs['referred_for'] = strtolower($input['refer_to']);
-            $relationAttrs['created_at'] = gmdate("Y-m-d H:i:s");
-            $relationAttrs['status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
-            $relationAttrs['one_way_status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
+            $relationAttrs['document_id']       = $documentId;
+            $relationAttrs['referred_by']       = strtolower($userEmail);
+            $relationAttrs['referred_for']      = strtolower($input['refer_to']);
+            $relationAttrs['created_at']        = gmdate("Y-m-d H:i:s");
+            $relationAttrs['status']            = Config::get('constants.REFERRALS.STATUSES.PENDING');
+            $relationAttrs['one_way_status']    = Config::get('constants.REFERRALS.STATUSES.PENDING');
+            $relationAttrs['relation_count']    = $relationCount;
+            $relationAttrs['resume_path']       = $referResumePath;
+            $relationAttrs['uploaded_by_p2']    = $uploadedByP2;
+            $relationAttrs['resume_original_name']  = $p3CvOriginalName;
             if (!empty($input['message'])) {
                 $relationAttrs['message'] = $input['message'];
             }
             if (!empty($input['bestfit_message'])) {
                 $relationAttrs['bestfit_message'] = $input['bestfit_message'];
             }
-            $relationAttrs['relation_count'] = $relationCount;
-            $relationAttrs['resume_path'] = $referResumePath;
-            $relationAttrs['uploaded_by_p2'] = $uploadedByP2;
-            $relationAttrs['resume_original_name'] = $p3CvOriginalName;
+            #creating GOT_REFERRED relation here
             if (!empty($referNonMintmesh)) {
                 $result = $this->referralsRepository->referContactByPhone($userEmail, $input['refer_to'], $input['referring'], $input['post_id'], $relationAttrs);
             } else {
+                
+                $isExist = $referringNodeId = $this->referralsRepository->checkUserNodeWithEmailid($input['referring']);
+                if(empty($isExist)){
+                    $neoInput = array();
+                    $neoInput['emailid']    = $input['referring'];
+                    $neoInput['firstname']  = $neoInput['fullname'] = $neoInput['phone'] = '';
+                    $referringNodeId = $this->referralsRepository->createUserNodeWithEmailid($neoInput);
+                }
                 $result = $this->referralsRepository->referContact($userEmail, $input['refer_to'], $input['referring'], $input['post_id'], $relationAttrs);
             }
+            #check result
             if (!empty($result)) {
-                
                 #update Got Referred Id in CompanyResumes table
-                if (isset($result[0]) && !empty($result[0][1])) {
+                if (!empty($documentId) && isset($result[0]) && !empty($result[0][1])) {
                     $gotReferredId = $result[0][1];
                     $this->enterpriseRepository->updateCompanyResumesWithGotReferredId($documentId, $gotReferredId);
                 }
-//                  if self referrence
-                if ($this->loggedinUserDetails->emailid == $input['referring']) {
-                    $notificationType = 23;
-                } else {
-                    $notificationType = 10;
-                }
-                //send notification to the person who created post
+                #if self referrence
+                $notificationType = ($isSelfReferral) ? 23 : 10;
+                #send notification to the person who created post
                 $this->userGateway->sendNotification($this->loggedinUserDetails, $this->neoLoggedInUserDetails, $input['refer_to'], $notificationType, array('extra_info' => $input['post_id']), array('other_user' => $input['referring'], 'p3_non_mintmesh' => 1));
+                
                 $message = array('msg' => array(Lang::get('MINTMESH.referrals.success')));
                 return $this->commonFormatter->formatResponse(200, "success", $message, array());
             } else {
@@ -2015,7 +2012,7 @@ class ReferralsGateway {
                 return $this->commonFormatter->formatResponse(406, "error", $message, array());
             }
         } else {
-            //return limit crossed message
+            #return limit crossed message
             $message = array('msg' => array(Lang::get('MINTMESH.referrals.limit_crossed')));
             return $this->commonFormatter->formatResponse(200, "success", $message, array());
         }

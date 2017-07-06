@@ -1318,6 +1318,45 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
         $query = "SELECT file_source,file_original_name FROM company_resumes WHERE id = ".$docId." AND company_id = ".$companyId."";
         return DB::select($query);
     }
+    
+    public function checkUserNodeWithEmailid($emailid = ''){
+        
+        $return = FALSE;
+        if($emailid){
+            $emailid = $this->appEncodeDecode->filterString(strtolower($emailid));
+            $queryString = "MATCH (u:User) where u.emailid='".$emailid."' return ID(u)";
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if(isset($result[0]) && !empty($result[0][0])){
+               $return =  $result[0][0];
+            }
+        } 
+        return $return;
+    }
+    
+    public function createUserNodeWithEmailid($neoInput){
+        
+        $return = FALSE;
+        if(!empty($neoInput['emailid'])){
+            $neoInput['emailid'] = $this->appEncodeDecode->filterString(strtolower($neoInput['emailid']));
+            $queryString = " CREATE (u:User ";
+            if (!empty($neoInput)) {
+                $queryString.="{";
+                foreach ($neoInput as $k => $v) { 
+                    $queryString.=$k . ":'" . $this->appEncodeDecode->filterString($v) . "',";
+                }
+                $queryString = rtrim($queryString, ",");
+                $queryString.="}";
+            }
+            $queryString.=") return ID(u)";
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if(isset($result[0]) && !empty($result[0][0])){
+               $return =  $result[0][0];
+            }
+        }
+        return $return;
+    }
 
 }
 
