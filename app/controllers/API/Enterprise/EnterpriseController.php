@@ -565,7 +565,7 @@ class EnterpriseController extends \BaseController {
             // Receiving user input data
             $inputUserData = \Input::all();
             // Validating user input data
-            $validation = $this->EnterpriseGateway->validateupdateCreateBucket($inputUserData);
+            $validation = $this->EnterpriseGateway->validateUpdateBucket($inputUserData);
             if($validation['status'] == 'success') {
                $response = $this->EnterpriseGateway->updateBucket($inputUserData);
                return \Response::json($response);

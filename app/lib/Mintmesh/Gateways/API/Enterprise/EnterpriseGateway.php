@@ -44,6 +44,7 @@ class EnterpriseGateway {
     const REFRESH_TOKEN = 'refresh_token';
     const AUTHORIZATION = 'Authorization';
     const CREATED_IN = 'created_in';
+    const Buckets_Inactive_STATUS = 2;
 
     protected $userRepository, $enterpriseRepository, $enterpriseValidator, $userFileUploader, $commonFormatter, $authorizer, $appEncodeDecode, $neoEnterpriseRepository;
     protected $allowedHeaders, $allowedExcelExtensions, $createdNeoUser, $referralsGateway, $contactsRepository,$referralsRepository,$myExcel;
@@ -170,7 +171,7 @@ class EnterpriseGateway {
         return $this->doValidation('create_bucket', 'MINTMESH.user.valid');
     }
     //validation on Create update Bucket input
-    public function validateupdateUpdateBucket($input) {
+    public function validateUpdateBucket($input) {
         return $this->doValidation('update_bucket', 'MINTMESH.user.valid');
     }
     //validation on contacts input file
@@ -1799,24 +1800,31 @@ class EnterpriseGateway {
     }
     
     public function updateBucket($input){ 
+       
         $response = $data = $setData = array();
         $createdAt = gmdate("Y-m-d H:i:s");
         $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser();
         $userEmailId    = $this->loggedinUserDetails->emailid;
         $userId         = $this->loggedinUserDetails->id;
         $companyCode    = !empty($input['company_code'])?$input['company_code']:0;
-        $bucket     = !empty($input['bucket_name'])?$input['bucket_name']:'';
-        $bucketStatus     = 2;//!empty($input['status'])?$input['status']:'';
-        $bucketId     = !empty($input['id'])?$input['id']:'';
-        $bucketName = $this->appEncodeDecode->filterString($bucket);
+        $bucketStatus     = self::Buckets_Inactive_STATUS;//!empty($input['status'])?$input['status']:'';
+        $bucketId     = !empty($input['bucket_id'])?$input['bucket_id']:'';
         // get the logged in user company details with company code here
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId      = !empty($companyDetails[0]->id)?$companyDetails[0]->id:0; 
        // $isBucketExist  = $this->enterpriseRepository->isBucketExist($userId, $companyId, $bucketName);
        
+        if($bucketId){
             //update bucket in MySql here
-            $bucketId = $this->enterpriseRepository->updateExistBucket($userId, $bucketId, $companyId,$bucketStatus, $createdAt);
-         
+            $IsDeleted = $this->enterpriseRepository->updateExistBucket($userId, $bucketId, $companyId,$bucketStatus, $createdAt);
+          if($IsDeleted){
+          $message = array('msg' => array(Lang::get('MINTMESH.companyDetails.bucket_deleted')));
+          }else{
+               $message = array('msg' => array(Lang::get('MINTMESH.companyDetails.bucket_delete_fail')));
+          }
+        }else{
+            $message = array('msg' => array(Lang::get('Bucket Id Doesnot exist')));
+        }
         return $this->commonFormatter->formatResponse(200, "success", $message);
     }
     

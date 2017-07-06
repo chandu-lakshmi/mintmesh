@@ -134,11 +134,11 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             
             $result = false;
             $ipAddress = !empty($_SERVER['REMOTE_ADDR'])?$_SERVER['REMOTE_ADDR']:0;
-            if (!empty($userId) && !empty($companyId) && !empty($bucketName))
+            if (!empty($userId) && !empty($companyId))
             {   
                 //$sql = "insert into import_contacts_buckets (`user_id`,`company_id`,`name`)" ;
-                $sql = "UPDATE buckets SET (`updated_by`='". $userId ."', `company_id`='". $companyId ."',`status`='". $bucketStatus ."',`created_at`='".$createdAt."',`ip_address`'".$ipAddress."') WHERE `id` = '".$id."'";
-               
+                $sql = "UPDATE buckets SET (`updated_by`='". $userId ."', `company_id`='". $companyId ."',`status`='". $bucketStatus ."',`created_at`='".$createdAt."',`ip_address`='".$ipAddress."') WHERE `id` = '".$id."'";
+               echo $sql; die;
                 DB::statement($sql);
                 $last_insert_id = DB::Select("SELECT LAST_INSERT_ID() as last_id"); 
                 $result = $last_insert_id[0]->last_id;

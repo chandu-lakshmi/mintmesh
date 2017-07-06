@@ -88,8 +88,7 @@ class EnterpriseValidator extends Validator {
                 'bucket_name'         => 'required'
         ),
         'update_bucket' =>array(
-                'company_code'        => 'required',
-                'bucket_id'         => 'required'
+                'company_code'        => 'required'
         ),
         'contacts_file' =>array(
                 'file_name'         => 'required'
