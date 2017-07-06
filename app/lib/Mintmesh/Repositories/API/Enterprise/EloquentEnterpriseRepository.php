@@ -151,7 +151,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             if (!empty($userId) && !empty($companyId) && !empty($bucketName))
             {  
                 //$sql = "select COUNT(id) as count from import_contacts_buckets where user_id = '".$userId."' and company_id = '".$companyId."' and name like '".$bucketName."' " ;
-                $sql = "select COUNT(id) as count from buckets where user_id = '".$userId."' and company_id = '".$companyId."'" ;//and name like '".$bucketName."'
+                $sql = "select COUNT(id) as count from buckets where user_id = '".$userId."' and company_id = '".$companyId."' and name like '".$bucketName."' and status = 1 " ;
                 //echo $sql;exit;
                 $result = DB::Select($sql);
                 $response = $result[0]->count;
