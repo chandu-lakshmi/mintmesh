@@ -151,7 +151,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             if (!empty($userId) && !empty($companyId) && !empty($bucketName))
             {  
                 //$sql = "select COUNT(id) as count from import_contacts_buckets where user_id = '".$userId."' and company_id = '".$companyId."' and name like '".$bucketName."' " ;
-                $sql = "select COUNT(id) as count from buckets where user_id = '".$userId."' and company_id = '".$companyId."' and name like '".$bucketName."' " ;
+                $sql = "select COUNT(id) as count from buckets where user_id = '".$userId."' and company_id = '".$companyId."'" ;//and name like '".$bucketName."'
                 //echo $sql;exit;
                 $result = DB::Select($sql);
                 $response = $result[0]->count;
@@ -1234,7 +1234,17 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                 ->where('company_id', '=', $companyId)
                 ->where('hcm_jobs_id', '=', $hcmJobsId)->get();
     }
-    
+    public function getCompanyMappingFieldsCount($companyId='', $company_hcm_jobs_id) {
+         return DB::table('company_hcm_jobs_fields_mapping')  
+                ->where('company_id', '=', $companyId)
+                ->where('company_hcm_jobs_id', '=', $company_hcm_jobs_id)->count();
+    }
+    public function getCompanyConfigProperties($companyId,$hcm_id) {
+         return DB::table('hcm_config_properties')
+                 ->select('config_name','config_value')
+                ->where('company_id', '=', $companyId)
+                ->where('hcm_id', '=', $hcm_id)->get();
+    }  
     public function integrateCompany($input = array()) {
          $result = DB::table('company_idp')->insert(
                                 array(
