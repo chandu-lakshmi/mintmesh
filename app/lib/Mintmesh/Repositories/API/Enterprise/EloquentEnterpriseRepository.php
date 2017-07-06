@@ -137,8 +137,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             if (!empty($userId) && !empty($companyId))
             {   
                 //$sql = "insert into import_contacts_buckets (`user_id`,`company_id`,`name`)" ;
-                $sql = "UPDATE buckets SET (`updated_by`='". $userId ."', `company_id`='". $companyId ."',`status`='". $bucketStatus ."',`created_at`='".$createdAt."',`ip_address`='".$ipAddress."') WHERE `id` = '".$id."'";
-               echo $sql; die;
+                $sql = "UPDATE buckets SET `updated_by`='". $userId ."', `company_id`='". $companyId ."',`status`='". $bucketStatus ."',`created_at`='".$createdAt."',`ip_address`='".$ipAddress."' WHERE `id` = '".$id."'";
                 DB::statement($sql);
                 $last_insert_id = DB::Select("SELECT LAST_INSERT_ID() as last_id"); 
                 $result = $last_insert_id[0]->last_id;
