@@ -1817,7 +1817,7 @@ class EnterpriseGateway {
         if($bucketId){
             //update bucket in MySql here
             $IsDeleted = $this->enterpriseRepository->updateExistBucket($userId, $bucketId, $companyId,$bucketStatus, $createdAt);
-          if($IsDeleted){
+          if(!$IsDeleted){
           $message = array('msg' => array(Lang::get('MINTMESH.companyDetails.bucket_deleted')));
           }else{
                $message = array('msg' => array(Lang::get('MINTMESH.companyDetails.bucket_delete_fail')));
