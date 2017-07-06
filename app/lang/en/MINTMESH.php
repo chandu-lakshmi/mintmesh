@@ -382,7 +382,7 @@ return array(
         "bucket_success" => "Bucket successfully created",
         "bucket_failure" => "Failed to create bucket",
         "bucket_exsisted" => "Bucket name already exsisted",
-        "bucket_deleted" => "Comminity deleted successfully",
+        "bucket_deleted" => "Community deleted successfully.",
         "bucket_delete_fail" => "Comminity Not Deleted",
         "company_not_exists" => "Invalid Company Code",
         "company_already_connected" => "Company already connected"
