@@ -1924,40 +1924,36 @@ class ReferralsGateway {
             }
             #non mintmesh and refer 
             if (!empty($input['refer_non_mm_email']) && !empty($input['referring'])) {
+                #p3 user details
+                $neoContactInput = $neoContactRelInput = array();
+                $neoContactInput['firstname'] = $neoContactInput['lastname'] = $neoContactInput['fullname'] = "";
+                #relation details
+                $neoContactRelInput['firstname'] = !empty($input['referring_user_firstname']) ? $this->appEncodeDecode->filterString($input['referring_user_firstname']) : '';
+                $neoContactRelInput['lastname']  = !empty($input['referring_user_lastname']) ? $this->appEncodeDecode->filterString($input['referring_user_lastname']) : '';
+                $neoContactRelInput['fullname']  = $neoContactRelInput['firstname'] . " " . $neoContactRelInput['lastname'];
                 #create node for this and relate
                 if (!empty($input['referring_phone_no'])) {
                     
-                    $phoneContactInput = $phoneContactRelationInput = array();
-                    $phoneContactInput['firstname'] = $phoneContactInput['lastname'] = $phoneContactInput['fullname'] = "";
-                    
                     $input['referring']         = $this->appEncodeDecode->formatphoneNumbers(strtolower($input['referring']));
                     $nonMintmeshContactExist    = $this->contactsRepository->getNonMintmeshContact($input['referring']);
-                    
-                    $phoneContactRelationInput['firstname'] = !empty($input['referring_user_firstname']) ? $this->appEncodeDecode->filterString($input['referring_user_firstname']) : '';
-                    $phoneContactRelationInput['lastname']  = !empty($input['referring_user_lastname']) ? $this->appEncodeDecode->filterString($input['referring_user_lastname']) : '';
-                    $phoneContactRelationInput['fullname']  = $phoneContactRelationInput['firstname'] . " " . $phoneContactRelationInput['lastname'];
-                    $phoneContactInput['phone']             = !empty($input['referring']) ? $this->appEncodeDecode->formatphoneNumbers($input['referring']) : '';
+                    $phoneContactInput['phone'] = !empty($input['referring']) ? $this->appEncodeDecode->formatphoneNumbers($input['referring']) : '';
                     #create import relation
                     if (!empty($nonMintmeshContactExist)) {
-                        $relationCreated = $this->contactsRepository->relateContacts($this->neoLoggedInUserDetails, $nonMintmeshContactExist[0], $phoneContactRelationInput, 1);
+                        $relationCreated = $this->contactsRepository->relateContacts($this->neoLoggedInUserDetails, $nonMintmeshContactExist[0], $neoContactRelInput, 1);
                     } else {
-                        $importedContact = $this->contactsRepository->createNodeAndRelationForPhoneContacts($userEmail, $phoneContactInput, $phoneContactRelationInput);
+                        $importedContact = $this->contactsRepository->createNodeAndRelationForPhoneContacts($userEmail, $phoneContactInput, $neoContactRelInput);
                     }
                     $referNonMintmesh = 1;
                 } else {
-                    #check if p2 imported p3
-                    $isImported = $this->contactsRepository->getContactByEmailid($input['referring']);
-                    if (empty($isImported)) {
-                        $message = array('msg' => array(Lang::get('MINTMESH.referrals.no_import')));
-                        return $this->commonFormatter->formatResponse(406, "error", $message, array());
+                    #check User Node already there or not
+                    $referringNodeId = $this->referralsRepository->checkUserNodeWithEmailid($input['referring']);
+                    if(!empty($referringNodeId)){
+                        #check if p2 imported p3
+                        $this->contactsRepository->createUserRelationWithEmailid($userEmail, $referringNodeId, $neoContactRelInput);
                     } else {//send invitation email to p3
-                        #not send to enterprise user 
-                        if (empty($isEnt)) {
-                            $postInvitationArray = array();
-                            $postInvitationArray['emails'] = json_encode(array($input['referring']));
-                            $postInvitationArray['post_id'] = $input['post_id'];
-                            $invited = $this->contactsGateway->sendPostReferralInvitations($postInvitationArray);
-                        }
+                        $neoContactInput['emailid'] = $input['referring'];
+                        #create User Node here
+                        $referringNodeId = $this->contactsRepository->createUserNodeAndRelationWithEmailid($userEmail, $neoContactInput, $neoContactRelInput);
                     }
                 }
             }
@@ -1983,14 +1979,7 @@ class ReferralsGateway {
             if (!empty($referNonMintmesh)) {
                 $result = $this->referralsRepository->referContactByPhone($userEmail, $input['refer_to'], $input['referring'], $input['post_id'], $relationAttrs);
             } else {
-                
-                $isExist = $referringNodeId = $this->referralsRepository->checkUserNodeWithEmailid($input['referring']);
-                if(empty($isExist)){
-                    $neoInput = array();
-                    $neoInput['emailid']    = $input['referring'];
-                    $neoInput['firstname']  = $neoInput['fullname'] = $neoInput['phone'] = '';
-                    $referringNodeId = $this->referralsRepository->createUserNodeWithEmailid($neoInput);
-                }
+                #here creating GOT_REFERRED relation with emailid
                 $result = $this->referralsRepository->referContact($userEmail, $input['refer_to'], $input['referring'], $input['post_id'], $relationAttrs);
             }
             #check result

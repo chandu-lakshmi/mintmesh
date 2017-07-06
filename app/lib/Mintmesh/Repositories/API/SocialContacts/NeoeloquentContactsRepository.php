@@ -375,6 +375,78 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
         $sql = "UPDATE company_resumes SET status = '2',updated_at = '" . NOW() . "' WHERE company_id ='" . $input['tenant_id'] . "' AND id = '". $input['doc_id'] ."'";
         DB::Statement($sql);
     }
+    
+    
+    public function createUserNodeAndRelationWithEmailid($p2userEmailid = '', $nodeAttrs = array(), $relationAttrs = array()){
+        
+        $return = FALSE;
+        if(!empty($nodeAttrs['emailid']) && !empty($p2userEmailid)){
+            $nodeAttrs['emailid'] = $this->appEncodeDecode->filterString(strtolower($nodeAttrs['emailid']));
+            $queryString = "MATCH (u:User:Mintmesh) WHERE u.emailid = '".$p2userEmailid."' ";
+            #form user node data here
+            $queryString.= " CREATE (n:User ";
+            if (!empty($nodeAttrs)) {
+                $queryString.="{";
+                foreach ($nodeAttrs as $k => $v) { 
+                    $queryString.=$k . ":'" . $this->appEncodeDecode->filterString($v) . "',";
+                }
+                $queryString = rtrim($queryString, ",");
+                $queryString.="}";
+            }
+            #form user relation data here
+            $queryString.=" )<-[:" . Config::get('constants.RELATIONS_TYPES.IMPORTED');
+            if (!empty($relationAttrs)) {
+                $relationAttrs['created_at'] = gmdate("m-d-Y H:i:s A");
+                $queryString.="{";
+                foreach ($relationAttrs as $k => $v) {
+                    $queryString.=$k . ":'" . $this->appEncodeDecode->filterString($v) . "',";
+                }
+                $queryString = rtrim($queryString, ",");
+                $queryString.="}";
+            }
+            $queryString.="]-(u) return ID(n)";
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if(isset($result[0]) && !empty($result[0][0])){
+               $return =  $result[0][0];
+            }
+        }
+        return $return;
+    }
+    
+    public function createUserRelationWithEmailid($p2userEmailid = '', $referringNodeId = 0,  $relationAttrs = array()){
+        
+        $return = TRUE;
+        if(!empty($referringNodeId) && !empty($p2userEmailid)){
+            
+            $queryString = "MATCH (u:User:Mintmesh)-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."]-(n:User) WHERE u.emailid = '".$p2userEmailid."' and ID(n)=".$referringNodeId." ";
+            $queryString.= " return ID(r)";
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            $existRelation = isset($result[0]) ? 0 : 1;
+            #check if IMPORTED or not
+            if($existRelation){
+                $queryString = "MATCH (u:User:Mintmesh),(n:User) WHERE u.emailid = '".$p2userEmailid."' and ID(n)=".$referringNodeId." ";
+                #form user relation data here
+                $queryString.=" merge (n)<-[:" . Config::get('constants.RELATIONS_TYPES.IMPORTED');
+                if (!empty($relationAttrs)) {
+                    $queryString.="{";
+                    foreach ($relationAttrs as $k => $v) {
+                        $queryString.=$k . ":'" . $this->appEncodeDecode->filterString($v) . "',";
+                    }
+                    $queryString = rtrim($queryString, ",");
+                    $queryString.="}";
+                }
+                $queryString.="]-(u) return ID(n)";
+                $query = new CypherQuery($this->client, $queryString);
+                $result = $query->getResultSet();
+                if(isset($result[0]) && !empty($result[0][0])){
+                   $return =  $result[0][0];
+                }
+            }    
+        }
+        return $return;
+    }
 
 }
 
