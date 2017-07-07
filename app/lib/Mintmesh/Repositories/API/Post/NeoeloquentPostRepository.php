@@ -1309,6 +1309,22 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         }
         return $return; 
     }
+    
+    public function updateMobileReferCandidateResume($neoInput = array(), $gotReferredId = 0) {
+        
+        $return = 0;
+        if(!empty($gotReferredId)){
+            $queryString = "match (p:Post)-[r:GOT_REFERRED]-(u:User) where ID(r)=".$gotReferredId." ";
+            $queryString.= "set r.document_id='".$neoInput['document_id']."' ,r.resume_path='".$neoInput['resume_path']."',r.resume_original_name='".$neoInput['resume_original_name']."' ";
+            $queryString.= " return ID(r)";
+            $query  = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if(isset($result[0]) && isset($result[0][0])){
+                $return = $result[0][0];
+            }
+        }
+        return $return; 
+    }
 }
 
 ?>

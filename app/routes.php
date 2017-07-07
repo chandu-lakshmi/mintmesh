@@ -130,6 +130,8 @@ Route::group(array('prefix' => 'v1'), function() {
       Route::post("enterprise/refer_candidate", "API\Post\PostController@referCandidate");
       //applying job 
       Route::post("enterprise/apply_job", "API\Post\PostController@applyJob");
+      //applying job 
+      Route::post("enterprise/apply_job_ref", "API\Post\PostController@applyJobRef");
       //decrpyting ref
       Route::post("enterprise/decrypt_ref", "API\Post\PostController@decryptRef");
       //decrpyting ref

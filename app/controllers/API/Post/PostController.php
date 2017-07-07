@@ -342,6 +342,32 @@ class PostController extends \BaseController {
             }
         }
         
+        /**
+	 * applying for a post
+         * 
+         * POST/apply_job_ref
+         * 
+         * @param string $firstname firstname of the candidate
+         * @param string $emailid emailid of the candidate
+         * @param string $phone_number phone number of the candidate
+         * @param string $cv cv of the candidate
+	 * @return Response
+	 */
+        public function applyJobRef()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->PostGateway->applyJobRefInput($inputUserData);
+            if($validation['status'] == 'success') {
+                $response = $this->PostGateway->applyJobRef($inputUserData);
+                return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+        }
+        
         public function decryptRef() {
            // Receiving user input data
            $inputUserData = \Input::all();
