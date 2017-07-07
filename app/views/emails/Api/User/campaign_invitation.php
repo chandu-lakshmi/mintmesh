@@ -70,7 +70,7 @@
                                        <tr>
                                           <td width="45%">
                                              <?php echo $campaign_start_date; ?>
-                                             <span style="font-weight: 100;font-size: 24px;">?php echo $campaign_start_time; ?></span>
+                                             <span style="font-weight: 100;font-size: 24px;"><?php echo $campaign_start_time; ?></span>
                                           </td>
                                           <td width="10%">to</td>
                                           <td width="45%" align="center">
@@ -106,7 +106,7 @@
             <tr>
                <td style="padding: 0 28px 34px 28px;">
                   <a href="https://www.facebook.com/dialog/feed?app_id=<?php echo $app_id; ?>&quote=click below to apply&display=popup&amp;caption=&name=Here is a campaign at <?php echo $company_name; ?> for <?php echo $campaign_name; ?>&description=Starts on:<?php echo $campaign_start_date; ?> and Ends on:<?php echo $campaign_end_date; ?>, Location: <?php echo $campaign_location; ?>&picture=<?php echo !empty($company_logo)?$company_logo:''; ?>&link=<?php echo $view_jobs_link; ?>&redirect_uri=<?php echo $view_jobs_link; ?>&domain=enterprisestaging.mintmesh.com&origin=http://enterprisestaging.mintmesh.com"><img src="<?php echo $public_url ;?>images/f_social.png" alt="fb" width="35px" style="width:35px;padding-right:5px"></a>
-                <a href="https://www.linkedin.com/shareArticle?mini=true&url=<?php echo $bittly_link; ?>&title=Here is a campaign at <?php echo $company_name; ?> for <?php echo $campaign_name; ?>&summary=Starts on:<?php echo $campaign_start_date; ?> and Ends on:<?php echo $campaign_end_date; ?>, Location: <?php echo $campaign_location; ?>&source=<?php echo $company_name; ?>"><img src="<?php echo $public_url ;?>images/in_social.png" alt="linkedin" width="35px" style="width:35px;"></a>
+                <a href="https://www.linkedin.com/shareArticle?mini=true&url=<?php echo $bittly_link; ?>&title=Here is a campaign at <?php echo $company_name; ?> for <?php echo $campaign_name; ?>&summary=Starts on:<?php echo $campaign_start_date; ?> and Ends on:<?php echo $campaign_end_date; ?>, Location: <?php echo $campaign_location; ?>&source=<?php echo $company_name; ?>"><img src="<?php echo $public_url ;?>images/in_social.png" alt="linkedin" width="35px" style="width:35px;padding-right:5px;"></a>
                 <a href="https://twitter.com/intent/tweet?text=Here is a campaign at <?php echo $company_name; ?> for <?php echo $campaign_name; ?>&url=<?php echo $bittly_link; ?>&hashtags=&via=<?php echo $company_name; ?>&related="><img src="<?php echo $public_url ;?>images/t_social.png" alt="twitter" width="35px" style="width:35px;padding-right:5px"></a>
                 <!--<a href="https://twitter.com/intent/tweet?text=Here is a campaign at <?php echo $company_name; ?> for <?php echo $campaign_name; ?>, Starts on:<?php echo $campaign_start_date; ?> and Ends on:<?php echo $campaign_end_date; ?>, Location: <?php echo $campaign_location; ?>&url=<?php echo $bittly_link; ?>&hashtags=&via=<?php echo $company_name; ?>&related="><img src="<?php echo $public_url ;?>images/t_social.png" alt="twitter" width="35px" style="width:35px;margin-right:5px"></a>-->
                 <a href="https://plus.google.com/share?url=<?php echo $view_jobs_link; ?>"><img src="<?php echo $public_url ;?>images/g_social.png" alt="g+" width="35px" style="width:35px"></a>
