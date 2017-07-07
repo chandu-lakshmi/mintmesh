@@ -3117,13 +3117,12 @@ class PostGateway {
     
     public function applyJobRef($input) {
         
-        print_r($input).exit;
-        if(!empty($input['post_id']) && !empty($input['reference_id']) && !empty($input['cv'])){
+        if(!empty($input['post_id']) && !empty($input['ref']) && !empty($input['cv'])){
         
             $documentId = 0; 
             $neoInput   = array();
             $input['time_zone'] = !empty($input['timeZone'])?$input['timeZone']:0; 
-            $reference_id       = $input['reference_id'];
+            $reference_id       = $input['ref'];
             $postId             =  $input['post_id'];
             $companyDetils      = $this->neoPostRepository->getPostCompany($postId); 
 
