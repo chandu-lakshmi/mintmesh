@@ -1300,7 +1300,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         
         $return = 0;
         if(!empty($gotReferredId)){
-            $queryString = "match (p:Post)-[r:GOT_REFERRED]-(u:User) where ID(r)=".$gotReferredId."  return p,r,u limit 1";
+            $queryString = "match (p:Post)-[r:GOT_REFERRED]-(u:User) where ID(r)=".$gotReferredId."  return distinct(r),u,p limit 1";
             $query  = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             if(isset($result[0]) && isset($result[0][0])){
