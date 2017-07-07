@@ -89,7 +89,7 @@
                                  <td style="padding:20px 0 40px 0">
                                     <table cellpadding="0" border="0" style="width:70px;text-align:center;display:inline-block;font-family:Arial,Helvetica,sans-serif;font-size:14px">
                                         <tr>
-                                            <td>
+                                            <td style="background: #238260;">
                                              <a href="<?php echo $view_jobs_link_web; ?>" style="font-size: 13px;padding: 8px 12px;display: inline-block;border: 1px solid  #238260;border-radius: 2px;outline:none;background: #238260;color: #fff;cursor:pointer;text-decoration:none">REFFER</a>
                                             </td>
                                         </tr>
@@ -104,8 +104,8 @@
             </tr>
             <tr><td style="color: #999999;padding:30px 28px 6px">Share Campaign</td></tr>
             <tr>
-                <td style="border-bottom:1px solid #ccc;padding-bottom:30px;">
-                    <table>
+                <td style="border-bottom:1px solid #ccc;padding: 0 28px 30px;">
+                    <table cellspacing="0" cellpadding="0" width="100%" border="0">
                         <tr style="padding-top:10px;display:inline-block;">
                             <td style="padding-right:15px"><a href="https://www.facebook.com/dialog/feed?app_id=<?php echo $app_id; ?>&quote=click below to apply&display=popup&amp;caption=&name=Here is a campaign at <?php echo $company_name; ?> for <?php echo $campaign_name; ?>&description=Starts on:<?php echo $campaign_start_date; ?> and Ends on:<?php echo $campaign_end_date; ?>, Location: <?php echo $campaign_location; ?>&picture=<?php echo !empty($company_logo)?$company_logo:''; ?>&link=<?php echo $view_jobs_link; ?>&redirect_uri=<?php echo $view_jobs_link; ?>&domain=enterprisestaging.mintmesh.com&origin=http://enterprisestaging.mintmesh.com" style="cursor:pointer"><img src="<?php echo $public_url ;?>images/f_social.png" height="40px" width="40px" alt="fb"></a></td>
                             <td style="padding-right:15px"><a href="https://www.linkedin.com/shareArticle?mini=true&url=<?php echo $bittly_link; ?>&title=Here is a campaign at <?php echo $company_name; ?> for <?php echo $campaign_name; ?>&summary=Starts on:<?php echo $campaign_start_date; ?> and Ends on:<?php echo $campaign_end_date; ?>, Location: <?php echo $campaign_location; ?>&source=<?php echo $company_name; ?>" style="cursor:pointer"><img src="<?php echo $public_url ;?>images/in_social.png" height="40px" width="40px" alt="linkedin"></a></td>
