@@ -3087,6 +3087,7 @@ class PostGateway {
        
        if(!empty($input['reference_id'])){
            
+        $reference_id       = $input['reference_id'];   
         $decryptedRef       = isset($input['reference_id']) ? MyEncrypt::decrypt_blowfish($input['reference_id'], Config::get('constants.MINTMESH_ENCCODE')) : 0 ;
         $decryptedAry       = array_map('intval', explode('_',$decryptedRef));	
 	$post_id            = isset($decryptedAry[0]) ? $decryptedAry[0] : 0 ;
@@ -3108,7 +3109,7 @@ class PostGateway {
             $jobDescription  = !empty($postDetails['job_description']) ? $postDetails['job_description'] : ''; 
             $bittly = $url = '';
             
-            $data = array("post_id" => $post_id, "emailid" => $userDetails->emailid, "post_status" => $jobStatus, "company_logo"=>$companyLogo, "company_name"=>$companyDetails->name, "title"=>$jobTitle,"description" => $jobDescription,"url"=>$url,"bittly_url"=>$bittly);
+            $data = array("post_id" => $post_id, "reference_id"=>$reference_id, "emailid" => $userDetails->emailid, "post_status" => $jobStatus, "company_logo"=>$companyLogo, "company_name"=>$companyDetails->name, "title"=>$jobTitle,"description" => $jobDescription,"url"=>$url,"bittly_url"=>$bittly);
         }
         return $data;
        }
@@ -3116,7 +3117,7 @@ class PostGateway {
     
     public function applyJobRef($input) {
         
-        
+        print_r($input).exit;
         if(!empty($input['post_id']) && !empty($input['reference_id']) && !empty($input['cv'])){
         
             $documentId = 0; 
