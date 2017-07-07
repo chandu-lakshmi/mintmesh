@@ -3089,7 +3089,7 @@ class PostGateway {
            
         $refid              = $input['ref'];   
         $reference_id       = $input['refrel'];   
-        $decryptedRef       = isset($input['reference_id']) ? MyEncrypt::decrypt_blowfish($input['reference_id'], Config::get('constants.MINTMESH_ENCCODE')) : 0 ;
+        $decryptedRef       = isset($input['refrel']) ? MyEncrypt::decrypt_blowfish($input['refrel'], Config::get('constants.MINTMESH_ENCCODE')) : 0 ;
         $decryptedAry       = array_map('intval', explode('_',$decryptedRef));	
 	$post_id            = isset($decryptedAry[0]) ? $decryptedAry[0] : 0 ;
         $gotReferredId      = isset($decryptedAry[1]) ? $decryptedAry[1] : 0 ;
