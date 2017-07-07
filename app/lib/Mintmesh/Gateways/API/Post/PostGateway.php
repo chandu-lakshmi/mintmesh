@@ -3119,10 +3119,11 @@ class PostGateway {
     public function applyJobRef($input) {
         
         
-        if(!empty($input['post_id']) && !empty($input['refrel']) && !empty($input['cv'])){
+        if(!empty($input['post_id']) && !empty($input['refrel']) && !empty($input['cv']) && !empty($input['ref'])){
         
             $decryptAry = array();
-            $decryptAry['reference_id'] = $input['refrel'];
+            $decryptAry['ref']    = $input['ref'];
+            $decryptAry['refrel'] = $input['refrel'];
             $decryptRes = $this->decryptRequestCandidateResume($decryptAry);
             
             $documentId = 0; 
