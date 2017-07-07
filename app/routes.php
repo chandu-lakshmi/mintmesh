@@ -132,6 +132,8 @@ Route::group(array('prefix' => 'v1'), function() {
       Route::post("enterprise/apply_job", "API\Post\PostController@applyJob");
       //decrpyting ref
       Route::post("enterprise/decrypt_ref", "API\Post\PostController@decryptRef");
+      //decrpyting ref
+      Route::post("enterprise/decrypt_mobile_ref", "API\Post\PostController@decryptRequestCandidateResume");
       //get applying job list
       Route::post("enterprise/apply_jobs_list", "API\Post\PostController@applyJobsList");
       //get applying job details

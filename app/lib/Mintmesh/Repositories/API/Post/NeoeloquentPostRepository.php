@@ -1295,6 +1295,20 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         }
         return $return; 
     }
+    
+    public function getGotReferredRelationDetailsById($gotReferredId = 0) {
+        
+        $return = 0;
+        if(!empty($gotReferredId)){
+            $queryString = "match (p:Post)-[r:GOT_REFERRED]-(u:User) where ID(r)=".$gotReferredId."  return p,r,u limit 1";
+            $query  = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if(isset($result[0]) && isset($result[0][0])){
+                $return = $result[0];
+            }
+        }
+        return $return; 
+    }
 }
 
 ?>

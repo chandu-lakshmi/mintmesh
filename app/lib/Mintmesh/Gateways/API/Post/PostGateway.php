@@ -3077,6 +3077,36 @@ class PostGateway {
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
     
+    public function decryptRequestCandidateResume($input){
+        
+       $data = array();
+       
+       if(!empty($input['reference_id'])){
+           
+        $decryptedRef       = isset($input['ref']) ? MyEncrypt::decrypt_blowfish($input['ref'], Config::get('constants.MINTMESH_ENCCODE')) : 0 ;
+        $decryptedAry       = array_map('intval', explode('_',$decryptedRef));	
+	$post_id            = isset($decryptedAry[0]) ? $decryptedAry[0] : 0 ;
+        $gotReferredId      = isset($decryptedAry[1]) ? $decryptedAry[1] : 0 ;
+        
+        if(!empty($post_id) && !empty($gotReferredId)){
+            $companyDetails     = $this->neoPostRepository->getPostCompany($post_id);
+            $companyLogo        = !empty($companyDetails->logo)?$companyDetails->logo:'';
+            
+            $referredDetails     = $this->neoPostRepository->getGotReferredRelationDetailsById($gotReferredId);
+            
+            $relDetails     = !empty($referredDetails[1]) ? $referredDetails[1] : ''; 
+            $userDetails    = !empty($referredDetails[2]) ? $referredDetails[2] : ''; 
+            
+            $userDetails        = $this->neoEnterpriseRepository->getNodeById($referred_by_id);
+            $postStatus         = $this->job2->getPost($input);
+            $postDetails        = $this->referralsGateway->formPostDetailsArray($postStatus);
+           
+            $data = array("post_id" => $post_id,"reference_id"=>$referred_by_id,"emailid" => $userDetails->emailid,"post_status"=>$postStatus->status,"company_logo"=>$companyLogo,"company_name"=>$companyDetails->name,"title"=>$jobTitle,"description" => $jobDescription,"url"=>$url,"bittly_url"=>$bittly);
+        }
+        return $data;
+       }
+    }
+    
 }
 
 ?>

@@ -341,10 +341,18 @@ class PostController extends \BaseController {
                 return \Response::json($validation);
             }
         }
+        
         public function decryptRef() {
            // Receiving user input data
            $inputUserData = \Input::all();
            $response = $this->PostGateway->decryptRef($inputUserData);
+           return \Response::json($response);
+        }
+        
+        public function decryptRequestCandidateResume() {
+           // Receiving user input data
+           $inputUserData = \Input::all();
+           $response = $this->PostGateway->decryptRequestCandidateResume($inputUserData);
            return \Response::json($response);
         }
         

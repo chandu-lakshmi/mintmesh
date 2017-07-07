@@ -2000,7 +2000,7 @@ class ReferralsGateway {
                 #send notification to the person who created post
                 $this->userGateway->sendNotification($this->loggedinUserDetails, $this->neoLoggedInUserDetails, $input['refer_to'], $notificationType, array('extra_info' => $input['post_id']), array('other_user' => $input['referring'], 'p3_non_mintmesh' => 1));
                 
-                if(empty($referResumePath) && !empty($input['mytest'])){
+                if(empty($referResumePath)){
 
                     $referring = $input['referring'];
                     $companyDetils = $this->neoPostRepository->getPostCompany($postId); 
@@ -2476,7 +2476,7 @@ class ReferralsGateway {
             $dataSet['reply_emailid']       = $emailData['reply_to'];
             $dataSet['email']               = $emailData['to_emailid'];
             $dataSet['fromName']            = $emailData['from_firstname'];
-            $dataSet['post_type']           = $posts->post_type;
+            $dataSet['post_type']           = 'internal';//$posts->post_type;
             $dataSet['company_name']        = $emailData['company_name'];//Enterpi Software Solutions Pvt.Ltd.
             $dataSet['company_logo']        = $emailData['company_logo'];
             $dataSet['emailbody']           = 'just testing';
@@ -2525,7 +2525,7 @@ class ReferralsGateway {
             $bitlyUrl = $this->urlShortner($dataSet['job_details_link']);
             $dataSet['bittly_link']    = $bitlyUrl;
             #redirect email links
-            $dataSet['apply_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/candidate-details/web?ref=" . $refCode."&flag=0&jc=0";
+            $dataSet['apply_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/candidate-details/web?ref=" . $refRelCode."&flag=0&jc=2";
             $dataSet['refer_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/referral-details/web?ref=" . $refCode."&flag=0&jc=0";
             $dataSet['view_jobs_link']      = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-jobs/web?ref=" . $refCode."";
             $dataSet['drop_cv_link']        = Config::get('constants.MM_ENTERPRISE_URL') . "/email/referral-details/web?ref=" . $refCode."&flag=1&jc=0";
