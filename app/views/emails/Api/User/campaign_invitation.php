@@ -42,11 +42,11 @@
                               </tr>
                               <tr style="font-size: 22px;color:#999999">
                                  <td width="47%" style="border-bottom: 1px solid #ededed;padding:20px 0 10px 0">
-                                    <a href="#" style="text-decoration: none;cursor: default;color:inherit"><img width="30" src="<?php echo $public_url ;?>images/calender.png" alt="calendar" style="width:30px;padding-right: 10px;vertical-align: middle;">Time</a>
+                                    <a href="#" style="text-decoration: none;cursor: default;color:#999999"><img width="30" src="<?php echo $public_url ;?>images/calender.png" alt="calendar" style="width:30px;padding-right: 10px;vertical-align: middle;">Time</a>
                                  </td>
                                  <td width="6%">&nbsp;</td>
                                  <td width="47%" style="border-bottom: 1px solid #ededed;padding:20px 0 10px 0">
-                                    <a href="#" style="text-decoration: none;cursor: default;color:inherit"><img width="22" src="<?php echo $public_url ;?>images/location.png" alt="location" style="width:22px;padding-right: 10px;vertical-align: middle;">Location</a>
+                                    <a href="#" style="text-decoration: none;cursor: default;color:#999999"><img width="22" src="<?php echo $public_url ;?>images/location.png" alt="location" style="width:22px;padding-right: 10px;vertical-align: middle;">Location</a>
                                  </td>
                               </tr>
                            </table>
