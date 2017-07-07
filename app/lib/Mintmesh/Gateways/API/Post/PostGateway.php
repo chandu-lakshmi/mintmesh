@@ -3085,9 +3085,10 @@ class PostGateway {
         
        $data = array();
        
-       if(!empty($input['reference_id'])){
+       if(!empty($input['refrel']) && !empty($input['ref'])){
            
-        $reference_id       = $input['reference_id'];   
+        $refid              = $input['ref'];   
+        $reference_id       = $input['refrel'];   
         $decryptedRef       = isset($input['reference_id']) ? MyEncrypt::decrypt_blowfish($input['reference_id'], Config::get('constants.MINTMESH_ENCCODE')) : 0 ;
         $decryptedAry       = array_map('intval', explode('_',$decryptedRef));	
 	$post_id            = isset($decryptedAry[0]) ? $decryptedAry[0] : 0 ;
@@ -3109,7 +3110,7 @@ class PostGateway {
             $jobDescription  = !empty($postDetails['job_description']) ? $postDetails['job_description'] : ''; 
             $bittly = $url = '';
             
-            $data = array("post_id" => $post_id, "reference_id"=>$reference_id, "emailid" => $userDetails->emailid, "post_status" => $jobStatus, "company_logo"=>$companyLogo, "company_name"=>$companyDetails->name, "title"=>$jobTitle,"description" => $jobDescription,"url"=>$url,"bittly_url"=>$bittly, "got_referred_id" => $gotReferredId);
+            $data = array("post_id" => $post_id, "ref"=>$refid,"refrel"=>$reference_id, "emailid" => $userDetails->emailid, "post_status" => $jobStatus, "company_logo"=>$companyLogo, "company_name"=>$companyDetails->name, "title"=>$jobTitle,"description" => $jobDescription,"url"=>$url,"bittly_url"=>$bittly, "got_referred_id" => $gotReferredId);
         }
         return $data;
        }
@@ -3118,10 +3119,10 @@ class PostGateway {
     public function applyJobRef($input) {
         
         
-        if(!empty($input['post_id']) && !empty($input['ref']) && !empty($input['cv'])){
+        if(!empty($input['post_id']) && !empty($input['refrel']) && !empty($input['cv'])){
         
             $decryptAry = array();
-            $decryptAry['reference_id'] = $input['ref'];
+            $decryptAry['reference_id'] = $input['refrel'];
             $decryptRes = $this->decryptRequestCandidateResume($decryptAry);
             
             $documentId = 0; 
