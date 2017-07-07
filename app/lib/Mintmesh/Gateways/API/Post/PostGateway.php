@@ -3109,7 +3109,7 @@ class PostGateway {
             $jobDescription  = !empty($postDetails['job_description']) ? $postDetails['job_description'] : ''; 
             $bittly = $url = '';
             
-            $data = array("post_id" => $post_id, "reference_id"=>$reference_id, "emailid" => $userDetails->emailid, "post_status" => $jobStatus, "company_logo"=>$companyLogo, "company_name"=>$companyDetails->name, "title"=>$jobTitle,"description" => $jobDescription,"url"=>$url,"bittly_url"=>$bittly);
+            $data = array("post_id" => $post_id, "reference_id"=>$reference_id, "emailid" => $userDetails->emailid, "post_status" => $jobStatus, "company_logo"=>$companyLogo, "company_name"=>$companyDetails->name, "title"=>$jobTitle,"description" => $jobDescription,"url"=>$url,"bittly_url"=>$bittly, "got_referred_id" => $gotReferredId);
         }
         return $data;
        }
@@ -3117,15 +3117,20 @@ class PostGateway {
     
     public function applyJobRef($input) {
         
+        
         if(!empty($input['post_id']) && !empty($input['ref']) && !empty($input['cv'])){
         
+            $decryptAry = array();
+            $decryptAry['reference_id'] = $input['ref'];
+            $decryptRes = $this->decryptRequestCandidateResume($decryptAry);
+            
             $documentId = 0; 
             $neoInput   = array();
             $input['time_zone'] = !empty($input['timeZone'])?$input['timeZone']:0; 
-            $reference_id       = $input['ref'];
-            $postId             =  $input['post_id'];
+            $reference_id       = !empty($decryptRes['got_referred_id']) ? $decryptRes['got_referred_id'] : 0;
+            $postId             = $input['post_id'];
             $companyDetils      = $this->neoPostRepository->getPostCompany($postId); 
-
+            if($reference_id){
                 $resumeFile       = $input['cv'];
                 $originalFileName =  !empty($input['resume_original_name']) ? $input['resume_original_name'] : '';
                 #get the user id by email for doc id
@@ -3154,20 +3159,25 @@ class PostGateway {
                 $neoInput['resume_path']            = $renamedFileName;
                 $neoInput['resume_original_name']   = $originalFileName;
                 $referredCandidate = $this->neoPostRepository->updateMobileReferCandidateResume($neoInput, $reference_id);
-            if($referredCandidate){
-                #update got referred relation id company resumes table
-                if(isset($referredCandidate[0]) && !empty($referredCandidate[0][2]) && !empty($documentId)){
-                    $gotReferredId = $referredCandidate[0][2];
-                    $this->enterpriseRepository->updateCompanyResumesWithGotReferredId($documentId, $gotReferredId);
-                }
+                if($referredCandidate){
+                    #update got referred relation id company resumes table
+                    if(isset($referredCandidate[0]) && !empty($referredCandidate[0][2]) && !empty($documentId)){
+                        $gotReferredId = $referredCandidate[0][2];
+                        $this->enterpriseRepository->updateCompanyResumesWithGotReferredId($documentId, $gotReferredId);
+                    }
 
-               $responseCode   = self::SUCCESS_RESPONSE_CODE;
-               $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
-               $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.success')));
+                   $responseCode   = self::SUCCESS_RESPONSE_CODE;
+                   $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                   $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.success')));
+               }else{
+                   $responseCode   = self::ERROR_RESPONSE_CODE;
+                   $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+                   $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.failure')));
+               }
            }else{
                $responseCode   = self::ERROR_RESPONSE_CODE;
                $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
-               $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.failure')));
+               $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.invalid')));
            }
         } else {
             $responseCode   = self::ERROR_RESPONSE_CODE;
