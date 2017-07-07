@@ -1360,7 +1360,7 @@ class NeoeloquentReferralsRepository extends BaseRepository implements Referrals
     
     public function isUserAlreadyReferred($post_id = '',$referring = '',$referred_by = ''){
         
-        $return = true;
+        $return = FALSE;
         if(!empty($referring) && !empty($post_id) && !empty($referred_by)){
             $referring = $this->appEncodeDecode->filterString(strtolower($referring));
             $queryString = "match (p:Post)-[r:GOT_REFERRED]-(u:User) where ID(p)=".$post_id." and r.referred_by='".$referred_by."' and u.emailid='".$referring."' return ID(r) limit 1";
