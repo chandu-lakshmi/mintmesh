@@ -2027,7 +2027,7 @@ class ReferralsGateway {
                         $emailData['from_userid']       = $neoUserId;
                         $emailData['from_emailid']      = $userEmail;
                         $emailData['from_firstname']    = $neoUserName;
-                        $emailData['email_template']    = 1;
+                        $emailData['email_template']    = ($isSelfReferral) ? 0 : 1 ;
                         $emailData['ip_address']        = $_SERVER['REMOTE_ADDR'];
                         $emailData['ref_code']          = $refCode;
                         $emailData['ref_rel_code']      = $refRelCode;
