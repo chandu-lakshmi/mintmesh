@@ -54,7 +54,6 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         }
         $queryString.="]-(u) set p.created_at='" . gmdate("Y-m-d H:i:s") . "' ";
         $queryString.=" , p.invited_count=0, p.total_referral_count=0, p.referral_accepted_count=0, p.referral_declined_count=0, p.referral_hired_count=0, p.referral_interviewed_count=0,p.unsolicited_count=0 return p";
-        //echo $queryString;exit;
         $query = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
         if ($result->count()) {

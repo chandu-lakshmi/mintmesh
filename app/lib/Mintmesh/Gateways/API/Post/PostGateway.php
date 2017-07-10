@@ -289,7 +289,7 @@ class PostGateway {
             $neoInput['job_description']    = !empty($input['job_description'])?$input['job_description'] : "";
             #RTA Box
             if(!empty($neoInput['job_description'])){
-               $neoInput['job_description'] = "<div style='font-family:Arial;font-size:14px'>".$neoInput['job_description']."</div>" ;
+               $neoInput['job_description'] = $neoInput['service'] = "<div style='font-family:Arial;font-size:14px'>".$neoInput['job_description']."</div>" ;
             }
             #form jobs skills here
             $neoInput['skills']             =  $this->userGateway->getSkillsFromJobTitle($neoInput['service_name'], $neoInput['job_description']);
