@@ -3117,8 +3117,7 @@ class PostGateway {
     }
     
     public function applyJobRef($input) {
-        
-        
+            
         if(!empty($input['post_id']) && !empty($input['refrel']) && !empty($input['cv']) && !empty($input['ref'])){
         
             $decryptAry = array();
@@ -3133,49 +3132,60 @@ class PostGateway {
             $postId             = $input['post_id'];
             $companyDetils      = $this->neoPostRepository->getPostCompany($postId); 
             if($reference_id){
-                $resumeFile       = $input['cv'];
-                $originalFileName =  !empty($input['resume_original_name']) ? $input['resume_original_name'] : '';
-                #get the user id by email for doc id
-                $referredByEmail  = !empty($input['referred_by_email']) ? $input['referred_by_email'] : '';
-                $sqlUser    = $this->userRepository->getUserByEmail($referredByEmail);
-                $refUserId  = !empty($sqlUser->id)?$sqlUser->id:0;
-                #get company details by code
-                $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyDetils->companyCode);
-                $companyId   = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
-                $source = self::SOURCE_FROM_EMAIL_UPLOAD;
-                $renamedFileName = '';
-                #insert company resumes in company resumes table
-                $insertResult = $this->enterpriseRepository->insertInCompanyResumes($companyId, $originalFileName, $refUserId, $source);
-                $documentId   = $insertResult->id;
+                #check user already updated resume
+                $referredDetails     = $this->neoPostRepository->getGotReferredRelationDetailsById($reference_id);
+                $relDetails          = !empty($referredDetails[0]) ? $referredDetails[0] : ''; 
+                $checkResumeExist    = !empty($relDetails->referred_for) ? $relDetails->referred_for : '';
+                
+                if(empty($checkResumeExist)){
+                    $resumeFile       = $input['cv'];
+                    $originalFileName =  !empty($input['resume_original_name']) ? $input['resume_original_name'] : '';
+                    #get the user id by email for doc id
+                    $referredByEmail  = !empty($input['referred_by_email']) ? $input['referred_by_email'] : '';
+                    $sqlUser    = $this->userRepository->getUserByEmail($referredByEmail);
+                    $refUserId  = !empty($sqlUser->id)?$sqlUser->id:0;
+                    #get company details by code
+                    $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyDetils->companyCode);
+                    $companyId   = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+                    $source = self::SOURCE_FROM_EMAIL_UPLOAD;
+                    $renamedFileName = '';
+                    #insert company resumes in company resumes table
+                    $insertResult = $this->enterpriseRepository->insertInCompanyResumes($companyId, $originalFileName, $refUserId, $source);
+                    $documentId   = $insertResult->id;
 
-                #file move to s3 folder
-                $fileName = $this->moveResume($resumeFile, $companyId, $documentId);
-                if($fileName){
-                    #form s3 path here
-                    $s3Path = Config::get('constants.S3_DOWNLOAD_PATH').$companyId.'/'.$fileName;
-                    #updte s3 path in company resumes table
-                    $updateResult = $this->enterpriseRepository->updateCompanyResumes($documentId, $s3Path);
-                    $renamedFileName = $s3Path;
-                }    
-                $neoInput['document_id']            = $documentId;
-                $neoInput['resume_path']            = $renamedFileName;
-                $neoInput['resume_original_name']   = $originalFileName;
-                $referredCandidate = $this->neoPostRepository->updateMobileReferCandidateResume($neoInput, $reference_id);
-                if($referredCandidate){
-                    #update got referred relation id company resumes table
-                    if(isset($referredCandidate[0]) && !empty($referredCandidate[0][2]) && !empty($documentId)){
-                        $gotReferredId = $referredCandidate[0][2];
-                        $this->enterpriseRepository->updateCompanyResumesWithGotReferredId($documentId, $gotReferredId);
-                    }
+                    #file move to s3 folder
+                    $fileName = $this->moveResume($resumeFile, $companyId, $documentId);
+                    if($fileName){
+                        #form s3 path here
+                        $s3Path = Config::get('constants.S3_DOWNLOAD_PATH').$companyId.'/'.$fileName;
+                        #updte s3 path in company resumes table
+                        $updateResult = $this->enterpriseRepository->updateCompanyResumes($documentId, $s3Path);
+                        $renamedFileName = $s3Path;
+                    }    
+                    $neoInput['document_id']            = $documentId;
+                    $neoInput['resume_path']            = $renamedFileName;
+                    $neoInput['resume_original_name']   = $originalFileName;
+                    $referredCandidate = $this->neoPostRepository->updateMobileReferCandidateResume($neoInput, $reference_id);
+                    if($referredCandidate){
+                        #update got referred relation id company resumes table
+                        if(isset($referredCandidate[0]) && !empty($referredCandidate[0][2]) && !empty($documentId)){
+                            $gotReferredId = $referredCandidate[0][2];
+                            $this->enterpriseRepository->updateCompanyResumesWithGotReferredId($documentId, $gotReferredId);
+                        }
 
-                   $responseCode   = self::SUCCESS_RESPONSE_CODE;
-                   $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
-                   $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.success')));
-               }else{
-                   $responseCode   = self::ERROR_RESPONSE_CODE;
-                   $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
-                   $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.failure')));
-               }
+                       $responseCode   = self::SUCCESS_RESPONSE_CODE;
+                       $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                       $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.success')));
+                   }else{
+                       $responseCode   = self::ERROR_RESPONSE_CODE;
+                       $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+                       $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.failure')));
+                   }
+                }else{
+                    $responseCode   = self::ERROR_RESPONSE_CODE;
+                    $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+                    $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.referred')));
+                }   
            }else{
                $responseCode   = self::ERROR_RESPONSE_CODE;
                $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
