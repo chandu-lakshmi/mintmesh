@@ -13,8 +13,9 @@
                               <tr>
                                  <td align="center" style="padding:36px 0;font-size:38px;">
                                     <?php if(!empty($company_logo)){ ?>
-                                    <img width="62" src="<?php echo $company_logo ?>" alt="company-logo">
-                                    <?php }else {echo $company_name; }?>
+                                    <img width="62" src="<?php echo $company_logo ?>" alt="company-logo" >
+                                    <?php }else {
+                                    echo $company_name; }?>
                                  </td>
                               </tr>
                            </table>
@@ -95,7 +96,7 @@
                                     </table>
                                  </td>
                                  <td width="6%"></td>
-                                 <td width="47%" style="color:#000000">
+                                 <td width="47%" style="color:#999999 ;font-size:17px">
                                     <?php echo $campaign_location; ?> 
                                  </td>
                               </tr>
@@ -121,10 +122,10 @@
                 <td style="padding: 0 30px 30px;">
                     <table>
                       <tr style="padding-top:10px;display:inline-block;">
-                          <td style="padding-right:15px"><a href="https://www.facebook.com/dialog/feed?app_id=<?php echo $app_id; ?>&quote=click below to apply&display=popup&amp;caption=&name=Here is a campaign at <?php echo $company_name; ?> for <?php echo $campaign_name; ?>&description=Starts on:<?php echo $campaign_start_date; ?> and Ends on:<?php echo $campaign_end_date; ?>, Location: <?php echo $campaign_location; ?>&picture=<?php echo !empty($company_logo)?$company_logo:''; ?>&link=<?php echo $view_jobs_link; ?>&redirect_uri=<?php echo $view_jobs_link; ?>&domain=enterprisestaging.mintmesh.com&origin=http://enterprisestaging.mintmesh.com" style="cursor:pointer"><img src="images/f_social.png" height="40" width="40" alt="fb"></a></td>
-                          <td style="padding-right:15px"><a href="https://www.linkedin.com/shareArticle?mini=true&url=<?php echo $bittly_link; ?>&title=Here is a campaign at <?php echo $company_name; ?> for <?php echo $campaign_name; ?>&summary=Starts on:<?php echo $campaign_start_date; ?> and Ends on:<?php echo $campaign_end_date; ?>, Location: <?php echo $campaign_location; ?>&source=<?php echo $company_name; ?>" style="cursor:pointer"><img src="images/in_social.png" height="40" width="40" alt="linkedin"></a></td>
-                          <td style="padding-right:15px"><a href="https://twitter.com/intent/tweet?text=Here is a campaign at <?php echo $company_name; ?> for <?php echo $campaign_name; ?>&url=<?php echo $bittly_link; ?>&hashtags=&via=<?php echo $company_name; ?>&related=" style="cursor:pointer"><img src="images/t_social.png" height="40" width="40" alt="twitter"></a></td>
-                          <td style="padding-right:15px"><a href="https://plus.google.com/share?url=<?php echo $view_jobs_link; ?>" style="cursor:pointer"><img src="images/g_social.png" height="40" width="40" alt="g+"></a></td>
+                          <td style="padding-right:15px"><a href="https://www.facebook.com/dialog/feed?app_id=<?php echo $app_id; ?>&quote=click below to apply&display=popup&amp;caption=&name=Here is a campaign at <?php echo $company_name; ?> for <?php echo $campaign_name; ?>&description=Starts on:<?php echo $campaign_start_date; ?> and Ends on:<?php echo $campaign_end_date; ?>, Location: <?php echo $campaign_location; ?>&picture=<?php echo !empty($company_logo)?$company_logo:''; ?>&link=<?php echo $view_jobs_link; ?>&redirect_uri=<?php echo $view_jobs_link; ?>&domain=enterprisestaging.mintmesh.com&origin=http://enterprisestaging.mintmesh.com" style="cursor:pointer"><img src="<?php echo $public_url ;?>images/f_social.png" height="40" width="40" alt="fb"></a></td>
+                          <td style="padding-right:15px"><a href="https://www.linkedin.com/shareArticle?mini=true&url=<?php echo $bittly_link; ?>&title=Here is a campaign at <?php echo $company_name; ?> for <?php echo $campaign_name; ?>&summary=Starts on:<?php echo $campaign_start_date; ?> and Ends on:<?php echo $campaign_end_date; ?>, Location: <?php echo $campaign_location; ?>&source=<?php echo $company_name; ?>" style="cursor:pointer"><img src="<?php echo $public_url ;?>images/in_social.png" height="40" width="40" alt="linkedin"></a></td>
+                          <td style="padding-right:15px"><a href="https://twitter.com/intent/tweet?text=Here is a campaign at <?php echo $company_name; ?> for <?php echo $campaign_name; ?>&url=<?php echo $bittly_link; ?>&hashtags=&via=<?php echo $company_name; ?>&related=" style="cursor:pointer"><img src="<?php echo $public_url ;?>images/t_social.png" height="40" width="40" alt="twitter"></a></td>
+                          <td style="padding-right:15px"><a href="https://plus.google.com/share?url=<?php echo $view_jobs_link; ?>" style="cursor:pointer"><img src="<?php echo $public_url ;?>images/g_social.png" height="40" width="40" alt="g+"></a></td>
                       </tr>
                     </table>
                 </td>
