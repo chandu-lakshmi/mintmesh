@@ -456,7 +456,7 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
             
             $userFullName = $this->appEncodeDecode->filterString($userFullName);
             $queryString = "MATCH (u:User:Mintmesh)-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."]-(n:User) WHERE u.emailid = '".$referred_by."' and n.emailid = '".$userEmailid."' ";
-            $queryString.= " set r.fullname = '".$userFullName."' return ID(r)";
+            $queryString.= " set r.fullname = '".$userFullName."', r.firstname = '".$userFullName."' return ID(r)";
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             $return = $result;
