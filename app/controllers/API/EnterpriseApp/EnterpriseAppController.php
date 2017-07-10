@@ -71,6 +71,7 @@ class EnterpriseAppController extends \BaseController {
             $validation = $this->userGateway->validateCreateUserInput_v2($inputUserData);
             if($validation['status'] == 'success') 
             {
+                $inputUserData['is_ent'] = TRUE;
                 $inputUserData['login_source'] = Config::get('constants.MNT_LOGIN_SOURCE') ;
                 // creating entry in mysql DB
                 return \Response::json($this->userGateway->createUser($inputUserData));
@@ -421,6 +422,7 @@ class EnterpriseAppController extends \BaseController {
             // Validating user input data
             $validation = $this->userGateway->validateEditProfileInput($inputUserData);
             if($validation['status'] == 'success') {
+               $inputUserData['is_ent'] = TRUE;
                $response = $this->userGateway->editProfile($inputUserData);
                return \Response::json($response);
             } else {
@@ -613,7 +615,7 @@ class EnterpriseAppController extends \BaseController {
             $validation = $this->referralsGateway->validatereferContact($inputUserData);
             if($validation['status'] == 'success') {
                 $inputUserData['is_ent'] = TRUE;
-                $response = $this->referralsGateway->referContactV2($inputUserData);
+                $response = $this->referralsGateway->enterpriseReferContact($inputUserData);
                 return \Response::json($response);
             } else {
                     // returning validation failure
@@ -1009,5 +1011,6 @@ class EnterpriseAppController extends \BaseController {
                 return \Response::json($validation);
             }
         }
+        
 }
 ?>

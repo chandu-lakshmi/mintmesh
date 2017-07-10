@@ -376,7 +376,11 @@ class UserGateway {
                 }
                 $deviceToken = $input['deviceToken'] ;
                 $this->neoUserRepository->mapToDevice($deviceToken, $input['emailid'], $osType) ;
-
+                
+                #update user mobile number with latest from mobile registration
+                if(!empty($input['is_ent'])){
+                    $this->updateCompanyUserPhoneNumber($input['emailid'], $input['phone']);
+                }
 
                 if (!empty($createdUser)) {
                     //add battle card for phone verification
@@ -1154,7 +1158,6 @@ class UserGateway {
                     $dataSet['name'] =$neoUserDetails['firstname'];
                     //set reset code
                     //set timezone of mysql if different servers are being used
-                    //date_default_timezone_set('America/Los_Angeles');
                     $currentTime =  date('Y-m-d H:i:s');
                     $email = md5($input['emailid']) ;
                     $code = $this->base_64_encode($currentTime, $email) ;
@@ -1162,9 +1165,11 @@ class UserGateway {
                     $deep_link = $this->getDeepLinkScheme($deep_link_type, $isEnt);
                     $appLink = $deep_link.Config::get('constants.MNT_VERSION')."/user/reset_password/".$code ;
                     $appLinkCoded = $this->base_64_encode("", $appLink) ; //comment it for normal flow of deep linki.e without http
-                    //$dataSet['link'] = $appLink ;//remove comment it for normal flow of deep linki.e without http
                     $dataSet['hrs'] = Config::get('constants.MNT_USER_EXPIRY_HR');
-                    $dataSet['link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/redirect_to_app/".$appLinkCoded ;//comment it for normal flow of deep linki.e without http
+                    #reset password from app
+                    $dataSet['app_link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/redirect_to_app/".$appLinkCoded ;//comment it for normal flow of deep linki.e without http
+                    #reset password from web
+                    $dataSet['web_link'] = URL::to('/')."/".Config::get('constants.MNT_VERSION')."/ent/forgot_password?code=".$code ;
                     $this->userEmailManager->dataSet = $dataSet;
                     $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.forgot_password');
                     $this->userEmailManager->name = $neoUserDetails['fullname'];
@@ -1446,8 +1451,13 @@ class UserGateway {
                         'created_at' => date('Y-m-d H:i:s')
                     ) ;
                     $t = $this->userRepository->logNotification($notificationLog);
+                    #update mobile number in company contacts table
+                    if(!empty($input['is_ent'])){
+                        $this->updateCompanyUserPhoneNumber($this->loggedinUserDetails->emailid, $neoInput['phone']);
+                    }
                 }
                 $updatedNeoUser =  $this->neoUserRepository->updateUser($neoInput) ;
+               
                 if (!empty($input['job_function']))
                 {
                     //remove the job function associated
@@ -5187,6 +5197,19 @@ class UserGateway {
            $count = 1; 
            $notificationsCount  = $this->userRepository->getBellNotifications($emailId, $count);
            return count($notificationsCount);   
+        }
+        
+        public function updateCompanyUserPhoneNumber($emailId = '', $phone = '') {
+            
+                #get the user connected company details here
+                $companyDetailsAry      = $this->neoEnterpriseRepository->connectedCompanyDetails($emailId);
+                $companyCode            = !empty($companyDetailsAry->companyCode) ? $companyDetailsAry->companyCode : 0;
+                #get the contact Id by emailid and company code
+                $companyContactDetails  = $this->enterpriseRepository->getCompanyContactsId($emailId, $companyCode);
+                $contactId              = !empty($companyContactDetails[0]->id) ? $companyContactDetails[0]->id : 0;
+                #update user phone number in company contacts table
+                $companyContactDetails  = $this->enterpriseRepository->updateCompanyContactPhoneNumber($contactId, $phone);
+            return true;
         }
 
 }

@@ -560,6 +560,20 @@ class EnterpriseController extends \BaseController {
             }
             
         }
+        
+        public function updateBucket() {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->EnterpriseGateway->validateUpdateBucket($inputUserData);
+            if($validation['status'] == 'success') {
+               $response = $this->EnterpriseGateway->updateBucket($inputUserData);
+               return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            } 
+        }
         /**
         * validate Contacts File Headers
         * 

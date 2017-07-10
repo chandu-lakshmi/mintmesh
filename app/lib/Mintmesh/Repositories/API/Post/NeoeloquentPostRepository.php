@@ -54,7 +54,6 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         }
         $queryString.="]-(u) set p.created_at='" . gmdate("Y-m-d H:i:s") . "' ";
         $queryString.=" , p.invited_count=0, p.total_referral_count=0, p.referral_accepted_count=0, p.referral_declined_count=0, p.referral_hired_count=0, p.referral_interviewed_count=0,p.unsolicited_count=0 return p";
-        //echo $queryString;exit;
         $query = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
         if ($result->count()) {
@@ -651,7 +650,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         $result = $query->getResultSet();   
         return $result;
     }
-    public function getCampaignPosts($campaignId='', $page=0,$search = '') {
+    public function getCampaignPosts($campaignId='', $page=0, $search = '', $status = '') {
         $skip  = $limit = 0;
         if (!empty($page)){
             $limit = $page*10 ;
@@ -660,6 +659,9 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         $queryString = "MATCH (c:Campaign)-[r:CAMPAIGN_POST]-(p:Post) where ID(c)=".$campaignId." ";
           if(!empty($search)){
                 $queryString .= "and (p.service_name =~ '(?i).*". $search .".*' or p.service_location =~ '(?i).*". $search .".*') ";
+            }
+          if(!empty($status)){
+                $queryString .= "and p.status='".$status."' ";
             }
         $queryString .= "return distinct(p) ORDER BY p.created_at DESC ";
         if (!empty($limit) && !($limit < 0))
@@ -1000,7 +1002,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
             $skip  = $limit - 10 ;
         }
         $search = $this->appEncodeDecode->filterString($search);
-        $queryString = "MATCH (c:Company)<-[:POSTED_FOR]-(p:Post)-[:INCLUDED]->(u:User) where c.companyCode = '".$companyCode."' and ID(u)=".$refById." and p.post_type <> 'campaign' ";
+        $queryString = "MATCH (c:Company)<-[:POSTED_FOR]-(p:Post{status:'ACTIVE'})-[:INCLUDED]->(u:User) where c.companyCode = '".$companyCode."' and ID(u)=".$refById." and p.post_type <> 'campaign' ";
         if(!empty($input['share']) && $input['share'] == 1){
             $queryString .= "and p.post_type <> 'internal' ";
         }
@@ -1008,7 +1010,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
                 $queryString .= "and (p.service_name =~ '(?i).*". $search .".*' or p.service_location =~ '(?i).*". $search .".*') ";
             }
             $queryString .= "WITH count(p) AS cnt
-                        MATCH (c:Company)<-[:POSTED_FOR]-(p:Post)-[:INCLUDED]->(u:User) where c.companyCode = '".$companyCode."' and ID(u)=".$refById." and p.post_type <> 'campaign' ";
+                        MATCH (c:Company)<-[:POSTED_FOR]-(p:Post{status:'ACTIVE'})-[:INCLUDED]->(u:User) where c.companyCode = '".$companyCode."' and ID(u)=".$refById." and p.post_type <> 'campaign' ";
             if(!empty($input['share']) && $input['share'] == 1){
             $queryString .= "and p.post_type <> 'internal' ";
             }
@@ -1288,6 +1290,36 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
             $result = $query->getResultSet();
             if(isset($result[0]) && isset($result[0][0])){
                 $return = $result;
+            }
+        }
+        return $return; 
+    }
+    
+    public function getGotReferredRelationDetailsById($gotReferredId = 0) {
+        
+        $return = 0;
+        if(!empty($gotReferredId)){
+            $queryString = "match (p:Post)-[r:GOT_REFERRED]-(u:User) where ID(r)=".$gotReferredId."  return distinct(r),u,p limit 1";
+            $query  = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if(isset($result[0]) && isset($result[0][0])){
+                $return = $result[0];
+            }
+        }
+        return $return; 
+    }
+    
+    public function updateMobileReferCandidateResume($neoInput = array(), $gotReferredId = 0) {
+        
+        $return = 0;
+        if(!empty($gotReferredId)){
+            $queryString = "match (p:Post)-[r:GOT_REFERRED]-(u:User) where ID(r)=".$gotReferredId." ";
+            $queryString.= "set r.document_id='".$neoInput['document_id']."' ,r.resume_path='".$neoInput['resume_path']."',r.resume_original_name='".$neoInput['resume_original_name']."' ";
+            $queryString.= " return ID(r)";
+            $query  = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if(isset($result[0]) && isset($result[0][0])){
+                $return = $result[0][0];
             }
         }
         return $return; 

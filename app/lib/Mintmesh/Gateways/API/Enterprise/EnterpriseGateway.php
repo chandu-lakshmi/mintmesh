@@ -44,6 +44,7 @@ class EnterpriseGateway {
     const REFRESH_TOKEN = 'refresh_token';
     const AUTHORIZATION = 'Authorization';
     const CREATED_IN = 'created_in';
+    const Buckets_Inactive_STATUS = 2;
 
     protected $userRepository, $enterpriseRepository, $enterpriseValidator, $userFileUploader, $commonFormatter, $authorizer, $appEncodeDecode, $neoEnterpriseRepository;
     protected $allowedHeaders, $allowedExcelExtensions, $createdNeoUser, $referralsGateway, $contactsRepository,$referralsRepository,$myExcel;
@@ -168,6 +169,10 @@ class EnterpriseGateway {
     //validation on Create new Bucket input
     public function validateupdateCreateBucket($input) {
         return $this->doValidation('create_bucket', 'MINTMESH.user.valid');
+    }
+    //validation on Create update Bucket input
+    public function validateUpdateBucket($input) {
+        return $this->doValidation('update_bucket', 'MINTMESH.user.valid');
     }
     //validation on contacts input file
     public function validateFileInput($input) {
@@ -861,6 +866,7 @@ class EnterpriseGateway {
                 $record['bucket_id']   = (int)$result->bucket_id;
                 $record['bucket_name'] = $result->bucket_name;
                 $record['count']       = $result->count;
+                $record['company_id']       = $result->company_id;
                 array_push($bucketsListArr,$record);
             }  
             $totalCountObj = $this->enterpriseRepository->contactsCount($params);
@@ -1085,7 +1091,7 @@ class EnterpriseGateway {
             $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($input['emailid']);
             if (!empty($userDetails) && $userDetails['emailverified'] == 1) {
                 // set email required params
-                $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.forgot_password');
+                $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.enterprise_forgot_password');
                 $this->userEmailManager->emailId = $input['emailid'];
                 $dataSet = array();
                 $dataSet['name'] = $neoUserDetails['fullname'];
@@ -1793,6 +1799,35 @@ class EnterpriseGateway {
         return $this->commonFormatter->formatResponse(200, "success", $message, $data);
     }
     
+    public function updateBucket($input){ 
+       
+        $response = $data = $setData = array();
+        $createdAt = gmdate("Y-m-d H:i:s");
+        $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser();
+        $userEmailId    = $this->loggedinUserDetails->emailid;
+        $userId         = $this->loggedinUserDetails->id;
+        $companyCode    = !empty($input['company_code'])?$input['company_code']:0;
+        $bucketStatus     = self::Buckets_Inactive_STATUS;//!empty($input['status'])?$input['status']:'';
+        $bucketId     = !empty($input['bucket_id'])?$input['bucket_id']:'';
+        // get the logged in user company details with company code here
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = !empty($companyDetails[0]->id)?$companyDetails[0]->id:0; 
+       // $isBucketExist  = $this->enterpriseRepository->isBucketExist($userId, $companyId, $bucketName);
+       
+        if($bucketId){
+            //update bucket in MySql here
+            $IsDeleted = $this->enterpriseRepository->updateExistBucket($userId, $bucketId, $companyId,$bucketStatus, $createdAt);
+          if(!$IsDeleted){
+          $message = array('msg' => array(Lang::get('MINTMESH.companyDetails.bucket_deleted')));
+          }else{
+               $message = array('msg' => array(Lang::get('MINTMESH.companyDetails.bucket_delete_fail')));
+          }
+        }else{
+            $message = array('msg' => array(Lang::get('Bucket Id Doesnot exist')));
+        }
+        return $this->commonFormatter->formatResponse(200, "success", $message);
+    }
+    
     public function validateContactsFileHeaders($input){ 
         
         $responseCode       = self::ERROR_RESPONSE_CODE;
@@ -2000,7 +2035,7 @@ class EnterpriseGateway {
         $relationAttrs['lastname']          = !empty($input['lastname'])?$input['lastname']:'';    
         $neoInput['firstname']   = $input['firstname'];
         $neoInput['lastname']    = $input['lastname'];
-        $neoInput['phone']       = !empty($input['phone'])?$input['phone']:'';          
+        $neoInput['contact_number'] = !empty($input['phone'])?$input['phone']:'';          
         $neoInput['emailid']     = $contactEmailId;
         $neoInput['employeeid']  = !empty($input['other_id'])?$input['other_id']:'';
         $neoInput['status']      = $status;  
@@ -2744,7 +2779,7 @@ class EnterpriseGateway {
             $this->neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid) ;
             $userEmail = $this->neoLoggedInUserDetails->emailid ;
             $postId = $input['post_id'] ;
-            $checkPermissions = $this->enterpriseRepository->getUserPermissions($this->neoLoggedInUserDetails->group_id,$input);
+            $checkPermissions = $this->enterpriseRepository->getUserPermissions($this->loggedinUserDetails->group_id,$input);
             $closeJobs = !empty($checkPermissions['close_jobs'])?$checkPermissions['close_jobs']:'';
             $posts = $this->neoPostRepository->getPosts($postId);
             if($closeJobs == 1 || $posts->created_by == $userEmail)

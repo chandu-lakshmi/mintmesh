@@ -450,7 +450,7 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
     public function updateContactsList($email='',$input) {
            if(!empty($email)){
                $queryString = "MATCH (u:User) where u.emailid='".$email."' set u.record_id='".trim($input['record_id'])."',u.firstname='".trim($input['firstname'])."'";
-               $queryString .= ",u.lastname='".trim($input['lastname'])."',u.phone='".trim($input['contact_number'])."',u.status='".trim($input['status'])."',u.employee_id='".trim(strtoupper($input['other_id']))."' return u";
+               $queryString .= ",u.lastname='".trim($input['lastname'])."',u.contact_number='".trim($input['contact_number'])."',u.status='".trim($input['status'])."',u.employee_id='".trim(strtoupper($input['other_id']))."' return u";
                $query = new CypherQuery($this->client, $queryString);
                $result = $query->getResultSet();   
                return $result;

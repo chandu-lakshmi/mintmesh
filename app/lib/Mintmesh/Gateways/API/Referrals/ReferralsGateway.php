@@ -1874,6 +1874,183 @@ class ReferralsGateway {
             return $this->commonFormatter->formatResponse(200, "success", $message, array());
         }
     }
+    
+    public function enterpriseReferContact($input) {
+
+        #if enterprise user flag
+        $isEnt = !empty($input['is_ent']) ? $input['is_ent'] : 0;
+        $referNonMintmesh   = $nonMintmeshPhoneRefer = 0;
+        $uploadedByP2       = $documentId = $isAlreadyReferred = 0;
+        $p3CvOriginalName   = $referResumePath = "";
+        $relationCount      = 1;
+        $postId = !empty($input['post_id']) ? $input['post_id'] : '';
+        
+        $this->loggedinUserDetails      = $this->getLoggedInUser();
+        $this->neoLoggedInUserDetails   = $this->neoUserRepository->getNodeByEmailId($this->loggedinUserDetails->emailid);
+        $userEmail      = $this->neoLoggedInUserDetails->emailid;
+        $neoUserId      = $this->neoLoggedInUserDetails->id;
+        $neoUserName    = $this->neoLoggedInUserDetails->firstname;
+        $userId         = $this->loggedinUserDetails->id;
+        $isSelfReferral = ($this->loggedinUserDetails->emailid == $input['referring']) ? 1 : 0;
+        
+        
+        $firstname = !empty($input['referring_user_firstname']) ? $input['referring_user_firstname'] : '';
+        $lastname  = !empty($input['referring_user_lastname']) ? $input['referring_user_lastname'] : '';
+            
+        #count for all relations
+        $existingRelationCount = $this->referralsRepository->getReferralsCount(Config::get('constants.REFERRALS.GOT_REFERRED'), $input['post_id'], $userEmail, $input['refer_to']);
+        if ($existingRelationCount < Config::get('constants.REFERRALS.MAX_REFERRALS')) {
+            #check user already got referred or not
+            $isAlreadyReferred = $this->referralsRepository->isUserAlreadyReferred($postId, $input['referring'], $userEmail);
+            if (empty($isAlreadyReferred)) {
+                # process resume for hire a candidate service scope
+                if (!empty($input['is_hire_candidate'])) {
+                    #process resume fields
+                    $companyDetils = $this->neoPostRepository->getPostCompany($postId);
+                    $companyDetils->companyCode;
+                    #get company details by code
+                    $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyDetils->companyCode);
+                    $companyId = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+                    #for enterprise app
+                    $resumeResult = $this->processResumeForEnterpriseRefer($input, $companyId, $userId);
+                    $documentId   = !empty($resumeResult['document_id']) ? $resumeResult['document_id'] : 0;
+
+                    if (!$resumeResult['status']) {
+                        return $this->commonFormatter->formatResponse(406, "error", $resumeResult['message'], array());
+                    } else {
+                        $referResumePath    = $resumeResult['resume_path'];
+                        $uploadedByP2       = $resumeResult['uploaded'];
+                        $p3CvOriginalName   = $resumeResult['resume_original_name'];
+                    }
+                }
+                if (!empty($input['refer_non_mm_email']) && !empty($input['referring'])) {
+                    $nonMintmeshPhoneRefer = 1;//continue only when the request count is in limit
+                }
+                #create a relation between the post and user
+                $oldRelationCount = $this->referralsRepository->getOldRelationsCount($input['post_id'], $input['referring'], $nonMintmeshPhoneRefer);
+                if (!empty($oldRelationCount)) {
+                    $relationCount = $oldRelationCount + 1;
+                }
+                #non mintmesh and refer 
+                if (!empty($input['refer_non_mm_email']) && !empty($input['referring'])) {
+                    #p3 user details
+                    $neoContactInput = $neoContactRelInput = array();
+                    $neoContactInput['firstname'] = $neoContactInput['lastname'] = $neoContactInput['fullname'] = "";
+                    #relation details
+                    $neoContactRelInput['firstname'] = $firstname;
+                    $neoContactRelInput['lastname']  = $lastname;
+                    $neoContactRelInput['fullname']  = $firstname . " " . $lastname;
+                    #create node for this and relate
+                    if (!empty($input['referring_phone_no'])) {
+
+                        $input['referring']         = $this->appEncodeDecode->formatphoneNumbers(strtolower($input['referring']));
+                        $nonMintmeshContactExist    = $this->contactsRepository->getNonMintmeshContact($input['referring']);
+                        $phoneContactInput['phone'] = !empty($input['referring']) ? $this->appEncodeDecode->formatphoneNumbers($input['referring']) : '';
+                        #create import relation
+                        if (!empty($nonMintmeshContactExist)) {
+                            $relationCreated = $this->contactsRepository->relateContacts($this->neoLoggedInUserDetails, $nonMintmeshContactExist[0], $neoContactRelInput, 1);
+                        } else {
+                            $importedContact = $this->contactsRepository->createNodeAndRelationForPhoneContacts($userEmail, $phoneContactInput, $neoContactRelInput);
+                        }
+                        $referNonMintmesh = 1;
+                    } else {
+                        #check User Node already there or not
+                        $referringNodeId = $this->referralsRepository->checkUserNodeWithEmailid($input['referring']);
+                        if(!empty($referringNodeId)){
+                            #check if p2 imported p3
+                            $this->contactsRepository->createUserRelationWithEmailid($userEmail, $referringNodeId, $neoContactRelInput);
+                        } else {//send invitation email to p3
+                            $neoContactInput['emailid'] = $input['referring'];
+                            #create User Node here
+                            $referringNodeId = $this->contactsRepository->createUserNodeAndRelationWithEmailid($userEmail, $neoContactInput, $neoContactRelInput);
+                        }
+                    }
+                }
+                #Neo4j GOT_REFERRED relation attributes
+                $relationAttrs = array();
+                $relationAttrs['document_id']       = $documentId;
+                $relationAttrs['referred_by']       = strtolower($userEmail);
+                $relationAttrs['referred_for']      = strtolower($input['refer_to']);
+                $relationAttrs['created_at']        = gmdate("Y-m-d H:i:s");
+                $relationAttrs['status']            = Config::get('constants.REFERRALS.STATUSES.PENDING');
+                $relationAttrs['one_way_status']    = Config::get('constants.REFERRALS.STATUSES.PENDING');
+                $relationAttrs['relation_count']    = $relationCount;
+                $relationAttrs['resume_path']       = $referResumePath;
+                $relationAttrs['uploaded_by_p2']    = $uploadedByP2;
+                $relationAttrs['resume_original_name']  = $p3CvOriginalName;
+                if (!empty($input['message'])) {
+                    $relationAttrs['message'] = $input['message'];
+                }
+                if (!empty($input['bestfit_message'])) {
+                    $relationAttrs['bestfit_message'] = $input['bestfit_message'];
+                }
+                #creating GOT_REFERRED relation here
+                if (!empty($referNonMintmesh)) {
+                    $result = $this->referralsRepository->referContactByPhone($userEmail, $input['refer_to'], $input['referring'], $input['post_id'], $relationAttrs);
+                } else {
+                    #here creating GOT_REFERRED relation with emailid
+                    $result = $this->referralsRepository->referContact($userEmail, $input['refer_to'], $input['referring'], $input['post_id'], $relationAttrs);
+                }
+                #check result
+                if (isset($result[0]) && !empty($result[0][1])) {
+                    $gotReferredId = $result[0][1];
+                    #update Got Referred Id in CompanyResumes table
+                    if (!empty($documentId)) {
+                        $this->enterpriseRepository->updateCompanyResumesWithGotReferredId($documentId, $gotReferredId);
+                    }
+                    #if self referrence
+                    $notificationType = ($isSelfReferral) ? 23 : 10;
+                    #send notification to the person who created post
+                    $this->userGateway->sendNotification($this->loggedinUserDetails, $this->neoLoggedInUserDetails, $input['refer_to'], $notificationType, array('extra_info' => $input['post_id']), array('other_user' => $input['referring'], 'p3_non_mintmesh' => 1));
+
+                    if(empty($referResumePath)){
+
+                        $referring = $input['referring'];
+                        $companyDetils = $this->neoPostRepository->getPostCompany($postId); 
+                        #for reply emailid 
+                        $replyToName = Config::get('constants.MINTMESH_SUPPORT.REFERRER_NAME');
+                        $replyToHost = Config::get('constants.MINTMESH_SUPPORT.REFERRER_HOST');       
+                        #send email notifications to all the contacts
+                        $refId = $refCode = 0;
+                        $emailData  = array();
+                        $refId = $this->neoPostRepository->getUserNodeIdByEmailId($userEmail);
+                        $refCode                        = MyEncrypt::encrypt_blowfish($postId.'_'.$refId,Config::get('constants.MINTMESH_ENCCODE'));
+                        $replyToData                    = '+ref='.$refCode;
+                        $refRelCode                     = MyEncrypt::encrypt_blowfish($postId.'_'.$gotReferredId,Config::get('constants.MINTMESH_ENCCODE'));
+                        $emailData['company_name']      = $companyDetils->name;
+                        $emailData['company_code']      = $companyDetils->companyCode;
+                        $emailData['post_id']           = $postId;
+                        $emailData['company_logo']      = $companyDetils->logo;
+                        $emailData['to_firstname']      = $firstname;
+                        $emailData['to_lastname']       = $lastname;
+                        $emailData['to_emailid']        = $referring;
+                        $emailData['from_userid']       = $neoUserId;
+                        $emailData['from_emailid']      = $userEmail;
+                        $emailData['from_firstname']    = $neoUserName;
+                        $emailData['email_template']    = ($isSelfReferral) ? 0 : 1 ;
+                        $emailData['ip_address']        = $_SERVER['REMOTE_ADDR'];
+                        $emailData['ref_code']          = $refCode;
+                        $emailData['ref_rel_code']      = $refRelCode;
+                        $emailData['reply_to']          = $replyToName.$replyToData.$replyToHost;
+
+                        $this->sendEmailRequestToCandidateForResume($emailData);
+                    }       
+                    $message = array('msg' => array(Lang::get('MINTMESH.referrals.success')));
+                    return $this->commonFormatter->formatResponse(200, "success", $message, array());
+                } else {
+                    $message = array('msg' => array(Lang::get('MINTMESH.referrals.closed_post')));
+                    return $this->commonFormatter->formatResponse(406, "error", $message, array());
+                }
+            } else {
+                $message = array('msg' => array(Lang::get('MINTMESH.referrals.already_referred')));
+                return $this->commonFormatter->formatResponse(406, "error", $message, array());
+            }
+        } else {
+            #return limit crossed message
+            $message = array('msg' => array(Lang::get('MINTMESH.referrals.limit_crossed')));
+            return $this->commonFormatter->formatResponse(200, "success", $message, array());
+        }
+    }
 
     /*
      * validate resume in refer contact
@@ -1921,36 +2098,36 @@ class ReferralsGateway {
 
     public function processResumeForEnterpriseRefer($input = array(), $companyId = 0, $userId = 0) {
         
-        $documentId     = 0;
+        $documentId     = $uploaded = 0;
         $returnBoolean  = true;
-        $uploaded       = 1;
         $resumePath     = $resumePathRes = $message = $resumeOriginalName = "";
-        $message        = Lang::get('MINTMESH.user.no_resume');
-        if (!empty($input['refer_non_mm_email']) && empty($input['resume'])) {#for non mintmesh with no resume
-            $returnBoolean = false;
-        } else if (empty($input['refer_non_mm_email']) && empty($input['resume'])) {#for mintmesh with no resume
-            #check if the referring person is having resume attached
-            $resumePathResult = $this->neoUserRepository->getMintmeshUserResume($input['referring']);
-            if (empty($resumePathResult)) {# if no resume uploaded in profile then ask for resume
-                $returnBoolean = false;
-            } else {
-                $uploaded = 0;
-                $resumePath = $resumePathResult['cvRenamedName'];
-                $resumeOriginalName = $resumePathResult['cvOriginalName'];
-            }
-        } else if (!empty($input['refer_non_mm_email']) && !empty($input['resume'])) {#for non mintmesh with resume
+        
+        if (!empty($input['refer_non_mm_email']) && !empty($input['resume'])) {
+            #for non mintmesh user with resume
+            $uploaded = 1;
             $responseAry    = $this->userGateway->uploadResumeForEnterpriseRefer($input['resume'], $companyId, $userId);
             $documentId     = !empty($responseAry['document_id']) ? $responseAry['document_id'] : 0;
             $resumePathRes  = $responseAry['response'];
-        } else if (empty($input['refer_non_mm_email']) && !empty($input['resume'])) {#for mintmesh with resume
+            
+        } else if (empty($input['refer_non_mm_email']) && !empty($input['resume'])) {
+            #for mintmesh user with resume    
+            $uploaded = 1;
             $responseAry    = $this->userGateway->uploadResumeForEnterpriseRefer($input['resume'], $companyId, $userId);
             $documentId     = !empty($responseAry['document_id']) ? $responseAry['document_id'] : 0;
             $resumePathRes  = $responseAry['response'];
+            
+        } else if (empty($input['refer_non_mm_email']) && empty($input['resume'])) {
+            #for mintmesh user with no resume
+            $resumePathResult   = $this->neoUserRepository->getMintmeshUserResume($input['referring']);
+            $resumePathRes      = !empty($resumePathResult['cvRenamedName']) ? $resumePathResult['cvRenamedName'] : '';
+            $resumeOriginalName = !empty($resumePathResult['cvOriginalName']) ? $resumePathResult['cvOriginalName'] : '';
+            
         }
         #check for validation of resume
-        if ($returnBoolean && !in_array($resumePathRes, $this->resumeValidations)) {# check if resume validations are fine
+        if (!in_array($resumePathRes, $this->resumeValidations)) {
+            # check if resume validations are fine
             $resumePath = $resumePathRes;
-            if ($uploaded != 0) {//uploaded
+            if ($uploaded == 1) {//uploaded
                 $resumeOriginalName = $input['resume']->getClientOriginalName();
             }
         } else if (in_array($resumePathRes, $this->resumeValidations)) {
@@ -2273,6 +2450,125 @@ class ReferralsGateway {
         return $data1;
         }
     }
+    
+    public function getPostRewardsDetils($postId = '') {
+        $aryRewards  = $rewards = array();
+        $postRewards = $this->neoPostRepository->getPostRewards($postId);
+            foreach ($postRewards as $value) { 
+               $relObj   = $value[1];//POST_REWARDS relation
+               $valueObj = $value[2];//REWARDS node
+               $rewards['rewards_name']     = !empty($relObj->rewards_mode)?ucfirst($relObj->rewards_mode):'';
+               $rewards['currency_type']    = !empty($valueObj->currency_type)?$valueObj->currency_type:0;
+               $rewards['rewards_type']     = !empty($valueObj->rewards_type)?$valueObj->rewards_type:'';
+               $rewards['rewards_value']    = !empty($valueObj->rewards_value)?$valueObj->rewards_value:'';
+               $aryRewards[] = $rewards;
+            }
+        return $aryRewards;
+    }
+    
+    
+    public function sendEmailRequestToCandidateForResume ($emailData = array()) {
+      
+        if(!empty($emailData)){  
+            $dataSet     = array();
+            $email_sent  = '';
+            $postId      = $emailData['post_id'];
+            $refCode     = $emailData['ref_code'];
+            $refRelCode  = $emailData['ref_rel_code'];
+            $fullName    = $emailData['to_firstname'] . ' ' . $emailData['to_lastname'];
+            $posts       = $this->neoPostRepository->getPosts($postId);
+            $postDetails = $this->formPostDetailsArray($posts);
+            $freeService = $postDetails['free_service']; 
+            #form email variables here
+            $dataSet['name']                = $fullName;
+            $dataSet['email_template']      = isset($emailData['email_template']) ? $emailData['email_template'] : 0;;
+            $dataSet['reply_emailid']       = $emailData['reply_to'];
+            $dataSet['email']               = $emailData['to_emailid'];
+            $dataSet['fromName']            = $emailData['from_firstname'];
+            $dataSet['post_type']           = 'internal';//$posts->post_type;
+            $dataSet['company_name']        = $emailData['company_name'];//Enterpi Software Solutions Pvt.Ltd.
+            $dataSet['company_logo']        = $emailData['company_logo'];
+            $dataSet['emailbody']           = 'just testing';
+            $dataSet['send_company_name']   = $emailData['company_name'];
+            $dataSet['reply_to']            = $emailData['reply_to'];
+            $dataSet['app_id']              = '1268916456509673';
+            #form job details here
+            $dataSet['looking_for']         = $posts->service_name;//'Senior UI/UX Designer';
+            $dataSet['job_function']        = $postDetails['job_function_name'];//'Design';
+            $dataSet['experience']          = $postDetails['experience_range_name'];//'5-6 Years';
+            $dataSet['vacancies']           = $posts->no_of_vacancies;//3;
+            $dataSet['location']            = $posts->service_location;//'Hyderabad, Telangana';
+            $dataSet['job_description']     = $posts->job_description;//'Job Description....';
+            #form currency types and rewards
+            $discovery   = $referral = $isPoints = 0;
+            if (empty($freeService)){
+                $postRewards = $this->getPostRewardsDetils($postId);
+                foreach ($postRewards as $value) {
+                    $isPoints = FALSE;
+                    #checking rewards type here
+                    if($value['rewards_type']=='paid'){
+                        $currency   = ($value['currency_type']==2)?'&#8377;':'&#x24;';//rupee:dollar
+                        $reward     = $currency.$value['rewards_value'];
+                    }else if($value['rewards_type'] == 'points'){
+                        $reward     = $value['rewards_value'];
+                        $isPoints   = TRUE;
+                    } else {
+                        $reward     = '';
+                    }
+                   #checking rewards name here     
+                   if($value['rewards_name']=='Discovery'){
+                       $discovery   = $reward;
+                       $isDisPoints = $isPoints;
+                       $dataSet['dis_points']  = $isDisPoints;
+                    } elseif ($value['rewards_name']=='Referral') {  
+                       $referral    = $reward;
+                       $isRefPoints = $isPoints;
+                       $dataSet['ref_points']  = $isRefPoints;
+                    }   
+                }
+            }
+            $dataSet['free_service']= $freeService;
+            $dataSet['discovery']   = $discovery;
+            $dataSet['referral']    = $referral;
+            $dataSet['job_details_link']    = Config::get('constants.MM_ENTERPRISE_URL') . "/email/job-details/share?ref=" . $refCode."";
+            $bitlyUrl = $this->urlShortner($dataSet['job_details_link']);
+            $dataSet['bittly_link']    = $bitlyUrl;
+            #redirect email links
+            $dataSet['apply_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/candidate-details/web?ref=" . $refCode."&refrel=" . $refRelCode."&flag=0&jc=2";
+            $dataSet['refer_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/referral-details/web?ref=" . $refCode."&flag=0&jc=0";
+            $dataSet['view_jobs_link']      = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-jobs/web?ref=" . $refCode."";
+            $dataSet['drop_cv_link']        = Config::get('constants.MM_ENTERPRISE_URL') . "/email/referral-details/web?ref=" . $refCode."&flag=1&jc=0";
+            #set email required params
+            $this->userEmailManager->templatePath   = Lang::get('MINTMESH.email_template_paths.contacts_job_invitation');
+            $this->userEmailManager->emailId        = $emailData['to_emailid'];//target email id
+            $this->userEmailManager->dataSet        = $dataSet;
+            $this->userEmailManager->subject        = $dataSet['looking_for'];
+            $this->userEmailManager->name           = $fullName;
+            $email_sent = $this->userEmailManager->sendMail();
+            #for email logs
+            $fromUserId  = $emailData['from_userid'];
+            $fromEmailId = $emailData['from_emailid'];
+            $companyCode = $emailData['company_code'];
+            $ipAddress   = $emailData['ip_address'];
+            #log email status
+            $emailStatus = 0;
+            if (!empty($email_sent)) {
+                $emailStatus = 1;
+            }
+            $emailLog = array(
+                'emails_types_id'   => 8,
+                'from_user'         => $fromUserId,
+                'from_email'        => $fromEmailId,
+                'to_email'          => $this->appEncodeDecode->filterString(strtolower($emailData['to_emailid'])),
+                'related_code'      => $companyCode,
+                'sent'              => $emailStatus,
+                'ip_address'        => $ipAddress
+            );
+            $this->userRepository->logEmail($emailLog);
+        }
+        return true;
+    }
+    
            
 }
 

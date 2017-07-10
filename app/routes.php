@@ -23,10 +23,12 @@ Route::any("getAccessTokenRefreshToken", "ZenefitsController@getAccessTokenRefre
 Route::get('getMails','Email2Controller@getMails');
 Route::any('getOauthBasedOnClientId','HomeController@getOauthBasedOnClientId');
 
-//Download Resumes
+//Download Resumes getIntegrationStatus
 Route::any('getZipDownload','API\Referrals\ReferralsController@getDownloadZipSelectedResumes');
 Route::any('getResumeDownload','API\Referrals\ReferralsController@getFileDownload');
 
+//Integration Status API
+Route::any('getIntegrationStatus','API\SuccessFactors\successFactorController@getIntegrationStatus');
 
 Route::post('getParsedResumeDocInfo','API\SocialContacts\ContactsController@getParsedResumeDocInfo');
 Route::get('docs', function() {
@@ -41,6 +43,7 @@ Route::get('/', function()
 {
 	return View::make('hello');
 });
+
 Route::get('/terms', function()
 {
 	return View::make('landings/terms');
@@ -129,8 +132,12 @@ Route::group(array('prefix' => 'v1'), function() {
       Route::post("enterprise/refer_candidate", "API\Post\PostController@referCandidate");
       //applying job 
       Route::post("enterprise/apply_job", "API\Post\PostController@applyJob");
+      //applying job 
+      Route::post("enterprise/apply_job_ref", "API\Post\PostController@applyJobRef");
       //decrpyting ref
       Route::post("enterprise/decrypt_ref", "API\Post\PostController@decryptRef");
+      //decrpyting ref
+      Route::post("enterprise/decrypt_mobile_ref", "API\Post\PostController@decryptRequestCandidateResume");
       //get applying job list
       Route::post("enterprise/apply_jobs_list", "API\Post\PostController@applyJobsList");
       //get applying job details
@@ -148,7 +155,8 @@ Route::group(array('prefix' => 'v1'), function() {
       //unsolicited node for old companies
       Route::post("enterprise/unsolicited_old_companies", "API\Enterprise\EnterpriseController@unsolicitedForOldCompanies");
       Route::post("enterprise/not_parsed_resumes", "API\Post\PostController@notParsedResumes");
-         
+      
+      
 });
 
 //Route::group(array('prefix' => 'v1'), function() {
@@ -297,6 +305,10 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
        Route::post("enterprise/contacts_upload", "API\Enterprise\EnterpriseController@enterpriseContactsUpload");
        //enterprise create new bucket
        Route::post("enterprise/create_bucket", "API\Enterprise\EnterpriseController@createBucket");
+       
+       //Update Bucket By Dinesh Pitla
+       Route::post("enterprise/update_bucket", "API\Enterprise\EnterpriseController@updateBucket");
+       
        //enterprise contacts upload
        Route::post("enterprise/upload_contacts", "API\Enterprise\EnterpriseController@uploadContacts");
        //enterprise validate Contacts input File Headers
@@ -376,6 +388,7 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       Route::post("enterprise/get_hcm_list", "API\Enterprise\EnterpriseController@getHcmList");
       Route::post("enterprise/get_zenefits_hcm_list", "API\Enterprise\EnterpriseController@getZenefitsHcmList");
       Route::post("enterprise/get_icims_hcm_list", "API\Enterprise\EnterpriseController@getIcimsHcmList");
+      Route::post("enterprise/get_greenhouse_hcm_list", "API\Enterprise\EnterpriseController@getGreenhouseHcmList");
       //view hcm
       Route::post("enterprise/get_hcm_partners", "API\Enterprise\EnterpriseController@getHcmPartners");
       // company all contacts
@@ -512,6 +525,11 @@ Route::group(array('prefix' => 'v1/ent'), function() {
     //check phone existance
     Route::post("checkPhoneExistance", "API\EnterpriseApp\EnterpriseAppController@checkPhoneExistance");
     Route::post("user/check_reset_password", "API\EnterpriseApp\EnterpriseAppController@checkResetPassword");
+    
+    Route::get('/forgot_password', function()
+    {
+        return View::make('forgot-password/forgot');
+    });
 });
 Route::group(array('prefix' => 'v1/ent', 'before' => 'oauth'), function() {
     //logout

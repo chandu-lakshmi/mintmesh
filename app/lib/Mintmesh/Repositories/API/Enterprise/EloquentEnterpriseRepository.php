@@ -129,13 +129,29 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             } 
             return $result; 
          }
+         
+         public function updateExistBucket($userId, $id, $companyId,$bucketStatus, $createdAt){
+            
+            $result = false;
+            $ipAddress = !empty($_SERVER['REMOTE_ADDR'])?$_SERVER['REMOTE_ADDR']:0;
+            if (!empty($userId) && !empty($companyId))
+            {   
+                //$sql = "insert into import_contacts_buckets (`user_id`,`company_id`,`name`)" ;
+                $sql = "UPDATE buckets SET `updated_by`='". $userId ."', `company_id`='". $companyId ."',`status`='". $bucketStatus ."',`created_at`='".$createdAt."',`ip_address`='".$ipAddress."' WHERE `id` = '".$id."'";
+                DB::statement($sql);
+                $last_insert_id = DB::Select("SELECT LAST_INSERT_ID() as last_id"); 
+                $result = $last_insert_id[0]->last_id;
+            } 
+            return $result; 
+         }
+         
         public function isBucketExist($userId, $companyId, $bucketName){
             
             $response = false;
             if (!empty($userId) && !empty($companyId) && !empty($bucketName))
             {  
                 //$sql = "select COUNT(id) as count from import_contacts_buckets where user_id = '".$userId."' and company_id = '".$companyId."' and name like '".$bucketName."' " ;
-                $sql = "select COUNT(id) as count from buckets where user_id = '".$userId."' and company_id = '".$companyId."' and name like '".$bucketName."' " ;
+                $sql = "select COUNT(id) as count from buckets where user_id = '".$userId."' and company_id = '".$companyId."' and name like '".$bucketName."' and status = 1 " ;
                 //echo $sql;exit;
                 $result = DB::Select($sql);
                 $response = $result[0]->count;
@@ -312,10 +328,10 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         }
         
         public function getCompanyBucketsList($params){
-            $sql = 'SELECT b.name AS bucket_name,b.id as bucket_id, COUNT(DISTINCT bc.contact_id) AS count
+            $sql = 'SELECT b.name AS bucket_name,b.id as bucket_id, COUNT(DISTINCT bc.contact_id) AS count,b.company_id as company_id 
                     FROM buckets b
                     LEFT JOIN buckets_contacts bc ON bc.bucket_id=b.id AND bc.company_id="'.$params['company_id'].'"
-                    WHERE 1 AND (b.company_id = "'.$params['company_id'].'" OR b.company_id = "0")
+                    WHERE 1 AND (b.company_id = "'.$params['company_id'].'" OR b.company_id = "0") AND b.status = "1"
                     GROUP BY b.id';
             $result = DB::select($sql);     
         return $result;
@@ -1218,7 +1234,17 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                 ->where('company_id', '=', $companyId)
                 ->where('hcm_jobs_id', '=', $hcmJobsId)->get();
     }
-    
+    public function getCompanyMappingFieldsCount($companyId='', $company_hcm_jobs_id) {
+         return DB::table('company_hcm_jobs_fields_mapping')  
+                ->where('company_id', '=', $companyId)
+                ->where('company_hcm_jobs_id', '=', $company_hcm_jobs_id)->count();
+    }
+    public function getCompanyConfigProperties($companyId,$hcm_id) {
+         return DB::table('hcm_config_properties')
+                 ->select('config_name','config_value')
+                ->where('company_id', '=', $companyId)
+                ->where('hcm_id', '=', $hcm_id)->get();
+    }  
     public function integrateCompany($input = array()) {
          $result = DB::table('company_idp')->insert(
                                 array(
@@ -1421,6 +1447,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
     
     public function updateCompanyResumesWithGotReferredId($documentId = 0, $gotReferredId = 0)
     {   
+        $results = FALSE;
         $updatedAt = gmdate("Y-m-d H:i:s");
         $companyResumes = array(
                         "got_referred_id"   => $gotReferredId,
@@ -1430,6 +1457,29 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             $results = Company_Resumes::where ('id',$documentId)->update($companyResumes); 
         }
        return $results;
+    }
+    
+    public function getCompanyContactsId($emailId = '', $companyCode = '') {
+        
+        $result = 0;
+        if(!empty($companyCode) && !empty($emailId)){
+            $sql = "select n.id from contacts n
+                    left join company m on m.id = n.company_id  
+                    where n.emailid='".$emailId."' and m.code='".$companyCode."' " ;
+            $result = DB::Select($sql);
+        }
+        return $result;
+    }
+    
+    public function updateCompanyContactPhoneNumber($contactId = 0, $phone = '') {
+        
+        $result = FALSE;
+        if(!empty($contactId) && !empty($phone)) {
+            $result =  DB::table('contacts')
+                    ->where('id', $contactId)  
+                    ->update(array('phone' => $phone));
+        }
+        return $result; 
     }
     
 }
