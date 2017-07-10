@@ -284,9 +284,13 @@ class PostGateway {
             $neoInput['service_cost']       = !empty($input['job_cost'])?$input['job_cost'] : "";
             $neoInput['bucket_id']          = !empty($input['bucket_id'])?$input['bucket_id'] : "";
             $neoInput['company']            = !empty($input['company_name'])?$input['company_name'] : "";
-            $neoInput['job_description']    = !empty($input['job_description'])?$input['job_description'] : "";
             $neoInput['status']             = Config::get('constants.POST.STATUSES.ACTIVE');
             $neoInput['created_by']         = $emailId;
+            $neoInput['job_description']    = !empty($input['job_description'])?$input['job_description'] : "";
+            #RTA Box
+            if(!empty($neoInput['job_description'])){
+               $neoInput['job_description'] = "<div style='font-family:Arial;font-size:14px'>".$neoInput['job_description']."</div>" ;
+            }
             #form jobs skills here
             $neoInput['skills']             =  $this->userGateway->getSkillsFromJobTitle($neoInput['service_name'], $neoInput['job_description']);
             
