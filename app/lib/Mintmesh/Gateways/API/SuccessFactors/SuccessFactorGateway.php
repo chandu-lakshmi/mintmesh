@@ -10,18 +10,9 @@ namespace Mintmesh\Gateways\API\SuccessFactors;
  * data and is not concerned with the validation.
  */
 use Mintmesh\Repositories\API\Enterprise\EnterpriseRepository;
-use Mintmesh\Repositories\API\Referrals\ReferralsRepository;
-use Mintmesh\Repositories\API\User\UserRepository;
-use Mintmesh\Repositories\API\User\NeoUserRepository;
-use Mintmesh\Repositories\API\Post\NeoPostRepository;
-use Mintmesh\Repositories\API\SocialContacts\ContactsRepository;
 use Mintmesh\Repositories\API\Enterprise\NeoEnterpriseRepository;
-use Mintmesh\Gateways\API\User\UserGateway;
-use Mintmesh\Gateways\API\Referrals\ReferralsGateway;
 use Mintmesh\Services\Validators\API\Enterprise\EnterpriseValidator;
 use Mintmesh\Services\Validators\Api\SuccessFactors\IntegrationValidator;
-use Mintmesh\Services\Emails\API\User\UserEmailManager;
-use Mintmesh\Services\FileUploader\API\User\UserFileUploader;
 use Mintmesh\Services\ResponseFormatter\API\CommonFormatter;
 use LucaDegasperi\OAuth2Server\Authorizer;
 use Mintmesh\Services\APPEncode\APPEncode;
@@ -47,29 +38,17 @@ class SuccessFactorGateway {
     const CREATED_IN = 'created_in';
     const HCM_ID = 1;
 
-    protected $userRepository, $enterpriseRepository, $enterpriseValidator, $integrationValidator, $userFileUploader, $commonFormatter, $authorizer, $appEncodeDecode, $neoEnterpriseRepository;
-    protected $allowedHeaders, $allowedExcelExtensions, $createdNeoUser, $referralsGateway, $contactsRepository, $referralsRepository, $myExcel;
+    protected $enterpriseRepository, $enterpriseValidator, $integrationValidator, $commonFormatter, $neoEnterpriseRepository;
+    protected $allowedHeaders;
 
-    public function __construct(EnterpriseRepository $enterpriseRepository, NeoEnterpriseRepository $neoEnterpriseRepository, UserGateway $userGateway, ReferralsGateway $referralsGateway, ReferralsRepository $referralsRepository, UserRepository $userRepository, NeoUserRepository $neoUserRepository, NeoPostRepository $neoPostRepository, Authorizer $authorizer, EnterpriseValidator $enterpriseValidator, IntegrationValidator $integrationValidator, UserFileUploader $userFileUploader, UserEmailManager $userEmailManager, CommonFormatter $commonFormatter, APPEncode $appEncodeDecode, ContactsRepository $contactsRepository, MyExcel $myExcel
+    public function __construct(EnterpriseRepository $enterpriseRepository, NeoEnterpriseRepository $neoEnterpriseRepository, EnterpriseValidator $enterpriseValidator, IntegrationValidator $integrationValidator, CommonFormatter $commonFormatter
     ) {
 
         $this->enterpriseRepository = $enterpriseRepository;
         $this->neoEnterpriseRepository = $neoEnterpriseRepository;
-        $this->userGateway = $userGateway;
-        $this->referralsRepository = $referralsRepository;
-        $this->referralsGateway = $referralsGateway;
-        $this->userRepository = $userRepository;
-        $this->neoUserRepository = $neoUserRepository;
-        $this->neoPostRepository = $neoPostRepository;
-        $this->authorizer = $authorizer;
         $this->enterpriseValidator = $enterpriseValidator;
         $this->integrationValidator = $integrationValidator;
-        $this->userFileUploader = $userFileUploader;
-        $this->userEmailManager = $userEmailManager;
         $this->commonFormatter = $commonFormatter;
-        $this->appEncodeDecode = $appEncodeDecode;
-        $this->contactsRepository = $contactsRepository;
-        $this->myExcel = $myExcel;
         $this->allowedHeaders = array('employee_idother_id', 'first_name', 'last_name', 'email_id', 'cell_phone', 'status');
         $this->validHeaders = array('Employee ID/Other ID', 'First Name', 'Last Name', 'Email ID', 'Cell Phone', 'Status');
         $this->allowedExcelExtensions = array('csv', 'xlsx', 'xls');
@@ -98,42 +77,37 @@ class SuccessFactorGateway {
 
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $message, $data);
     }
-    
+
     public function getIntegrationStatus($input) {
-        
+
         $hcm_id = self::HCM_ID;
         $returnAry = $data = $getHcmList = $response = array();
-        $companyCode    = !empty($input['company_id'])?$input['company_id']:'';
+        $companyCode = !empty($input['company_id']) ? $input['company_id'] : '';
         #get the logged in user company details with company code here
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
-        $companyId      = !empty($companyDetails[0]->id)?$companyDetails[0]->id:0;
+        $companyId = !empty($companyDetails[0]->id) ? $companyDetails[0]->id : 0;
         #get company HCMs List here
         $getHcmJobs = $this->enterpriseRepository->checkCompanyHcmJobs($companyId, $hcm_id);
-        if(!empty($getHcmJobs)){
-        $getHcmstatus = !empty($getHcmJobs[0]->status)?$getHcmJobs[0]->status:0;
-        $getHcmstatus = !empty($getHcmstatus)?'enable':'disable';
+        $getHcmstatus = !empty($getHcmJobs[0]->status) ? $getHcmJobs[0]->status : 0;
+        $getHcmstatus = !empty($getHcmstatus) ? 'enable' : 'disable';
         $company_id = $getHcmJobs[0]->company_id;
         $company_hcm_jobs_id = $getHcmJobs[0]->company_hcm_jobs_id;
-        $response['hcmJobs'] = "Success";
-        $getHcmMappingFieldsCount = $this->enterpriseRepository->getCompanyMappingFieldsCount($companyId,$company_hcm_jobs_id);
-        if($getHcmMappingFieldsCount == 14){
-            $response['hcmMappingFieldsCount'] = "Success";
-        }else{
-            $response['hcmMappingFieldsCount'] = "Failure";
+        $getHcmMappingFieldsCount = $this->enterpriseRepository->getCompanyMappingFieldsCount($companyId, $company_hcm_jobs_id);
+        $getHcmConfigProperties = $this->enterpriseRepository->getCompanyConfigProperties($companyId, $hcm_id);
+        if (!empty($getHcmJobs) && $getHcmMappingFieldsCount == 14 && !empty($getHcmConfigProperties)) {
+            $message = array('msg' => array(Lang::get("Success")));
+            $responseCode = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg = self::SUCCESS_RESPONSE_MESSAGE;
+            $data = array();
+        } else {
+            $message = array('msg' => array(Lang::get("Failure")));
+            $responseCode = self::ERROR_RESPONSE_CODE;
+            $responseMsg = self::ERROR_RESPONSE_MESSAGE;
+            $data = array();
         }
-        $getHcmConfigProperties = $this->enterpriseRepository->getCompanyConfigProperties($companyId,$hcm_id);
-        if(!empty($getHcmConfigProperties)){
-        $response['hcmConfigProperties'] = "Success";
-        }else{
-            $response['hcmConfigProperties'] = "Failure";
-        }
-        }else{
-            $response['hcmJobs'] = "Failure";
-        }
-        return $response;
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $message, $data);
     }
 
-     
 }
 ?>
 
