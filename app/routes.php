@@ -156,9 +156,7 @@ Route::group(array('prefix' => 'v1'), function() {
       Route::post("enterprise/unsolicited_old_companies", "API\Enterprise\EnterpriseController@unsolicitedForOldCompanies");
       Route::post("enterprise/not_parsed_resumes", "API\Post\PostController@notParsedResumes");
       
-      //Integration Status API
-      Route::any('getIntegrationStatus','API\SuccessFactors\successFactorController@getIntegrationStatus');
-         
+      
 });
 
 //Route::group(array('prefix' => 'v1'), function() {
