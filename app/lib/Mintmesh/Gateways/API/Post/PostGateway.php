@@ -2722,12 +2722,11 @@ class PostGateway {
             $jobData  = $postDetails = $this->referralsGateway->formPostDetailsArray($postResultAry[0][0]);
             $relData = !empty($postResultAry[0][4])?$postResultAry[0][4]:'';
             $jobDesc = $jobData['job_description'];
-            $jobDesc = trim(preg_replace('/ +/', ' ', preg_replace('/[^A-Za-z0-9 ]/', ' ', urldecode(html_entity_decode(strip_tags($jobDesc))))));
+            //$jobDesc = trim(preg_replace('/ +/', ' ', preg_replace('/[^A-Za-z0-9 ]/', ' ', urldecode(html_entity_decode(strip_tags($jobDesc))))));
             $created_at = !empty($jobData['created_at']) ? $jobData['created_at'] : '';
             if($created_at){
                 $created_at = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($jobData['created_at'], $timeZone)));
             }
-            
             $record['post_id']          = $jobData['post_id'];
             $record['job_name']         = $jobData['service_name'];
             $record['job_type']         = $jobData['post_type'];
@@ -2750,7 +2749,6 @@ class PostGateway {
             #get the post reward details here
             $postRewards                = $this->referralsGateway->getPostRewards($postId, $userCountry, $isEnterprise=1);
             $record['rewards']          = $postRewards;
-            
             $returnData['job_details']  = $record;
             #get post referral details here
             if(!empty($postResultAry[0][1]) && !empty($postResultAry[0][2])){   
