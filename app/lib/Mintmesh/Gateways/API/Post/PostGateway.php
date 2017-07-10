@@ -795,7 +795,7 @@ class PostGateway {
                 $returnReferralDetails['updated_at']            = !empty($postRelDetails['p1_updated_at'])?date("D M d, Y h:i A", strtotime($this->appEncodeDecode->UserTimezone($postRelDetails['p1_updated_at'],$timeZone))):'';
                 $returnReferralDetails['referred_by']           = $neoReferrerDetails['emailid'];
                 $returnReferralDetails['resume_path']           = !empty($postRelDetails['resume_path'])?$postRelDetails['resume_path']:$cvPath;
-                $returnReferralDetails['resume_original_name']  = $postRelDetails['resume_original_name'];
+                $returnReferralDetails['resume_original_name']  = !empty($postRelDetails['resume_original_name']) ? $postRelDetails['resume_original_name'] : Lang::get('MINTMESH.candidates.awaiting_resume');
                 $returnReferralDetails['relation_count']        = $postRelDetails['relation_count'];
                 $returnReferralDetails['referred_by_name']      = !empty($referrerName)?$referrerName:$neoReferrerName;
                 $returnReferralDetails['referred_by_dp_image']  = $neoReferrerDetails['dp_renamed_name'];
@@ -1986,7 +1986,7 @@ class PostGateway {
                 $record['document_id']      = !empty($relation->document_id) ? $relation->document_id : 0;
                 $record['one_way_status']   = $relation->one_way_status;
                 $record['resume_path']      = $relation->resume_path;
-                $record['resume_name']      = $relation->resume_original_name;
+                $record['resume_name']      = !empty($relation->resume_original_name) ? $relation->resume_original_name : Lang::get('MINTMESH.candidates.awaiting_resume');
                 $record['created_at']       = date('M d, Y',strtotime($this->appEncodeDecode->UserTimezone($relation->created_at,$input['time_zone'])));
                 $record['awt_status']       = $relation->awaiting_action_status;
                 #get the user details here

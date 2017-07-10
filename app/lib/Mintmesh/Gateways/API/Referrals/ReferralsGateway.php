@@ -2027,6 +2027,7 @@ class ReferralsGateway {
                         $emailData['from_userid']       = $neoUserId;
                         $emailData['from_emailid']      = $userEmail;
                         $emailData['from_firstname']    = $neoUserName;
+                        $emailData['email_template']    = 1;
                         $emailData['ip_address']        = $_SERVER['REMOTE_ADDR'];
                         $emailData['ref_code']          = $refCode;
                         $emailData['ref_rel_code']      = $refRelCode;
@@ -2480,6 +2481,7 @@ class ReferralsGateway {
             $freeService = $postDetails['free_service']; 
             #form email variables here
             $dataSet['name']                = $fullName;
+            $dataSet['email_template']      = isset($emailData['email_template']) ? $emailData['email_template'] : 0;;
             $dataSet['reply_emailid']       = $emailData['reply_to'];
             $dataSet['email']               = $emailData['to_emailid'];
             $dataSet['fromName']            = $emailData['from_firstname'];
