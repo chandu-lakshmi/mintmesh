@@ -23,10 +23,12 @@ Route::any("getAccessTokenRefreshToken", "ZenefitsController@getAccessTokenRefre
 Route::get('getMails','Email2Controller@getMails');
 Route::any('getOauthBasedOnClientId','HomeController@getOauthBasedOnClientId');
 
-//Download Resumes
+//Download Resumes getIntegrationStatus
 Route::any('getZipDownload','API\Referrals\ReferralsController@getDownloadZipSelectedResumes');
 Route::any('getResumeDownload','API\Referrals\ReferralsController@getFileDownload');
 
+//Integration Status API
+Route::any('getIntegrationStatus','API\SuccessFactors\successFactorController@getIntegrationStatus');
 
 Route::post('getParsedResumeDocInfo','API\SocialContacts\ContactsController@getParsedResumeDocInfo');
 Route::get('docs', function() {
@@ -153,6 +155,9 @@ Route::group(array('prefix' => 'v1'), function() {
       //unsolicited node for old companies
       Route::post("enterprise/unsolicited_old_companies", "API\Enterprise\EnterpriseController@unsolicitedForOldCompanies");
       Route::post("enterprise/not_parsed_resumes", "API\Post\PostController@notParsedResumes");
+      
+      //Integration Status API
+      Route::any('getIntegrationStatus','API\SuccessFactors\successFactorController@getIntegrationStatus');
          
 });
 
@@ -385,6 +390,7 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       Route::post("enterprise/get_hcm_list", "API\Enterprise\EnterpriseController@getHcmList");
       Route::post("enterprise/get_zenefits_hcm_list", "API\Enterprise\EnterpriseController@getZenefitsHcmList");
       Route::post("enterprise/get_icims_hcm_list", "API\Enterprise\EnterpriseController@getIcimsHcmList");
+      Route::post("enterprise/get_greenhouse_hcm_list", "API\Enterprise\EnterpriseController@getGreenhouseHcmList");
       //view hcm
       Route::post("enterprise/get_hcm_partners", "API\Enterprise\EnterpriseController@getHcmPartners");
       // company all contacts

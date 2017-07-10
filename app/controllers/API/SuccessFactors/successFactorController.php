@@ -5,6 +5,7 @@ namespace API\SuccessFactors;
 use Mintmesh\Services\SuccessFactors\successFactorManager ;
 use Mintmesh\Repositories\API\Post\NeoPostRepository;
 use Mintmesh\Gateways\API\User\UserGateway;
+use Mintmesh\Gateways\API\SuccessFactors\SuccessFactorGateway;
 use Mintmesh\Repositories\API\Referrals\ReferralsRepository;
 use Mintmesh\Services\ResponseFormatter\API\CommonFormatter;
 use Config;
@@ -16,11 +17,12 @@ class successFactorController extends \BaseController {
     const ERROR_RESPONSE_CODE = 403;
     const ERROR_RESPONSE_MESSAGE = 'error';
     
-    protected $successFactorManager, $neoPostRepository, $userGateway, $referralsRepository;
+    protected $successFactorManager, $neoPostRepository, $userGateway, $referralsRepository, $successfactorygateway;
     public function __construct(
                 successFactorManager $successFactorManager,
                 NeoPostRepository $neoPostRepository,
                 UserGateway $userGateway,
+                SuccessFactorGateway $successfactorygateway,
                 referralsRepository $referralsRepository,
                 CommonFormatter $commonFormatter
             )
@@ -30,6 +32,7 @@ class successFactorController extends \BaseController {
             $this->userGateway          = $userGateway;
             $this->referralsRepository  = $referralsRepository;
             $this->commonFormatter      = $commonFormatter;
+            $this->SuccessFactorGateway = $successfactorygateway;
         }
     /**
      * Display a listing of the resource.
@@ -130,7 +133,23 @@ class successFactorController extends \BaseController {
        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage,$data);
     }
     
-    
+    public function getIntegrationStatus() {
+         // Receiving user input data
+            $inputUserData = \Input::all(); 
+            // Validating user input data
+            $validation = $this->SuccessFactorGateway->validateIntegrationStatus($inputUserData);
+            if($validation['status'] == 'success') {
+                if($inputUserData['authentication_key'] == "HcHajxliVqjQ8Jp3Sgc8ms8UPzPyPp8jq1AQk9x9"){
+                    $response = $this->SuccessFactorGateway->getIntegrationStatus($inputUserData);
+                }else{
+                    $response = "Failure";
+                }
+               return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            } 
+    }
    
    
     
