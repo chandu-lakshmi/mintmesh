@@ -3133,7 +3133,8 @@ class PostGateway {
                 #check user already updated resume
                 $referredDetails     = $this->neoPostRepository->getGotReferredRelationDetailsById($reference_id);
                 $relDetails          = !empty($referredDetails[0]) ? $referredDetails[0] : ''; 
-                $checkResumeExist    = !empty($relDetails->referred_for) ? $relDetails->referred_for : '';
+                $userDetails         = !empty($referredDetails[1]) ? $referredDetails[1] : ''; 
+                $checkResumeExist    = !empty($relDetails->resume_path) ? $relDetails->resume_path : '';
                 
                 if(empty($checkResumeExist)){
                     $resumeFile       = $input['cv'];
@@ -3164,12 +3165,18 @@ class PostGateway {
                     $neoInput['resume_path']            = $renamedFileName;
                     $neoInput['resume_original_name']   = $originalFileName;
                     $referredCandidate = $this->neoPostRepository->updateMobileReferCandidateResume($neoInput, $reference_id);
+                    
                     if($referredCandidate){
                         #update got referred relation id company resumes table
                         if(isset($referredCandidate[0]) && !empty($referredCandidate[0][2]) && !empty($documentId)){
                             $gotReferredId = $referredCandidate[0][2];
                             $this->enterpriseRepository->updateCompanyResumesWithGotReferredId($documentId, $gotReferredId);
                         }
+                        #update referred Candidate full name
+                        $userFullName = !empty($input['fullname']) ? $input['fullname'] : '';
+                        $referred_by  = !empty($relDetails->referred_by) ? $relDetails->referred_by : '';
+                        $userEmailid  = !empty($userDetails->emailid) ? $userDetails->emailid : '';
+                        $this->contactsRepository->updateUserImportedRelation($userEmailid, $referred_by, $userFullName);
 
                        $responseCode   = self::SUCCESS_RESPONSE_CODE;
                        $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
