@@ -584,6 +584,6 @@ Route::group(array('prefix' => 'v1/ent', 'before' => 'oauth'), function() {
     Route::post("get_services", "API\EnterpriseApp\EnterpriseAppController@getServices");
     //my referral contacts
     Route::post("referral/get_my_referral_contacts", "API\EnterpriseApp\EnterpriseAppController@getMyReferralContacts");
-    
+    //get all my referrals
     Route::post("referral/get_all_my_referrals", "API\EnterpriseApp\EnterpriseAppController@getAllMyReferrals");
 });
