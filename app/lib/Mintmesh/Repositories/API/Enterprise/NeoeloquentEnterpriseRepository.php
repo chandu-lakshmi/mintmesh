@@ -567,7 +567,7 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
     }
     
     public function updateUser($input) {
-        $queryString = "MATCH (u:User) where u.mysql_id='".$input['user_id']."' set u.fullname='".$input['name']."',u.photo='".$input['photo']."',u.photo_org_name='".$input['photo_org_name']."' return u";
+        $queryString = "MATCH (u:User) where u.emailid='".$input['emailid']."' set u.fullname='".$input['name']."',u.photo='".$input['photo']."',u.photo_org_name='".$input['photo_org_name']."' return u";
         $query = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
         return $result[0][0];

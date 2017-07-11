@@ -105,7 +105,7 @@
                                     <table cellpadding="0" border="0" style="width:70px;text-align:center;display:inline-block;font-family:Arial,Helvetica,sans-serif;font-size:14px">
                                         <tr>
                                             <td style="background: #238260;">
-                                             <a href="<?php echo $view_jobs_link_web; ?>" style="font-size: 13px;padding: 8px 12px;display: inline-block;border: 1px solid  #238260;border-radius: 2px;outline:none;background: #238260;color: #fff;cursor:pointer;text-decoration:none">REFFER</a>
+                                             <a href="<?php echo $view_jobs_link_web; ?>" style="font-size: 13px;padding: 8px 12px;display: inline-block;border: 1px solid  #238260;border-radius: 2px;outline:none;background: #238260;color: #fff;cursor:pointer;text-decoration:none">REFER</a>
                                             </td>
                                         </tr>
                                     </table>
