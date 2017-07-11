@@ -2457,7 +2457,7 @@ class PostGateway {
             $checkRelation  = $this->neoPostRepository->checkCampaignUserRelation($input);
             $reference_id   = !empty($input['reference_id']) ? $input['reference_id'] : 0;
             $userDetails    = $this->neoEnterpriseRepository->getNodeById($reference_id);
-            $companyCode    = !empty($checkRelation->company_code)?$checkRelation->company_code:$userCompany;
+            $companyCode    = !empty($checkRelation->company_code)?$checkRelation->company_code:'';
             #check user Separated Status here
             $separatedStatus = $this->checkReferredUserSeparatedStatus($reference_id, $companyCode);
             if($separatedStatus){
