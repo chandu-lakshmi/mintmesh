@@ -4942,6 +4942,7 @@ class UserGateway {
                             #form s3 path here
                             $s3Path = Config::get('constants.S3_DOWNLOAD_PATH').$companyId.'/'.$renamedFileName;
                             $response['document_id']  = $documentId;
+                            $response['s3_path']      = $s3Path;
                             $response['response']     = $renamedFileName;
                             #update s3 path in company resumes table
                             $updateResult = $this->enterpriseRepository->updateCompanyResumes($documentId, $s3Path);

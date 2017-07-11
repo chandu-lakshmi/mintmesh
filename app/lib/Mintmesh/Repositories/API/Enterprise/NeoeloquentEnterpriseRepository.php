@@ -265,7 +265,7 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
          $queryString = " MATCH (u:User),(b:Contact_bucket)
                             WHERE b.mysql_id = '" . $bucket_id . "' and u.emailid = '" . $neoInput['emailid'] . "' ";
            $queryString .= "set u.firstname='".$neoInput['firstname']."', u.lastname='".$neoInput['lastname']."', u.emailid='".$neoInput['emailid']."'";
-           $queryString .= ",u.phone='".$neoInput['phone']."',u.status='".$neoInput['status']."' ";
+           $queryString .= ",u.contact_number='".$neoInput['contact_number']."',u.status='".$neoInput['status']."' ";
             $queryString.="create unique (u)<-[:" . Config::get('constants.RELATIONS_TYPES.COMPANY_CONTACT_IMPORTED');
             if (!empty($relationAttrs)) {
                 $queryString.="{";

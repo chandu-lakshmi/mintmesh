@@ -1881,7 +1881,7 @@ class ReferralsGateway {
         $isEnt = !empty($input['is_ent']) ? $input['is_ent'] : 0;
         $referNonMintmesh   = $nonMintmeshPhoneRefer = 0;
         $uploadedByP2       = $documentId = $isAlreadyReferred = 0;
-        $p3CvOriginalName   = $referResumePath = "";
+        $p3CvOriginalName   = $referResumePath = $s3_path = "";
         $relationCount      = 1;
         $postId = !empty($input['post_id']) ? $input['post_id'] : '';
         
@@ -1914,6 +1914,7 @@ class ReferralsGateway {
                     #for enterprise app
                     $resumeResult = $this->processResumeForEnterpriseRefer($input, $companyId, $userId);
                     $documentId   = !empty($resumeResult['document_id']) ? $resumeResult['document_id'] : 0;
+                    $s3_path      = !empty($resumeResult['s3_path']) ? $resumeResult['s3_path'] : '';
 
                     if (!$resumeResult['status']) {
                         return $this->commonFormatter->formatResponse(406, "error", $resumeResult['message'], array());
@@ -1975,7 +1976,7 @@ class ReferralsGateway {
                 $relationAttrs['status']            = Config::get('constants.REFERRALS.STATUSES.PENDING');
                 $relationAttrs['one_way_status']    = Config::get('constants.REFERRALS.STATUSES.PENDING');
                 $relationAttrs['relation_count']    = $relationCount;
-                $relationAttrs['resume_path']       = $referResumePath;
+                $relationAttrs['resume_path']       = !empty($s3_path) ? $s3_path : $referResumePath;
                 $relationAttrs['uploaded_by_p2']    = $uploadedByP2;
                 $relationAttrs['resume_original_name']  = $p3CvOriginalName;
                 if (!empty($input['message'])) {
@@ -2100,13 +2101,14 @@ class ReferralsGateway {
         
         $documentId     = $uploaded = 0;
         $returnBoolean  = true;
-        $resumePath     = $resumePathRes = $message = $resumeOriginalName = "";
+        $resumePath     = $resumePathRes = $message = $resumeOriginalName = $s3_path = "";
         
         if (!empty($input['refer_non_mm_email']) && !empty($input['resume'])) {
             #for non mintmesh user with resume
             $uploaded = 1;
             $responseAry    = $this->userGateway->uploadResumeForEnterpriseRefer($input['resume'], $companyId, $userId);
             $documentId     = !empty($responseAry['document_id']) ? $responseAry['document_id'] : 0;
+            $s3_path        = !empty($responseAry['s3_path']) ? $responseAry['s3_path'] : '';
             $resumePathRes  = $responseAry['response'];
             
         } else if (empty($input['refer_non_mm_email']) && !empty($input['resume'])) {
@@ -2114,6 +2116,7 @@ class ReferralsGateway {
             $uploaded = 1;
             $responseAry    = $this->userGateway->uploadResumeForEnterpriseRefer($input['resume'], $companyId, $userId);
             $documentId     = !empty($responseAry['document_id']) ? $responseAry['document_id'] : 0;
+            $s3_path        = !empty($responseAry['s3_path']) ? $responseAry['s3_path'] : '';
             $resumePathRes  = $responseAry['response'];
             
         } else if (empty($input['refer_non_mm_email']) && empty($input['resume'])) {
@@ -2135,7 +2138,7 @@ class ReferralsGateway {
             $message = Lang::get('MINTMESH.user.' . $resumePathRes);
         }
         $msg = array('msg' => array($message));
-        return array('status' => $returnBoolean, 'uploaded' => $uploaded, 'resume_path' => $resumePath, 'message' => $msg, 'resume_original_name' => $resumeOriginalName, 'document_id' => $documentId);
+        return array('status' => $returnBoolean, 'uploaded' => $uploaded, 'resume_path' => $resumePath, 'message' => $msg, 'resume_original_name' => $resumeOriginalName, 'document_id' => $documentId, 's3_path'=>$s3_path);
     }
 
     public function getPostRewards($postId = '', $userCountry = '', $isEnterprise = 0) {
@@ -2176,6 +2179,9 @@ class ReferralsGateway {
     }
 
     public function viewCampaignApp($campaignId = '', $timeZone = '') {
+        
+        $page = 0; 
+        $search =  $status = '';
         $campSchedule = $returnData = $scheduleRes = $postAry = $postsRes = array();
         #get Campaign Schedule here
         $scheduleRes = $this->neoPostRepository->getCampaignSchedule($campaignId);
@@ -2188,8 +2194,9 @@ class ReferralsGateway {
             $schedule['end_on_time'] = $value->end_time;
             $campSchedule[] = $schedule;
         }
+        $status = Config::get('constants.REFERRALS.STATUSES.ACTIVE');
         #get Campaign Posts here
-        $postsRes = $this->neoPostRepository->getCampaignPosts($campaignId);
+        $postsRes = $this->neoPostRepository->getCampaignPosts($campaignId,$page, $search, $status);
         $vacancies = 0;
         $jobs_count = $postsRes->count();
         foreach ($postsRes as $posts) {
@@ -2414,7 +2421,7 @@ class ReferralsGateway {
 
         set_time_limit(0);
         $url  = $resumePathfile[0]->file_source;
-        $file = basename($url);
+        $file = 'uploads/'. basename($url);
         $fp   = fopen($file, 'w');
         $type = self::CURL_CALL_TYPE_FILE;
         $data =  $this->curlCall($url,$fp,$type);
@@ -2431,6 +2438,7 @@ class ReferralsGateway {
         ob_clean();
         flush();
         readfile($file);
+        unlink($file);
 
     }
     
