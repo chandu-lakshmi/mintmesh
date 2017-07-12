@@ -493,7 +493,7 @@ return array(
         "success" => "Successfully retrieved candidates List",
         "no_candidates" => "No candidate records found",
         "failure" => "Failed to retrieve candidates",
-        "awaiting_resume" => "Awaiting Resume from Candidate"
+        "awaiting_resume" => "Awaiting Application from Candidate"
     ),
     'apply_job' => array(
         "success" => "Successfully referred",
