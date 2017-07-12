@@ -26,7 +26,7 @@
                                                     <tr height="28px"><td>&nbsp;</td></tr>
                                                     <?php if(!empty($email_template)){?>
                                                     <tr>
-                                                        <td style="color:#000;padding: 5px 0;">Hey <?php echo $name;?>, your friend <?php echo $fromName ; ?> referred you for the following job</td>
+                                                        <td style="color:#000;padding: 5px 0;">Hello <?php echo $name;?>,<br /> you have been Referred by your friend <?php echo $fromName ; ?> for the job <?php echo $looking_for ; ?> at <?php echo $company_name ; ?></td>
                                                     </tr>
                                                     <?php } ?>
                                                     <tr>
