@@ -284,9 +284,13 @@ class PostGateway {
             $neoInput['service_cost']       = !empty($input['job_cost'])?$input['job_cost'] : "";
             $neoInput['bucket_id']          = !empty($input['bucket_id'])?$input['bucket_id'] : "";
             $neoInput['company']            = !empty($input['company_name'])?$input['company_name'] : "";
-            $neoInput['job_description']    = !empty($input['job_description'])?$input['job_description'] : "";
             $neoInput['status']             = Config::get('constants.POST.STATUSES.ACTIVE');
             $neoInput['created_by']         = $emailId;
+            $neoInput['job_description']    = !empty($input['job_description'])?$input['job_description'] : "";
+            #RTA Box
+            if(!empty($neoInput['job_description'])){
+               $neoInput['job_description'] = $neoInput['service'] = '<div style="font-family:Arial;font-size:14px">'.$neoInput['job_description'].'</div>' ;
+            }
             #form jobs skills here
             $neoInput['skills']             =  $this->userGateway->getSkillsFromJobTitle($neoInput['service_name'], $neoInput['job_description']);
             
@@ -2453,7 +2457,7 @@ class PostGateway {
             $checkRelation  = $this->neoPostRepository->checkCampaignUserRelation($input);
             $reference_id   = !empty($input['reference_id']) ? $input['reference_id'] : 0;
             $userDetails    = $this->neoEnterpriseRepository->getNodeById($reference_id);
-            $companyCode    = !empty($checkRelation->company_code)?$checkRelation->company_code:$userCompany;
+            $companyCode    = !empty($checkRelation->company_code)?$checkRelation->company_code:'';
             #check user Separated Status here
             $separatedStatus = $this->checkReferredUserSeparatedStatus($reference_id, $companyCode);
             if($separatedStatus){
@@ -2722,12 +2726,11 @@ class PostGateway {
             $jobData  = $postDetails = $this->referralsGateway->formPostDetailsArray($postResultAry[0][0]);
             $relData = !empty($postResultAry[0][4])?$postResultAry[0][4]:'';
             $jobDesc = $jobData['job_description'];
-            $jobDesc = trim(preg_replace('/ +/', ' ', preg_replace('/[^A-Za-z0-9 ]/', ' ', urldecode(html_entity_decode(strip_tags($jobDesc))))));
+            //$jobDesc = trim(preg_replace('/ +/', ' ', preg_replace('/[^A-Za-z0-9 ]/', ' ', urldecode(html_entity_decode(strip_tags($jobDesc))))));
             $created_at = !empty($jobData['created_at']) ? $jobData['created_at'] : '';
             if($created_at){
                 $created_at = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($jobData['created_at'], $timeZone)));
             }
-            
             $record['post_id']          = $jobData['post_id'];
             $record['job_name']         = $jobData['service_name'];
             $record['job_type']         = $jobData['post_type'];
@@ -2750,7 +2753,6 @@ class PostGateway {
             #get the post reward details here
             $postRewards                = $this->referralsGateway->getPostRewards($postId, $userCountry, $isEnterprise=1);
             $record['rewards']          = $postRewards;
-            
             $returnData['job_details']  = $record;
             #get post referral details here
             if(!empty($postResultAry[0][1]) && !empty($postResultAry[0][2])){   
@@ -3135,7 +3137,8 @@ class PostGateway {
                 #check user already updated resume
                 $referredDetails     = $this->neoPostRepository->getGotReferredRelationDetailsById($reference_id);
                 $relDetails          = !empty($referredDetails[0]) ? $referredDetails[0] : ''; 
-                $checkResumeExist    = !empty($relDetails->referred_for) ? $relDetails->referred_for : '';
+                $userDetails         = !empty($referredDetails[1]) ? $referredDetails[1] : ''; 
+                $checkResumeExist    = !empty($relDetails->resume_path) ? $relDetails->resume_path : '';
                 
                 if(empty($checkResumeExist)){
                     $resumeFile       = $input['cv'];
@@ -3166,12 +3169,18 @@ class PostGateway {
                     $neoInput['resume_path']            = $renamedFileName;
                     $neoInput['resume_original_name']   = $originalFileName;
                     $referredCandidate = $this->neoPostRepository->updateMobileReferCandidateResume($neoInput, $reference_id);
+                    
                     if($referredCandidate){
                         #update got referred relation id company resumes table
                         if(isset($referredCandidate[0]) && !empty($referredCandidate[0][2]) && !empty($documentId)){
                             $gotReferredId = $referredCandidate[0][2];
                             $this->enterpriseRepository->updateCompanyResumesWithGotReferredId($documentId, $gotReferredId);
                         }
+                        #update referred Candidate full name
+                        $userFullName = !empty($input['fullname']) ? $input['fullname'] : '';
+                        $referred_by  = !empty($relDetails->referred_by) ? $relDetails->referred_by : '';
+                        $userEmailid  = !empty($userDetails->emailid) ? $userDetails->emailid : '';
+                        $this->contactsRepository->updateUserImportedRelation($userEmailid, $referred_by, $userFullName);
 
                        $responseCode   = self::SUCCESS_RESPONSE_CODE;
                        $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;

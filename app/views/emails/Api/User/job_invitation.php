@@ -26,7 +26,7 @@
                                                     <tr height="28px"><td>&nbsp;</td></tr>
                                                     <?php if(!empty($email_template)){?>
                                                     <tr>
-                                                        <td style="color:#000;padding: 5px 0;">Hey <?php echo $name;?>, your friend <?php echo $fromName ; ?> referred you for the following job,</td>
+                                                        <td style="color:#000;padding: 5px 0;">Hey <?php echo $name;?>, your friend <?php echo $fromName ; ?> referred you for the following job</td>
                                                     </tr>
                                                     <?php } ?>
                                                     <tr>
@@ -90,7 +90,7 @@
                                         <tr><td width="20%" style="color:#939393;padding:5px 0;vertical-align:top;">Location:</td><td width="80%" style="color:#252525;padding:5px 0;"><?php echo $location ; ?></td></tr>
                                         <tr><td style="color:#939393;padding:5px 0;vertical-align:top;">Job Description:</td></tr>
                                         <tr><td colspan="2" style="padding:0">
-                                                <pre style="white-space: pre-line;font-family:Arial, Helvetica, sans-serif !important;">
+                                                <pre style="white-space: pre-line;font-family:Arial, Helvetica, sans-serif;margin:0;">
                                                  <?php echo $job_description ; ?>   
                                                 </pre>
                                             </td>

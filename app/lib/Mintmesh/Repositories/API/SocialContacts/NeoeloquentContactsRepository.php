@@ -447,6 +447,22 @@ class NeoeloquentContactsRepository extends BaseRepository implements ContactsRe
         }
         return $return;
     }
+    
+    
+    public function updateUserImportedRelation($userEmailid = '', $referred_by = '', $userFullName = '') {
+        
+        $return = TRUE;
+        if(!empty($userEmailid) && !empty($referred_by) && !empty($userFullName)){
+            
+            $userFullName = $this->appEncodeDecode->filterString($userFullName);
+            $queryString = "MATCH (u:User:Mintmesh)-[r:".Config::get('constants.RELATIONS_TYPES.IMPORTED')."]-(n:User) WHERE u.emailid = '".$referred_by."' and n.emailid = '".$userEmailid."' ";
+            $queryString.= " set r.fullname = '".$userFullName."', r.firstname = '".$userFullName."' return ID(r)";
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            $return = $result;
+        }
+        return $return;
+    }
 
 }
 

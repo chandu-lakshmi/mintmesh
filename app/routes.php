@@ -25,6 +25,7 @@ Route::any('getOauthBasedOnClientId','HomeController@getOauthBasedOnClientId');
 
 //Download Resumes getIntegrationStatus
 Route::any('getZipDownload','API\Referrals\ReferralsController@getDownloadZipSelectedResumes');
+
 Route::any('getResumeDownload','API\Referrals\ReferralsController@getFileDownload');
 
 //Integration Status API
@@ -582,7 +583,8 @@ Route::group(array('prefix' => 'v1/ent', 'before' => 'oauth'), function() {
     Route::post("enterprise/get_job_details", "API\EnterpriseApp\EnterpriseAppController@getJobDetails");    
     //services
     Route::post("get_services", "API\EnterpriseApp\EnterpriseAppController@getServices");
-    
+    //my referral contacts
     Route::post("referral/get_my_referral_contacts", "API\EnterpriseApp\EnterpriseAppController@getMyReferralContacts");
+    //get all my referrals
     Route::post("referral/get_all_my_referrals", "API\EnterpriseApp\EnterpriseAppController@getAllMyReferrals");
 });
