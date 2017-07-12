@@ -43,7 +43,7 @@
                                              <td width="40%" align="center" >
                                                 <!--   Thank you-->
                                                 </td>
-                                              <?php if($post_type == 'external'){ if($discovery){
+                                              <?php if($post_type == 'external'){  if($discovery){
                                                 ?>
                                             <td width="20%" style="border-left:1px solid #ccc;padding:0 10px;">
                                                 <table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial, Helvetica, sans-serif;font-size:14px;">
