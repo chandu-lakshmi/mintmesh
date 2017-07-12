@@ -2190,41 +2190,59 @@ class PostGateway {
     }
     
     public function decryptRef($input){
+        
        $data = array();
-       $input['all_jobs'] = !empty($input['all_jobs'])?$input['all_jobs']:'';
+       $input['all_jobs'] = !empty($input['all_jobs']) ? $input['all_jobs'] : '';
        if(!empty($input['ref']) && isset($input['ref'])){
-        $mail_parse_ref = isset($input['ref'])?MyEncrypt::decrypt_blowfish($input['ref'],Config::get('constants.MINTMESH_ENCCODE')):0;
+           
+        $mail_parse_ref     = isset($input['ref']) ? MyEncrypt::decrypt_blowfish($input['ref'],Config::get('constants.MINTMESH_ENCCODE')) : 0;
         $mail_parse_ref_val = array_map('intval',explode('_',$mail_parse_ref));	
-	$post_id = isset($mail_parse_ref_val[0])?$mail_parse_ref_val[0]:0;
-        $referred_by_id = isset($mail_parse_ref_val[1])?$mail_parse_ref_val[1]:0;
+	$post_id            = isset($mail_parse_ref_val[0]) ? $mail_parse_ref_val[0] : 0;
+        $referred_by_id     = isset($mail_parse_ref_val[1]) ? $mail_parse_ref_val[1] : 0;
+        
         if($post_id != 0 && $referred_by_id != 0){
-        $userDetails = $this->neoEnterpriseRepository->getNodeById($referred_by_id);
-        $companyDetails     = $this->neoPostRepository->getPostCompany($post_id);
-        $input['post_id'] = $post_id;
-        $postStatus = $this->job2->getPost($input);
-        $postDetails    = $this->referralsGateway->formPostDetailsArray($postStatus);
-        $companyLogo = !empty($companyDetails->logo)?$companyDetails->logo:'';
-        if($input['all_jobs'] == 0){
-        $jobTitle = $companyDetails->name .' looking for '.$postStatus->looking_for;
-        $jobDescription = 'Experience: '.$postDetails['experience_range_name'].', Location: '.$postStatus->service_location;
-         $url = Config::get('constants.MM_ENTERPRISE_URL') . "/email/job-details/share?ref=" . $input['ref']."";
-         $bitlyUrl = $this->urlShortner($url);
-         $bittly    = $bitlyUrl;
-
-        }else if($input['all_jobs'] == 1){
-            $jobTitle = 'These jobs are available in '.$companyDetails->name;
-            $jobDescription = $postStatus->looking_for;
-            $url = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-jobs/share?ref=" . $input['ref']."";
-            $bitlyUrl = $this->urlShortner($url);
-            $bittly    = $bitlyUrl;
-
-        }
-        else{
-            $jobTitle = $jobDescription = $url = '';
-        }
-        $data = array("post_id" => $input['post_id'],"reference_id"=>$referred_by_id,"emailid" => $userDetails->emailid,"post_status"=>$postStatus->status,"company_logo"=>$companyLogo,"company_name"=>$companyDetails->name,"title"=>$jobTitle,"description" => $jobDescription,"url"=>$url,"bittly_url"=>$bittly);
-        }else{
-            $data = array();
+            
+            $userDetails        = $this->neoEnterpriseRepository->getNodeById($referred_by_id);
+            $companyDetails     = $this->neoPostRepository->getPostCompany($post_id);
+            $input['post_id']   = $post_id;
+            $postStatus         = $this->job2->getPost($input);
+            $postDetails        = $this->referralsGateway->formPostDetailsArray($postStatus);
+            $companyLogo        = !empty($companyDetails->logo) ? $companyDetails->logo : '';
+            if($input['all_jobs'] == 0){
+                
+                $jobTitle       = $companyDetails->name .' looking for '.$postStatus->looking_for;
+                $jobFunction    = $postDetails['job_function_name'];
+                $experience     = $postDetails['experience_range_name'];
+                $location       = $postDetails['service_location'];
+                $jobDescription = 'Experience: '.$postDetails['experience_range_name'].', Location: '.$postStatus->service_location;
+                $url            = Config::get('constants.MM_ENTERPRISE_URL') . "/email/job-details/share?ref=" . $input['ref']."";
+                $bitlyUrl       = $this->urlShortner($url);
+                $bittly         = $bitlyUrl;
+            }else if($input['all_jobs'] == 1){
+                
+                $jobTitle       = 'These jobs are available in '.$companyDetails->name;
+                $jobDescription = $postStatus->looking_for;
+                $url            = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-jobs/share?ref=" . $input['ref']."";
+                $bitlyUrl       = $this->urlShortner($url);
+                $bittly         = $bitlyUrl;
+            } else {
+                $jobTitle = $jobDescription = $url = $jobFunction = $experience = $location = '';
+            }
+            $data = array(
+                    "post_id"       => $input['post_id'],
+                    "reference_id"  => $referred_by_id,
+                    "emailid"       => $userDetails->emailid,
+                    "post_status"   => $postStatus->status,
+                    "company_logo"  => $companyLogo,
+                    "company_name"  => $companyDetails->name,
+                    "title"         => $jobTitle,
+                    "job_function"  => $jobFunction,
+                    "experience"    => $experience,
+                    "location"      => $location,
+                    "description"   => $jobDescription,
+                    "url"           => $url,
+                    "bittly_url"    => $bittly
+                    );
         }
         return $data;
        }
