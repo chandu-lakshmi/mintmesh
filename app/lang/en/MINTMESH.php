@@ -496,7 +496,7 @@ return array(
         "awaiting_resume" => "Awaiting Resume from Candidate"
     ),
     'apply_job' => array(
-        "success" => "Successfully referred",
+        "success" => "Successfully applied",
         "failure" => "Failed to refer",
         "post_closed" => "Job is closed",
         "referred" => "Candidate is already referred for the post.",
