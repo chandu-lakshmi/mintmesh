@@ -1474,8 +1474,8 @@ class PostGateway {
         #redirect email links
           $dataSet['view_jobs_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/share?ref=" . $refCode."";
           $dataSet['bittly_link']             = $emailData['bittly_url'];;
-          $dataSet['view_jobs_link_web']      = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/web?ref=" . $refCode."";
-          //$dataSet['view_jobs_link_web']      = "http://202.63.105.85/mmenterprise_sapdemo/email/all-campaigns/web?ref=" . $refCode."";
+          //$dataSet['view_jobs_link_web']      = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/web?ref=" . $refCode."";
+          $dataSet['view_jobs_link_web']      = "http://202.63.105.85/mmenterprise_sapdemo/email/all-campaigns/web?ref=" . $refCode."";
         #set email required params
         $this->userEmailManager->templatePath   = Lang::get('MINTMESH.email_template_paths.contacts_campaign_invitation');
         $this->userEmailManager->emailId        = $emailData['to_emailid'];//target email id
@@ -2193,6 +2193,7 @@ class PostGateway {
     public function decryptRef($input){
         
        $data = array();
+       $jobTitle = $jobDescription = $url = $jobFunction = $experience = $location = '';
        $input['all_jobs'] = !empty($input['all_jobs']) ? $input['all_jobs'] : '';
        if(!empty($input['ref']) && isset($input['ref'])){
            
@@ -2226,9 +2227,7 @@ class PostGateway {
                 $url            = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-jobs/share?ref=" . $input['ref']."";
                 $bitlyUrl       = $this->urlShortner($url);
                 $bittly         = $bitlyUrl;
-            } else {
-                $jobTitle = $jobDescription = $url = $jobFunction = $experience = $location = '';
-            }
+            } 
             $data = array(
                     "post_id"       => $input['post_id'],
                     "reference_id"  => $referred_by_id,
