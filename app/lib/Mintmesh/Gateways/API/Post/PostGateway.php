@@ -2015,6 +2015,7 @@ class PostGateway {
                         $referralName  = !empty($nonMMUser->fullname)?$nonMMUser->fullname:!empty($nonMMUser->firstname)?$nonMMUser->firstname: "The contact";
                     }
                 }
+                #get referred by name here
                 $referrerDetails = $this->enterpriseRepository->getContactByEmailId($relation->referred_by,$company->company_id);
                 if(!empty($referrerDetails)){
                     $referrerName = $referrerDetails[0]->firstname.' '.$referrerDetails[0]->lastname;}
@@ -3127,10 +3128,29 @@ class PostGateway {
             $postDetails     = $this->referralsGateway->formPostDetailsArray($postDetails);
             $jobStatus       = !empty($postDetails['status']) ? $postDetails['status'] : ''; 
             $jobTitle        = !empty($postDetails['service_name']) ? $postDetails['service_name'] : ''; 
+            $jobFunction     = !empty($postDetails['job_function_name']) ? $postDetails['job_function_name'] : ''; 
+            $experience      = !empty($postDetails['experience_range_name']) ? $postDetails['experience_range_name'] : ''; 
+            $location        = !empty($postDetails['service_location']) ? $postDetails['service_location'] : ''; 
             $jobDescription  = !empty($postDetails['job_description']) ? $postDetails['job_description'] : ''; 
             $bittly = $url = '';
             
-            $data = array("post_id" => $post_id, "ref"=>$refid,"refrel"=>$reference_id, "emailid" => $userDetails->emailid, "post_status" => $jobStatus, "company_logo"=>$companyLogo, "company_name"=>$companyDetails->name, "title"=>$jobTitle,"description" => $jobDescription,"url"=>$url,"bittly_url"=>$bittly, "got_referred_id" => $gotReferredId);
+            $data = array(
+                "post_id"   => $post_id, 
+                "ref"       => $refid,
+                "refrel"    => $reference_id,
+                "emailid"   => $userDetails->emailid, 
+                "post_status"       => $jobStatus, 
+                "company_logo"      => $companyLogo, 
+                "company_name"      => $companyDetails->name, 
+                "title"             => $jobTitle,
+                "job_function"      => $jobFunction,
+                "experience"        => $experience,
+                "location"          => $location,
+                "description"       => $jobDescription,
+                "url"               => $url,
+                "bittly_url"        => $bittly, 
+                "got_referred_id"   => $gotReferredId
+                );
         }
         return $data;
        }
