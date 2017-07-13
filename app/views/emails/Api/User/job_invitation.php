@@ -26,12 +26,13 @@
                                                     <tr height="28px"><td>&nbsp;</td></tr>
                                                     <?php if(!empty($email_template)){?>
                                                     <tr>
-                                                        <td style="color:#000;padding: 5px 0;">Hello <b><?php echo $name;?></b>,<br /> You have been Referred by your friend <b><?php echo $fromName ; ?></b> for the job <b><?php echo $looking_for ; ?></b> at <b><?php echo $company_name ; ?></b></td>
+                                                        <td style="color:#000;padding: 5px 0;">Hello <?php echo $name;?>,<br /> <br />
+														You have been Referred by your friend <?php echo $fromName ; ?> for the job <?php echo $looking_for ; ?> at <?php echo $company_name ; ?></td>
                                                     </tr>
                                                     <?php } ?>
-                                                    <tr>
+                                                    <!--<tr>
                                                         <td style="color:#3b70cd"><?php echo $company_name ; ?></td>
-                                                    </tr>
+                                                    </tr>-->
                                                     <tr>
                                                         <td><h4 style="margin:4px 0 20px;font-weight:600;font-size:20px;color:#252525"><?php echo $looking_for ; ?></h4></td>                        
                                                     </tr>
