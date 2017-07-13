@@ -2077,115 +2077,162 @@ class PostGateway {
     
     public function applyJob($input){
         
-     if(!empty($input['post_id']) && isset($input['post_id']) && !empty($input['reference_id']) && isset($input['reference_id'])){
-        
-        $documentId = 0; 
-        $input['time_zone'] = !empty($input['timeZone'])?$input['timeZone']:0; 
-        $input['referred_by_id'] = $reference_id = $input['reference_id'];
-        $postId =  $input['post_id'];
-        $companyDetils = $this->neoPostRepository->getPostCompany($postId); 
-        #check user Separated Status here
-        $separatedStatus = $this->checkReferredUserSeparatedStatus($reference_id, $companyDetils->companyCode);
-        if($separatedStatus){
-                $from =  $this->appEncodeDecode->filterString(strtolower($input['emailid']));
-                $checkCand_Not_exist = $this->job2->checkCandidate($input,$from);
-                if($checkCand_Not_exist){ 
-                    $checkRel = $this->job2->checkRel($input);
-                    if(!empty($checkRel[0]) && isset($checkRel[0][0])){
-                        $neoInput['uploaded_by_p2'] = '1';
-                        $neoInput['referred_for'] = $checkRel[0][0]->user_emailid;
-                        $neoInput['referred_by'] = $checkRel[0][1]->emailid;
-                        $checkUser = $this->job2->checkUser($from);
-                        if(!empty($checkUser[0]) && isset($checkUser[0][0])){
-                        $neoInput['referral'] = $checkUser[0][0];
-                        }else{
-                        $input['referral_name'] = $input['fullname'];
-                        $createUser = $this->job2->createUser($from,$input);
-                        $neoInput['referral'] = $createUser[0][0];
-                        }
-                         if (isset($input['cv']) && !empty($input['cv'])) {
-                            
-                            $resumeFile = $input['cv'];
-                            $originalFileName =  !empty($input['resume_original_name']) ? $input['resume_original_name'] : '';
-                            #get the user id by email for doc id
-                            $referredByEmail = !empty($checkRel[0][1]->emailid) ? $checkRel[0][1]->emailid : '';
-                            $sqlUser    = $this->userRepository->getUserByEmail($referredByEmail);
-                            $refUserId  = !empty($sqlUser->id)?$sqlUser->id:0;
-                            #get company details by code
-                            $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyDetils->companyCode);
-                            $companyId   = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
-                            $source = self::SOURCE_FROM_EMAIL_UPLOAD;
-                            $renamedFileName = '';
-                            #insert company resumes in company resumes table
-                            $insertResult = $this->enterpriseRepository->insertInCompanyResumes($companyId, $originalFileName, $refUserId, $source);
-                            $documentId   = $insertResult->id;
-                            
-                            #file move to s3 folder
-                            $fileName = $this->moveResume($resumeFile, $companyId, $documentId);
-                            if($fileName){
-                                #form s3 path here
-                                $s3Path = Config::get('constants.S3_DOWNLOAD_PATH').$companyId.'/'.$fileName;
-                                #updte s3 path in company resumes table
-                                $updateResult = $this->enterpriseRepository->updateCompanyResumes($documentId, $s3Path);
-                                $renamedFileName = $s3Path;
-                            }    
-                            $neoInput['document_id'] = $documentId;
-                            $neoInput['resume_path'] = $renamedFileName;
-                        }
-                        $neoInput['resume_original_name'] = $input['resume_original_name'];
-                        $neoInput['created_at']     = gmdate('Y-m-d H:i:s'); 
-                        $neoInput['awaiting_action_status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
-                        $neoInput['status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
-                        $neoInput['relation_count'] = '1';
-                        $neoInput['completed_status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
-                        $neoInput['awaiting_action_by'] = $neoInput['referred_for'];
-                        if($input['flag'] == '1'){
-                            $neoInput['one_way_status'] = Config::get('constants.REFERRALS.STATUSES.UNSOLICITED');
-                        }
-                        else{
-                            $neoInput['one_way_status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
-                        }
-                        $referredCandidate = $this->neoPostRepository->referCandidate($neoInput, $input);
-                        if($referredCandidate){
-                            #update got referred relation id company resumes table
-                            if(isset($referredCandidate[0]) && !empty($referredCandidate[0][2]) && !empty($documentId)){
-                                $gotReferredId = $referredCandidate[0][2];
-                                $this->enterpriseRepository->updateCompanyResumesWithGotReferredId($documentId, $gotReferredId);
+        if(!empty($input['post_id'])  && !empty($input['reference_id'])){
+
+            $documentId         = 0; 
+            $renamedFileName    = $isSelfReferral = '';
+            $neoInput           = array();
+            $input['time_zone'] =   !empty($input['timeZone'])?$input['timeZone']:0; 
+            $input['referred_by_id'] = $reference_id = $input['reference_id'];
+            $postId             =   $input['post_id'];
+            $companyDetils      =   $this->neoPostRepository->getPostCompany($postId); 
+            #check user Separated Status here
+            $separatedStatus    =   $this->checkReferredUserSeparatedStatus($reference_id, $companyDetils->companyCode);
+            if($separatedStatus){
+                   $from                   =    $this->appEncodeDecode->filterString(strtolower($input['emailid']));
+                   $checkCand_Not_exist    =    $this->job2->checkCandidate($input,$from);
+
+                   if($checkCand_Not_exist){ 
+                       $checkRel = $this->job2->checkRel($input);
+
+                       if(!empty($checkRel[0]) && isset($checkRel[0][0])){
+                            $neoInput['uploaded_by_p2'] = '1';
+                            $neoInput['referred_for']   = $checkRel[0][0]->user_emailid;
+                            $neoInput['referred_by']    = $referredBy = $checkRel[0][1]->emailid;
+                            #check if candidate is node is there
+                            $checkUser                  = $this->job2->checkUser($from);
+                            if(!empty($checkUser[0]) && isset($checkUser[0][0])){
+                                $neoInput['referral']   = $checkUser[0][0];
+                            }else{
+                                #if candidate node not there create here
+                                $input['referral_name'] = $input['fullname'];
+                                $createUser             = $this->job2->createUser($from,$input);
+                                $neoInput['referral']   = $createUser[0][0];
                             }
-                            if(!empty($input['department']) && isset($input['department'])){
-                             #map job_function if provided
-                             $userId = $referredCandidate[0][1]->getID();
-                             $jfResult = $this->neoPostRepository->mapJobFunctionToUser($input['department'], $userId, Config::get('constants.REFERRALS.ASSIGNED_JOB_FUNCTION'));
+                            #upload resume here
+                            if (isset($input['cv']) && !empty($input['cv'])) {
+
+                                $resumeFile         = $input['cv'];
+                                $originalFileName   = !empty($input['resume_original_name']) ? $input['resume_original_name'] : '';
+                                #get the user id by email for doc id
+                                $referredByEmail    = $referredBy;
+                                $sqlUser            = $this->userRepository->getUserByEmail($referredByEmail);
+                                $refUserId          = !empty($sqlUser->id)?$sqlUser->id:0;
+                                #get company details by code
+                                $companyDetails     = $this->enterpriseRepository->getCompanyDetailsByCode($companyDetils->companyCode);
+                                $companyId          = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+                                $source             = self::SOURCE_FROM_EMAIL_UPLOAD;
+                                #insert company resumes in company resumes table
+                                $insertResult       = $this->enterpriseRepository->insertInCompanyResumes($companyId, $originalFileName, $refUserId, $source);
+                                $documentId         = $insertResult->id;
+
+                                #file move to s3 folder
+                                $fileName           = $this->moveResume($resumeFile, $companyId, $documentId);
+                                if($fileName){
+                                    #form s3 path here
+                                    $s3Path          = Config::get('constants.S3_DOWNLOAD_PATH').$companyId.'/'.$fileName;
+                                    #updte s3 path in company resumes table
+                                    $updateResult    = $this->enterpriseRepository->updateCompanyResumes($documentId, $s3Path);
+                                    $renamedFileName = $s3Path;
+                                }    
+                                $neoInput['document_id'] = $documentId;
+                                $neoInput['resume_path'] = $renamedFileName;
                             }
-                            $responseCode   = self::SUCCESS_RESPONSE_CODE;
-                            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
-                            $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.success')));
+                            $neoInput['resume_original_name']   = !empty($input['resume_original_name']) ? $input['resume_original_name'] : '';
+                            $neoInput['created_at']             = gmdate('Y-m-d H:i:s'); 
+                            $neoInput['awaiting_action_status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
+                            $neoInput['status']                 = Config::get('constants.REFERRALS.STATUSES.PENDING');
+                            $neoInput['relation_count']         = '1';
+                            $neoInput['completed_status']       = Config::get('constants.REFERRALS.STATUSES.PENDING');
+                            $neoInput['awaiting_action_by']     = $neoInput['referred_for'];
+                            if($input['flag'] == '1'){
+                                $neoInput['one_way_status']     = Config::get('constants.REFERRALS.STATUSES.UNSOLICITED');
+                            } else {
+                                $neoInput['one_way_status']     = Config::get('constants.REFERRALS.STATUSES.PENDING');
+                            }
+                            $referredCandidate = $this->neoPostRepository->referCandidate($neoInput, $input);
+                            if($referredCandidate){
+
+                                if(isset($referredCandidate[0]) && !empty($referredCandidate[0][2])){
+                                    $gotReferredId = $referredCandidate[0][2];
+
+                                    if(!empty($documentId)){
+                                        #update got referred relation id company resumes table
+                                        $this->enterpriseRepository->updateCompanyResumesWithGotReferredId($documentId, $gotReferredId);
+                                    }
+                                    # send email to candidate(p3)
+                                    if(empty($renamedFileName)){
+
+                                        $referral               = $neoInput['referral'];
+                                        $neoReferredByDetails   = $this->neoUserRepository->getNodeByEmailId($referredBy);
+                                        $neoReferredByName      = !empty($neoReferredByDetails->fullname) ? $neoReferredByDetails->fullname : $neoReferredByDetails->firstname;
+                                        $neoReferralDetails     = $this->neoUserRepository->getNodeByEmailId($referral);
+                                        $neoReferrerName        = !empty($neoReferralDetails->fullname) ? $neoReferralDetails->fullname : $neoReferralDetails->firstname;
+                                        #for reply emailid 
+                                        $replyToName    = Config::get('constants.MINTMESH_SUPPORT.REFERRER_NAME');
+                                        $replyToHost    = Config::get('constants.MINTMESH_SUPPORT.REFERRER_HOST');       
+                                        #send email notifications to all the contacts
+                                        $refId = $refCode = 0;
+                                        $emailData  = array();
+                                        $refId      = $neoReferredByDetails->id;
+                                        $refCode                        = MyEncrypt::encrypt_blowfish($postId.'_'.$refId,Config::get('constants.MINTMESH_ENCCODE'));
+                                        $replyToData                    = '+ref='.$refCode;
+                                        $refRelCode                     = MyEncrypt::encrypt_blowfish($postId.'_'.$gotReferredId,Config::get('constants.MINTMESH_ENCCODE'));
+                                        $emailData['company_name']      = $companyDetils->name;//company details
+                                        $emailData['company_code']      = $companyDetils->companyCode;
+                                        $emailData['post_id']           = $postId;
+                                        $emailData['company_logo']      = $companyDetils->logo;
+                                        $emailData['to_firstname']      = $neoReferrerName;//p3 details
+                                        $emailData['to_lastname']       = '';
+                                        $emailData['to_emailid']        = $referral;
+                                        $emailData['from_userid']       = $neoReferredByDetails->id;//p2 details
+                                        $emailData['from_emailid']      = $referredBy;
+                                        $emailData['from_firstname']    = $neoReferredByName;
+                                        $emailData['email_template']    = ($isSelfReferral) ? 0 : 1 ;
+                                        $emailData['ip_address']        = $_SERVER['REMOTE_ADDR'];
+                                        $emailData['ref_code']          = $refCode;
+                                        $emailData['ref_rel_code']      = $refRelCode;
+                                        $emailData['reply_to']          = $replyToName.$replyToData.$replyToHost;
+
+                                       $this->referralsGateway->sendEmailRequestToCandidateForResume($emailData);
+                                    }
+
+                                }
+
+                                if(!empty($input['department']) && isset($input['department'])){
+                                    #map job_function if provided
+                                    $userId     = $referredCandidate[0][1]->getID();
+                                    $jfResult   = $this->neoPostRepository->mapJobFunctionToUser($input['department'], $userId, Config::get('constants.REFERRALS.ASSIGNED_JOB_FUNCTION'));
+                                }
+                                $responseCode   = self::SUCCESS_RESPONSE_CODE;
+                                $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                                $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.success')));
+                            }else{
+                                $responseCode   = self::ERROR_RESPONSE_CODE;
+                                $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+                                $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.failure')));
+                            }
                         }else{
                             $responseCode   = self::ERROR_RESPONSE_CODE;
                             $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
-                            $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.failure')));
+                            $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.referrer_invalid')));
                         }
+
                     }else{
                         $responseCode   = self::ERROR_RESPONSE_CODE;
                         $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
-                        $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.referrer_invalid')));
+                        $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.referred')));
                     }
-
                 }else{
                     $responseCode   = self::ERROR_RESPONSE_CODE;
                     $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
-                    $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.referred')));
-                }
-            }else{
-                $responseCode   = self::ERROR_RESPONSE_CODE;
-                $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
-                $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.user_separated')));
-            }
-     }else{
-            $responseCode   = self::ERROR_RESPONSE_CODE;
-            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.invalid')));
-     }
+                    $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.user_separated')));
+               }
+        }else{
+               $responseCode   = self::ERROR_RESPONSE_CODE;
+               $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+               $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.invalid')));
+        }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, array());
         
     }
