@@ -2740,30 +2740,40 @@ class PostGateway {
     }
     
      public function decryptCampaignRef($input){
-       $data = array();
-       if(!empty($input['ref']) && isset($input['ref'])){
-        $mail_parse_ref = isset($input['ref'])?MyEncrypt::decrypt_blowfish($input['ref'],Config::get('constants.MINTMESH_ENCCODE')):0;
-        $mail_parse_ref_val = array_map('intval',explode('_',$mail_parse_ref));	
-	$campaign_id = isset($mail_parse_ref_val[0])?$mail_parse_ref_val[0]:0;
-        $referred_by_id = isset($mail_parse_ref_val[1])?$mail_parse_ref_val[1]:0;
-        if($campaign_id != 0 && $referred_by_id != 0){
-        $userDetails = $this->neoEnterpriseRepository->getNodeById($referred_by_id);
-        $companyDetails     = $this->neoPostRepository->getCampaignCompany($campaign_id);
-        $input['campaign_id'] = $campaign_id;
-        $campaignStatus = $this->neoPostRepository->getCampaignById($input['campaign_id']);
-        $scheduleTimes = $this->neoPostRepository->getCampaignSchedule($input['campaign_id']);
-        $companyLogo = !empty($companyDetails->logo)?$companyDetails->logo:'';
-        $campaignTitle = 'Here is a campaign at '.$companyDetails->name.' for '.$campaignStatus->campaign_name;
-        $campaignDescription = 'Start date: '.$scheduleTimes[0][0]->start_date.' and End date: '.$scheduleTimes[0][0]->end_date;
-        $url = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/share?ref=" . $input['ref']."";
-        $bitlyUrl = $this->urlShortner($url);
-        $bittly    = $bitlyUrl;
-        $data = array("campaign_id" => $input['campaign_id'],"reference_id"=>$referred_by_id,"emailid" => $userDetails->emailid,"campaign_status"=>$campaignStatus->status,"company_logo"=>$companyLogo,"company_name"=>$companyDetails->name,"title"=>$campaignTitle,"description"=>$campaignDescription,"url" => $url,"bittly_url"=>$bittly);
-        }else{
-            $data = array();
-        }
-        return $data;
+        $data = array();
+        if(!empty($input['ref']) && isset($input['ref'])){
+            $mail_parse_ref     = isset($input['ref'])?MyEncrypt::decrypt_blowfish($input['ref'],Config::get('constants.MINTMESH_ENCCODE')):0;
+            $mail_parse_ref_val = array_map('intval',explode('_',$mail_parse_ref));	
+            $campaign_id        = isset($mail_parse_ref_val[0])?$mail_parse_ref_val[0]:0;
+            $referred_by_id     = isset($mail_parse_ref_val[1])?$mail_parse_ref_val[1]:0;
+            
+            if($campaign_id != 0 && $referred_by_id != 0){
+                $userDetails            = $this->neoEnterpriseRepository->getNodeById($referred_by_id);
+                $companyDetails         = $this->neoPostRepository->getCampaignCompany($campaign_id);
+                $input['campaign_id']   = $campaign_id;
+                $campaignStatus         = $this->neoPostRepository->getCampaignById($input['campaign_id']);
+                $scheduleTimes          = $this->neoPostRepository->getCampaignSchedule($input['campaign_id']);
+                $companyLogo            = !empty($companyDetails->logo)?$companyDetails->logo:'';
+                $campaignTitle          = 'Here is a campaign at '.$companyDetails->name.' for '.$campaignStatus->campaign_name;
+                $campaignDescription    = 'Start date: '.$scheduleTimes[0][0]->start_date.' and End date: '.$scheduleTimes[0][0]->end_date;
+                $url                    = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/share?ref=" . $input['ref']."";
+                $bitlyUrl               = $this->urlShortner($url);
+                $bittly                 = $bitlyUrl;
+                $data = array(
+                    "campaign_id"       =>  $input['campaign_id'],
+                    "reference_id"      =>  $referred_by_id,
+                    "emailid"           =>  $userDetails->emailid,
+                    "campaign_status"   =>  $campaignStatus->status,
+                    "company_logo"  =>  $companyLogo,
+                    "company_name"  =>  $companyDetails->name,
+                    "title"         =>  $campaignTitle,
+                    "description"   =>  $campaignDescription,
+                    "url"           =>  $url,
+                    "bittly_url"    =>  $bittly
+                    );
+            }
        }
+       return $data;
     }
     
      public function getJobDetails($input){
