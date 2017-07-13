@@ -134,7 +134,7 @@ return array(
         "activate_user" => "Please activate your account"
     ),
     "reset_password" => array(
-        "success" => "New Password set successfully. Please login to your Enterprise Mobile Application.",
+        "success" => "New Password Updated successfully. Please login to your Enterprise Mobile Application.",
         "invalid" => "Reset Password Period Expired",
         "failed" => "Some Error Occured",
         "error" => "Invalid Token",
