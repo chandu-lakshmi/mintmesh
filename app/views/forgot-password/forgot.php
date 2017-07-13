@@ -39,7 +39,7 @@
                                             <form role="form" name="re_enter_password_form" ng-submit="forgotCtrl.forgot_submit(re_enter_password_form.$valid)" novalidate>
                                                 <div class="error-spacer" style="float:none">
                                                     <div class="has-error-msg text-center" style="float:none">
-                                                        <span ng-if="forgotCtrl.backendError">{{forgotCtrl.backendMsg}}</span>
+                                                        <span ng-if="forgotCtrl.backendError" style="font-size: 14px">{{forgotCtrl.backendMsg}}</span>
                                                     </div>
                                                 </div>
 
