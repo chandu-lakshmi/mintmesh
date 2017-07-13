@@ -574,10 +574,14 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
     }
     
     public function getNodeById($id='') {
+        $return = FALSE;
         $queryString = "MATCH (n:User) where ID(n)=".$id." return n";
         $query = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
-        return $result[0][0];
+        if(isset($result[0]) && !empty($result[0][0])){
+            $return = $result[0][0];
+        }
+        return $return;
     }
     
     public function getCompanyBucketJobs($companyCode='', $bucketId=''){
