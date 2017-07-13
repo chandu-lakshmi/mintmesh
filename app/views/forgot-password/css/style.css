@@ -455,7 +455,6 @@ md-input-container md-select .md-select-value .md-select-icon:after {
 .has-error-msg{
     color: red;
     float: left;
-    font-size: 14px;
     min-height: 24px;
     min-width: 1px;
     white-space: nowrap;
