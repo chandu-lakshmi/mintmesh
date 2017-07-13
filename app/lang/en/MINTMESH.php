@@ -497,6 +497,7 @@ return array(
     ),
     'apply_job' => array(
         "success" => "Successfully applied",
+        "ref_success" => "Successfully referred",
         "failure" => "Failed to refer",
         "post_closed" => "Job is closed",
         "referred" => "Candidate is already referred for the post.",

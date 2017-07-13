@@ -2206,7 +2206,11 @@ class PostGateway {
                                 }
                                 $responseCode   = self::SUCCESS_RESPONSE_CODE;
                                 $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                                if($neoInput['referred_by'] == $neoInput['referral']){
                                 $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.success')));
+                                }else{
+                                $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.ref_success')));
+                                }
                             }else{
                                 $responseCode   = self::ERROR_RESPONSE_CODE;
                                 $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
