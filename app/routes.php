@@ -25,6 +25,7 @@ Route::any('getOauthBasedOnClientId','HomeController@getOauthBasedOnClientId');
 
 //Download Resumes getIntegrationStatus
 Route::any('getZipDownload','API\Referrals\ReferralsController@getDownloadZipSelectedResumes');
+
 Route::any('getResumeDownload','API\Referrals\ReferralsController@getFileDownload');
 
 //Integration Status API

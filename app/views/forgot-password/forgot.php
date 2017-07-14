@@ -39,7 +39,7 @@
                                             <form role="form" name="re_enter_password_form" ng-submit="forgotCtrl.forgot_submit(re_enter_password_form.$valid)" novalidate>
                                                 <div class="error-spacer" style="float:none">
                                                     <div class="has-error-msg text-center" style="float:none">
-                                                        <span ng-if="forgotCtrl.backendError">{{forgotCtrl.backendMsg}}</span>
+                                                        <span ng-if="forgotCtrl.backendError" style="font-size: 14px">{{forgotCtrl.backendMsg}}</span>
                                                     </div>
                                                 </div>
 
@@ -56,7 +56,7 @@
                                                         <div ng-if="re_enter_password_form.re_password.$error.required && forgotCtrl.forgot_show_error" class="has-error-msg">Please Enter Confirm Password.</div>
                                                         <div ng-if="re_enter_password_form.re_password.$dirty && re_enter_password_form.re_password.$error.pwmatch && forgotCtrl.forgot_show_error && !re_enter_password_form.re_password.$error.required" class="has-error-msg">Password Doesn't Match.</div>
                                                     </md-input-container>
-                                                    <div class="text-center"><button class="btn btn-lg btn-style btn-loader">Create Password<img src="<?php echo url('/'); ?>/app/views/forgot-password/images/butt_loader.gif"  width="30px" style="margin-top: -2px;" alt="loader" ng-if="forgotCtrl.load_cond_reset"></button></div>
+                                                    <div class="text-center"><button class="btn btn-lg btn-style btn-loader">Reset Password<img src="<?php echo url('/'); ?>/app/views/forgot-password/images/butt_loader.gif"  width="30px" style="margin-top: -2px;" alt="loader" ng-if="forgotCtrl.load_cond_reset"></button></div>
 <!--                                                    <div class="back-to-home text-center"><span ng-click="forgotCtrl.forgot_cancel()">Cancel</span></div>-->
                                                 </div>
                                             </form>

@@ -535,7 +535,7 @@ class PostGateway {
         #redirect email links
         $dataSet['apply_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/candidate-details/web?ref=" . $refCode."&flag=0&jc=0";
         $dataSet['refer_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/referral-details/web?ref=" . $refCode."&flag=0&jc=0";
-        $dataSet['view_jobs_link']      = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-jobs/web?ref=" . $refCode."";
+        $dataSet['view_jobs_link']      = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-jobs/web?ref=" . $refCode."&jc=0";
         $dataSet['drop_cv_link']        = Config::get('constants.MM_ENTERPRISE_URL') . "/email/referral-details/web?ref=" . $refCode."&flag=1&jc=0";
         #set email required params
         $this->userEmailManager->templatePath   = Lang::get('MINTMESH.email_template_paths.contacts_job_invitation');
@@ -1475,7 +1475,7 @@ class PostGateway {
           $dataSet['view_jobs_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/share?ref=" . $refCode."";
           $dataSet['bittly_link']             = $emailData['bittly_url'];;
           $dataSet['view_jobs_link_web']      = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/web?ref=" . $refCode."";
-          //$dataSet['view_jobs_link_web']      = "http://202.63.105.85/mmenterprise_sapdemo/email/all-campaigns/web?ref=" . $refCode."";
+           //$dataSet['view_jobs_link_web']      = "http://202.63.105.85/mmenterprise_sapdemo/email/all-campaigns/web?ref=" . $refCode."";
         #set email required params
         $this->userEmailManager->templatePath   = Lang::get('MINTMESH.email_template_paths.contacts_campaign_invitation');
         $this->userEmailManager->emailId        = $emailData['to_emailid'];//target email id
@@ -2015,6 +2015,7 @@ class PostGateway {
                         $referralName  = !empty($nonMMUser->fullname)?$nonMMUser->fullname:!empty($nonMMUser->firstname)?$nonMMUser->firstname: "The contact";
                     }
                 }
+                #get referred by name here
                 $referrerDetails = $this->enterpriseRepository->getContactByEmailId($relation->referred_by,$company->company_id);
                 if(!empty($referrerDetails)){
                     $referrerName = $referrerDetails[0]->firstname.' '.$referrerDetails[0]->lastname;}
@@ -2076,155 +2077,227 @@ class PostGateway {
     
     public function applyJob($input){
         
-     if(!empty($input['post_id']) && isset($input['post_id']) && !empty($input['reference_id']) && isset($input['reference_id'])){
-        
-        $documentId = 0; 
-        $input['time_zone'] = !empty($input['timeZone'])?$input['timeZone']:0; 
-        $input['referred_by_id'] = $reference_id = $input['reference_id'];
-        $postId =  $input['post_id'];
-        $companyDetils = $this->neoPostRepository->getPostCompany($postId); 
-        #check user Separated Status here
-        $separatedStatus = $this->checkReferredUserSeparatedStatus($reference_id, $companyDetils->companyCode);
-        if($separatedStatus){
-                $from =  $this->appEncodeDecode->filterString(strtolower($input['emailid']));
-                $checkCand_Not_exist = $this->job2->checkCandidate($input,$from);
-                if($checkCand_Not_exist){ 
-                    $checkRel = $this->job2->checkRel($input);
-                    if(!empty($checkRel[0]) && isset($checkRel[0][0])){
-                        $neoInput['uploaded_by_p2'] = '1';
-                        $neoInput['referred_for'] = $checkRel[0][0]->user_emailid;
-                        $neoInput['referred_by'] = $checkRel[0][1]->emailid;
-                        $checkUser = $this->job2->checkUser($from);
-                        if(!empty($checkUser[0]) && isset($checkUser[0][0])){
-                        $neoInput['referral'] = $checkUser[0][0];
-                        }else{
-                        $input['referral_name'] = $input['fullname'];
-                        $createUser = $this->job2->createUser($from,$input);
-                        $neoInput['referral'] = $createUser[0][0];
-                        }
-                         if (isset($input['cv']) && !empty($input['cv'])) {
-                            
-                            $resumeFile = $input['cv'];
-                            $originalFileName =  !empty($input['resume_original_name']) ? $input['resume_original_name'] : '';
-                            #get the user id by email for doc id
-                            $referredByEmail = !empty($checkRel[0][1]->emailid) ? $checkRel[0][1]->emailid : '';
-                            $sqlUser    = $this->userRepository->getUserByEmail($referredByEmail);
-                            $refUserId  = !empty($sqlUser->id)?$sqlUser->id:0;
-                            #get company details by code
-                            $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyDetils->companyCode);
-                            $companyId   = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
-                            $source = self::SOURCE_FROM_EMAIL_UPLOAD;
-                            $renamedFileName = '';
-                            #insert company resumes in company resumes table
-                            $insertResult = $this->enterpriseRepository->insertInCompanyResumes($companyId, $originalFileName, $refUserId, $source);
-                            $documentId   = $insertResult->id;
-                            
-                            #file move to s3 folder
-                            $fileName = $this->moveResume($resumeFile, $companyId, $documentId);
-                            if($fileName){
-                                #form s3 path here
-                                $s3Path = Config::get('constants.S3_DOWNLOAD_PATH').$companyId.'/'.$fileName;
-                                #updte s3 path in company resumes table
-                                $updateResult = $this->enterpriseRepository->updateCompanyResumes($documentId, $s3Path);
-                                $renamedFileName = $s3Path;
-                            }    
-                            $neoInput['document_id'] = $documentId;
-                            $neoInput['resume_path'] = $renamedFileName;
-                        }
-                        $neoInput['resume_original_name'] = $input['resume_original_name'];
-                        $neoInput['created_at']     = gmdate('Y-m-d H:i:s'); 
-                        $neoInput['awaiting_action_status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
-                        $neoInput['status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
-                        $neoInput['relation_count'] = '1';
-                        $neoInput['completed_status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
-                        $neoInput['awaiting_action_by'] = $neoInput['referred_for'];
-                        if($input['flag'] == '1'){
-                            $neoInput['one_way_status'] = Config::get('constants.REFERRALS.STATUSES.UNSOLICITED');
-                        }
-                        else{
-                            $neoInput['one_way_status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
-                        }
-                        $referredCandidate = $this->neoPostRepository->referCandidate($neoInput, $input);
-                        if($referredCandidate){
-                            #update got referred relation id company resumes table
-                            if(isset($referredCandidate[0]) && !empty($referredCandidate[0][2]) && !empty($documentId)){
-                                $gotReferredId = $referredCandidate[0][2];
-                                $this->enterpriseRepository->updateCompanyResumesWithGotReferredId($documentId, $gotReferredId);
+        if(!empty($input['post_id'])  && !empty($input['reference_id'])){
+
+            $documentId         = 0; 
+            $renamedFileName    = $isSelfReferral = '';
+            $neoInput           = array();
+            $input['time_zone'] =   !empty($input['timeZone'])?$input['timeZone']:0; 
+            $input['referred_by_id'] = $reference_id = $input['reference_id'];
+            $postId             =   $input['post_id'];
+            $companyDetils      =   $this->neoPostRepository->getPostCompany($postId); 
+            #check user Separated Status here
+            $separatedStatus    =   $this->checkReferredUserSeparatedStatus($reference_id, $companyDetils->companyCode);
+            if($separatedStatus){
+                   $from                   =    $this->appEncodeDecode->filterString(strtolower($input['emailid']));
+                   $checkCand_Not_exist    =    $this->job2->checkCandidate($input,$from);
+
+                   if($checkCand_Not_exist){ 
+                       $checkRel = $this->job2->checkRel($input);
+
+                       if(!empty($checkRel[0]) && isset($checkRel[0][0])){
+                            $neoInput['uploaded_by_p2'] = '1';
+                            $neoInput['referred_for']   = $checkRel[0][0]->user_emailid;
+                            $neoInput['referred_by']    = $referredBy = $checkRel[0][1]->emailid;
+                            #check if candidate is node is there
+                            $checkUser                  = $this->job2->checkUser($from);
+                            if(!empty($checkUser[0]) && isset($checkUser[0][0])){
+                                $neoInput['referral']   = $checkUser[0][0];
+                            }else{
+                                #if candidate node not there create here
+                                $input['referral_name'] = $input['fullname'];
+                                $createUser             = $this->job2->createUser($from,$input);
+                                $neoInput['referral']   = $createUser[0][0];
                             }
-                            if(!empty($input['department']) && isset($input['department'])){
-                             #map job_function if provided
-                             $userId = $referredCandidate[0][1]->getID();
-                             $jfResult = $this->neoPostRepository->mapJobFunctionToUser($input['department'], $userId, Config::get('constants.REFERRALS.ASSIGNED_JOB_FUNCTION'));
+                            #upload resume here
+                            if (isset($input['cv']) && !empty($input['cv'])) {
+
+                                $resumeFile         = $input['cv'];
+                                $originalFileName   = !empty($input['resume_original_name']) ? $input['resume_original_name'] : '';
+                                #get the user id by email for doc id
+                                $referredByEmail    = $referredBy;
+                                $sqlUser            = $this->userRepository->getUserByEmail($referredByEmail);
+                                $refUserId          = !empty($sqlUser->id)?$sqlUser->id:0;
+                                #get company details by code
+                                $companyDetails     = $this->enterpriseRepository->getCompanyDetailsByCode($companyDetils->companyCode);
+                                $companyId          = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+                                $source             = self::SOURCE_FROM_EMAIL_UPLOAD;
+                                #insert company resumes in company resumes table
+                                $insertResult       = $this->enterpriseRepository->insertInCompanyResumes($companyId, $originalFileName, $refUserId, $source);
+                                $documentId         = $insertResult->id;
+
+                                #file move to s3 folder
+                                $fileName           = $this->moveResume($resumeFile, $companyId, $documentId);
+                                if($fileName){
+                                    #form s3 path here
+                                    $s3Path          = Config::get('constants.S3_DOWNLOAD_PATH').$companyId.'/'.$fileName;
+                                    #updte s3 path in company resumes table
+                                    $updateResult    = $this->enterpriseRepository->updateCompanyResumes($documentId, $s3Path);
+                                    $renamedFileName = $s3Path;
+                                }    
+                                $neoInput['document_id'] = $documentId;
+                                $neoInput['resume_path'] = $renamedFileName;
                             }
-                            $responseCode   = self::SUCCESS_RESPONSE_CODE;
-                            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
-                            $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.success')));
+                            $neoInput['resume_original_name']   = !empty($input['resume_original_name']) ? $input['resume_original_name'] : '';
+                            $neoInput['created_at']             = gmdate('Y-m-d H:i:s'); 
+                            $neoInput['awaiting_action_status'] = Config::get('constants.REFERRALS.STATUSES.PENDING');
+                            $neoInput['status']                 = Config::get('constants.REFERRALS.STATUSES.PENDING');
+                            $neoInput['relation_count']         = '1';
+                            $neoInput['completed_status']       = Config::get('constants.REFERRALS.STATUSES.PENDING');
+                            $neoInput['awaiting_action_by']     = $neoInput['referred_for'];
+                            if($input['flag'] == '1'){
+                                $neoInput['one_way_status']     = Config::get('constants.REFERRALS.STATUSES.UNSOLICITED');
+                            } else {
+                                $neoInput['one_way_status']     = Config::get('constants.REFERRALS.STATUSES.PENDING');
+                            }
+                            $referredCandidate = $this->neoPostRepository->referCandidate($neoInput, $input);
+                            if($referredCandidate){
+
+                                if(isset($referredCandidate[0]) && !empty($referredCandidate[0][2])){
+                                    $gotReferredId = $referredCandidate[0][2];
+
+                                    if(!empty($documentId)){
+                                        #update got referred relation id company resumes table
+                                        $this->enterpriseRepository->updateCompanyResumesWithGotReferredId($documentId, $gotReferredId);
+                                    }
+                                    # send email to candidate(p3)
+                                    if(empty($renamedFileName)){
+
+                                        $referral               = $neoInput['referral'];
+                                        $neoReferredByDetails   = $this->neoUserRepository->getNodeByEmailId($referredBy);
+                                        $neoReferredByName      = !empty($neoReferredByDetails->fullname) ? $neoReferredByDetails->fullname : $neoReferredByDetails->firstname;
+                                        $neoReferralDetails     = $this->neoUserRepository->getNodeByEmailId($referral);
+                                        $neoReferrerName        = !empty($neoReferralDetails->fullname) ? $neoReferralDetails->fullname : $neoReferralDetails->firstname;
+                                        #for reply emailid 
+                                        $replyToName    = Config::get('constants.MINTMESH_SUPPORT.REFERRER_NAME');
+                                        $replyToHost    = Config::get('constants.MINTMESH_SUPPORT.REFERRER_HOST');       
+                                        #send email notifications to all the contacts
+                                        $refId = $refCode = 0;
+                                        $emailData  = array();
+                                        $refId      = $neoReferredByDetails->id;
+                                        $refCode                        = MyEncrypt::encrypt_blowfish($postId.'_'.$refId,Config::get('constants.MINTMESH_ENCCODE'));
+                                        $replyToData                    = '+ref='.$refCode;
+                                        $refRelCode                     = MyEncrypt::encrypt_blowfish($postId.'_'.$gotReferredId,Config::get('constants.MINTMESH_ENCCODE'));
+                                        $emailData['company_name']      = $companyDetils->name;//company details
+                                        $emailData['company_code']      = $companyDetils->companyCode;
+                                        $emailData['post_id']           = $postId;
+                                        $emailData['company_logo']      = $companyDetils->logo;
+                                        $emailData['to_firstname']      = $neoReferrerName;//p3 details
+                                        $emailData['to_lastname']       = '';
+                                        $emailData['to_emailid']        = $referral;
+                                        $emailData['from_userid']       = $neoReferredByDetails->id;//p2 details
+                                        $emailData['from_emailid']      = $referredBy;
+                                        $emailData['from_firstname']    = $neoReferredByName;
+                                        $emailData['email_template']    = ($isSelfReferral) ? 0 : 1 ;
+                                        $emailData['ip_address']        = $_SERVER['REMOTE_ADDR'];
+                                        $emailData['ref_code']          = $refCode;
+                                        $emailData['ref_rel_code']      = $refRelCode;
+                                        $emailData['reply_to']          = $replyToName.$replyToData.$replyToHost;
+
+                                       $this->referralsGateway->sendEmailRequestToCandidateForResume($emailData);
+                                    }
+
+                                }
+
+                                if(!empty($input['department']) && isset($input['department'])){
+                                    #map job_function if provided
+                                    $userId     = $referredCandidate[0][1]->getID();
+                                    $jfResult   = $this->neoPostRepository->mapJobFunctionToUser($input['department'], $userId, Config::get('constants.REFERRALS.ASSIGNED_JOB_FUNCTION'));
+                                }
+                                $responseCode   = self::SUCCESS_RESPONSE_CODE;
+                                $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                                if($neoInput['referred_by'] == $neoInput['referral']){
+                                $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.success')));
+                                }else{
+                                $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.ref_success')));
+                                }
+                            }else{
+                                $responseCode   = self::ERROR_RESPONSE_CODE;
+                                $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+                                $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.failure')));
+                            }
                         }else{
                             $responseCode   = self::ERROR_RESPONSE_CODE;
                             $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
-                            $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.failure')));
+                            $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.referrer_invalid')));
                         }
+
                     }else{
                         $responseCode   = self::ERROR_RESPONSE_CODE;
                         $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
-                        $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.referrer_invalid')));
+                        $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.referred')));
                     }
-
                 }else{
                     $responseCode   = self::ERROR_RESPONSE_CODE;
                     $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
-                    $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.referred')));
-                }
-            }else{
-                $responseCode   = self::ERROR_RESPONSE_CODE;
-                $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
-                $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.user_separated')));
-            }
-     }else{
-            $responseCode   = self::ERROR_RESPONSE_CODE;
-            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.invalid')));
-     }
+                    $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.user_separated')));
+               }
+        }else{
+               $responseCode   = self::ERROR_RESPONSE_CODE;
+               $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+               $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.invalid')));
+        }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, array());
         
     }
     
     public function decryptRef($input){
+        
        $data = array();
-       $input['all_jobs'] = !empty($input['all_jobs'])?$input['all_jobs']:'';
+       $jobTitle = $jobDescription = $url = $jobFunction = $experience = $location = $jobName = '';
+       $input['all_jobs'] = !empty($input['all_jobs']) ? $input['all_jobs'] : '';
        if(!empty($input['ref']) && isset($input['ref'])){
-        $mail_parse_ref = isset($input['ref'])?MyEncrypt::decrypt_blowfish($input['ref'],Config::get('constants.MINTMESH_ENCCODE')):0;
+           
+        $mail_parse_ref     = isset($input['ref']) ? MyEncrypt::decrypt_blowfish($input['ref'],Config::get('constants.MINTMESH_ENCCODE')) : 0;
         $mail_parse_ref_val = array_map('intval',explode('_',$mail_parse_ref));	
-	$post_id = isset($mail_parse_ref_val[0])?$mail_parse_ref_val[0]:0;
-        $referred_by_id = isset($mail_parse_ref_val[1])?$mail_parse_ref_val[1]:0;
+	$post_id            = isset($mail_parse_ref_val[0]) ? $mail_parse_ref_val[0] : 0;
+        $referred_by_id     = isset($mail_parse_ref_val[1]) ? $mail_parse_ref_val[1] : 0;
+        
         if($post_id != 0 && $referred_by_id != 0){
-        $userDetails = $this->neoEnterpriseRepository->getNodeById($referred_by_id);
-        $companyDetails     = $this->neoPostRepository->getPostCompany($post_id);
-        $input['post_id'] = $post_id;
-        $postStatus = $this->job2->getPost($input);
-        $postDetails    = $this->referralsGateway->formPostDetailsArray($postStatus);
-        $companyLogo = !empty($companyDetails->logo)?$companyDetails->logo:'';
-        if($input['all_jobs'] == 0){
-        $jobTitle = $companyDetails->name .' looking for '.$postStatus->looking_for;
-        $jobDescription = 'Experience: '.$postDetails['experience_range_name'].', Location: '.$postStatus->service_location;
-         $url = Config::get('constants.MM_ENTERPRISE_URL') . "/email/job-details/share?ref=" . $input['ref']."";
-         $bitlyUrl = $this->urlShortner($url);
-         $bittly    = $bitlyUrl;
+            
+            $companyDetails     = $this->neoPostRepository->getPostCompany($post_id);
+            $userDetails        = $this->neoEnterpriseRepository->getNodeById($referred_by_id);
+            if(!empty($companyDetails) && !empty($userDetails)){
+                $input['post_id']   = $post_id;
+                $postStatus         = $this->job2->getPost($input);
+                $postDetails        = $this->referralsGateway->formPostDetailsArray($postStatus);
+                $companyLogo        = !empty($companyDetails->logo) ? $companyDetails->logo : '';
+                if($input['all_jobs'] == 0){
 
-        }else if($input['all_jobs'] == 1){
-            $jobTitle = 'These jobs are available in '.$companyDetails->name;
-            $jobDescription = $postStatus->looking_for;
-            $url = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-jobs/share?ref=" . $input['ref']."";
-            $bitlyUrl = $this->urlShortner($url);
-            $bittly    = $bitlyUrl;
+                    $jobTitle       = $companyDetails->name .' looking for '.$postStatus->looking_for;
+                    $jobName        = $postStatus->looking_for;
+                    $jobFunction    = $postDetails['job_function_name'];
+                    $experience     = $postDetails['experience_range_name'];
+                    $location       = $postDetails['service_location'];
+                    $jobDescription = 'Experience: '.$postDetails['experience_range_name'].', Location: '.$postStatus->service_location;
+                    $url            = Config::get('constants.MM_ENTERPRISE_URL') . "/email/job-details/share?ref=" . $input['ref']."";
+                    $bitlyUrl       = $this->urlShortner($url);
+                    $bittly         = $bitlyUrl;
+                }else if($input['all_jobs'] == 1){
 
-        }
-        else{
-            $jobTitle = $jobDescription = $url = '';
-        }
-        $data = array("post_id" => $input['post_id'],"reference_id"=>$referred_by_id,"emailid" => $userDetails->emailid,"post_status"=>$postStatus->status,"company_logo"=>$companyLogo,"company_name"=>$companyDetails->name,"title"=>$jobTitle,"description" => $jobDescription,"url"=>$url,"bittly_url"=>$bittly);
-        }else{
-            $data = array();
+                    $jobTitle       = 'These jobs are available in '.$companyDetails->name;
+                    $jobDescription = $postStatus->looking_for;
+                    $url            = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-jobs/share?ref=" . $input['ref']."";
+                    $bitlyUrl       = $this->urlShortner($url);
+                    $bittly         = $bitlyUrl;
+                } 
+                $data = array(
+                        "post_id"       => $input['post_id'],
+                        "reference_id"  => $referred_by_id,
+                        "emailid"       => $userDetails->emailid,
+                        "post_status"   => $postStatus->status,
+                        "company_logo"  => $companyLogo,
+                        "company_name"  => $companyDetails->name,
+                        "title"         => $jobTitle,
+                        "job_title"     => $jobName,
+                        "job_function"  => $jobFunction,
+                        "experience"    => $experience,
+                        "location"      => $location,
+                        "description"   => $jobDescription,
+                        "url"           => $url,
+                        "bittly_url"    => $bittly
+                        );
+            }
         }
         return $data;
        }
@@ -2670,30 +2743,40 @@ class PostGateway {
     }
     
      public function decryptCampaignRef($input){
-       $data = array();
-       if(!empty($input['ref']) && isset($input['ref'])){
-        $mail_parse_ref = isset($input['ref'])?MyEncrypt::decrypt_blowfish($input['ref'],Config::get('constants.MINTMESH_ENCCODE')):0;
-        $mail_parse_ref_val = array_map('intval',explode('_',$mail_parse_ref));	
-	$campaign_id = isset($mail_parse_ref_val[0])?$mail_parse_ref_val[0]:0;
-        $referred_by_id = isset($mail_parse_ref_val[1])?$mail_parse_ref_val[1]:0;
-        if($campaign_id != 0 && $referred_by_id != 0){
-        $userDetails = $this->neoEnterpriseRepository->getNodeById($referred_by_id);
-        $companyDetails     = $this->neoPostRepository->getCampaignCompany($campaign_id);
-        $input['campaign_id'] = $campaign_id;
-        $campaignStatus = $this->neoPostRepository->getCampaignById($input['campaign_id']);
-        $scheduleTimes = $this->neoPostRepository->getCampaignSchedule($input['campaign_id']);
-        $companyLogo = !empty($companyDetails->logo)?$companyDetails->logo:'';
-        $campaignTitle = 'Here is a campaign at '.$companyDetails->name.' for '.$campaignStatus->campaign_name;
-        $campaignDescription = 'Start date: '.$scheduleTimes[0][0]->start_date.' and End date: '.$scheduleTimes[0][0]->end_date;
-        $url = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/share?ref=" . $input['ref']."";
-        $bitlyUrl = $this->urlShortner($url);
-        $bittly    = $bitlyUrl;
-        $data = array("campaign_id" => $input['campaign_id'],"reference_id"=>$referred_by_id,"emailid" => $userDetails->emailid,"campaign_status"=>$campaignStatus->status,"company_logo"=>$companyLogo,"company_name"=>$companyDetails->name,"title"=>$campaignTitle,"description"=>$campaignDescription,"url" => $url,"bittly_url"=>$bittly);
-        }else{
-            $data = array();
-        }
-        return $data;
+        $data = array();
+        if(!empty($input['ref']) && isset($input['ref'])){
+            $mail_parse_ref     = isset($input['ref'])?MyEncrypt::decrypt_blowfish($input['ref'],Config::get('constants.MINTMESH_ENCCODE')):0;
+            $mail_parse_ref_val = array_map('intval',explode('_',$mail_parse_ref));	
+            $campaign_id        = isset($mail_parse_ref_val[0])?$mail_parse_ref_val[0]:0;
+            $referred_by_id     = isset($mail_parse_ref_val[1])?$mail_parse_ref_val[1]:0;
+            
+            if($campaign_id != 0 && $referred_by_id != 0){
+                $userDetails            = $this->neoEnterpriseRepository->getNodeById($referred_by_id);
+                $companyDetails         = $this->neoPostRepository->getCampaignCompany($campaign_id);
+                $input['campaign_id']   = $campaign_id;
+                $campaignStatus         = $this->neoPostRepository->getCampaignById($input['campaign_id']);
+                $scheduleTimes          = $this->neoPostRepository->getCampaignSchedule($input['campaign_id']);
+                $companyLogo            = !empty($companyDetails->logo)?$companyDetails->logo:'';
+                $campaignTitle          = 'Here is a campaign at '.$companyDetails->name.' for '.$campaignStatus->campaign_name;
+                $campaignDescription    = 'Start date: '.$scheduleTimes[0][0]->start_date.' and End date: '.$scheduleTimes[0][0]->end_date;
+                $url                    = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/share?ref=" . $input['ref']."";
+                $bitlyUrl               = $this->urlShortner($url);
+                $bittly                 = $bitlyUrl;
+                $data = array(
+                    "campaign_id"       =>  $input['campaign_id'],
+                    "reference_id"      =>  $referred_by_id,
+                    "emailid"           =>  $userDetails->emailid,
+                    "campaign_status"   =>  $campaignStatus->status,
+                    "company_logo"  =>  $companyLogo,
+                    "company_name"  =>  $companyDetails->name,
+                    "title"         =>  $campaignTitle,
+                    "description"   =>  $campaignDescription,
+                    "url"           =>  $url,
+                    "bittly_url"    =>  $bittly
+                    );
+            }
        }
+       return $data;
     }
     
      public function getJobDetails($input){
@@ -3109,10 +3192,30 @@ class PostGateway {
             $postDetails     = $this->referralsGateway->formPostDetailsArray($postDetails);
             $jobStatus       = !empty($postDetails['status']) ? $postDetails['status'] : ''; 
             $jobTitle        = !empty($postDetails['service_name']) ? $postDetails['service_name'] : ''; 
+            $jobFunction     = !empty($postDetails['job_function_name']) ? $postDetails['job_function_name'] : ''; 
+            $experience      = !empty($postDetails['experience_range_name']) ? $postDetails['experience_range_name'] : ''; 
+            $location        = !empty($postDetails['service_location']) ? $postDetails['service_location'] : ''; 
             $jobDescription  = !empty($postDetails['job_description']) ? $postDetails['job_description'] : ''; 
             $bittly = $url = '';
             
-            $data = array("post_id" => $post_id, "ref"=>$refid,"refrel"=>$reference_id, "emailid" => $userDetails->emailid, "post_status" => $jobStatus, "company_logo"=>$companyLogo, "company_name"=>$companyDetails->name, "title"=>$jobTitle,"description" => $jobDescription,"url"=>$url,"bittly_url"=>$bittly, "got_referred_id" => $gotReferredId);
+            $data = array(
+                "post_id"   => $post_id, 
+                "ref"       => $refid,
+                "refrel"    => $reference_id,
+                "emailid"   => $userDetails->emailid, 
+                "post_status"       => $jobStatus, 
+                "company_logo"      => $companyLogo, 
+                "company_name"      => $companyDetails->name, 
+                "title"             => $jobTitle,
+                "job_title"         => $jobTitle,
+                "job_function"      => $jobFunction,
+                "experience"        => $experience,
+                "location"          => $location,
+                "description"       => $jobDescription,
+                "url"               => $url,
+                "bittly_url"        => $bittly, 
+                "got_referred_id"   => $gotReferredId
+                );
         }
         return $data;
        }

@@ -54,8 +54,7 @@ class PostValidator extends Validator {
         ),
         'apply_job' => array(
             'fullname'         =>   'required',
-            'emailid'           =>   'required',
-            'cv'                =>   'required',
+            'emailid'          =>   'required',            
         ),
         'apply_job_ref' => array(
             'fullname'         =>   'required',

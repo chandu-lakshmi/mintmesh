@@ -134,7 +134,7 @@ return array(
         "activate_user" => "Please activate your account"
     ),
     "reset_password" => array(
-        "success" => "New Password set successfully. Please login to your Enterprise Mobile Application.",
+        "success" => "New Password Updated successfully. Please login to your Enterprise Mobile Application.",
         "invalid" => "Reset Password Period Expired",
         "failed" => "Some Error Occured",
         "error" => "Invalid Token",
@@ -493,10 +493,11 @@ return array(
         "success" => "Successfully retrieved candidates List",
         "no_candidates" => "No candidate records found",
         "failure" => "Failed to retrieve candidates",
-        "awaiting_resume" => "Awaiting Resume from Candidate"
+        "awaiting_resume" => "Awaiting Application from Candidate"
     ),
     'apply_job' => array(
-        "success" => "Successfully referred",
+        "success" => "Successfully Applied",
+        "ref_success" => "Successfully Referred",
         "failure" => "Failed to refer",
         "post_closed" => "Job is closed",
         "referred" => "Candidate is already referred for the post.",
