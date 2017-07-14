@@ -535,7 +535,7 @@ class PostGateway {
         #redirect email links
         $dataSet['apply_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/candidate-details/web?ref=" . $refCode."&flag=0&jc=0";
         $dataSet['refer_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/referral-details/web?ref=" . $refCode."&flag=0&jc=0";
-        $dataSet['view_jobs_link']      = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-jobs/web?ref=" . $refCode."";
+        $dataSet['view_jobs_link']      = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-jobs/web?ref=" . $refCode."&jc=0";
         $dataSet['drop_cv_link']        = Config::get('constants.MM_ENTERPRISE_URL') . "/email/referral-details/web?ref=" . $refCode."&flag=1&jc=0";
         #set email required params
         $this->userEmailManager->templatePath   = Lang::get('MINTMESH.email_template_paths.contacts_job_invitation');
