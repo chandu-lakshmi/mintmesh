@@ -2085,6 +2085,7 @@ class PostGateway {
             $input['time_zone'] =   !empty($input['timeZone'])?$input['timeZone']:0; 
             $input['referred_by_id'] = $reference_id = $input['reference_id'];
             $postId             =   $input['post_id'];
+            $postStatus         =   !empty($input['post_status']) ? $input['post_status'] :'' ;
             $companyDetils      =   $this->neoPostRepository->getPostCompany($postId); 
             #check user Separated Status here
             $separatedStatus    =   $this->checkReferredUserSeparatedStatus($reference_id, $companyDetils->companyCode);
@@ -2206,10 +2207,11 @@ class PostGateway {
                                 }
                                 $responseCode   = self::SUCCESS_RESPONSE_CODE;
                                 $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
-                                if($neoInput['referred_by'] == $neoInput['referral']){
-                                $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.success')));
+                                
+                                if($postStatus){
+                                    $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.success')));
                                 }else{
-                                $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.ref_success')));
+                                    $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.ref_success')));
                                 }
                             }else{
                                 $responseCode   = self::ERROR_RESPONSE_CODE;
