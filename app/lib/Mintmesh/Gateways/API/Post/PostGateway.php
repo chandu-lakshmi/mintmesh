@@ -2174,7 +2174,8 @@ class PostGateway {
                                         #send email notifications to all the contacts
                                         $refId = $refCode = 0;
                                         $emailData  = array();
-                                        $refId      = $neoReferredByDetails->id;
+                                        //$refId      = $neoReferredByDetails->id;
+                                        $refId      = $neoReferralDetails->id;
                                         $refCode                        = MyEncrypt::encrypt_blowfish($postId.'_'.$refId,Config::get('constants.MINTMESH_ENCCODE'));
                                         $replyToData                    = '+ref='.$refCode;
                                         $refRelCode                     = MyEncrypt::encrypt_blowfish($postId.'_'.$gotReferredId,Config::get('constants.MINTMESH_ENCCODE'));
