@@ -38,10 +38,7 @@
                                                     </tr>
                                                 </table>
                                             </td>
-                                            <?php if($free_service){
-                                                
-                                             } else {   if(empty($email_template)){ if($discovery){
-                                                ?>
+                                            <?php  if (empty($free_service) && empty($email_template)) {    if($discovery){?>
                                             <td width="20%" style="border-left:1px solid #ccc;padding:0 10px;">
                                                 <table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial, Helvetica, sans-serif;font-size:14px;">
                                                     <tr align="center">
@@ -71,7 +68,6 @@
                                             </td>
                                               <?php } } ?>
                                             
-                                            <?php  } ?>
                                         </tr>
                                     </table>
                                 </td>
