@@ -1,43 +1,3 @@
-<!--[if mso]>
-  <style type="text/css">
-    .msoq {
-        max-height: 80px !important;
-        width: auto !important;
-    }
-  </style>
-<![endif]-->
-<!--[if mso 12]>
-  <style type="text/css">
-    .msoq {
-        max-height: 80px !important;
-        width: auto !important;
-    }
-  </style>
-<![endif]-->
-<!--[if mso 14]>
-  <style type="text/css">
-    .msoq {
-        max-height: 80px !important;
-        width: auto !important;
-    }
-  </style>
-<![endif]-->
-<!--[if mso 15]>
-  <style type="text/css">
-    .msoq {
-        max-height: 80px !important;
-        width: auto !important;
-    }
-  </style>
-<![endif]-->
-<!--[if mso 16]>
-  <style type="text/css">
-    .msoq {
-        max-height: 80px !important;
-        width: auto !important;
-    }
-  </style>
-<![endif]-->
 <table width="100%" height="100%" style="min-width:348px;font-size:14px;font-family:Arial, Helvetica, sans-serif;" border="0" cellspacing="0" cellpadding="0">
     <tr height="32px"></tr>
     <tr align="center">
@@ -123,9 +83,7 @@
                                         <tr><td width="20%" style="color:#939393;padding:5px 0;vertical-align:top;">Location:</td><td width="80%" style="color:#252525;padding:5px 0;"><?php echo $location ; ?></td></tr>
                                         <tr><td style="color:#939393;padding:5px 0;vertical-align:top;">Job Description:</td></tr>
                                         <tr><td colspan="2" style="padding:0">
-                                                <pre style="white-space: pre-line;font-family:Arial, Helvetica, sans-serif;margin:0;">
                                                  <?php echo $job_description ; ?>   
-                                                </pre>
                                             </td>
                                         </tr>
                                     </table>  
