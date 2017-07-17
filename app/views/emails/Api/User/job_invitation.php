@@ -7,16 +7,16 @@
                 <tr>
                     <td width="540px" style="padding:0 30px;">
                        <table cellspacing="0" cellpadding="0" width="100%" style="font-family:Arial, Helvetica, sans-serif;font-size:14px;">
-                           <tr height="36px"><td>&nbsp;</td></tr>
+                           <tr height="20px"><td>&nbsp;</td></tr>
                            <tr>
                                 <td align="center">
                                     <?php if(!empty($company_logo)){ ?>
-                                    <img width="62" src="<?php echo $company_logo ; ?>" alt="company-logo">
+                                    <img style="max-height: 80px;width: auto;" src="<?php echo $company_logo ; ?>" alt="company-logo">
                                      <?php }else {
                                      echo $company_name; }?>
                                 </td>
                             </tr>
-                            <tr height="36px"><td style="border-bottom:1px solid #cccccc">&nbsp;</td></tr>
+                            <tr height="20px"><td style="border-bottom:1px solid #cccccc">&nbsp;</td></tr>
                             <tr>
                                 <td style="padding-top:8px">
                                     <table cellspacing="0" cellpadding="0" width="100%">
