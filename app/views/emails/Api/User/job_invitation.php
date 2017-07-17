@@ -1,3 +1,43 @@
+<!--[if mso]>
+  <style type="text/css">
+    .msoq {
+        max-height: 80px !important;
+        width: auto !important;
+    }
+  </style>
+<![endif]-->
+<!--[if mso 12]>
+  <style type="text/css">
+    .msoq {
+        max-height: 80px !important;
+        width: auto !important;
+    }
+  </style>
+<![endif]-->
+<!--[if mso 14]>
+  <style type="text/css">
+    .msoq {
+        max-height: 80px !important;
+        width: auto !important;
+    }
+  </style>
+<![endif]-->
+<!--[if mso 15]>
+  <style type="text/css">
+    .msoq {
+        max-height: 80px !important;
+        width: auto !important;
+    }
+  </style>
+<![endif]-->
+<!--[if mso 16]>
+  <style type="text/css">
+    .msoq {
+        max-height: 80px !important;
+        width: auto !important;
+    }
+  </style>
+<![endif]-->
 <table width="100%" height="100%" style="min-width:348px;font-size:14px;font-family:Arial, Helvetica, sans-serif;" border="0" cellspacing="0" cellpadding="0">
     <tr height="32px"></tr>
     <tr align="center">
@@ -11,7 +51,7 @@
                            <tr>
                                 <td align="center">
                                     <?php if(!empty($company_logo)){ ?>
-                                    <img style="max-height: 80px;width: auto;" src="<?php echo $company_logo ; ?>" alt="company-logo">
+                                    <img style="max-height: 80px;width: auto;" class="msoq" src="<?php echo $company_logo ; ?>" alt="company-logo">
                                      <?php }else {
                                      echo $company_name; }?>
                                 </td>
