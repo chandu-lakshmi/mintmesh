@@ -11,7 +11,7 @@
                            <tr>
                                 <td align="center">
                                     <?php if(!empty($company_logo)){ ?>
-                                    <img style="max-height: 80px;width: auto;" class="msoq" src="<?php echo $company_logo ; ?>" alt="company-logo">
+                                        <img <?php if(!empty($logo_width) && !empty($logo_height)){ echo ' width='.$logo_width.' height='.$logo_height; } else {?> style="max-height: 80px;width: auto;" <?php } ?> class="msoq" src="<?php echo $company_logo ; ?>" alt="company-logo">
                                      <?php }else {
                                      echo $company_name; }?>
                                 </td>

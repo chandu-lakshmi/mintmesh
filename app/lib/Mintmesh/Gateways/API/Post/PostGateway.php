@@ -261,7 +261,8 @@ class PostGateway {
         $fromName   = $this->loggedinEnterpriseUserDetails->firstname;
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($input['company_code']);
         if ($this->loggedinEnterpriseUserDetails) {
-            $relationAttrs = $neoInput = $excludedList = $getSkillsAry = $usersAry = array();
+            $companyLogoWidth = $companyLogoHeight = '';
+            $relationAttrs = $neoInput = $excludedList = $getSkillsAry = $usersAry = $companyLogoAspectRatio = array();
             $neoInput['service_scope']      = "find_candidate";
             $neoInput['service_from_web']   = 1;
             $neoInput['service_name']       = !empty($input['job_title'])?$input['job_title']:'';
@@ -295,6 +296,12 @@ class PostGateway {
             $neoInput['skills']             =  $this->userGateway->getSkillsFromJobTitle($neoInput['service_name'], $neoInput['job_description']);
             
             $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($input['company_code']);
+            #company logo Aspect Ratio details for email template
+            if(isset($companyDetails[0]) && !empty($companyDetails[0]->logo)){
+                $companyLogoAspectRatio = $this->referralsGateway->getImageAspectRatio($companyDetails[0]->logo);
+                $companyLogoWidth       = !empty($companyLogoAspectRatio['width']) ? $companyLogoAspectRatio['width'] : '';
+                $companyLogoHeight      = !empty($companyLogoAspectRatio['height']) ? $companyLogoAspectRatio['height'] : '';
+            }
             
             $relationAttrs['created_at']    = gmdate("Y-m-d H:i:s");
             $relationAttrs['company_name']  = $neoInput['company'];
@@ -387,22 +394,24 @@ class PostGateway {
                             $refId = $refCode = 0;
                             $emailData  = array();
                             $refId = $this->neoPostRepository->getUserNodeIdByEmailId($contacts->emailid);
-                            $refCode                        = MyEncrypt::encrypt_blowfish($postId.'_'.$refId,Config::get('constants.MINTMESH_ENCCODE'));
-                            $replyToData                    = '+ref='.$refCode;
-                            $emailData['company_name']      = $input['company_name'];
-                            $emailData['company_code']      = $input['company_code'];
-                            $emailData['post_id']           = $postId;
-                            $emailData['post_type']         = $postType;
-                            $emailData['company_logo']      = $companyDetails[0]->logo;
-                            $emailData['to_firstname']      = $contacts->firstname;
-                            $emailData['to_lastname']       = $contacts->lastname;
-                            $emailData['to_emailid']        = $contacts->emailid;
-                            $emailData['from_userid']       = $fromId;
-                            $emailData['from_emailid']      = $emailId;
-                            $emailData['from_firstname']    = $fromName;
-                            $emailData['ip_address']        = $_SERVER['REMOTE_ADDR'];
-                            $emailData['ref_code']          = $refCode;
-                            $emailData['reply_to']          = $replyToName.$replyToData.$replyToHost;
+                            $refCode                            = MyEncrypt::encrypt_blowfish($postId.'_'.$refId,Config::get('constants.MINTMESH_ENCCODE'));
+                            $replyToData                        = '+ref='.$refCode;
+                            $emailData['company_name']          = $input['company_name'];
+                            $emailData['company_code']          = $input['company_code'];
+                            $emailData['post_id']               = $postId;
+                            $emailData['post_type']             = $postType;
+                            $emailData['company_logo']          = $companyDetails[0]->logo;
+                            $emailData['company_logo_width']    = $companyLogoWidth;
+                            $emailData['company_logo_height']   = $companyLogoHeight;
+                            $emailData['to_firstname']          = $contacts->firstname;
+                            $emailData['to_lastname']           = $contacts->lastname;
+                            $emailData['to_emailid']            = $contacts->emailid;
+                            $emailData['from_userid']           = $fromId;
+                            $emailData['from_emailid']          = $emailId;
+                            $emailData['from_firstname']        = $fromName;
+                            $emailData['ip_address']            = $_SERVER['REMOTE_ADDR'];
+                            $emailData['ref_code']              = $refCode;
+                            $emailData['reply_to']              = $replyToName.$replyToData.$replyToHost;
                           Queue::push('Mintmesh\Services\Queues\SendJobPostEmailToContactsQueue', $emailData, 'Notification');
                           $inviteCount+=1;
                         }
@@ -484,9 +493,11 @@ class PostGateway {
         $dataSet['reply_emailid']       = $emailData['reply_to'];
         $dataSet['email']               = $emailData['to_emailid'];
         $dataSet['fromName']            = $emailData['from_firstname'];
-        $dataSet['post_type']            = $emailData['post_type'];
+        $dataSet['post_type']           = $emailData['post_type'];
         $dataSet['company_name']        = $emailData['company_name'];//Enterpi Software Solutions Pvt.Ltd.
         $dataSet['company_logo']        = $emailData['company_logo'];
+        $dataSet['logo_width']          = $emailData['company_logo_width'];
+        $dataSet['logo_height']         = $emailData['company_logo_height'];
         $dataSet['emailbody']           = 'just testing';
         $dataSet['send_company_name']   = $emailData['company_name'];
         $dataSet['reply_to']            = $emailData['reply_to'];
