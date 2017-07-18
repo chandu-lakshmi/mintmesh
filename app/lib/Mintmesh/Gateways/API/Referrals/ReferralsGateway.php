@@ -2013,7 +2013,7 @@ class ReferralsGateway {
                         $companyDetils = $this->neoPostRepository->getPostCompany($postId);
                         #company logo Aspect Ratio details for email template
                         if(!empty($companyDetils->logo)){
-                            $companyLogoAspectRatio = $this->referralsGateway->getImageAspectRatio($companyDetils->logo);
+                            $companyLogoAspectRatio = $this->getImageAspectRatio($companyDetils->logo);
                             $companyLogoWidth       = !empty($companyLogoAspectRatio['width']) ? $companyLogoAspectRatio['width'] : '';
                             $companyLogoHeight      = !empty($companyLogoAspectRatio['height']) ? $companyLogoAspectRatio['height'] : '';
                         }
