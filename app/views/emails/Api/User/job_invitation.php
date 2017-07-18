@@ -23,7 +23,7 @@
                                         <tr>
                                             <td width="60%" >
                                                 <table cellpadding="0" cellpadding="0" border="0" style="font-family:Arial, Helvetica, sans-serif;font-size:14px;">
-                                                    <tr height="28px"><td>&nbsp;</td></tr>
+                                                    <tr height="10px"><td>&nbsp;</td></tr>
                                                     <?php if(!empty($email_template)){?>
                                                     <tr>
                                                         <td style="color:#000;padding: 5px 0;">Hello <?php echo $name;?>,<br /> <br />
@@ -90,7 +90,7 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td style="padding-bottom:30px;">
+                                <td style="padding-bottom:20px;">
                                     <table cellspacing="0" cellpadding="0" width="100%" style="font-family:Arial, Helvetica, sans-serif;font-size:14px;">
                                         <tr>
                                             <?php if($post_type == 'internal'){ ; ?>
@@ -125,9 +125,9 @@
                                 </td>
                             </tr>
                              <?php if($post_type == 'external'){ ; ?>
-                        <tr><td style="border-top:1px solid #ccc;color:#939393;padding-top:30px;">Share Job</td></tr>
+                        <tr><td style="border-top:1px solid #ccc;color:#939393;padding-top:20px;">Share Job</td></tr>
                         <tr>
-                            <td style="border-bottom:1px solid #ccc;padding-bottom:30px;">
+                            <td style="border-bottom:1px solid #ccc;padding-bottom:20px;">
                                 <table>
                                     <tr style="padding-top:10px;display:inline-block;">
                                         <td style="padding-right:15px"><a href="https://www.facebook.com/dialog/feed?app_id=<?php echo $app_id; ?>&quote=click below to apply&display=popup&amp;caption=&name=<?php echo $company_name; ?> is looking for <?php echo $looking_for; ?>&picture=<?php echo !empty($company_logo)?$company_logo:''; ?>&description=Experience: <?php echo $experience ; ?>, Location: <?php echo $location ; ?>&link=<?php echo $job_details_link; ?>&redirect_uri=<?php echo $job_details_link; ?>&domain=enterprisestaging.mintmesh.com&origin=http://enterprisestaging.mintmesh.com" style="cursor:pointer"><img src="<?php echo $public_url ;?>images/f_social.png" height="40px" width="40px" alt="fb"></a></td>
@@ -142,8 +142,8 @@
                                 <td>
                                     <table cellspacing="0" cellpadding="0" width="90%" style="font-family:Arial, Helvetica, sans-serif;font-size:14px;">
                                         <tr>
-                                            <td align="right" style="padding:30px 0;">Upload a friend’s resume for future openings  &nbsp;</td>
-                                            <td align="left" style="padding:30px 0;">
+                                            <td align="right" style="padding:20px 0;">Upload a friend’s resume for future openings  &nbsp;</td>
+                                            <td align="left" style="padding:20px 0;">
                                                 <table cellpadding="0" cellpadding="0" border="0" style="width:100px;text-align:center;display:inline-block;font-family:Arial, Helvetica, sans-serif;font-size:14px;">
                                                     <tr>
                                                         <td style="background:#238260;border:1px solid #238260;padding: 6px 10px;"><a href="<?php echo $drop_cv_link ; ?>" style="display:inline-block;border-radius: 2px;background:#238260;color:#fff;text-decoration: none;outline:none;width:100%;">Upload CV</a>
