@@ -419,6 +419,7 @@ App::missing(function($exception)
 |  return accesstoken
 */
 Route::post("oauth/access_token", function() {
+    \Log::info('<------------------- oauth/access_token --------------------->');
 	return Response::json(Authorizer::issueAccessToken());
 });
 
