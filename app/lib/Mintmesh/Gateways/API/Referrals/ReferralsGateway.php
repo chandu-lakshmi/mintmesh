@@ -41,7 +41,7 @@ class ReferralsGateway {
     const ERROR_RESPONSE_MESSAGE = 'error';
     const CURL_CALL_TYPE = 1;
     const CURL_CALL_TYPE_FILE = 2;
-    const IMAGE_DEFAULT_HIGHT = 160;
+    const IMAGE_DEFAULT_HIGHT = 120;
 
     protected $referralsRepository, $referralsValidator, $neoUserRepository, $userRepository;
     protected $authorizer, $appEncodeDecode, $paymentRepository, $paymentGateway, $neoPostRepository, $postGateway;
@@ -2593,7 +2593,6 @@ class ReferralsGateway {
     public function getImageAspectRatio($imagePath = '') {
         
         $return = $result = array();
-        //$imagePath = 'https://s3-us-west-2.amazonaws.com/mintmesh%2Fstg%2FcompanyLogo/attach_10455027421500295990_1500295999.png';
         if($imagePath){
             $file_headers   = @get_headers($imagePath);
             if(isset($file_headers[0]) && $file_headers[0] == 'HTTP/1.1 200 OK') {

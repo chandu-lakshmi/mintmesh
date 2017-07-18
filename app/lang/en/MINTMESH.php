@@ -501,7 +501,7 @@ return array(
         "failure" => "Failed to refer",
         "post_closed" => "Job is closed",
         "referred" => "Candidate is already referred for the post.",
-        "referrer_nvalid" => "Invalid referrer",
+        "referrer_invalid" => "Invalid referrer",
         "invalid" => "Invalid reference id and post id",
         "user_separated" => "This job is no longer available."
     ),
