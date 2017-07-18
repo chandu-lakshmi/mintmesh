@@ -34,7 +34,7 @@
                                                         <td style="color:#3b70cd"><?php echo $company_name ; ?></td>
                                                     </tr>-->
                                                     <tr>
-                                                        <td><h4 style="margin:4px 0 20px;font-weight:600;font-size:20px;color:#252525"><?php echo $looking_for ; ?></h4></td>                        
+                                                        <td><h4 style="margin:4px 0 0;font-weight:600;font-size:20px;color:#252525"><?php echo $looking_for ; ?></h4></td>                        
                                                     </tr>
                                                 </table>
                                             </td>
