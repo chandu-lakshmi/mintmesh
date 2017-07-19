@@ -1537,24 +1537,24 @@ class PostGateway {
         $userEmailId    = $loggedInUser->emailid;
         $objCompany->fullname   = $company->name;
         //explode jobs and buckets here
-        $campPostIds    = !empty($input['job_ids'])?$input['job_ids']:'';
-        $campBucketIds  = !empty($input['selectedBuckets'])?explode(',',$input['selectedBuckets']):'';
-        $campaignId     = !empty($input['campaign_id'])?$input['campaign_id']:'';
-        $requestType    = !empty($input['request_type'])?$input['request_type']:'add';
+        $campPostIds    = !empty($input['job_ids']) ? $input['job_ids'] : '';
+        $campBucketIds  = !empty($input['selectedBuckets']) ? explode(',',$input['selectedBuckets']) : '';
+        $campaignId     = !empty($input['campaign_id']) ? $input['campaign_id'] : '';
+        $requestType    = !empty($input['request_type']) ? $input['request_type'] : 'add';
         
-        $campaign['campaign_name']      = !empty($input['campaign_name'])?$input['campaign_name']:'';
-        $campaign['campaign_type']      = !empty($input['campaign_type'])?$input['campaign_type']:'';//mass recruitment | military veterans | campus hires
-        $campaign['location_type']      = !empty($input['location_type'])?$input['location_type']:'';//online | onsite 
-        $campaign['bucket_id']          = !empty($input['selectedBuckets'])?$input['selectedBuckets']:''; 
+        $campaign['campaign_name']      = !empty($input['campaign_name']) ? $input['campaign_name'] : '';
+        $campaign['campaign_type']      = !empty($input['campaign_type']) ? $input['campaign_type'] :'';//mass recruitment | military veterans | campus hires
+        $campaign['location_type']      = !empty($input['location_type']) ? $input['location_type'] :'';//online | onsite 
+        $campaign['bucket_id']          = !empty($input['selectedBuckets']) ? $input['selectedBuckets'] : ''; 
         
         if(strtolower($campaign['location_type']) == 'onsite'){
-            $campaign['address']        = !empty($input['address'])?$input['address']:'';
-            $campaign['city']           = !empty($input['city'])?$input['city']:'';
-            $campaign['zip_code']       = !empty($input['zip_code'])?$input['zip_code']:'';
-            $campaign['state']  = !empty($input['state'])?$input['state']:'';
-            $campaign['country']  = !empty($input['country'])?$input['country']:'';
-            $campaign['latitude']  = !empty($input['latitude'])?$input['latitude']:'';
-            $campaign['longitude']  = !empty($input['longitude'])?$input['longitude']:'';
+            $campaign['address']        = !empty($input['address']) ? $input['address'] : '';
+            $campaign['city']           = !empty($input['city']) ? $input['city'] : '';
+            $campaign['zip_code']       = !empty($input['zip_code']) ? $input['zip_code'] : '';
+            $campaign['state']          = !empty($input['state']) ? $input['state'] : '';
+            $campaign['country']        = !empty($input['country']) ? $input['country'] : '';
+            $campaign['latitude']       = !empty($input['latitude']) ? $input['latitude'] : '';
+            $campaign['longitude']      = !empty($input['longitude']) ? $input['longitude'] : '';
         }    
         $campSchedule = !empty($input['schedule'])?$input['schedule']:array();
          

@@ -7,7 +7,7 @@
                   <table cellspacing="0" cellpadding="0" width="100%">
                      <tr>
                         <td width="504px" style="padding:0 32px 20px 32px;text-align:center;border-bottom:1px solid #ccc">
-                           <img width="62" src="<?php echo $company_logo ; ?>" alt="company-logo" >
+                           <img <?php if(!empty($logo_width) && !empty($logo_height)){ echo ' width='.$logo_width.' height='.$logo_height; } else {?> style="max-height: 80px;width: auto;" <?php } ?> src="<?php echo $company_logo ; ?>" alt="company-logo" >
                         </td>
                      </tr>
                      <tr><td style="font-weight:bold;font-size:26px;padding:20px 0;">Referral Reward Program</td></tr>

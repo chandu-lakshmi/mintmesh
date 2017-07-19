@@ -992,37 +992,51 @@ class EnterpriseGateway {
      * @return Response
      */
     public function enterpriseContactsEmailInvitation($input) {
+        
         $params = array();
-        $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser(); //get the logged in user details
-        $params['user_id'] = $this->loggedinUserDetails->id;
-        $params['from_user_name'] = $this->loggedinUserDetails->firstname;
-        $params['user_email'] = $this->loggedinUserDetails->emailid;
-        $params['company_id'] = $input['company_id'];
-        $emailSubject = $input['email_subject'];
-        $emailBody = $input['email_body'];
-        $params['invite_contacts'] = explode(',', $input['invite_contacts']);
-        $params['ip_address'] = $_SERVER['REMOTE_ADDR'];
+        $companyLogoWidth  = $companyLogoHeight = $companyName = $companyLogo = '';
+        $this->loggedinUserDetails  = $this->referralsGateway->getLoggedInUser(); //get the logged in user details
+        $params['user_id']          = $this->loggedinUserDetails->id;
+        $params['from_user_name']   = $this->loggedinUserDetails->firstname;
+        $params['user_email']   = $this->loggedinUserDetails->emailid;
+        $params['company_id']   = $input['company_id'];
+        $emailSubject           = $input['email_subject'];
+        $emailBody              = $input['email_body'];
+        $params['invite_contacts']  = explode(',', $input['invite_contacts']);
+        $params['ip_address']       = $_SERVER['REMOTE_ADDR'];
 
-        $contactList = $this->enterpriseRepository->getCompanyContactsListById($params); //get the import contact list by Ids
-        $company = $this->enterpriseRepository->getCompanyDetails($params['company_id']);
+        $contactList    = $this->enterpriseRepository->getCompanyContactsListById($params); //get the import contact list by Ids
+        $company        = $this->enterpriseRepository->getCompanyDetails($params['company_id']);//get company details
+        if(isset($company[0])){
+            $company     = $company[0];
+            $companyName = !empty($company->name) ? $company->name : '' ;
+            $companyLogo = !empty($company->logo) ? $company->logo : '' ;
+            #company logo Aspect Ratio details for email template
+            if(!empty($company->logo)){
+                $companyLogoAspectRatio = $this->referralsGateway->getImageAspectRatio($company->logo);
+                $companyLogoWidth       = !empty($companyLogoAspectRatio['width']) ? $companyLogoAspectRatio['width'] : '';
+                $companyLogoHeight      = !empty($companyLogoAspectRatio['height']) ? $companyLogoAspectRatio['height'] : '';
+            }
+        }
+        
         if (!empty($contactList)) {
             foreach ($contactList as $key => $value) {
                 if(isset($value[0]) && !empty($value[0]->emailid) && $value[0]->status != 'Separated'){
                     $pushData = array();
-                    if(!empty($company)){
-                        foreach ($company as $k=>$v){
-                            $pushData['company_name'] = $v->name;
-                            $pushData['company_logo'] = $v->logo;
-                        }
-                    }
-                    $pushData['firstname'] = $value[0]->firstname;
-                    $pushData['lastname'] = $value[0]->lastname;
-                    $pushData['emailid'] = $value[0]->emailid;
-                    $pushData['email_subject'] = 'Invitation to Referral Rewards Program from '.$pushData['company_name'];
-                    $pushData['email_body'] = $emailBody;
+                    #company Details
+                    $pushData['company_name']           = $companyName;
+                    $pushData['company_logo']           = $companyLogo;
+                    $pushData['company_logo_width']     = $companyLogoWidth;
+                    $pushData['company_logo_height']    = $companyLogoHeight;
+                    #contact details
+                    $pushData['firstname']      = $value[0]->firstname;
+                    $pushData['lastname']       = $value[0]->lastname;
+                    $pushData['emailid']        = $value[0]->emailid;
+                    $pushData['email_subject']  = 'Invitation to Referral Rewards Program from '.$pushData['company_name'];
+                    $pushData['email_body']     = $emailBody;
                     //for email logs
                     $pushData['from_user_id']    = $params['user_id'];
-                    $pushData['from_user_name']    = $params['from_user_name'];
+                    $pushData['from_user_name']  = $params['from_user_name'];
                     $pushData['from_user_email'] = $params['user_email'];
                     $pushData['company_code']    = $params['company_id'];
                     $pushData['ip_address']      = $params['ip_address'];
@@ -1042,15 +1056,18 @@ class EnterpriseGateway {
     }
 
     public function enterpriseSendContactsEmailInvitation($inputEmailData) {
+        
         $dataSet = array();
         $fullName = $inputEmailData['firstname'] . ' ' . $inputEmailData['lastname'];
         $dataSet['company_name'] = $inputEmailData['company_name'];
         $dataSet['company_logo'] = !empty($inputEmailData['company_logo'])?$inputEmailData['company_logo']:'https://www.owbaz.com/images/default-company-logo.jpg';
-        $dataSet['name'] = $fullName;
-        $dataSet['email'] = $inputEmailData['emailid'];
-        $dataSet['emailbody'] = $inputEmailData['email_body'];
-        $dataSet['fromName']  = $inputEmailData['from_user_name'];
+        $dataSet['name']         = $fullName;
+        $dataSet['email']        = $inputEmailData['emailid'];
+        $dataSet['emailbody']    = $inputEmailData['email_body'];
+        $dataSet['fromName']     = $inputEmailData['from_user_name'];
         $dataSet['send_company_name'] = $inputEmailData['company_name'];
+        $dataSet['logo_width']  = $inputEmailData['company_logo_width'];
+        $dataSet['logo_height'] = $inputEmailData['company_logo_height'];
         //for email logs
         $fromUserId  = $inputEmailData['from_user_id'];
         $fromEmailId = $inputEmailData['from_user_email'];
