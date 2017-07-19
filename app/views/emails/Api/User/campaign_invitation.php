@@ -11,7 +11,7 @@
                         <td style="padding:0 30px">
                            <table cellspacing="0" cellpadding="0" width="100%" style="border-bottom:1px solid #cccccc;">
                               <tr>
-                                 <td align="center" style="padding:36px 0;font-size:38px;">
+                                 <td align="center" style="padding:20px 0;font-size:38px;">
                                     <?php if(!empty($company_logo)){ ?>
                                     <img <?php if(!empty($logo_width) && !empty($logo_height)){ echo ' width='.$logo_width.' height='.$logo_height; } else {?> style="max-height: 80px;width: auto;" <?php } ?> src="<?php echo $company_logo ?>" alt="company-logo" >
                                     <?php }else {
@@ -31,7 +31,7 @@
                         <td style="padding: 0 30px">
                            <table cellspacing="0" cellpadding="0" width="100%">
                               <tr>
-                                 <td colspan="3" style="color:#3b70cd;padding-top:35px"><?php echo $company_name; ?></td>
+                                 <td colspan="3" style="color:#3b70cd;padding-top:20px"><?php echo $company_name; ?></td>
                               </tr>
                               <tr>
                                  <td colspan="3" style="padding:3px 0;font-weight:900;font-size:21px;color:#252525">
@@ -101,7 +101,7 @@
                                  </td>
                               </tr>
                               <tr>
-                                 <td style="padding:20px 0 40px 0">
+                                 <td style="padding:20px 0">
                                     <table cellpadding="0" border="0" style="width:70px;text-align:center;display:inline-block;font-family:Arial,Helvetica,sans-serif;font-size:14px">
                                         <tr>
                                             <td style="background: #238260;">
@@ -117,9 +117,9 @@
                   </table>
                </td>
             </tr>
-            <tr><td style="color:#939393;padding-top:30px;padding-left:30px;">Share Campaign</td></tr>            
+            <tr><td style="color:#939393;padding-top:20px;padding-left:30px;">Share Campaign</td></tr>            
             <tr>
-                <td style="padding: 0 30px 30px;">
+                <td style="padding: 0 30px 20px;">
                     <table>
                       <tr style="padding-top:10px;display:inline-block;">
                           <td style="padding-right:15px"><a href="https://www.facebook.com/dialog/feed?app_id=<?php echo $app_id; ?>&quote=click below to apply&display=popup&amp;caption=&name=Here is a campaign at <?php echo $company_name; ?> for <?php echo $campaign_name; ?>&description=Starts on:<?php echo $campaign_start_date; ?> and Ends on:<?php echo $campaign_end_date; ?>, Location: <?php echo $campaign_location; ?>&picture=<?php echo !empty($company_logo)?$company_logo:''; ?>&link=<?php echo $view_jobs_link; ?>&redirect_uri=<?php echo $view_jobs_link; ?>&domain=enterprisestaging.mintmesh.com&origin=http://enterprisestaging.mintmesh.com" style="cursor:pointer"><img src="<?php echo $public_url ;?>images/f_social.png" height="40" width="40" alt="fb"></a></td>
