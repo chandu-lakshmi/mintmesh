@@ -1,7 +1,7 @@
 <table width="100%" height="100%" style="min-width:348px;font-size:14px;font-family:Arial, Helvetica, sans-serif;" border="0" cellspacing="0" cellpadding="0">
    <tr>
       <td style="padding:32px;" align="center">
-         <table cellspacing="0" cellpadding="0" style="max-width:600px;border:1px solid #cccccc">
+         <table cellspacing="0" cellpadding="0" style="max-width:500px;border:1px solid #cccccc">
             <tr>
                <td style="padding:32px">
                   <table cellspacing="0" cellpadding="0" width="100%">
