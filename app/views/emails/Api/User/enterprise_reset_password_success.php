@@ -17,8 +17,8 @@
                      <tr><td style="color:#777">If you don't recognize this activity, please reset your MintMesh Password.</td></tr>
                      <tr><td style="padding-top: 75px;">Sincerely,</td></tr>
                      <tr><td style="color:#777;padding: 5px 0 20px;border-bottom:1px solid #ccc;">MintMesh Team</td></tr>
-                     <tr><td style="color:#777;padding:20px 0 6px;text-align: center">If you need assistance, please contact MintMesh </td></tr>
-                     <tr><td style="color:#777;text-align: center">Support. <a style="color:#1b8c6e;text-decoration:none;" href="mailto:support@mintmesh.com">(support@mintmesh.com)</a></td></tr>
+                     <tr><td style="color:#777;padding:20px 0 6px;text-align: center;font-size: 16px;">If you need assistance, please contact MintMesh </td></tr>
+                     <tr><td style="color:#777;text-align: center;font-size: 16px;">Support. <a style="color:#1b8c6e;text-decoration:none;" href="mailto:support@mintmesh.com">(support@mintmesh.com)</a></td></tr>
                   </table>
                </td>
             </tr>

@@ -21,7 +21,7 @@
                         </td>
                      </tr>
                      <tr><td>Thanks,</td></tr>
-                     <tr><td style="padding:8px 0"><?php echo $fromName; ?>,</td></tr>
+                     <tr><td><?php echo $fromName; ?>,</td></tr>
                      <tr><td><?php echo $company_name; ?>.</td></tr>
                   </table>
                </td>
