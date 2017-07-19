@@ -13,7 +13,7 @@
                               <tr>
                                  <td align="center" style="padding:36px 0;font-size:38px;">
                                     <?php if(!empty($company_logo)){ ?>
-                                    <img width="62" src="<?php echo $company_logo ?>" alt="company-logo" >
+                                    <img <?php if(!empty($logo_width) && !empty($logo_height)){ echo ' width='.$logo_width.' height='.$logo_height; } else {?> style="max-height: 80px;width: auto;" <?php } ?> src="<?php echo $company_logo ?>" alt="company-logo" >
                                     <?php }else {
                                     echo $company_name; }?>
                                  </td>

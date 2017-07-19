@@ -1383,6 +1383,8 @@ class PostGateway {
                     $pushData['company_code']       = $input['company_code'];
                     $pushData['company_name']       = $input['company_name'];
                     $pushData['company_logo']       = $input['company_logo'];
+                    $pushData['company_logo_width'] = $input['company_logo_width'];
+                    $pushData['company_logo_height']= $input['company_logo_height'];
                     $pushData['campaign_name']      = $input['campaign_name'];
                     $pushData['campaign_type']      = $input['campaign_type'];
                     $pushData['campaign_location']      = $input['campaign_location'];
@@ -1442,7 +1444,9 @@ class PostGateway {
             $emailData['campaign_location']     = $relationInput['campaign_location'];
             $emailData['campaign_start_date']   = $relationInput['campaign_start_date'];
             $emailData['campaign_end_date']     = $relationInput['campaign_end_date'];
-            $emailData['company_logo']   = $relationInput['company_logo'];
+            $emailData['company_logo']          = $relationInput['company_logo'];
+            $emailData['company_logo_width']    = $relationInput['company_logo_width'];
+            $emailData['company_logo_height']   = $relationInput['company_logo_height'];
             $emailData['to_emailid']     = $contactEmailid;
             $emailData['contact_name']   = $relationInput['contact_name'];
             $emailData['from_emailid']   = $relationInput['user_emailid'];
@@ -1481,6 +1485,8 @@ class PostGateway {
         $dataSet['campaign_location']       = $emailData['campaign_location'];
         $dataSet['company_name']            = $emailData['company_name'];//Enterpi Software Solutions Pvt.Ltd.
         $dataSet['company_logo']            = $emailData['company_logo'];
+        $dataSet['logo_width']              = $emailData['company_logo_width'];
+        $dataSet['logo_height']             = $emailData['company_logo_height'];
         $dataSet['app_id']                  = '1268916456509673';
         #redirect email links
         $dataSet['view_jobs_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/share?ref=" . $refCode."";
@@ -1702,6 +1708,17 @@ class PostGateway {
                 $campaignContacts['company_logo']   = $company->logo;
                 $campaignContacts['campaign_name']  = !empty($createdCampaign[0][0]->campaign_name)?$createdCampaign[0][0]->campaign_name:$editedCampaign[0][0]->campaign_name; 
                 $campaignContacts['campaign_type']  = !empty($createdCampaign[0][0]->campaign_type)?$createdCampaign[0][0]->campaign_type:$editedCampaign[0][0]->campaign_type; 
+                
+                #company logo Aspect Ratio details for email template
+                $companyLogoWidth  = $companyLogoHeight = '';
+                if(!empty($company->logo)){
+                    $companyLogoAspectRatio = $this->referralsGateway->getImageAspectRatio($company->logo);
+                    $companyLogoWidth       = !empty($companyLogoAspectRatio['width']) ? $companyLogoAspectRatio['width'] : '';
+                    $companyLogoHeight      = !empty($companyLogoAspectRatio['height']) ? $companyLogoAspectRatio['height'] : '';
+                }
+                $campaignContacts['company_logo_width']  = $companyLogoWidth;
+                $campaignContacts['company_logo_height'] = $companyLogoHeight;
+                
                 if((isset($createdCampaign[0][0]) && $createdCampaign[0][0]->location_type === 'onsite')){
                     
                    $campaignContacts['campaign_location'] = !empty($createdCampaign[0][0]->zip_code)?$createdCampaign[0][0]->address.', '.$createdCampaign[0][0]->city.', '.$createdCampaign[0][0]->zip_code.', '.$createdCampaign[0][0]->state.', '.$createdCampaign[0][0]->country:$createdCampaign[0][0]->address.', '.$createdCampaign[0][0]->city.', '.$createdCampaign[0][0]->state.', '.$createdCampaign[0][0]->country;
