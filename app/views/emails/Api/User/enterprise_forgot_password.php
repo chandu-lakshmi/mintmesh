@@ -18,7 +18,7 @@
                         <td style="text-align: center;padding:45px 0">
                            <table cellpadding="0" cellpadding="0" border="0" style="display:inline-block;font-family:Arial, Helvetica, sans-serif;font-size:14px;">
                               <tr>
-                                 <td style="background: #269b7b;padding: 12px 20px;"><a href="<?php echo $link ; ?>" target="_blank" style="background: #269b7b;color: #fff;text-decoration: none;display: inline-block;font-size: 20px;border-radius: 4px;">Reset Password</a>
+                                 <td style="background: #269b7b;padding: 12px 20px;border-radius: 5px;"><a href="<?php echo $link ; ?>" target="_blank" style="background: #269b7b;color: #fff;text-decoration: none;display: inline-block;font-size: 20px;border-radius: 4px;">Reset Password</a>
                                  </td>
                               </tr>
                            </table>   
