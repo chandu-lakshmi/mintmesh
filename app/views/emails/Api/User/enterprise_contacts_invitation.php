@@ -1,4 +1,4 @@
-<table width="100%" height="100%" style="min-width:348px;font-size:14px;font-family:Arial, Helvetica, sans-serif;color: #000 !important" border="0" cellspacing="0" cellpadding="0">
+<table width="100%" height="100%" style="min-width:348px;font-size:14px;font-family:Arial, Helvetica, sans-serif;color: #000 !important;font-size: 16px" border="0" cellspacing="0" cellpadding="0">
    <tr>
       <td style="padding:32px;" align="center">
          <table cellspacing="0" cellpadding="0" style="max-width:500px;border:1px solid #cccccc">
