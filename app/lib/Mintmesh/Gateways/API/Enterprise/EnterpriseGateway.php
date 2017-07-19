@@ -1648,15 +1648,16 @@ class EnterpriseGateway {
        return $return = array('top_referrals' =>$returnTopReferrals);
     }
     
-    public function getCompanyProfile(){   
+    public function getCompanyProfile(){
+        
         $returnDetails  = $return = $data = $userDetails = array();
-        $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser();
-        $userEmailId = $this->loggedinUserDetails->emailid;
-        $user = $this->neoEnterpriseRepository->getUsers($userEmailId);
-        $userDetails['user_id'] = $this->loggedinUserDetails->id;
-        $userDetails['user_name'] = $user->fullname;
-        $userDetails['user_email'] = $user->emailid;
-        $userDetails['user_dp'] = $user->photo;
+        $this->loggedinUserDetails  = $this->referralsGateway->getLoggedInUser();
+        $userEmailId                = $this->loggedinUserDetails->emailid;
+        $user                       = $this->neoEnterpriseRepository->getUsers($userEmailId);
+        $userDetails['user_id']     = $this->loggedinUserDetails->id;
+        $userDetails['user_name']   = $user->fullname;
+        $userDetails['user_email']  = $user->emailid;
+        $userDetails['user_dp']     = $user->photo;
         // get the logged in user company details here
         $companyDetails = $this->neoEnterpriseRepository->getCompanyProfile($userEmailId);
         if(!empty($companyDetails[0])){
@@ -1666,10 +1667,11 @@ class EnterpriseGateway {
             $returnDetails['company_code'] = $company->companyCode;
             $returnDetails['company_logo'] = $company->logo;
             $returnDetails['employees_no'] = !empty($company->size)?$company->size:0;
+            $returnDetails['company_id']   = !empty($company->mysql_id) ? $company->mysql_id : 0;
             $data['companyDetails'] = $returnDetails;
-            $data['userDetails'] = $userDetails;
-            $checkGroupStatus = $this->enterpriseRepository->checkGroupStatus($this->loggedinUserDetails->group_id);
-            $data['userPermissions'] = $this->getUserPermissions();
+            $data['userDetails']    = $userDetails;
+            $checkGroupStatus       = $this->enterpriseRepository->checkGroupStatus($this->loggedinUserDetails->group_id);
+            $data['userPermissions']               = $this->getUserPermissions();
             $data['userPermissions']['is_primary'] = $checkGroupStatus[0]->is_primary;
             $message = array('msg' => array(Lang::get('MINTMESH.companyDetails.success')));
         } else {
