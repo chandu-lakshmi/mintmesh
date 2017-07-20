@@ -1,81 +1,40 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>Mint Mesh</title>
-<link href='http://fonts.googleapis.com/css?family=arial:300,400,500,700' rel='stylesheet' type='text/css'>
-<style type="text/css">
-.main_table {
-  width: 500px;
-}
-@media only screen and (max-width: 520px) {
-.main_table {
-  width: 100% !important;
-}
-.textContent p {
-  font-size: 16px !important;
-}
-.textContent .wish_txt { font-size:24px !important; line-height:30px; }
-.activate_btn {
-    width: 90% !important;
-}
-}
-
-</style>
-</head>
-<body style="margin:0px; font-family: 'arial', sans-serif;font-weight:300;font-size:18px;">
-    <table style='min-width:550px;width: 550px' align="center" bgcolor="#EAEFF2 ">
-        <tr align="center"><td><img src="<?php echo $public_url ; ?>images/mintmesh-logo.png" alt="brand-logo" height="60px"></td></tr>
-        <tr>
-            <td style="padding:20px">
-                <table  width="100%" style="background-color:#fff">
-                    <tr>
-                        <td>
-                            <h2 style="text-align:center;color:#cc6c5a ;margin:0;padding:30px 0">Thank you for joining MintMesh Enterprise</h2>
+<table width="100%" height="100%" style="min-width:348px;font-size:14px;font-family:Arial, Helvetica, sans-serif;" border="0" cellspacing="0" cellpadding="0">
+   <tr>
+      <td style="padding:32px;" align="center">
+         <table cellspacing="0" cellpadding="0" style="max-width:500px;border:1px solid #cccccc">
+            <tr>
+               <td style="padding:20px 32px">
+                  <table cellspacing="0" cellpadding="0" width="100%" style="font-size:18px">
+                     <tr>
+                        <td width="504px" style="padding:0 32px 20px 32px;text-align:center;border-bottom:1px solid #ccc;">
+                           <img src="<?php echo $public_url ; ?>images/mintmesh-logo.png" alt="company-logo" width="80" height="80">
                         </td>
-                    </tr>
-                    <tr>
-                        <td style="text-align: center;padding: 20px 0">
-                            <img src="<?php echo $public_url ; ?>images/Email-icon.png" alt="mail-icon" width="100px" height="100px">
+                     </tr>
+                     <tr><td style="padding: 20px 0 0;font-size: 20px;text-align: center;font-size: 24px;color: #cc6c5a;">Thank you for joining MintMesh Enterprise</td></tr>
+                     <td style="text-align: center;"">
+                         <img src="<?php echo $public_url ; ?>images/Email-icon.png" alt="mail-icon" width="100" height="100">
+                     </td>
+                     <tr><td style="padding:0 0 10px 0;font-size: 20px;font-weight:700">Hello <?php echo ucfirst($name) ; ?>,</td></tr>
+                     <tr><td style="color:#777;padding-bottom: 10px">You have successfully created an account with <?php echo $email ; ?> for <span style="font-weight:700"><?php echo $company ; ?></span>.</td></tr>
+                     <tr><td style="color:#777">To complete the process, please verify your email account.</td></tr>
+                     <tr>
+                        <td style="text-align: center;padding:45px 0">
+                           <table cellpadding="0" cellpadding="0" border="0" style="display:inline-block;font-family:Arial, Helvetica, sans-serif;font-size:14px;">
+                              <tr>
+                                 <td style="background: #269b7b;padding: 12px 20px;border-radius: 5px;"><a href="<?php echo $desktop_link ; ?>" target="_blank" style="background: #269b7b;color: #fff;text-decoration: none;display: inline-block;font-size: 20px;border-radius: 4px;">VERIFY YOUR ACCOUNT</a></a>
+                                 </td>
+                              </tr>
+                           </table>   
                         </td>
-                    </tr>
-                    <tr>
-                        <td style="padding:20px 15px">
-                            <strong style="font-size: 20px;color: #403B3B ">Hello <?php echo ucfirst($name) ; ?>,</strong>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding:20px 15px 0px">
-                            <p style="color: #666666 ;line-height: 1.6em">You have successfully created an account with <span><?php echo $email ; ?></span> for <span style="font-weight:bold"><?php echo $company ; ?></span>.</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 0px 15px 50px;">
-                            <p style="color: #666666 ;line-height: 1.6em">To complete the process, please verify your email account.</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="text-align: center;padding:0px 0px 100px"> 
-                             
-                                <a class="activate_btn" style="color:#FFFFFF;text-decoration:none;font-family:'arial',sans-serif;font-size:20px;padding:10px 15px; text-align: center;  background:#269b7b; width:auto; margin:0px auto; border-radius:5px; line-height:20px;" href="<?php echo $desktop_link ; ?>" target="_blank"> VERIFY YOUR ACCOUNT                          
-                                </a> 
-                            
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding-left:15px;line-height: 1.6em;font-size: 16px">
-                            <span style="font-size: 18px">Sincerely,</span><br>
-                            <span style="color: #666666 ">MintMesh Team.</span>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-        <tr>
-            <td style="text-align: center;color: #666;font-size: 18px;line-height: 1.6em">
-                <p>If you need assistance, please contact MintMesh Support. (<a href="" style="text-decoration: none;color: black"><mark style="background: rgba(255, 255, 0, 0.5);">support@mintmesh.com</mark></a>)</p>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>
+                     </tr>
+                     <tr><td>Sincerely,</td></tr>
+                     <tr><td style="color:#777;padding: 5px 0 20px;border-bottom:1px solid #ccc;">MintMesh Team</td></tr>
+                     <tr><td style="color:#777;padding:20px 0 6px;text-align: center">If you need assistance, please contact MintMesh </td></tr>
+                     <tr><td style="color:#777;text-align: center">Support. <a style="color:#1b8c6e;text-decoration:none;" href="mailto:support@mintmesh.com">(support@mintmesh.com)</a></td></tr>
+                  </table>
+               </td>
+            </tr>
+         </table>
+      </td>
+   </tr>
+</table>
