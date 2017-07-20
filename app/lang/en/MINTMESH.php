@@ -39,7 +39,7 @@ return array(
         "uploaded_large_file" => "Uploaded file size is too large",
         "invalid_file_format" => "Uploaded file format not allowed",
         "no_resume" => "Please upload a resume",
-        'invalid_acess' => 'Invalid license number',
+        'invalid_acess' => 'Please enter valid License Key.',
         'server_access_denied' => 'Access denied to user!'
     ),
     "referrals" => array(
@@ -66,8 +66,8 @@ return array(
         "login_failure" => "Invalid Credentials",
         "email_inactive" => "You are inactive please activate via email",
         "login_credentials" => "Please login with your enterprise credentials",
-        "inactive_group" => "You are an inactive group user",
-        "inactive_user" => "You are an inactive user",
+        "inactive_group" => "You are an Inactive Group User",
+        "inactive_user" => "You are an Inactive User",
         "contact_admin" => "Something went wrong. Please contact your administrator."
     ),
     "resendActivationLink" => array(
@@ -522,7 +522,7 @@ return array(
     ),
     'hcm_details' => array(
         "insert_success" => "HCM details added successfully",
-        "update_success" => "HCM details successfully updated",
+        "update_success" => "HCM Details Successfully Updated",
         "retrieve_success" => "successfully retrieved HCM details",
         "hcm_name_isexist" => "HCM name already exist",
         "retrieve_failure" => "Failed to retrieve HCM details"
