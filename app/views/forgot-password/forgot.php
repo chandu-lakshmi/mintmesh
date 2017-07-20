@@ -47,11 +47,11 @@
                                                     <md-input-container class="md-block">
                                                         <label for="new_password">New Password</label>
                                                         <input type="password" id="new_password" name="new_password" ng-model="forgotCtrl.forgotPassword.new_password" required ng-pattern="/^(?=.*[a-zA-Z0-9]).{6,}$/" ng-class="{'has-error-border':re_enter_password_form.new_password.$invalid && forgotCtrl.forgot_show_error}">
-                                                        <div ng-if="re_enter_password_form.new_password.$error.required && forgotCtrl.forgot_show_error" class="has-error-msg">Please enter Password.</div>
+                                                        <div ng-if="re_enter_password_form.new_password.$error.required && forgotCtrl.forgot_show_error" class="has-error-msg">Please enter New Password.</div>
                                                         <div ng-if="re_enter_password_form.new_password.$error.pattern && forgotCtrl.forgot_show_error" class="has-error-msg">Please enter atleast 6 characters.</div>
                                                     </md-input-container>
                                                     <md-input-container class="md-block">
-                                                        <label for="re_password">Confirm New Password</label>
+                                                        <label for="re_password">Confirm Password</label>
                                                         <input type="password" id="re_password" name="re_password" ng-model="forgotCtrl.forgotPassword.re_password" pw-match="new_password" ng-class="{'has-error-border': re_enter_password_form.re_password.$invalid && forgotCtrl.forgot_show_error}" required>
                                                         <div ng-if="re_enter_password_form.re_password.$error.required && forgotCtrl.forgot_show_error" class="has-error-msg">Please enter Confirm Password.</div>
                                                         <div ng-if="re_enter_password_form.re_password.$dirty && re_enter_password_form.re_password.$error.pwmatch && forgotCtrl.forgot_show_error && !re_enter_password_form.re_password.$error.required" class="has-error-msg">Password Doesn't Match.</div>
