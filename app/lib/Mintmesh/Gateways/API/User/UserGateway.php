@@ -651,7 +651,9 @@ class UserGateway {
                 $neoInput['linkedinImage'] = $linkedinFileName ;
                 $neoInput['points_earned'] = Config::get('constants.POINTS.COMPLETE_PROFILE') ;
                 $neoInput['completed_contact'] = 1 ;
+                $this->userRepository->updateUser($neoInput);
                 $updatedNeoUser =  $this->neoUserRepository->updateUser($neoInput) ;
+                
                 if (count($updatedNeoUser))
                 {
                     // log the points
