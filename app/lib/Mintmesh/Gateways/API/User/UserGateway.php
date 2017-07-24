@@ -1326,7 +1326,8 @@ class UserGateway {
                     if (!empty($userInput))
                     {
                         $userInput['emailid'] = $this->loggedinUserDetails->emailid ;
-                        $this->neoUserRepository->updateUser($userInput);
+                        $this->userRepository->updateUser($userInput);//MySql
+                        $this->neoUserRepository->updateUser($userInput);//Neo4j
                     }
                     $message = array('msg'=>array(Lang::get('MINTMESH.user.edit_success')));
                     return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
