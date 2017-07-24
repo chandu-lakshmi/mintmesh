@@ -651,7 +651,6 @@ class UserGateway {
                 $neoInput['linkedinImage'] = $linkedinFileName ;
                 $neoInput['points_earned'] = Config::get('constants.POINTS.COMPLETE_PROFILE') ;
                 $neoInput['completed_contact'] = 1 ;
-                $this->userRepository->updateUser($neoInput);
                 $updatedNeoUser =  $this->neoUserRepository->updateUser($neoInput) ;
                 
                 if (count($updatedNeoUser))
@@ -1328,7 +1327,6 @@ class UserGateway {
                     if (!empty($userInput))
                     {
                         $userInput['emailid'] = $this->loggedinUserDetails->emailid ;
-                        $this->userRepository->updateUser($userInput);//MySql
                         $this->neoUserRepository->updateUser($userInput);//Neo4j
                     }
                     $message = array('msg'=>array(Lang::get('MINTMESH.user.edit_success')));
