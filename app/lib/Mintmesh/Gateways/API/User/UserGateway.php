@@ -1459,6 +1459,7 @@ class UserGateway {
                         $this->updateCompanyUserPhoneNumber($this->loggedinUserDetails->emailid, $neoInput['phone']);
                     }
                 }
+                $this->userRepository->updateUser($neoInput) ;
                 $updatedNeoUser =  $this->neoUserRepository->updateUser($neoInput) ;
                
                 if (!empty($input['job_function']))

@@ -795,6 +795,7 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
     
     public function updateUser($input)
     {
+        \Log::info("<in update user mysql>");
         if(!empty($input['emailid']) && isset($input['firstname']) && isset($input['lastname'])){ 
             $emailId =   $this->appEncodeDecode->filterString($input['emailid']);    
             $userProfile = array(
