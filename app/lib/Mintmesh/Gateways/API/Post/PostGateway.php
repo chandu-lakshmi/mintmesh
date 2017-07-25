@@ -1646,7 +1646,7 @@ class PostGateway {
                         }  else {
                             //create Campaign Schedule here
                             $campaignSchedule = $this->neoPostRepository->createCampaignScheduleRelation($campaignId, $scheduleAttrs, $userEmailId);
-                            $cmpSchedule = array();
+                            $cmpSchedule = $campSchedule = array();
                             foreach ($campaignSchedule as $k => $value){
                                 $value = $value[0];
                                 $cmpSchedule['schedule_id']         = $value->getID();
