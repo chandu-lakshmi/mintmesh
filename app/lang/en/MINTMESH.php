@@ -528,11 +528,11 @@ return array(
         "retrieve_failure" => "Failed to retrieve HCM details"
     ),
     'add_configuration' => array(
-        "success" => "Successfully added",
+        "success" => "Successfully Added",
         "failure" => "Failed to add configuration details"
     ),
     'edit_configuration' => array(
-        "success" => "Successfully updated",
+        "success" => "Successfully Updated",
         "failure" => "Failed to update configuration details"
     ),
     'configuration_details' => array(

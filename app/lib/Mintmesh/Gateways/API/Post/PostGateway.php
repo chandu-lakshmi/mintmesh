@@ -1482,7 +1482,7 @@ class PostGateway {
         $dataSet['campaign_end_date']       = \Carbon\Carbon::parse($endDate)->format('dS M Y');
         $dataSet['campaign_start_time']     = \Carbon\Carbon::parse($startDate)->format('h:i A');
         $dataSet['campaign_end_time']       = \Carbon\Carbon::parse($endDate)->format('h:i A');
-        $dataSet['campaign_location']       = $emailData['campaign_location'];
+        $dataSet['campaign_location']       = ucfirst($emailData['campaign_location']);
         $dataSet['company_name']            = $emailData['company_name'];//Enterpi Software Solutions Pvt.Ltd.
         $dataSet['company_logo']            = $emailData['company_logo'];
         $dataSet['logo_width']              = $emailData['company_logo_width'];
