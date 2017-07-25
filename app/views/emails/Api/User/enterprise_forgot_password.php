@@ -11,7 +11,7 @@
                         </td>
                      </tr>
                      <tr><td style="border-bottom:1px solid #ccc;text-align:center;font-weight: 500;font-size: 24px;padding: 20px 0">Change Your Password</td></tr>
-                     <tr><td style="padding: 20px 0;font-size: 20px;">Hello <?php echo ucfirst($name) ; ?>, </td></tr>
+                     <tr><td style="padding: 20px 0;font-size: 20px;">Hello <?php echo ucfirst($name);?>, </td></tr>
                      <tr><td style="color:#777;padding-bottom: 6px">Please click the button below to reset your password.</td></tr>
                      <tr><td style="color:#777">Thank you for choosing MintMesh.</td></tr>
                      <tr>
