@@ -2711,27 +2711,31 @@ class EnterpriseGateway {
     }
     
     public function updateUser($input) {
+        
         $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser();
-        $input['user_id'] = $this->loggedinUserDetails->id;
-        $input['firstname'] = $input['name'];
-          if (isset($input['photo']) && !empty($input['photo'])) {
+        $input['user_id']   = $this->loggedinUserDetails->id;
+        $input['firstname'] = trim($input['name']);
+        
+        if (isset($input['photo']) && !empty($input['photo'])) {
             //upload the file
-            $this->userFileUploader->source =  $input['photo'];
+            $this->userFileUploader->source      =  $input['photo'];
             $this->userFileUploader->destination = Config::get('constants.S3BUCKET_USER_IMAGE');
             $renamedFileName = $this->userFileUploader->uploadToS3BySource($input['photo']);
-            $input['photo'] = $renamedFileName;
+            $input['photo']  = $renamedFileName;
         } 
+        
         if (isset($input['photo_s3']) && !empty($input['photo_s3'])) {
             //upload the file
-            $input['photo'] = $input['photo_s3'];
+            $input['photo']          = $input['photo_s3'];
             $input['photo_org_name'] = $input['photo_org_name_s3'];
         }
-        $input['photo'] = isset($input['photo'])?$input['photo']:'';
-        $input['photo_org_name'] = isset($input['photo_org_name'])?$input['photo_org_name']:'';
+        $input['photo']          = isset($input['photo']) ? $input['photo'] : '';
+        $input['photo_org_name'] = isset($input['photo_org_name']) ? $input['photo_org_name'] : '';
+        
         if(isset($input['flag']) && !empty($input['flag']) && $input['flag'] == 1 && !empty($input['photo'])){
-            $updatedCompanyLogo = $this->enterpriseRepository->updateCompanyLogo($input);
-            $input['id'] = $updatedCompanyLogo[0]->id; 
-            $neoupdatedCompanyLogo = $this->neoEnterpriseRepository->updateCompanyLogo($input);
+            $updatedCompanyLogo     = $this->enterpriseRepository->updateCompanyLogo($input);
+            $input['id']            = $updatedCompanyLogo[0]->id; 
+            $neoupdatedCompanyLogo  = $this->neoEnterpriseRepository->updateCompanyLogo($input);
         }
         $updatedUser    = $this->enterpriseRepository->updateUser($input);
         $neoUpdatedUser = $this->neoEnterpriseRepository->updateUser($input);
