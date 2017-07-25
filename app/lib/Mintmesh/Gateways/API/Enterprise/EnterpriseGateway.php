@@ -1672,7 +1672,7 @@ class EnterpriseGateway {
         $userEmailId                = $this->loggedinUserDetails->emailid;
         $user                       = $this->neoEnterpriseRepository->getUsers($userEmailId);
         $userDetails['user_id']     = $this->loggedinUserDetails->id;
-        $userDetails['user_name']   = $user->fullname;
+        $userDetails['user_name']   = trim($user->fullname);
         $userDetails['user_email']  = $user->emailid;
         $userDetails['user_dp']     = $user->photo;
         // get the logged in user company details here
