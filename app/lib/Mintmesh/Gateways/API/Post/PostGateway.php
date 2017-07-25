@@ -1655,9 +1655,9 @@ class PostGateway {
                                 $gmtend_date                    = $value->end_date." " .$value->end_time;
                                 $gmt_end_on_date                = $this->appEncodeDecode->UserTimezone($gmtend_date,$input['time_zone']);
                                 $schedule['gmt_end_on_date']    = !empty($gmt_end_on_date)?$gmt_end_on_date:'';
-                                $schedule['start_on_date']      = date('Y-m-d', strtotime($value->start_date));
+                                $schedule['start_on_date']      = date('Y/m/d', strtotime($value->start_date));
                                 $schedule['start_on_time']      = $value->start_time;
-                                $schedule['end_on_date']        = date('Y-m-d', strtotime($value->end_date));
+                                $schedule['end_on_date']        = date('Y/m/d', strtotime($value->end_date));
                                 $schedule['end_on_time']        = $value->end_time;
                                 $campSchedule[] = $schedule; 
                             }
