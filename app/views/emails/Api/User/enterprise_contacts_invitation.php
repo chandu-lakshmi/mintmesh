@@ -11,7 +11,7 @@
                         </td>
                      </tr>
                      <tr><td style="font-weight:bold;font-size:26px;padding:20px 0;">Referral Reward Program</td></tr>
-                     <tr><td style="font-weight:600;font-size:16px;">Hello <?php echo ucfirst($name);?>,</td></tr>
+                     <tr><td style="font-weight:600;font-size:16px;">Hello <?php echo ucfirst(trim($name));?>,</td></tr>
                      <tr><td style="font-size:16px;padding: 10px 0"><?php echo $emailbody; ?></td></tr>
                      <tr><td style="padding: 60px 0 14px 0">Download the mobile app from</td></tr>
                      <tr>
