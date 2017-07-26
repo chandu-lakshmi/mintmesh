@@ -523,7 +523,7 @@ return array(
     'hcm_details' => array(
         "insert_success" => "HCM details added successfully",
         "update_success" => "HCM Details Successfully Updated",
-        "retrieve_success" => "successfully retrieved HCM details",
+        "retrieve_success" => "Successfully retrieved HCM details",
         "hcm_name_isexist" => "HCM name already exist",
         "retrieve_failure" => "Failed to retrieve HCM details"
     ),

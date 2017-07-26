@@ -1117,7 +1117,7 @@ class EnterpriseGateway {
                 $email = md5($input['emailid']);
                 $code = $this->userGateway->base_64_encode($currentTime, $email);
                 $dataSet['hrs'] = Config::get('constants.MNT_USER_EXPIRY_HR');
-                $dataSet['link'] = Config::get('constants.MM_ENTERPRISE_URL') . "/reset_password?resetcode=" . $code; //comment it for normal flow of deep linki.e without http
+                $dataSet['link'] = Config::get('constants.MM_ENTERPRISE_URL') . "/reset_password?resetcode=" . $code."&createpwd=0"; //comment it for normal flow of deep linki.e without http
                 $this->userEmailManager->dataSet = $dataSet;
                 $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.forgot_password');
                 $this->userEmailManager->name = $neoUserDetails['fullname'];
@@ -2223,7 +2223,7 @@ class EnterpriseGateway {
                 $code = $this->userGateway->base_64_encode($currentTime, $email);
                 $dataSet['hrs'] = Config::get('constants.USER_EXPIRY_HR');
                 $dataSet['send_company_name'] = $this->loggedinUserDetails->firstname;
-                $dataSet['link'] = Config::get('constants.MM_ENTERPRISE_URL') . "/reset_password?setcode=" . $code; //comment it for normal flow of deep linki.e without http
+                $dataSet['link'] = Config::get('constants.MM_ENTERPRISE_URL') . "/reset_password?setcode=" . $code."&createpwd=1"; //comment it for normal flow of deep linki.e without http
                 $this->userEmailManager->dataSet = $dataSet;
                 $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.set_password');
                 $this->userEmailManager->name = $createdUser[0]->firstname;
@@ -2396,7 +2396,7 @@ class EnterpriseGateway {
                 $code = $this->userGateway->base_64_encode($currentTime, $email);
                 $dataSet['hrs'] = Config::get('constants.USER_EXPIRY_HR');
                 $dataSet['send_company_name'] = $this->loggedinUserDetails->firstname;
-                $dataSet['link'] = Config::get('constants.MM_ENTERPRISE_URL') . "/reset_password?setcode=" . $code; //comment it for normal flow of deep linki.e without http
+                $dataSet['link'] = Config::get('constants.MM_ENTERPRISE_URL') . "/reset_password?setcode=" . $code."&createpwd=1"; //comment it for normal flow of deep linki.e without http
                 $this->userEmailManager->dataSet = $dataSet;
                 $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.set_password');
                 $this->userEmailManager->name = $user['firstname'];
@@ -2844,7 +2844,7 @@ class EnterpriseGateway {
           $email = md5($userDetails['emailid']);
          $code = $this->userGateway->base_64_encode($currentTime, $email);
          $dataSet['hrs'] = Config::get('constants.USER_EXPIRY_HR');
-         $dataSet['link'] = Config::get('constants.MM_ENTERPRISE_URL') . "/reset_password?setcode=" . $code; //comment it for normal flow of deep linki.e without http
+         $dataSet['link'] = Config::get('constants.MM_ENTERPRISE_URL') . "/reset_password?setcode=" . $code."&createpwd=1"; //comment it for normal flow of deep linki.e without http
          $this->userEmailManager->dataSet = $dataSet;
          $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.set_password');
          $this->userEmailManager->name = $userDetails['firstname'];
