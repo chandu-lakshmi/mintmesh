@@ -11,7 +11,7 @@
                         </td>
                      </tr>
                      <tr><td style="border-bottom:1px solid #ccc;text-align:center;font-weight: 500;font-size: 24px;padding: 20px 0">Password Change Confirmation</td></tr>
-                     <tr><td style="padding: 20px 0;font-size: 20px;">Hello <?php echo ucfirst($name);?>, </td></tr>
+                     <tr><td style="padding: 20px 0;font-size: 20px;">Hello <?php echo ucfirst(trim($name));?>, </td></tr>
                      <tr><td style="color:#777;padding-bottom: 6px">The password for your MintMesh Enterprise account <a href="mailto:<?php echo $email;?>" target="_blank"><?php echo $email;?></a> was recently changed.</td></tr>
                      <tr><td style="color:#777;padding: 14px 0">If you requested this change, please ignore this email.</td></tr>
                      <tr><td style="color:#777">If you don't recognize this activity, please reset your MintMesh Password.</td></tr>

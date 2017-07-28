@@ -21,7 +21,7 @@
                         </td>
                      </tr>
                      <tr><td>Thanks,</td></tr>
-                     <tr><td><?php echo $fromName; ?>,</td></tr>
+                     <tr><td><?php echo trim($fromName);?>,</td></tr>
                      <tr><td><?php echo $company_name; ?>.</td></tr>
                   </table>
                </td>

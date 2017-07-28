@@ -14,7 +14,7 @@
                      <td style="text-align: center;"">
                          <img src="<?php echo $public_url ; ?>images/Email-icon.png" alt="mail-icon" width="100" height="100">
                      </td>
-                     <tr><td style="padding:0 0 10px 0;font-size: 20px;font-weight:700">Hello <?php echo ucfirst($name) ; ?>,</td></tr>
+                     <tr><td style="padding:0 0 10px 0;font-size: 20px;font-weight:700">Hello <?php echo ucfirst(trim($name));?>,</td></tr>
                      <tr><td style="color:#777;padding-bottom: 10px">You have successfully created an account with <?php echo $email ; ?> for <span style="font-weight:700"><?php echo $company ; ?></span>.</td></tr>
                      <tr><td style="color:#777">To complete the process, please verify your email account.</td></tr>
                      <tr>
