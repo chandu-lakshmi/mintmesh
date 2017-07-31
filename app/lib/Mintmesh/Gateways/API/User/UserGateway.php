@@ -652,6 +652,7 @@ class UserGateway {
                 $neoInput['points_earned'] = Config::get('constants.POINTS.COMPLETE_PROFILE') ;
                 $neoInput['completed_contact'] = 1 ;
                 $updatedNeoUser =  $this->neoUserRepository->updateUser($neoInput) ;
+                
                 if (count($updatedNeoUser))
                 {
                     // log the points
@@ -1326,7 +1327,7 @@ class UserGateway {
                     if (!empty($userInput))
                     {
                         $userInput['emailid'] = $this->loggedinUserDetails->emailid ;
-                        $this->neoUserRepository->updateUser($userInput);
+                        $this->neoUserRepository->updateUser($userInput);//Neo4j
                     }
                     $message = array('msg'=>array(Lang::get('MINTMESH.user.edit_success')));
                     return $this->commonFormatter->formatResponse(self::SUCCESS_RESPONSE_CODE, self::SUCCESS_RESPONSE_MESSAGE, $message, $data) ;
@@ -1456,6 +1457,7 @@ class UserGateway {
                         $this->updateCompanyUserPhoneNumber($this->loggedinUserDetails->emailid, $neoInput['phone']);
                     }
                 }
+                $this->userRepository->updateUser($neoInput) ;
                 $updatedNeoUser =  $this->neoUserRepository->updateUser($neoInput) ;
                
                 if (!empty($input['job_function']))
@@ -1645,19 +1647,13 @@ class UserGateway {
         
         public function getUserProfile()
         {
-//            if (Cache::has('userprofile')) { 
-//                $loggedinUserDetails = Cache::get('userprofile_'.Crypt::encrypt($this->loggedinUserDetails->emailid));                
-//                \Log::info("<<<<<<<<< In if >>>>>>>>>");
-//            } else {
-//                $loggedinUserDetails = $this->getLoggedInUser();
-//                \Log::info("<<<<<<<<< In else >>>>>>>>>");
-//                Cache::add('userprofile_'.Crypt::encrypt($this->loggedinUserDetails->emailid), $loggedinUserDetails, 1000);                
-//            }  
-//            
+       
             $responseMessage = $responseCode = $responseStatus = "";
             $responseData = array();
             $loggedinUserDetails = $this->getLoggedInUser();
-            $userId         = !empty($loggedinUserDetails->id)?$loggedinUserDetails->id:'';
+            $userId         = !empty($loggedinUserDetails->id) ? $loggedinUserDetails->id : '';
+            $firstName      = !empty($loggedinUserDetails->firstname) ? $loggedinUserDetails->firstname : '';
+            $lastName       = !empty($loggedinUserDetails->lastname) ? $loggedinUserDetails->lastname : '';
             #log user activity here
             $this->userRepository->addUserActivityLogs($userId, $appType=1, $moduleType=7);
             if ($loggedinUserDetails)
@@ -1665,6 +1661,7 @@ class UserGateway {
                 $requestsCount = 0;
                 $extraDetails = array();
                 $neoLoggedInUserDetails = $this->neoUserRepository->getNodeByEmailId($loggedinUserDetails->emailid) ;
+                
                 $moreDetails = $this->neoUserRepository->getMoreDetails($loggedinUserDetails->emailid);
                 if (!empty($moreDetails))
                 {
@@ -1684,6 +1681,9 @@ class UserGateway {
                 if (!empty($neoLoggedInUserDetails))
                 {
                     $r = $this->formUserDetailsArray($neoLoggedInUserDetails);
+                    $r['firstname'] = $firstName;
+                    $r['lastname']  = $lastName;
+                    
                     if (!empty($neoLoggedInUserDetails->cv_path) && !empty($neoLoggedInUserDetails->cv_renamed_name))
                     {
                         $r['cv_path'] = $neoLoggedInUserDetails->cv_renamed_name ;

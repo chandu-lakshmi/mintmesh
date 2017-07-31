@@ -792,5 +792,18 @@ class EloquentUserRepository extends BaseRepository implements UserRepository {
         $sql = "select is_enterprise from users where emailid='".$emailId."'" ;
         return $result = DB::select($sql);
     }
+    
+    public function updateUser($input)
+    {
+        if(!empty($input['emailid']) && isset($input['firstname']) && isset($input['lastname'])){ 
+            $emailId =   $this->appEncodeDecode->filterString($input['emailid']);    
+            $userProfile = array(
+                    "firstname"     => $this->appEncodeDecode->filterString($input['firstname']),
+                    "lastname"      => $this->appEncodeDecode->filterString($input['lastname'])
+                );
+            User::where ('emailid',$emailId)->update($userProfile); 
+        }
+       return true;  
+    }
         
 }

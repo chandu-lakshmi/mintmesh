@@ -33,7 +33,7 @@
   </tr>
   <tr>
     <td valign="top" class="textContent" style="padding:20px 20px 10px;line-height:135%;letter-spacing:0.2px;font-size:18px; font-weight:normal; color:#777777;"><h2 style="text-align:center;font-weight:normal;font-family: 'arial', sans-serif;font-size:30px;margin-bottom:35px;margin-top:0px; color:#cc6e35;letter-spacing:0.4px;font-weight:300; line-height: 40px;" class="wish_txt">Thank you for joining MintMesh</h2>
-      <h3 style="color:#000000;font-family: 'arial', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello <?php echo ucfirst($name) ; ?>, </h3>
+      <h3 style="color:#000000;font-family: 'arial', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello <?php echo ucfirst(trim($name));?>, </h3>
       <p>You have successfully created MintMesh account for <a href="mailto:<?php echo $email ; ?>" style="color:#000;text-decoration:none;"><?php echo $email ; ?></a></p>
 <p>To complete the process, activate your account using the below activation link.</p>
 <p style="text-align:center; margin-top:50px; margin-bottom:50px;" >

@@ -576,7 +576,5 @@ class ReferralsController extends \BaseController {
                return $response = $this->referralsGateway->getResumeDownload($inputUserData);
             } 
         }
-        
-        
 }
 ?>

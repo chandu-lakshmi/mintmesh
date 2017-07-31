@@ -156,6 +156,7 @@ Route::group(array('prefix' => 'v1'), function() {
       //unsolicited node for old companies
       Route::post("enterprise/unsolicited_old_companies", "API\Enterprise\EnterpriseController@unsolicitedForOldCompanies");
       Route::post("enterprise/not_parsed_resumes", "API\Post\PostController@notParsedResumes");
+      Route::post("enterprise/rename_company", "API\Enterprise\EnterpriseController@renameCompany");
       
 });
 
@@ -419,6 +420,7 @@ App::missing(function($exception)
 |  return accesstoken
 */
 Route::post("oauth/access_token", function() {
+    \Log::info('<------------------- oauth/access_token ---------------------> ');
 	return Response::json(Authorizer::issueAccessToken());
 });
 
@@ -530,6 +532,10 @@ Route::group(array('prefix' => 'v1/ent'), function() {
     {
         return View::make('forgot-password/forgot');
     });
+    
+    Route::post("oauth/access_token", function() {
+	return Response::json(Authorizer::issueAccessToken());
+    });
 });
 Route::group(array('prefix' => 'v1/ent', 'before' => 'oauth'), function() {
     //logout
@@ -586,4 +592,5 @@ Route::group(array('prefix' => 'v1/ent', 'before' => 'oauth'), function() {
     Route::post("referral/get_my_referral_contacts", "API\EnterpriseApp\EnterpriseAppController@getMyReferralContacts");
     //get all my referrals
     Route::post("referral/get_all_my_referrals", "API\EnterpriseApp\EnterpriseAppController@getAllMyReferrals");
+    
 });

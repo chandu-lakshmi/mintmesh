@@ -39,7 +39,7 @@ return array(
         "uploaded_large_file" => "Uploaded file size is too large",
         "invalid_file_format" => "Uploaded file format not allowed",
         "no_resume" => "Please upload a resume",
-        'invalid_acess' => 'Invalid license number',
+        'invalid_acess' => 'Please enter valid License Key.',
         'server_access_denied' => 'Access denied to user!'
     ),
     "referrals" => array(
@@ -66,8 +66,8 @@ return array(
         "login_failure" => "Invalid Credentials",
         "email_inactive" => "You are inactive please activate via email",
         "login_credentials" => "Please login with your enterprise credentials",
-        "inactive_group" => "You are an inactive group user",
-        "inactive_user" => "You are an inactive user",
+        "inactive_group" => "You are an Inactive Group User",
+        "inactive_user" => "You are an Inactive User",
         "contact_admin" => "Something went wrong. Please contact your administrator."
     ),
     "resendActivationLink" => array(
@@ -366,8 +366,8 @@ return array(
         'upload_contacts_inserted' => 'Contacts successfully imported ',
         'upload_contacts_updated' => 'Contacts successfully updated',
         'upload_contacts_failure' => 'No rows affected',
-        'invalid_headers' => 'Invalid headers or Worksheet,Please download the template and import',
-        'invalid_file_format' => 'Invalid file format or file size more than 1 MB',
+        'invalid_headers' => 'Invalid Input File Headers or Worksheet,Please download the template and import',
+        'invalid_file_format' => 'Invalid Input File Headers or file size more than 1 MB',
         'retrieve_success' => 'Successfully retrieved',
         'retrieve_failure' => 'Failed to retrieved',
         'success' => "Successfully Done",
@@ -501,7 +501,7 @@ return array(
         "failure" => "Failed to refer",
         "post_closed" => "Job is closed",
         "referred" => "Candidate is already referred for the post.",
-        "referrer_nvalid" => "Invalid referrer",
+        "referrer_invalid" => "Invalid referrer",
         "invalid" => "Invalid reference id and post id",
         "user_separated" => "This job is no longer available."
     ),
@@ -522,17 +522,17 @@ return array(
     ),
     'hcm_details' => array(
         "insert_success" => "HCM details added successfully",
-        "update_success" => "HCM details successfully updated",
-        "retrieve_success" => "successfully retrieved HCM details",
+        "update_success" => "HCM Details Successfully Updated",
+        "retrieve_success" => "Successfully retrieved HCM details",
         "hcm_name_isexist" => "HCM name already exist",
         "retrieve_failure" => "Failed to retrieve HCM details"
     ),
     'add_configuration' => array(
-        "success" => "Successfully added",
+        "success" => "Successfully Added",
         "failure" => "Failed to add configuration details"
     ),
     'edit_configuration' => array(
-        "success" => "Successfully updated",
+        "success" => "Successfully Updated",
         "failure" => "Failed to update configuration details"
     ),
     'configuration_details' => array(

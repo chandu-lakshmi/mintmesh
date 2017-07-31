@@ -261,7 +261,8 @@ class PostGateway {
         $fromName   = $this->loggedinEnterpriseUserDetails->firstname;
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($input['company_code']);
         if ($this->loggedinEnterpriseUserDetails) {
-            $relationAttrs = $neoInput = $excludedList = $getSkillsAry = $usersAry = array();
+            $companyLogoWidth = $companyLogoHeight = '';
+            $relationAttrs = $neoInput = $excludedList = $getSkillsAry = $usersAry = $companyLogoAspectRatio = array();
             $neoInput['service_scope']      = "find_candidate";
             $neoInput['service_from_web']   = 1;
             $neoInput['service_name']       = !empty($input['job_title'])?$input['job_title']:'';
@@ -295,6 +296,12 @@ class PostGateway {
             $neoInput['skills']             =  $this->userGateway->getSkillsFromJobTitle($neoInput['service_name'], $neoInput['job_description']);
             
             $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($input['company_code']);
+            #company logo Aspect Ratio details for email template
+            if(isset($companyDetails[0]) && !empty($companyDetails[0]->logo)){
+                $companyLogoAspectRatio = $this->referralsGateway->getImageAspectRatio($companyDetails[0]->logo);
+                $companyLogoWidth       = !empty($companyLogoAspectRatio['width']) ? $companyLogoAspectRatio['width'] : '';
+                $companyLogoHeight      = !empty($companyLogoAspectRatio['height']) ? $companyLogoAspectRatio['height'] : '';
+            }
             
             $relationAttrs['created_at']    = gmdate("Y-m-d H:i:s");
             $relationAttrs['company_name']  = $neoInput['company'];
@@ -387,22 +394,24 @@ class PostGateway {
                             $refId = $refCode = 0;
                             $emailData  = array();
                             $refId = $this->neoPostRepository->getUserNodeIdByEmailId($contacts->emailid);
-                            $refCode                        = MyEncrypt::encrypt_blowfish($postId.'_'.$refId,Config::get('constants.MINTMESH_ENCCODE'));
-                            $replyToData                    = '+ref='.$refCode;
-                            $emailData['company_name']      = $input['company_name'];
-                            $emailData['company_code']      = $input['company_code'];
-                            $emailData['post_id']           = $postId;
-                            $emailData['post_type']         = $postType;
-                            $emailData['company_logo']      = $companyDetails[0]->logo;
-                            $emailData['to_firstname']      = $contacts->firstname;
-                            $emailData['to_lastname']       = $contacts->lastname;
-                            $emailData['to_emailid']        = $contacts->emailid;
-                            $emailData['from_userid']       = $fromId;
-                            $emailData['from_emailid']      = $emailId;
-                            $emailData['from_firstname']    = $fromName;
-                            $emailData['ip_address']        = $_SERVER['REMOTE_ADDR'];
-                            $emailData['ref_code']          = $refCode;
-                            $emailData['reply_to']          = $replyToName.$replyToData.$replyToHost;
+                            $refCode                            = MyEncrypt::encrypt_blowfish($postId.'_'.$refId,Config::get('constants.MINTMESH_ENCCODE'));
+                            $replyToData                        = '+ref='.$refCode;
+                            $emailData['company_name']          = $input['company_name'];
+                            $emailData['company_code']          = $input['company_code'];
+                            $emailData['post_id']               = $postId;
+                            $emailData['post_type']             = $postType;
+                            $emailData['company_logo']          = $companyDetails[0]->logo;
+                            $emailData['company_logo_width']    = $companyLogoWidth;
+                            $emailData['company_logo_height']   = $companyLogoHeight;
+                            $emailData['to_firstname']          = $contacts->firstname;
+                            $emailData['to_lastname']           = $contacts->lastname;
+                            $emailData['to_emailid']            = $contacts->emailid;
+                            $emailData['from_userid']           = $fromId;
+                            $emailData['from_emailid']          = $emailId;
+                            $emailData['from_firstname']        = $fromName;
+                            $emailData['ip_address']            = $_SERVER['REMOTE_ADDR'];
+                            $emailData['ref_code']              = $refCode;
+                            $emailData['reply_to']              = $replyToName.$replyToData.$replyToHost;
                           Queue::push('Mintmesh\Services\Queues\SendJobPostEmailToContactsQueue', $emailData, 'Notification');
                           $inviteCount+=1;
                         }
@@ -484,9 +493,11 @@ class PostGateway {
         $dataSet['reply_emailid']       = $emailData['reply_to'];
         $dataSet['email']               = $emailData['to_emailid'];
         $dataSet['fromName']            = $emailData['from_firstname'];
-        $dataSet['post_type']            = $emailData['post_type'];
+        $dataSet['post_type']           = $emailData['post_type'];
         $dataSet['company_name']        = $emailData['company_name'];//Enterpi Software Solutions Pvt.Ltd.
         $dataSet['company_logo']        = $emailData['company_logo'];
+        $dataSet['logo_width']          = $emailData['company_logo_width'];
+        $dataSet['logo_height']         = $emailData['company_logo_height'];
         $dataSet['emailbody']           = 'just testing';
         $dataSet['send_company_name']   = $emailData['company_name'];
         $dataSet['reply_to']            = $emailData['reply_to'];
@@ -1372,6 +1383,8 @@ class PostGateway {
                     $pushData['company_code']       = $input['company_code'];
                     $pushData['company_name']       = $input['company_name'];
                     $pushData['company_logo']       = $input['company_logo'];
+                    $pushData['company_logo_width'] = $input['company_logo_width'];
+                    $pushData['company_logo_height']= $input['company_logo_height'];
                     $pushData['campaign_name']      = $input['campaign_name'];
                     $pushData['campaign_type']      = $input['campaign_type'];
                     $pushData['campaign_location']      = $input['campaign_location'];
@@ -1429,16 +1442,18 @@ class PostGateway {
             $emailData['campaign_name']     = $relationInput['campaign_name'];
             $emailData['campaign_type']     = $relationInput['campaign_type'];
             $emailData['campaign_location']     = $relationInput['campaign_location'];
-            $emailData['campaign_start_date']     = $relationInput['campaign_start_date'];
+            $emailData['campaign_start_date']   = $relationInput['campaign_start_date'];
             $emailData['campaign_end_date']     = $relationInput['campaign_end_date'];
-            $emailData['company_logo']      = $relationInput['company_logo'];
-            $emailData['to_emailid']        = $contactEmailid;
-            $emailData['contact_name']        = $relationInput['contact_name'];
-            $emailData['from_emailid']      = $relationInput['user_emailid'];
-            $emailData['from_userid']      = $relationInput['user_id'];
+            $emailData['company_logo']          = $relationInput['company_logo'];
+            $emailData['company_logo_width']    = $relationInput['company_logo_width'];
+            $emailData['company_logo_height']   = $relationInput['company_logo_height'];
+            $emailData['to_emailid']     = $contactEmailid;
+            $emailData['contact_name']   = $relationInput['contact_name'];
+            $emailData['from_emailid']   = $relationInput['user_emailid'];
+            $emailData['from_userid']    = $relationInput['user_id'];
             $emailData['time_zone']      = $relationInput['time_zone'];
             $emailData['user_name']      = $relationInput['user_name'];
-            $emailData['ref_code']          = $refCode;
+            $emailData['ref_code']       = $refCode;
             $emailData['ip_address']     = $relationInput['ip_address'] ;
             $emailData['bittly_url']     = $biltyUrl ;
             $this->sendCampaignEmailToContacts($emailData); 
@@ -1454,28 +1469,30 @@ class PostGateway {
         
         $dataSet    = array();
         $email_sent = '';
-        $campaignId     = $emailData['campaign_id'];
+        $campaignId = $emailData['campaign_id'];
         $refCode    = $emailData['ref_code']; 
         #form email variables here
-        $dataSet['name']                = $emailData['user_name'];
-        $dataSet['campaign_name']       = $emailData['campaign_name'];
-        $dataSet['campaign_type']       = $emailData['campaign_type'];
-        $dataSet['send_company_name']   = $emailData['company_name'];
-        $startDate = $this->appEncodeDecode->UserTimezone($emailData['campaign_start_date'],$emailData['time_zone']); 
-        $endDate = $this->appEncodeDecode->UserTimezone($emailData['campaign_end_date'],$emailData['time_zone']); 
-        $dataSet['campaign_start_date']  = \Carbon\Carbon::parse($startDate)->format('dS M Y');
-        $dataSet['campaign_end_date']  = \Carbon\Carbon::parse($endDate)->format('dS M Y');
-        $dataSet['campaign_start_time']= \Carbon\Carbon::parse($startDate)->format('h:i A');
-        $dataSet['campaign_end_time'] = \Carbon\Carbon::parse($endDate)->format('h:i A');
-        $dataSet['campaign_location']       = $emailData['campaign_location'];
-        $dataSet['company_name']        = $emailData['company_name'];//Enterpi Software Solutions Pvt.Ltd.
-        $dataSet['company_logo']        = $emailData['company_logo'];
-        $dataSet['app_id']              = '1268916456509673';
+        $dataSet['name']                    = $emailData['user_name'];
+        $dataSet['campaign_name']           = $emailData['campaign_name'];
+        $dataSet['campaign_type']           = $emailData['campaign_type'];
+        $dataSet['send_company_name']       = $emailData['company_name'];
+        $startDate                          = $this->appEncodeDecode->UserTimezone($emailData['campaign_start_date'],$emailData['time_zone']); 
+        $endDate                            = $this->appEncodeDecode->UserTimezone($emailData['campaign_end_date'],$emailData['time_zone']); 
+        $dataSet['campaign_start_date']     = \Carbon\Carbon::parse($startDate)->format('dS M Y');
+        $dataSet['campaign_end_date']       = \Carbon\Carbon::parse($endDate)->format('dS M Y');
+        $dataSet['campaign_start_time']     = \Carbon\Carbon::parse($startDate)->format('h:i A');
+        $dataSet['campaign_end_time']       = \Carbon\Carbon::parse($endDate)->format('h:i A');
+        $dataSet['campaign_location']       = ucfirst($emailData['campaign_location']);
+        $dataSet['company_name']            = $emailData['company_name'];//Enterpi Software Solutions Pvt.Ltd.
+        $dataSet['company_logo']            = $emailData['company_logo'];
+        $dataSet['logo_width']              = $emailData['company_logo_width'];
+        $dataSet['logo_height']             = $emailData['company_logo_height'];
+        $dataSet['app_id']                  = '1268916456509673';
         #redirect email links
-          $dataSet['view_jobs_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/share?ref=" . $refCode."";
-          $dataSet['bittly_link']             = $emailData['bittly_url'];;
-          $dataSet['view_jobs_link_web']      = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/web?ref=" . $refCode."";
-           //$dataSet['view_jobs_link_web']      = "http://202.63.105.85/mmenterprise_sapdemo/email/all-campaigns/web?ref=" . $refCode."";
+        $dataSet['view_jobs_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/share?ref=" . $refCode."";
+        $dataSet['bittly_link']             = $emailData['bittly_url'];;
+        $dataSet['view_jobs_link_web']      = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/web?ref=" . $refCode."";
+           
         #set email required params
         $this->userEmailManager->templatePath   = Lang::get('MINTMESH.email_template_paths.contacts_campaign_invitation');
         $this->userEmailManager->emailId        = $emailData['to_emailid'];//target email id
@@ -1520,24 +1537,24 @@ class PostGateway {
         $userEmailId    = $loggedInUser->emailid;
         $objCompany->fullname   = $company->name;
         //explode jobs and buckets here
-        $campPostIds    = !empty($input['job_ids'])?$input['job_ids']:'';
-        $campBucketIds  = !empty($input['selectedBuckets'])?explode(',',$input['selectedBuckets']):'';
-        $campaignId     = !empty($input['campaign_id'])?$input['campaign_id']:'';
-        $requestType    = !empty($input['request_type'])?$input['request_type']:'add';
+        $campPostIds    = !empty($input['job_ids']) ? $input['job_ids'] : '';
+        $campBucketIds  = !empty($input['selectedBuckets']) ? explode(',',$input['selectedBuckets']) : '';
+        $campaignId     = !empty($input['campaign_id']) ? $input['campaign_id'] : '';
+        $requestType    = !empty($input['request_type']) ? $input['request_type'] : 'add';
         
-        $campaign['campaign_name']      = !empty($input['campaign_name'])?$input['campaign_name']:'';
-        $campaign['campaign_type']      = !empty($input['campaign_type'])?$input['campaign_type']:'';//mass recruitment | military veterans | campus hires
-        $campaign['location_type']      = !empty($input['location_type'])?$input['location_type']:'';//online | onsite 
-        $campaign['bucket_id']          = !empty($input['selectedBuckets'])?$input['selectedBuckets']:''; 
+        $campaign['campaign_name']      = !empty($input['campaign_name']) ? $input['campaign_name'] : '';
+        $campaign['campaign_type']      = !empty($input['campaign_type']) ? $input['campaign_type'] :'';//mass recruitment | military veterans | campus hires
+        $campaign['location_type']      = !empty($input['location_type']) ? $input['location_type'] :'';//online | onsite 
+        $campaign['bucket_id']          = !empty($input['selectedBuckets']) ? $input['selectedBuckets'] : ''; 
         
         if(strtolower($campaign['location_type']) == 'onsite'){
-            $campaign['address']        = !empty($input['address'])?$input['address']:'';
-            $campaign['city']           = !empty($input['city'])?$input['city']:'';
-            $campaign['zip_code']       = !empty($input['zip_code'])?$input['zip_code']:'';
-            $campaign['state']  = !empty($input['state'])?$input['state']:'';
-            $campaign['country']  = !empty($input['country'])?$input['country']:'';
-            $campaign['latitude']  = !empty($input['latitude'])?$input['latitude']:'';
-            $campaign['longitude']  = !empty($input['longitude'])?$input['longitude']:'';
+            $campaign['address']        = !empty($input['address']) ? $input['address'] : '';
+            $campaign['city']           = !empty($input['city']) ? $input['city'] : '';
+            $campaign['zip_code']       = !empty($input['zip_code']) ? $input['zip_code'] : '';
+            $campaign['state']          = !empty($input['state']) ? $input['state'] : '';
+            $campaign['country']        = !empty($input['country']) ? $input['country'] : '';
+            $campaign['latitude']       = !empty($input['latitude']) ? $input['latitude'] : '';
+            $campaign['longitude']      = !empty($input['longitude']) ? $input['longitude'] : '';
         }    
         $campSchedule = !empty($input['schedule'])?$input['schedule']:array();
          
@@ -1629,20 +1646,21 @@ class PostGateway {
                         }  else {
                             //create Campaign Schedule here
                             $campaignSchedule = $this->neoPostRepository->createCampaignScheduleRelation($campaignId, $scheduleAttrs, $userEmailId);
+                            $cmpSchedule = $campSchedule = array();
                             foreach ($campaignSchedule as $k => $value){
                                 $value = $value[0];
-                                $schedule['schedule_id']    = $value->getID();
-                                $gmtstart_date = $value->start_date." " .$value->start_time;
-                                $gmt_start_on_date = $this->appEncodeDecode->UserTimezone($gmtstart_date,$input['time_zone']);
-                                $schedule['gmt_start_on_date'] = !empty($gmt_start_on_date)?$gmt_start_on_date:'';
-                                $gmtend_date = $value->end_date." " .$value->end_time;
-                                $gmt_end_on_date = $this->appEncodeDecode->UserTimezone($gmtend_date,$input['time_zone']);
-                                $schedule['gmt_end_on_date'] = !empty($gmt_end_on_date)?$gmt_end_on_date:'';
-                                $schedule['start_on_date']  = date('Y-m-d', strtotime($value->start_date));
-                                $schedule['start_on_time']  = $value->start_time;
-                                $schedule['end_on_date']    = date('Y-m-d', strtotime($value->end_date));
-                                $schedule['end_on_time']    = $value->end_time;
-                                $campSchedule[] = $schedule; 
+                                $cmpSchedule['schedule_id']         = $value->getID();
+                                $gmtstart_date                      = $value->start_date." " .$value->start_time;
+                                $gmt_start_on_date                  = $this->appEncodeDecode->UserTimezone($gmtstart_date,$input['time_zone']);
+                                $cmpSchedule['gmt_start_on_date']   = !empty($gmt_start_on_date)?$gmt_start_on_date:'';
+                                $gmtend_date                        = $value->end_date." " .$value->end_time;
+                                $gmt_end_on_date                    = $this->appEncodeDecode->UserTimezone($gmtend_date,$input['time_zone']);
+                                $cmpSchedule['gmt_end_on_date']     = !empty($gmt_end_on_date)?$gmt_end_on_date:'';
+                                $cmpSchedule['start_on_date']       = date('Y/m/d', strtotime($value->start_date));
+                                $cmpSchedule['start_on_time']       = $value->start_time;
+                                $cmpSchedule['end_on_date']         = date('Y/m/d', strtotime($value->end_date));
+                                $cmpSchedule['end_on_time']         = $value->end_time;
+                                $campSchedule[] = $cmpSchedule; 
                             }
                             }
                     }
@@ -1683,14 +1701,25 @@ class PostGateway {
             }
             //checking if user selected at least one bucket or not
             if(!empty($campBucketIds)){
-                $campaignContacts['company_code'] = $companyCode;
-                $campaignContacts['user_name']    = !empty($loggedInUser->fullname)?$loggedInUser->fullname:$loggedInUser->firstname;
-                $campaignContacts['time_zone'] = $input['time_zone'];
-                $campaignContacts['company_id']   = $companyId;
-                $campaignContacts['company_name'] = $company->name;
-                $campaignContacts['company_logo']    = $company->logo;
-                $campaignContacts['campaign_name'] = !empty($createdCampaign[0][0]->campaign_name)?$createdCampaign[0][0]->campaign_name:$editedCampaign[0][0]->campaign_name; 
-                $campaignContacts['campaign_type'] = !empty($createdCampaign[0][0]->campaign_type)?$createdCampaign[0][0]->campaign_type:$editedCampaign[0][0]->campaign_type; 
+                $campaignContacts['company_code']   = $companyCode;
+                $campaignContacts['user_name']      = !empty($loggedInUser->fullname)?$loggedInUser->fullname:$loggedInUser->firstname;
+                $campaignContacts['time_zone']      = $input['time_zone'];
+                $campaignContacts['company_id']     = $companyId;
+                $campaignContacts['company_name']   = $company->name;
+                $campaignContacts['company_logo']   = $company->logo;
+                $campaignContacts['campaign_name']  = !empty($createdCampaign[0][0]->campaign_name)?$createdCampaign[0][0]->campaign_name:$editedCampaign[0][0]->campaign_name; 
+                $campaignContacts['campaign_type']  = !empty($createdCampaign[0][0]->campaign_type)?$createdCampaign[0][0]->campaign_type:$editedCampaign[0][0]->campaign_type; 
+                
+                #company logo Aspect Ratio details for email template
+                $companyLogoWidth  = $companyLogoHeight = '';
+                if(!empty($company->logo)){
+                    $companyLogoAspectRatio = $this->referralsGateway->getImageAspectRatio($company->logo);
+                    $companyLogoWidth       = !empty($companyLogoAspectRatio['width']) ? $companyLogoAspectRatio['width'] : '';
+                    $companyLogoHeight      = !empty($companyLogoAspectRatio['height']) ? $companyLogoAspectRatio['height'] : '';
+                }
+                $campaignContacts['company_logo_width']  = $companyLogoWidth;
+                $campaignContacts['company_logo_height'] = $companyLogoHeight;
+                
                 if((isset($createdCampaign[0][0]) && $createdCampaign[0][0]->location_type === 'onsite')){
                     
                    $campaignContacts['campaign_location'] = !empty($createdCampaign[0][0]->zip_code)?$createdCampaign[0][0]->address.', '.$createdCampaign[0][0]->city.', '.$createdCampaign[0][0]->zip_code.', '.$createdCampaign[0][0]->state.', '.$createdCampaign[0][0]->country:$createdCampaign[0][0]->address.', '.$createdCampaign[0][0]->city.', '.$createdCampaign[0][0]->state.', '.$createdCampaign[0][0]->country;
@@ -1698,7 +1727,7 @@ class PostGateway {
                     $campaignContacts['campaign_location'] = !empty($editedCampaign[0][0]->zip_code)?$editedCampaign[0][0]->address.', '.$editedCampaign[0][0]->city.', '.$editedCampaign[0][0]->zip_code.', '.$editedCampaign[0][0]->state.', '.$editedCampaign[0][0]->country:$editedCampaign[0][0]->address.', '.$editedCampaign[0][0]->city.', '.$editedCampaign[0][0]->state.', '.$editedCampaign[0][0]->country;
                 }
                 else{
-                                        $campaignContacts['campaign_location'] = 'online'; 
+                    $campaignContacts['campaign_location'] = 'online'; 
                 }
                 $campaignContacts['campaign_start_date'] = $campaignSchedule[0][0]->gmt_start_date;
                 $campaignContacts['campaign_end_date'] = $campaignSchedule[0][0]->gmt_end_date;
@@ -1722,9 +1751,9 @@ class PostGateway {
                 $bucket = (int)$buckets[0];
                 $bucketAry[] = $bucket;
             }
-            $data['bucket_ids']         = $bucketAry;
-            $data['schedule']     = $campSchedule;
-            $data['job_details']   = $postAry;
+            $data['bucket_ids']     = $bucketAry;
+            $data['schedule']       = $campSchedule;
+            $data['job_details']    = $postAry;
             if($requestType == 'edit'){
                 $data = array(); 
             }
@@ -2080,7 +2109,7 @@ class PostGateway {
         if(!empty($input['post_id'])  && !empty($input['reference_id'])){
 
             $documentId         = 0; 
-            $renamedFileName    = $isSelfReferral = '';
+            $renamedFileName    = $isSelfReferral = $companyLogoWidth = $companyLogoHeight = '';
             $neoInput           = array();
             $input['time_zone'] =   !empty($input['timeZone'])?$input['timeZone']:0; 
             $input['referred_by_id'] = $reference_id = $input['reference_id'];
@@ -2121,6 +2150,12 @@ class PostGateway {
                                 $refUserId          = !empty($sqlUser->id)?$sqlUser->id:0;
                                 #get company details by code
                                 $companyDetails     = $this->enterpriseRepository->getCompanyDetailsByCode($companyDetils->companyCode);
+                                #company logo Aspect Ratio details for email template
+                                if(!empty($companyDetils->logo)){
+                                    $companyLogoAspectRatio = $this->referralsGateway->getImageAspectRatio($companyDetils->logo);
+                                    $companyLogoWidth       = !empty($companyLogoAspectRatio['width']) ? $companyLogoAspectRatio['width'] : '';
+                                    $companyLogoHeight      = !empty($companyLogoAspectRatio['height']) ? $companyLogoAspectRatio['height'] : '';
+                                }
                                 $companyId          = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
                                 $source             = self::SOURCE_FROM_EMAIL_UPLOAD;
                                 #insert company resumes in company resumes table
@@ -2183,6 +2218,8 @@ class PostGateway {
                                         $emailData['company_code']      = $companyDetils->companyCode;
                                         $emailData['post_id']           = $postId;
                                         $emailData['company_logo']      = $companyDetils->logo;
+                                        $emailData['company_logo_width']    = $companyLogoWidth;
+                                        $emailData['company_logo_height']   = $companyLogoHeight;
                                         $emailData['to_firstname']      = $neoReferrerName;//p3 details
                                         $emailData['to_lastname']       = '';
                                         $emailData['to_emailid']        = $referral;

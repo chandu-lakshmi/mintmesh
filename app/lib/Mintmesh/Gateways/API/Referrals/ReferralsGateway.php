@@ -41,6 +41,7 @@ class ReferralsGateway {
     const ERROR_RESPONSE_MESSAGE = 'error';
     const CURL_CALL_TYPE = 1;
     const CURL_CALL_TYPE_FILE = 2;
+    const IMAGE_DEFAULT_HIGHT = 120;
 
     protected $referralsRepository, $referralsValidator, $neoUserRepository, $userRepository;
     protected $authorizer, $appEncodeDecode, $paymentRepository, $paymentGateway, $neoPostRepository, $postGateway;
@@ -2005,9 +2006,17 @@ class ReferralsGateway {
                     $this->userGateway->sendNotification($this->loggedinUserDetails, $this->neoLoggedInUserDetails, $input['refer_to'], $notificationType, array('extra_info' => $input['post_id']), array('other_user' => $input['referring'], 'p3_non_mintmesh' => 1));
 
                     if(empty($referResumePath)){
-
+                        
+                        
                         $referring = $input['referring'];
-                        $companyDetils = $this->neoPostRepository->getPostCompany($postId); 
+                        $companyLogoWidth = $companyLogoHeight = '';
+                        $companyDetils = $this->neoPostRepository->getPostCompany($postId);
+                        #company logo Aspect Ratio details for email template
+                        if(!empty($companyDetils->logo)){
+                            $companyLogoAspectRatio = $this->getImageAspectRatio($companyDetils->logo);
+                            $companyLogoWidth       = !empty($companyLogoAspectRatio['width']) ? $companyLogoAspectRatio['width'] : '';
+                            $companyLogoHeight      = !empty($companyLogoAspectRatio['height']) ? $companyLogoAspectRatio['height'] : '';
+                        }
                         #for reply emailid 
                         $replyToName = Config::get('constants.MINTMESH_SUPPORT.REFERRER_NAME');
                         $replyToHost = Config::get('constants.MINTMESH_SUPPORT.REFERRER_HOST');       
@@ -2015,24 +2024,26 @@ class ReferralsGateway {
                         $refId = $refCode = 0;
                         $emailData  = array();
                         $refId = $this->neoPostRepository->getUserNodeIdByEmailId($userEmail);
-                        $refCode                        = MyEncrypt::encrypt_blowfish($postId.'_'.$refId,Config::get('constants.MINTMESH_ENCCODE'));
-                        $replyToData                    = '+ref='.$refCode;
-                        $refRelCode                     = MyEncrypt::encrypt_blowfish($postId.'_'.$gotReferredId,Config::get('constants.MINTMESH_ENCCODE'));
-                        $emailData['company_name']      = $companyDetils->name;
-                        $emailData['company_code']      = $companyDetils->companyCode;
-                        $emailData['post_id']           = $postId;
-                        $emailData['company_logo']      = $companyDetils->logo;
-                        $emailData['to_firstname']      = $firstname;
-                        $emailData['to_lastname']       = $lastname;
-                        $emailData['to_emailid']        = $referring;
-                        $emailData['from_userid']       = $neoUserId;
-                        $emailData['from_emailid']      = $userEmail;
-                        $emailData['from_firstname']    = $neoUserName;
-                        $emailData['email_template']    = ($isSelfReferral) ? 0 : 1 ;
-                        $emailData['ip_address']        = $_SERVER['REMOTE_ADDR'];
-                        $emailData['ref_code']          = $refCode;
-                        $emailData['ref_rel_code']      = $refRelCode;
-                        $emailData['reply_to']          = $replyToName.$replyToData.$replyToHost;
+                        $refCode                            = MyEncrypt::encrypt_blowfish($postId.'_'.$refId,Config::get('constants.MINTMESH_ENCCODE'));
+                        $replyToData                        = '+ref='.$refCode;
+                        $refRelCode                         = MyEncrypt::encrypt_blowfish($postId.'_'.$gotReferredId,Config::get('constants.MINTMESH_ENCCODE'));
+                        $emailData['company_name']          = $companyDetils->name;
+                        $emailData['company_code']          = $companyDetils->companyCode;
+                        $emailData['post_id']               = $postId;
+                        $emailData['company_logo']          = $companyDetils->logo;
+                        $emailData['company_logo_width']    = $companyLogoWidth;
+                        $emailData['company_logo_height']   = $companyLogoHeight;
+                        $emailData['to_firstname']          = $firstname;
+                        $emailData['to_lastname']           = $lastname;
+                        $emailData['to_emailid']            = $referring;
+                        $emailData['from_userid']           = $neoUserId;
+                        $emailData['from_emailid']          = $userEmail;
+                        $emailData['from_firstname']        = $neoUserName;
+                        $emailData['email_template']        = ($isSelfReferral) ? 0 : 1 ;
+                        $emailData['ip_address']            = $_SERVER['REMOTE_ADDR'];
+                        $emailData['ref_code']              = $refCode;
+                        $emailData['ref_rel_code']          = $refRelCode;
+                        $emailData['reply_to']              = $replyToName.$replyToData.$replyToHost;
 
                         $this->sendEmailRequestToCandidateForResume($emailData);
                     }       
@@ -2496,6 +2507,8 @@ class ReferralsGateway {
             $dataSet['post_type']           = 'internal';//$posts->post_type;
             $dataSet['company_name']        = $emailData['company_name'];//Enterpi Software Solutions Pvt.Ltd.
             $dataSet['company_logo']        = $emailData['company_logo'];
+            $dataSet['logo_width']          = $emailData['company_logo_width'];
+            $dataSet['logo_height']         = $emailData['company_logo_height'];
             $dataSet['emailbody']           = 'just testing';
             $dataSet['send_company_name']   = $emailData['company_name'];
             $dataSet['reply_to']            = $emailData['reply_to'];
@@ -2577,6 +2590,23 @@ class ReferralsGateway {
         return true;
     }
     
+    public function getImageAspectRatio($imagePath = '') {
+        
+        $return = $result = array();
+        if($imagePath){
+            $file_headers   = @get_headers($imagePath);
+            if(isset($file_headers[0]) && $file_headers[0] == 'HTTP/1.1 200 OK') {
+                $result = getimagesize($imagePath);
+                if(isset($result[0]) && isset($result[1])){
+                    $height     = self::IMAGE_DEFAULT_HIGHT; 
+                    $newWidth   = ($result[0]/$result[1])*$height;
+                    $return['width']  = round($newWidth);
+                    $return['height'] = $height;
+                }  
+            }
+        }
+        return $return;
+    }
            
 }
 

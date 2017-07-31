@@ -610,6 +610,16 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
         $result = $query->getResultSet();
         return $result ;
     }
+    
+    public function renameCompany($companyCode='', $companyName='') {
+        $result = FALSE;
+        if(!empty($companyCode) && !empty($companyName)){
+            $queryString = "MATCH (c:Company) where c.companyCode='".$companyCode."' set c.name='".$companyName."' RETURN c";
+            $query = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+        }
+        return $result ;
+    }
 }
 
 ?>

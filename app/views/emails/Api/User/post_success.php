@@ -27,7 +27,7 @@
   </tr>
   <tr>
     <td valign="top" class="textContent" style="padding:20px 20px 10px;line-height:135%;letter-spacing:0.2px;font-size:18px; font-weight:normal; color:#777777;">
-      <h3 style="color:#000000;line-height:125%;font-family: 'arial', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello <?php echo ucfirst($name) ; ?>, </h3>
+      <h3 style="color:#000000;line-height:125%;font-family: 'arial', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Hello <?php echo ucfirst(trim($name));?>, </h3>
       <p>Now that you posted your request, here's what will happen next.</p>
       <p style="text-align:center" ><img src="<?php echo $public_url ; ?>images/img1.png"   align="center" style="max-width:100%;text-align:center;padding:20px 30px 10px;" alt="logo" title="Text"></p>
             <p style="text-align:center; color:#000; "> <b>1. </b>This request is visible to your network. They will pick these requests and refer suitable contacts.</p>

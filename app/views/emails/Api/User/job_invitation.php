@@ -7,26 +7,26 @@
                 <tr>
                     <td width="540px" style="padding:0 30px;">
                        <table cellspacing="0" cellpadding="0" width="100%" style="font-family:Arial, Helvetica, sans-serif;font-size:14px;">
-                           <tr height="36px"><td>&nbsp;</td></tr>
+                           <tr height="20px"><td>&nbsp;</td></tr>
                            <tr>
                                 <td align="center">
                                     <?php if(!empty($company_logo)){ ?>
-                                    <img width="62" src="<?php echo $company_logo ; ?>" alt="company-logo">
+                                        <img <?php if(!empty($logo_width) && !empty($logo_height)){ echo ' width='.$logo_width.' height='.$logo_height; } else {?> style="max-height: 80px;width: auto;" <?php } ?> class="msoq" src="<?php echo $company_logo ; ?>" alt="company-logo">
                                      <?php }else {
                                      echo $company_name; }?>
                                 </td>
                             </tr>
-                            <tr height="36px"><td style="border-bottom:1px solid #cccccc">&nbsp;</td></tr>
+                            <tr height="20px"><td style="border-bottom:1px solid #cccccc">&nbsp;</td></tr>
                             <tr>
                                 <td style="padding-top:8px">
                                     <table cellspacing="0" cellpadding="0" width="100%">
                                         <tr>
                                             <td width="60%" >
                                                 <table cellpadding="0" cellpadding="0" border="0" style="font-family:Arial, Helvetica, sans-serif;font-size:14px;">
-                                                    <tr height="28px"><td>&nbsp;</td></tr>
+                                                    <tr height="10px"><td>&nbsp;</td></tr>
                                                     <?php if(!empty($email_template)){?>
                                                     <tr>
-                                                        <td style="color:#000;padding: 5px 0;">Hello <?php echo $name;?>,<br /> <br />
+                                                        <td style="color:#000;padding: 5px 0;">Hello <?php echo ucfirst(trim($name));?>,<br /> <br />
 														You have been Referred by your friend <?php echo $fromName ; ?> for the job <?php echo $looking_for ; ?> at <?php echo $company_name ; ?></td>
                                                     </tr>
                                                     <?php } ?>
@@ -34,7 +34,7 @@
                                                         <td style="color:#3b70cd"><?php echo $company_name ; ?></td>
                                                     </tr>-->
                                                     <tr>
-                                                        <td><h4 style="margin:4px 0 20px;font-weight:600;font-size:20px;color:#252525"><?php echo $looking_for ; ?></h4></td>                        
+                                                        <td><h4 style="margin:4px 0 0;font-weight:600;font-size:20px;color:#252525"><?php echo $looking_for ; ?></h4></td>                        
                                                     </tr>
                                                 </table>
                                             </td>
@@ -83,16 +83,14 @@
                                         <tr><td width="20%" style="color:#939393;padding:5px 0;vertical-align:top;">Location:</td><td width="80%" style="color:#252525;padding:5px 0;"><?php echo $location ; ?></td></tr>
                                         <tr><td style="color:#939393;padding:5px 0;vertical-align:top;">Job Description:</td></tr>
                                         <tr><td colspan="2" style="padding:0">
-                                                <pre style="white-space: pre-line;font-family:Arial, Helvetica, sans-serif;margin:0;">
                                                  <?php echo $job_description ; ?>   
-                                                </pre>
                                             </td>
                                         </tr>
                                     </table>  
                                 </td>
                             </tr>
                             <tr>
-                                <td style="padding-bottom:30px;">
+                                <td style="padding-bottom:20px;">
                                     <table cellspacing="0" cellpadding="0" width="100%" style="font-family:Arial, Helvetica, sans-serif;font-size:14px;">
                                         <tr>
                                             <?php if($post_type == 'internal'){ ; ?>
@@ -127,9 +125,9 @@
                                 </td>
                             </tr>
                              <?php if($post_type == 'external'){ ; ?>
-                        <tr><td style="border-top:1px solid #ccc;color:#939393;padding-top:30px;">Share Job</td></tr>
+                        <tr><td style="border-top:1px solid #ccc;color:#939393;padding-top:20px;">Share Job</td></tr>
                         <tr>
-                            <td style="border-bottom:1px solid #ccc;padding-bottom:30px;">
+                            <td style="border-bottom:1px solid #ccc;padding-bottom:20px;">
                                 <table>
                                     <tr style="padding-top:10px;display:inline-block;">
                                         <td style="padding-right:15px"><a href="https://www.facebook.com/dialog/feed?app_id=<?php echo $app_id; ?>&quote=click below to apply&display=popup&amp;caption=&name=<?php echo $company_name; ?> is looking for <?php echo $looking_for; ?>&picture=<?php echo !empty($company_logo)?$company_logo:''; ?>&description=Experience: <?php echo $experience ; ?>, Location: <?php echo $location ; ?>&link=<?php echo $job_details_link; ?>&redirect_uri=<?php echo $job_details_link; ?>&domain=enterprisestaging.mintmesh.com&origin=http://enterprisestaging.mintmesh.com" style="cursor:pointer"><img src="<?php echo $public_url ;?>images/f_social.png" height="40px" width="40px" alt="fb"></a></td>
@@ -144,8 +142,8 @@
                                 <td>
                                     <table cellspacing="0" cellpadding="0" width="90%" style="font-family:Arial, Helvetica, sans-serif;font-size:14px;">
                                         <tr>
-                                            <td align="right" style="padding:30px 0;">Upload a friend’s resume for future openings  &nbsp;</td>
-                                            <td align="left" style="padding:30px 0;">
+                                            <td align="right" style="padding:20px 0;">Upload a friend’s resume for future openings  &nbsp;</td>
+                                            <td align="left" style="padding:20px 0;">
                                                 <table cellpadding="0" cellpadding="0" border="0" style="width:100px;text-align:center;display:inline-block;font-family:Arial, Helvetica, sans-serif;font-size:14px;">
                                                     <tr>
                                                         <td style="background:#238260;border:1px solid #238260;padding: 6px 10px;"><a href="<?php echo $drop_cv_link ; ?>" style="display:inline-block;border-radius: 2px;background:#238260;color:#fff;text-decoration: none;outline:none;width:100%;">Upload CV</a>
