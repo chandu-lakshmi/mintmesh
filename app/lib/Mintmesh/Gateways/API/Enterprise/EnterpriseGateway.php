@@ -2382,6 +2382,7 @@ class EnterpriseGateway {
             $user = $this->enterpriseRepository->getEnterpriseUserByEmail($input['emailid']);
             \Log::info("<<<<<<<<<<<<<<<< EmailTest userdata >>>>>>>>>>>>>".print_r($user,1));
             if(!isset($user['resetactivationcode']) && $user['group_status'] == '1'){
+                \Log::info("<<<<<<<<<<<<<<<< in side if Email >>>>>>>>>>>>>".print_r($user,1));
                 $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.set_password');
                 $this->userEmailManager->emailId = $user['emailid'];
                 $senderName =  $this->loggedinUserDetails->firstname .' via MintMesh';
@@ -2425,6 +2426,8 @@ class EnterpriseGateway {
                     
                $this->userRepository->updateUserresetpwdcode($inputdata);
                 }
+            } else {
+                \Log::info("<<<<<<<<<<<<<<<< else if Email >>>>>>>>>>>>>");
             }
             $input['user_id'] = $editedUser;
            // Inserting user node in neo4j
