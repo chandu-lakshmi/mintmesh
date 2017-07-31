@@ -2397,6 +2397,7 @@ class EnterpriseGateway {
                 $dataSet['hrs'] = Config::get('constants.USER_EXPIRY_HR');
                 $dataSet['send_company_name'] = $this->loggedinUserDetails->firstname;
                 $dataSet['link'] = Config::get('constants.MM_ENTERPRISE_URL') . "/reset_password?setcode=" . $code; //comment it for normal flow of deep linki.e without http
+                \Log::info("<<<<<<<<<<<<<<<< Email >>>>>>>>>>>>>".print_r($dataSet,1));
                 $this->userEmailManager->dataSet = $dataSet;
                 $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.set_password');
                 $this->userEmailManager->name = $user['firstname'];
@@ -2410,7 +2411,7 @@ class EnterpriseGateway {
                     'emails_types_id' => 1,
                     'from_user' => 0,
                     'from_email' => '',
-                    'to_email' => !empty($createdUser) ? $createdUser[0]->emailid : '',
+                    'to_email' => !empty($user['emailid']) ? $user['emailid'] : '',
                     'related_code' => $code,
                     'sent' => $emailStatus,
                     'ip_address' => $_SERVER['REMOTE_ADDR']
