@@ -2277,7 +2277,7 @@ class EnterpriseGateway {
                 }
   
                 $updateEnterpriseUser   = $this->enterpriseRepository->updateEnterpriseUser($input['emailid'], $input['group_id'], $isEnterprise);
-                $data                   = $this->enterpriseRepository->companyUserMapping($checkUser['id'], $input['company_id'], $input['company_code']);
+                $companyUserData        = $this->enterpriseRepository->companyUserMapping($checkUser['id'], $input['company_id'], $input['company_code']);
                 
                 if($updateEnterpriseUser){
                     
