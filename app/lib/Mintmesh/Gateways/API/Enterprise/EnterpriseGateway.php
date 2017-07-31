@@ -3609,6 +3609,15 @@ class EnterpriseGateway {
         }
         
     }
+    
+    public function renameCompany() {
+        
+        $result =  $this->enterpriseRepository->getCompanyList();
+        foreach($result as $val){
+            $this->neoEnterpriseRepository->renameCompany($val->code, $val->name);
+        }
+        
+    }
 }
 
 ?>

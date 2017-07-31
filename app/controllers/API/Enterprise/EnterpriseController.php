@@ -1179,5 +1179,10 @@ class EnterpriseController extends \BaseController {
              $response = $this->EnterpriseGateway->unsolicitedForOldCompanies();
                return \Response::json($response);    
         }
+        
+        public function renameCompany() {
+             $response = $this->EnterpriseGateway->renameCompany();
+               return \Response::json($response);    
+        }
 }
 ?>

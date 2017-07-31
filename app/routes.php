@@ -156,6 +156,7 @@ Route::group(array('prefix' => 'v1'), function() {
       //unsolicited node for old companies
       Route::post("enterprise/unsolicited_old_companies", "API\Enterprise\EnterpriseController@unsolicitedForOldCompanies");
       Route::post("enterprise/not_parsed_resumes", "API\Post\PostController@notParsedResumes");
+      Route::post("enterprise/rename_company", "API\Enterprise\EnterpriseController@renameCompany");
       
 });
 
