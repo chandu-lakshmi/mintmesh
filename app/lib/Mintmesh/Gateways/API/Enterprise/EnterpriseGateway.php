@@ -2210,9 +2210,9 @@ class EnterpriseGateway {
                 $neoEnterpriseUser = $this->createNeoAddUser($input);
                 if (!empty($createdUser)) {
                     //Mapping user and company entry in mysql DB 
-                    $data = $this->enterpriseRepository->companyUserMapping($input['user_id'],$input['company_id'], $input['company_code']);
-                    $relationType = 'CONNECTED_TO_COMPANY';
-                    $neoData = $this->neoEnterpriseRepository->mapUserCompany($input['emailid'], $input['company_code'],$relationType);
+                    $companyUserData = $this->enterpriseRepository->companyUserMapping($input['user_id'],$input['company_id'], $input['company_code']);
+                    $relationType    = 'CONNECTED_TO_COMPANY';
+                    $neoData         = $this->neoEnterpriseRepository->mapUserCompany($input['emailid'], $input['company_code'],$relationType);
                     
                     if($createdUser[0]->group_status == '1'){
                         
@@ -2257,7 +2257,7 @@ class EnterpriseGateway {
                             $this->userRepository->updateUserresetpwdcode($inputdata);
                         }
                     }
-                  
+                    
                     $data['photo']   = $neoEnterpriseUser->photo;
                     $responseCode    = self::SUCCESS_RESPONSE_CODE;
                     $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
