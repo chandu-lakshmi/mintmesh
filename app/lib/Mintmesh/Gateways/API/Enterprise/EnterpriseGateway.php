@@ -2380,9 +2380,10 @@ class EnterpriseGateway {
             if(!$checkUser){
             $editedUser = $this->enterpriseRepository->editingUser($input);
             $user = $this->enterpriseRepository->getEnterpriseUserByEmail($input['emailid']);
-            \Log::info("<<<<<<<<<<<<<<<< EmailTest userdata >>>>>>>>>>>>>".print_r($user,1));
-            if(!isset($user['resetactivationcode']) && $user['group_status'] == '1'){
-                \Log::info("<<<<<<<<<<<<<<<< in side if Email >>>>>>>>>>>>>".print_r($user,1));
+            
+            //if(!isset($user['resetactivationcode']) && $user['group_status']==1){
+            if($user['group_status']=='1'){
+                
                 $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.set_password');
                 $this->userEmailManager->emailId = $user['emailid'];
                 $senderName =  $this->loggedinUserDetails->firstname .' via MintMesh';
@@ -2399,7 +2400,6 @@ class EnterpriseGateway {
                 $dataSet['hrs'] = Config::get('constants.USER_EXPIRY_HR');
                 $dataSet['send_company_name'] = $this->loggedinUserDetails->firstname;
                 $dataSet['link'] = Config::get('constants.MM_ENTERPRISE_URL') . "/reset_password?setcode=" . $code; //comment it for normal flow of deep linki.e without http
-                \Log::info("<<<<<<<<<<<<<<<< Email >>>>>>>>>>>>>".print_r($dataSet,1));
                 $this->userEmailManager->dataSet = $dataSet;
                 $this->userEmailManager->subject = Lang::get('MINTMESH.user_email_subjects.set_password');
                 $this->userEmailManager->name = $user['firstname'];
@@ -2426,9 +2426,7 @@ class EnterpriseGateway {
                     
                $this->userRepository->updateUserresetpwdcode($inputdata);
                 }
-            } else {
-                \Log::info("<<<<<<<<<<<<<<<< else if Email >>>>>>>>>>>>>");
-            }
+            } 
             $input['user_id'] = $editedUser;
            // Inserting user node in neo4j
             if($input['status'] == '0'){
