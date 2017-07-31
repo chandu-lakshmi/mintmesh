@@ -2380,6 +2380,7 @@ class EnterpriseGateway {
             if(!$checkUser){
             $editedUser = $this->enterpriseRepository->editingUser($input);
             $user = $this->enterpriseRepository->getEnterpriseUserByEmail($input['emailid']);
+            \Log::info("<<<<<<<<<<<<<<<< EmailTest userdata >>>>>>>>>>>>>".print_r($user,1));
             if(!isset($user['resetactivationcode']) && $user['group_status'] == '1'){
                 $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.set_password');
                 $this->userEmailManager->emailId = $user['emailid'];
