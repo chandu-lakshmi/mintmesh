@@ -46,6 +46,7 @@ class EnterpriseGateway {
     const CREATED_IN = 'created_in';
     const Buckets_Inactive_STATUS = 2;
     const IS_ENTERPRISE = 1;
+    const COMPANY_DEFAULT_LOGO = 'https://s3-us-west-2.amazonaws.com/mintmesh%2Fstg%2FcompanyLogo/attach_10185995551501516545_1501516554.jpg';
 
     protected $userRepository, $enterpriseRepository, $enterpriseValidator, $userFileUploader, $commonFormatter, $authorizer, $appEncodeDecode, $neoEnterpriseRepository;
     protected $allowedHeaders, $allowedExcelExtensions, $createdNeoUser, $referralsGateway, $contactsRepository,$referralsRepository,$myExcel;
@@ -1061,7 +1062,7 @@ class EnterpriseGateway {
         $dataSet = array();
         $fullName = $inputEmailData['firstname'] . ' ' . $inputEmailData['lastname'];
         $dataSet['company_name'] = $inputEmailData['company_name'];
-        $dataSet['company_logo'] = !empty($inputEmailData['company_logo'])?$inputEmailData['company_logo']:'https://www.owbaz.com/images/default-company-logo.jpg';
+        $dataSet['company_logo'] = !empty($inputEmailData['company_logo']) ? $inputEmailData['company_logo'] : self::COMPANY_DEFAULT_LOGO;
         $dataSet['name']         = $fullName;
         $dataSet['email']        = $inputEmailData['emailid'];
         $dataSet['emailbody']    = $inputEmailData['email_body'];

@@ -1483,7 +1483,7 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
     }
     
     public function getCompanyList() {
-        $sql = 'select * from company';
+        $sql = 'select code,name from company';
         return $result = DB::Select($sql);
     }
 }
