@@ -2793,6 +2793,8 @@ class PostGateway {
             
             if($campaign_id != 0 && $referred_by_id != 0){
                 
+                
+                $timeZone  = isset($input['time_zone']) ? $input['time_zone'] : 0;
                 $startDate = $startTime = $endDate = $endTime = $campaignLocation = '';
                 $userDetails            = $this->neoEnterpriseRepository->getNodeById($referred_by_id);
                 $companyDetails         = $this->neoPostRepository->getCampaignCompany($campaign_id);
@@ -2806,10 +2808,12 @@ class PostGateway {
                 if(isset($scheduleTimes[0]) && !empty($scheduleTimes[0][0])){
                     
                     $schedule   = $scheduleTimes[0][0];
-                    $startDate  = $schedule->start_date;
-                    $startTime  = $schedule->start_time;
-                    $endDate    = $schedule->end_date;
-                    $endTime    = $schedule->end_time;
+                    $startGmDate= $this->appEncodeDecode->UserTimezone($schedule->gmt_start_date, $timeZone); 
+                    $endGmDate  = $this->appEncodeDecode->UserTimezone($schedule->gmt_end_date, $timeZone); 
+                    $startDate  = \Carbon\Carbon::parse($startGmDate)->format('dS M Y');
+                    $endDate    = \Carbon\Carbon::parse($endGmDate)->format('dS M Y');
+                    $startTime  = \Carbon\Carbon::parse($startGmDate)->format('h:i A');
+                    $endTime    = \Carbon\Carbon::parse($endGmDate)->format('h:i A');
                 }
                 #get campaign location
                 if($campaignDetails->location_type == 'online'){
