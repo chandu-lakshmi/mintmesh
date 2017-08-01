@@ -2782,36 +2782,65 @@ class PostGateway {
     }
     
      public function decryptCampaignRef($input){
+         
         $data = array();
         if(!empty($input['ref']) && isset($input['ref'])){
-            $mail_parse_ref     = isset($input['ref'])?MyEncrypt::decrypt_blowfish($input['ref'],Config::get('constants.MINTMESH_ENCCODE')):0;
-            $mail_parse_ref_val = array_map('intval',explode('_',$mail_parse_ref));	
-            $campaign_id        = isset($mail_parse_ref_val[0])?$mail_parse_ref_val[0]:0;
-            $referred_by_id     = isset($mail_parse_ref_val[1])?$mail_parse_ref_val[1]:0;
+            
+            $referenceCode      = isset($input['ref']) ? MyEncrypt::decrypt_blowfish($input['ref'], Config::get('constants.MINTMESH_ENCCODE')) : 0;
+            $referenceValue     = array_map('intval', explode('_',$referenceCode));	
+            $campaign_id        = isset($referenceValue[0]) ? $referenceValue[0] : 0;
+            $referred_by_id     = isset($referenceValue[1]) ? $referenceValue[1] : 0;
             
             if($campaign_id != 0 && $referred_by_id != 0){
+                
+                $startDate = $startTime = $endDate = $endTime = $campaignLocation = '';
                 $userDetails            = $this->neoEnterpriseRepository->getNodeById($referred_by_id);
                 $companyDetails         = $this->neoPostRepository->getCampaignCompany($campaign_id);
-                $input['campaign_id']   = $campaign_id;
-                $campaignStatus         = $this->neoPostRepository->getCampaignById($input['campaign_id']);
-                $scheduleTimes          = $this->neoPostRepository->getCampaignSchedule($input['campaign_id']);
+                $campaignDetails        = $this->neoPostRepository->getCampaignById($campaign_id);
+                $scheduleTimes          = $this->neoPostRepository->getCampaignSchedule($campaign_id);
+                #return details form here
                 $companyLogo            = !empty($companyDetails->logo)?$companyDetails->logo:'';
-                $campaignTitle          = 'Here is a campaign at '.$companyDetails->name.' for '.$campaignStatus->campaign_name;
-                $campaignDescription    = 'Start date: '.$scheduleTimes[0][0]->start_date.' and End date: '.$scheduleTimes[0][0]->end_date;
+                //$campaignTitle        = 'Here is a campaign at '.$companyDetails->name.' for '.$campaignStatus->campaign_name;
+                //$campaignDescription  = 'Start date: '.$scheduleTimes[0][0]->start_date.' and End date: '.$scheduleTimes[0][0]->end_date;
+                #campaign schedule form here
+                if(isset($scheduleTimes[0]) && !empty($scheduleTimes[0][0])){
+                    
+                    $schedule   = $scheduleTimes[0][0];
+                    $startDate  = $schedule->start_date;
+                    $startTime  = $schedule->start_time;
+                    $endDate    = $schedule->end_date;
+                    $endTime    = $schedule->end_time;
+                }
+                #get campaign location
+                if($campaignDetails->location_type == 'online'){
+                    $campaignLocation = 'online'; 
+                }else{
+                    $location = $campaignDetails->address.', '.$campaignDetails->city.', '.$campaignDetails->state.', '.$campaignDetails->country.', '.$campaignDetails->zip_code;
+                    $campaignLocation = str_replace(', ,', ',', $location);//remove double commas
+                }
+                #social share links
                 $url                    = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/share?ref=" . $input['ref']."";
                 $bitlyUrl               = $this->urlShortner($url);
                 $bittly                 = $bitlyUrl;
+                #return Array
                 $data = array(
-                    "campaign_id"       =>  $input['campaign_id'],
+                    "campaign_id"       =>  $campaign_id,
                     "reference_id"      =>  $referred_by_id,
                     "emailid"           =>  $userDetails->emailid,
-                    "campaign_status"   =>  $campaignStatus->status,
-                    "company_logo"  =>  $companyLogo,
-                    "company_name"  =>  $companyDetails->name,
-                    "title"         =>  $campaignTitle,
-                    "description"   =>  $campaignDescription,
-                    "url"           =>  $url,
-                    "bittly_url"    =>  $bittly
+                    "campaign_status"   =>  $campaignDetails->status,
+                    "company_logo"      =>  $companyLogo,
+                    "company_name"      =>  $companyDetails->name,
+                    //"title"           =>  $campaignTitle,
+                    //"description"     =>  $campaignDescription,
+                    "campaign_type"     =>  $campaignDetails->campaign_name,
+                    "campaign_heading"  =>  $campaignDetails->campaign_name.', '.$campaignDetails->campaign_type,
+                    "start_date"        =>  $startDate,
+                    "start_time"        =>  $startTime,
+                    "end_date"          =>  $endDate,
+                    "end_time"          =>  $endTime,
+                    "campaign_location" =>  $campaignLocation,
+                    "url"               =>  $url,
+                    "bittly_url"        =>  $bittly
                     );
             }
        }
