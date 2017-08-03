@@ -994,7 +994,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
        return $return;
     }
     
-    public function getApplyJobsList($companyCode='',$refById='', $page=0,$search = '',$input='') {
+    public function getApplyJobsList_old($companyCode='',$refById='', $page=0,$search = '',$input='') {
         $return = array();
         $skip   = $limit = 0;
         if (!empty($page)){
@@ -1028,6 +1028,46 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
             $return = $result;  
          
        return $return;
+    }
+    
+    public function getApplyJobsList($companyCode = '', $refById = '', $page = 0, $isShare = '', $searchName = '', $searchLocation = '', $searchExperience = '') {
+        
+        $return = array();
+        if(!empty($companyCode)){
+            
+            $baseQuery = $searchQuery = $limitQuery = '';
+            $skip  = $limit = 0;
+            if (!empty($page)){
+                $limit = $page*10 ;
+                $skip  = $limit - 10 ;
+            }
+            #base query string
+            $baseQuery = "MATCH (c:Company)<-[:POSTED_FOR]-(p:Post{status:'ACTIVE'})-[:INCLUDED]->(u:User) where c.companyCode = '".$companyCode."' and ID(u)=".$refById." and p.post_type <> 'campaign' ";
+            if($isShare){
+                $baseQuery.= " and p.post_type <> 'internal' ";
+            }
+            #search query string
+            if(!empty($searchName) || !empty($searchLocation) || !empty($searchExperience)){
+                $searchName         = $this->appEncodeDecode->filterString($searchName);
+                $searchLocation     = $this->appEncodeDecode->filterString($searchLocation);
+                $experienceQuery    = !empty($searchExperience) ? " and p.experience_range ='". $searchExperience ."' " : '' ; 
+                $searchQuery        = " AND (p.service_name =~ '(?i).*".$searchName.".*' and p.service_location =~ '(?i).*".$searchLocation.".*' ".$experienceQuery." ) ";
+            }
+            #limit query string
+            if (!empty($limit) && !($limit < 0)){
+                $limitQuery =" skip ".$skip." limit ".self::LIMIT ;
+            }
+            #final query string formation here
+            $queryString = $baseQuery.$searchQuery;
+            $queryString .= " WITH count(p) AS cnt ";
+            $queryString .= $baseQuery.$searchQuery;
+            $queryString .= " WITH distinct(p), cnt, c ORDER BY p.created_at DESC ".$limitQuery;
+            $queryString .= " return p,cnt,c ";
+            $query  = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            $return = $result;
+        }
+        return $return;
     }
     
     public function getPostCompany($postId=''){
@@ -1330,28 +1370,28 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         $return = array();
         if(!empty($campaignId)){
             
-            $baseMatch = $optionalMatch = $optionalWith = $optionalWithCnt = $optionalWhere = $limitQuery = '';
+            $baseQuery = $searchQuery = $limitQuery = '';
             $skip  = $limit = 0;
             if (!empty($page)){
                 $limit = $page*10 ;
                 $skip  = $limit - 10 ;
             }
             #base query string
-            $baseMatch = "MATCH (c:Campaign)-[r:CAMPAIGN_POST]-(p:Post{status:'ACTIVE'}) where ID(c)=".$campaignId." ";
+            $baseQuery = "MATCH (c:Campaign)-[r:CAMPAIGN_POST]-(p:Post{status:'ACTIVE'}) where ID(c)=".$campaignId." ";
             if(!empty($searchName) || !empty($searchLocation) || !empty($searchExperience)){
-                $optionalMatch   = " OPTIONAL MATCH (p)-[:ASSIGNED_EXPERIENCE_RANGE]->(x:ExperienceRange) ";
-                $optionalWhere   = " WHERE (p.service_name =~ '(?i).*".$searchName.".*' and p.service_location =~ '(?i).*".$searchLocation.".*' and x.name=~'(?i).*". $searchExperience .".*') ";
-                $optionalWith    = 'WITH p,x';
-                $optionalWithCnt = 'WITH p,x,cnt';
+                $searchName         = $this->appEncodeDecode->filterString($searchName);
+                $searchLocation     = $this->appEncodeDecode->filterString($searchLocation);
+                $experienceQuery    = !empty($searchExperience) ? " and p.experience_range ='". $searchExperience ."' " : '' ; 
+                $searchQuery        = " AND (p.service_name =~ '(?i).*".$searchName.".*' and p.service_location =~ '(?i).*".$searchLocation.".*' ".$experienceQuery." ) ";
             }
             #limit query string
             if (!empty($limit) && !($limit < 0)){
                 $limitQuery =" skip ".$skip." limit ".self::LIMIT ;
             }
             #final query string formation here
-            $queryString = $baseMatch.$optionalMatch.$optionalWith.$optionalWhere;
+            $queryString = $baseQuery.$searchQuery;
             $queryString .= " WITH count(p) AS cnt ";
-            $queryString .= $baseMatch.$optionalMatch.$optionalWithCnt.$optionalWhere;
+            $queryString .= $baseQuery.$searchQuery;
             $queryString .= " WITH distinct(p), cnt ORDER BY p.created_at DESC ".$limitQuery;
             $queryString .= " return p,cnt ";
             $query  = new CypherQuery($this->client, $queryString);

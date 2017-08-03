@@ -2343,59 +2343,69 @@ class PostGateway {
     }
     
     public function applyJobsList($input){
+        
         $jobsListCount  = 0;
-        $compName       = '';
+        $compName       = $compLogo = '';
         $resJobsList    = $refAry = $returnData =  $data = array();
         $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
         $referenceId    = isset($input['reference_id'])?$input['reference_id']:'';
         $page           = !empty($input['page_no']) ? $input['page_no'] : 0;
-        $search_for     = !empty($input['search']) ? $input['search'] : 0;
+        $searchName     = !empty($input['search_name']) ? $input['search_name'] : '';
+        $searchLocation     = !empty($input['search_location']) ? $input['search_location'] : '';
+        $searchExperience   = !empty($input['search_experience']) ? $input['search_experience'] : '';
+        $timeZone           = isset($input['time_zone']) ? $input['time_zone'] : 0;
+        $isShare            = !empty($input['share']) ? $input['share'] : '' ;
+        
         if(!empty($referenceId)){
+            
             $refId          = MyEncrypt::decrypt_blowfish($referenceId, Config::get('constants.MINTMESH_ENCCODE'));
             $url = $enterpriseUrl . "/email/all-jobs/share?ref=" . $referenceId.""; 
             $biltyUrl       = $this->urlShortner($url);
             $bittly         = $biltyUrl;
             $refAry         = array_map('intval', explode('_', $refId));
-            $post_id        = isset($refAry[0])?$refAry[0]:0;  
-            $refById        = isset($refAry[1])?$refAry[1]:0;
+            $post_id        = isset($refAry[0]) ? $refAry[0] : 0;  
+            $refById        = isset($refAry[1]) ? $refAry[1] : 0;
             $neoInput['post_id'] = $post_id;
             $neoInput['referred_by_id'] = $refById;
             
             $checkRelation  = $this->job2->checkRel($neoInput);
-            $companyCode    = !empty($checkRelation[0][0]->company_code)?$checkRelation[0][0]->company_code:'';
+            $companyCode    = !empty($checkRelation[0][0]->company_code) ? $checkRelation[0][0]->company_code : '';
             if($companyCode){
                 #check user Separated Status here
                 $separatedStatus = $this->checkReferredUserSeparatedStatus($refById, $companyCode);
                 if($separatedStatus){
-                    $resJobsList      = $this->neoPostRepository->getApplyJobsList($companyCode, $refById,$page,$search_for,$input);
-                    foreach ($resJobsList as $result){
-                        $record         = array();
-                        $postRes        = $result[0];//post details 
-                        $postDetails    = $this->referralsGateway->formPostDetailsArray($postRes);
-                        $compRes        = $result[1];//company details 
-                        $jobsListCount  = !empty($result[2])?$result[2]:0;//count of result set
-
-                        $postId   = $postRes->getID();
-                        $compName = $compRes->name;
-                        $compLogo = !empty($compRes->logo)?$compRes->logo:'';
-                        //form the return jobs list here
-                        $record['job_name']         = $postRes->service_name;
-                        $record['experience']       = $postDetails['experience_range_name'];
-                        $record['vacancies']        = $postRes->no_of_vacancies;
-                        $record['location']         = $postRes->service_location;
-                        $record['job_description']  = $postRes->job_description;
-                        $record['status']           = $postRes->status;
-                        $record['post_type']        = $postRes->post_type;
-                        $record['ref_code']         = MyEncrypt::encrypt_blowfish($postId.'_'.$refById,Config::get('constants.MINTMESH_ENCCODE'));
-
-                        $returnData[] = $record; 
+                    $resJobsList      = $this->neoPostRepository->getApplyJobsList($companyCode, $refById, $page, $isShare, $searchName, $searchLocation, $searchExperience);
+                    
+                    if(isset($resJobsList[0])){
+                        $jobsListCount  = !empty($resJobsList[0][1]) ? $resJobsList[0][1] : 0;//count of result set
+                        $compRes        = !empty($resJobsList[0][2]) ? $resJobsList[0][2] : 0;//company details 
+                        $compName       = !empty($compRes->name) ? $compRes->name : '';
+                        $compLogo       = !empty($compRes->logo) ? $compRes->logo : '';
+                    
+                        foreach ($resJobsList as $result){
+                            $record         = array();
+                            $postRes        = $result[0];//post details 
+                            $postDetails    = $this->referralsGateway->formPostDetailsArray($postRes);
+                            $postId         = $postRes->getID();
+                            //form the return jobs list here
+                            $record['job_name']         = $postRes->service_name;
+                            $record['experience']       = $postDetails['experience_range_name'];
+                            $record['vacancies']        = $postRes->no_of_vacancies;
+                            $record['location']         = $postRes->service_location;
+                            $record['job_description']  = $postRes->job_description;
+                            $record['status']           = $postRes->status;
+                            $record['post_type']        = $postRes->post_type;
+                            $record['ref_code']         = MyEncrypt::encrypt_blowfish($postId.'_'.$refById,Config::get('constants.MINTMESH_ENCCODE'));
+                            $returnData[] = $record; 
+                        }
                     }
+                    
                     if($returnData){
-                    $data = array("jobs_list" => array_values($returnData),'count'=>$jobsListCount, 'company_name'=>$compName,'company_logo' => $compLogo,'bittly_url' => $bittly);
-                    $responseCode   = self::SUCCESS_RESPONSE_CODE;
-                    $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
-                    $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_jobs_list.success')));
-                    }else{
+                        $data = array("jobs_list" => array_values($returnData),'count'=>$jobsListCount, 'company_name'=>$compName,'company_logo' => $compLogo,'bittly_url' => $bittly);
+                        $responseCode   = self::SUCCESS_RESPONSE_CODE;
+                        $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                        $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_jobs_list.success')));
+                    } else {
                         $responseCode   = self::ERROR_RESPONSE_CODE;
                         $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
                         $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_jobs_list.no_jobs')));
@@ -2406,12 +2416,11 @@ class PostGateway {
                     $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_jobs_list.user_separated')));
                 }
             } else {
-                    $responseCode   = self::ERROR_RESPONSE_CODE;
-                    $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
-                    $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_jobs_list.failure')));
-                }    
-        } 
-        else {
+                $responseCode   = self::ERROR_RESPONSE_CODE;
+                $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+                $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_jobs_list.failure')));
+            }    
+        } else {
             $responseCode   = self::ERROR_RESPONSE_CODE;
             $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
             $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_jobs_list.failure')));
