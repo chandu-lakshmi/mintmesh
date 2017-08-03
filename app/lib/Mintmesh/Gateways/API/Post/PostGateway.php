@@ -2565,46 +2565,54 @@ class PostGateway {
     
     public function campaignJobsList($input){
         
-            $returnData = $data = array();
+            $returnData     = $data = $returnAry = array();
             $checkRelation  = $this->neoPostRepository->checkCampaignUserRelation($input);
             $reference_id   = !empty($input['reference_id']) ? $input['reference_id'] : 0;
             $userDetails    = $this->neoEnterpriseRepository->getNodeById($reference_id);
-            $companyCode    = !empty($checkRelation->company_code)?$checkRelation->company_code:'';
+            $companyCode    = !empty($checkRelation->company_code) ? $checkRelation->company_code : '';
             #check user Separated Status here
             $separatedStatus = $this->checkReferredUserSeparatedStatus($reference_id, $companyCode);
             if($separatedStatus){
+                $campaignId     = !empty($input['campaign_id']) ? $input['campaign_id'] : 0;
                 $page           = !empty($input['page_no']) ? $input['page_no'] : 0;
+                $searchName     = !empty($input['search_name']) ? $input['search_name'] : '';
+                $searchLocation     = !empty($input['search_location']) ? $input['search_location'] : '';
+                $searchExperience   = !empty($input['search_experience']) ? $input['search_experience'] : '';
+                $timeZone       = isset($input['time_zone']) ? $input['time_zone'] : 0;
                 $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
-                $search_for     = !empty($input['search']) ? $input['search'] : 0;
                 if($companyCode){
-                    $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
-                    $companyLogo = !empty($companyDetails[0]->logo)?$companyDetails[0]->logo:'';
-                    $campaignDetails = $this->neoPostRepository->getCampaignById($input['campaign_id']);
-                    $campaignSchedule = $this->neoPostRepository->getCampaignSchedule($input['campaign_id']);  
-                    $refCode = MyEncrypt::encrypt_blowfish($input['campaign_id'].'_'.$input['reference_id'],Config::get('constants.MINTMESH_ENCCODE'));
-                    $url = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
-                    $biltyUrl = $this->urlShortner($url);
-                    $bittly   = $biltyUrl;
-                    $startDate = $this->appEncodeDecode->UserTimezone($campaignSchedule[0][0]->gmt_start_date,$input['time_zone']); 
-                    $endDate = $this->appEncodeDecode->UserTimezone($campaignSchedule[0][0]->gmt_end_date,$input['time_zone']); 
-                    $start_date = \Carbon\Carbon::parse($startDate)->format('dS M Y');
-                    $end_date = \Carbon\Carbon::parse($endDate)->format('dS M Y');
-                    $start_time = \Carbon\Carbon::parse($startDate)->format('h:i A');
-                    $end_time = \Carbon\Carbon::parse($endDate)->format('h:i A');
+                    
+                    $companyDetails     = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+                    $companyLogo        = !empty($companyDetails[0]->logo) ? $companyDetails[0]->logo : '';
+                    $campaignDetails    = $this->neoPostRepository->getCampaignById($input['campaign_id']);
+                    $campaignSchedule   = $this->neoPostRepository->getCampaignSchedule($input['campaign_id']);  
+                    
+                    $startDate      = $this->appEncodeDecode->UserTimezone($campaignSchedule[0][0]->gmt_start_date, $timeZone); 
+                    $endDate        = $this->appEncodeDecode->UserTimezone($campaignSchedule[0][0]->gmt_end_date, $timeZone); 
+                    $start_date     = \Carbon\Carbon::parse($startDate)->format('dS M Y');
+                    $end_date       = \Carbon\Carbon::parse($endDate)->format('dS M Y');
+                    $start_time     = \Carbon\Carbon::parse($startDate)->format('h:i A');
+                    $end_time       = \Carbon\Carbon::parse($endDate)->format('h:i A');
+                    
                     if($campaignDetails->location_type == 'onsite'){
                         $campaignLocation = $campaignDetails->address.','.$campaignDetails->city.','.$campaignDetails->state.','.$campaignDetails->country.','.$campaignDetails->zip_code;
                     }else{
                         $campaignLocation = 'online';
                     }
-                    $status = Config::get('constants.REFERRALS.STATUSES.ACTIVE');
-                    $campaignJobsList      = $this->neoPostRepository->getCampaignPosts($input['campaign_id'], $page, $search_for, $status);
+                    $status     = Config::get('constants.REFERRALS.STATUSES.ACTIVE');
+                    $refCode    = MyEncrypt::encrypt_blowfish($input['campaign_id'].'_'.$input['reference_id'],Config::get('constants.MINTMESH_ENCCODE'));
+                    $url        = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
+                    $biltyUrl   = $this->urlShortner($url);
+                    $bittly     = $biltyUrl;
+                    #get campaign jobs list here
+                    $campaignJobsList      = $this->neoPostRepository->campaignJobsList($campaignId, $page, $searchName, $searchLocation, $searchExperience);
                     foreach ($campaignJobsList as $result){
                         $record         = array();
                         $postRes        = $result[0];//post details 
                         $postDetails    = $this->referralsGateway->formPostDetailsArray($postRes);
-                        $postId   = $postRes->getID();
-    //                    //form the return jobs list here
-                        $record['reference_id']         = $input['reference_id'];
+                        $postId         = $postRes->getID();
+                        #form the return jobs list here
+                        $record['reference_id']     = $input['reference_id'];
                         $record['job_name']         = $postRes->service_name;
                         $record['experience']       = $postDetails['experience_range_name'];
                         $record['vacancies']        = $postRes->no_of_vacancies;
@@ -2614,13 +2622,28 @@ class PostGateway {
                         $record['post_type']        = $postRes->post_type;
                         $record['post_id']          = $postId;
                         $record['ref_code']         = MyEncrypt::encrypt_blowfish($postId.'_'.$record['reference_id'],Config::get('constants.MINTMESH_ENCCODE'));
-                          $returnData[] = $record; 
+                        $returnData[] = $record; 
                     }
                     if($returnData){
-                    $data = array("bittly_url"=>$bittly,"campaign_jobs_list" => array_values($returnData),"campaign_name" => $campaignDetails->campaign_name,"campaign_type" => $campaignDetails->campaign_type, "campaign_location" => $campaignLocation,"campaign_start_date" => $start_date,"campaign_start_time" => $start_time,"campaign_end_date"=>$end_date,"campaign_end_time" => $end_time,"company_name" =>$companyDetails[0]->name,"company_logo"=>$companyLogo,"user_emailid"=>$userDetails->emailid,"count"=>count($campaignJobsList));
-                    $responseCode   = self::SUCCESS_RESPONSE_CODE;
-                    $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
-                    $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_jobs_list.success')));
+                        
+                        $returnAry['campaign_name']         = $campaignDetails->campaign_name;
+                        $returnAry['campaign_type']         = $campaignDetails->campaign_type; 
+                        $returnAry['campaign_location']     = $campaignLocation;
+                        $returnAry['campaign_start_date']   = $start_date;
+                        $returnAry['campaign_start_time']   = $start_time;
+                        $returnAry['campaign_end_date']     = $end_date;
+                        $returnAry['campaign_end_time']     = $end_time;
+                        $returnAry['company_name']          = $companyDetails[0]->name;
+                        $returnAry['company_logo']          = $companyLogo;
+                        $returnAry['user_emailid']          = $userDetails->emailid;
+                        $returnAry['bittly_url']            = $bittly;
+                        $returnAry['count']                 = count($campaignJobsList);
+                        $returnAry['campaign_jobs_list']    = array_values($returnData);
+                        $data = $returnAry;
+                        
+                        $responseCode   = self::SUCCESS_RESPONSE_CODE;
+                        $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                        $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_jobs_list.success')));
                     }else{
                         $responseCode   = self::ERROR_RESPONSE_CODE;
                         $responseMsg    = self::ERROR_RESPONSE_MESSAGE;

@@ -1324,6 +1324,34 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         }
         return $return; 
     }
+    
+     public function campaignJobsList($campaignId = '', $page = 0, $searchName = '', $searchLocation = '', $searchExperience = '') {
+        
+        $return = array();
+        if(!empty($campaignId)){
+            $skip  = $limit = 0;
+            if (!empty($page)){
+                $limit = $page*10 ;
+                $skip  = $limit - 10 ;
+            }
+            $queryString = "MATCH (c:Campaign)-[r:CAMPAIGN_POST]-(p:Post) where ID(c)=".$campaignId." ";
+            if(!empty($searchName) || !empty($searchLocation) || !empty($searchExperience)){
+                  $queryString .= " OPTIONAL MATCH (p)-[:ASSIGNED_EXPERIENCE_RANGE]->(x:ExperienceRange)
+                                  WITH p,x
+                                  WHERE
+                                  (p.service_name =~ '(?i).*".$searchName.".*' and p.service_location =~ '(?i).*".$searchLocation.".*' and x.name=~'(?i).*". $searchExperience .".*') ";
+              }
+            $queryString .= " return distinct(p) ORDER BY p.created_at DESC ";
+            if (!empty($limit) && !($limit < 0))
+            {
+                $queryString.=" skip ".$skip." limit ".self::LIMIT ;
+            }
+            $query  = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            $return = $result;
+        }
+        return $return;
+    }
 }
 
 ?>
