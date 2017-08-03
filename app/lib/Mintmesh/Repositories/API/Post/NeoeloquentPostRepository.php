@@ -1329,23 +1329,31 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         
         $return = array();
         if(!empty($campaignId)){
+            
+            $baseMatch = $optionalMatch = $optionalWith = $optionalWithCnt = $optionalWhere = $limitQuery = '';
             $skip  = $limit = 0;
             if (!empty($page)){
                 $limit = $page*10 ;
                 $skip  = $limit - 10 ;
             }
-            $queryString = "MATCH (c:Campaign)-[r:CAMPAIGN_POST]-(p:Post) where ID(c)=".$campaignId." ";
+            #base query string
+            $baseMatch = "MATCH (c:Campaign)-[r:CAMPAIGN_POST]-(p:Post{status:'ACTIVE'}) where ID(c)=".$campaignId." ";
             if(!empty($searchName) || !empty($searchLocation) || !empty($searchExperience)){
-                  $queryString .= " OPTIONAL MATCH (p)-[:ASSIGNED_EXPERIENCE_RANGE]->(x:ExperienceRange)
-                                  WITH p,x
-                                  WHERE
-                                  (p.service_name =~ '(?i).*".$searchName.".*' and p.service_location =~ '(?i).*".$searchLocation.".*' and x.name=~'(?i).*". $searchExperience .".*') ";
-              }
-            $queryString .= " return distinct(p) ORDER BY p.created_at DESC ";
-            if (!empty($limit) && !($limit < 0))
-            {
-                $queryString.=" skip ".$skip." limit ".self::LIMIT ;
+                $optionalMatch   = " OPTIONAL MATCH (p)-[:ASSIGNED_EXPERIENCE_RANGE]->(x:ExperienceRange) ";
+                $optionalWhere   = " WHERE (p.service_name =~ '(?i).*".$searchName.".*' and p.service_location =~ '(?i).*".$searchLocation.".*' and x.name=~'(?i).*". $searchExperience .".*') ";
+                $optionalWith    = 'WITH p,x';
+                $optionalWithCnt = 'WITH p,x,cnt';
             }
+            #limit query string
+            if (!empty($limit) && !($limit < 0)){
+                $limitQuery =" skip ".$skip." limit ".self::LIMIT ;
+            }
+            #final query string formation here
+            $queryString = $baseMatch.$optionalMatch.$optionalWith.$optionalWhere;
+            $queryString .= " WITH count(p) AS cnt ";
+            $queryString .= $baseMatch.$optionalMatch.$optionalWithCnt.$optionalWhere;
+            $queryString .= " WITH distinct(p), cnt ORDER BY p.created_at DESC ".$limitQuery;
+            $queryString .= " return p,cnt ";
             $query  = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             $return = $result;

@@ -2586,14 +2586,14 @@ class PostGateway {
                     $companyLogo        = !empty($companyDetails[0]->logo) ? $companyDetails[0]->logo : '';
                     $campaignDetails    = $this->neoPostRepository->getCampaignById($input['campaign_id']);
                     $campaignSchedule   = $this->neoPostRepository->getCampaignSchedule($input['campaign_id']);  
-                    
+                    #Campaign Schedule details
                     $startDate      = $this->appEncodeDecode->UserTimezone($campaignSchedule[0][0]->gmt_start_date, $timeZone); 
                     $endDate        = $this->appEncodeDecode->UserTimezone($campaignSchedule[0][0]->gmt_end_date, $timeZone); 
                     $start_date     = \Carbon\Carbon::parse($startDate)->format('dS M Y');
                     $end_date       = \Carbon\Carbon::parse($endDate)->format('dS M Y');
                     $start_time     = \Carbon\Carbon::parse($startDate)->format('h:i A');
                     $end_time       = \Carbon\Carbon::parse($endDate)->format('h:i A');
-                    
+                    #Campaign Location Details
                     if($campaignDetails->location_type == 'onsite'){
                         $campaignLocation = $campaignDetails->address.','.$campaignDetails->city.','.$campaignDetails->state.','.$campaignDetails->country.','.$campaignDetails->zip_code;
                     }else{
@@ -2606,26 +2606,29 @@ class PostGateway {
                     $bittly     = $biltyUrl;
                     #get campaign jobs list here
                     $campaignJobsList      = $this->neoPostRepository->campaignJobsList($campaignId, $page, $searchName, $searchLocation, $searchExperience);
-                    foreach ($campaignJobsList as $result){
-                        $record         = array();
-                        $postRes        = $result[0];//post details 
-                        $postDetails    = $this->referralsGateway->formPostDetailsArray($postRes);
-                        $postId         = $postRes->getID();
-                        #form the return jobs list here
-                        $record['reference_id']     = $input['reference_id'];
-                        $record['job_name']         = $postRes->service_name;
-                        $record['experience']       = $postDetails['experience_range_name'];
-                        $record['vacancies']        = $postRes->no_of_vacancies;
-                        $record['location']         = $postRes->service_location;
-                        $record['job_description']  = $postRes->job_description;
-                        $record['status']           = $postRes->status;
-                        $record['post_type']        = $postRes->post_type;
-                        $record['post_id']          = $postId;
-                        $record['ref_code']         = MyEncrypt::encrypt_blowfish($postId.'_'.$record['reference_id'],Config::get('constants.MINTMESH_ENCCODE'));
-                        $returnData[] = $record; 
-                    }
-                    if($returnData){
-                        
+                    $totalJobsCount        = isset($campaignJobsList[0]) ? !empty($campaignJobsList[0][1]) ? $campaignJobsList[0][1] : 0 : 0;
+                    #check jobs count
+                    if($totalJobsCount){
+                    
+                        foreach ($campaignJobsList as $result){
+                            $record         = array();
+                            $postRes        = $result[0];//post details 
+                            $postDetails    = $this->referralsGateway->formPostDetailsArray($postRes);
+                            $postId         = $postRes->getID();
+                            #form the return jobs list here
+                            $record['reference_id']     = $input['reference_id'];
+                            $record['job_name']         = $postRes->service_name;
+                            $record['experience']       = $postDetails['experience_range_name'];
+                            $record['vacancies']        = $postRes->no_of_vacancies;
+                            $record['location']         = $postRes->service_location;
+                            $record['job_description']  = $postRes->job_description;
+                            $record['status']           = $postRes->status;
+                            $record['post_type']        = $postRes->post_type;
+                            $record['post_id']          = $postId;
+                            $record['ref_code']         = MyEncrypt::encrypt_blowfish($postId.'_'.$record['reference_id'],Config::get('constants.MINTMESH_ENCCODE'));
+                            $returnData[] = $record; 
+                        }
+                        #return response array
                         $returnAry['campaign_name']         = $campaignDetails->campaign_name;
                         $returnAry['campaign_type']         = $campaignDetails->campaign_type; 
                         $returnAry['campaign_location']     = $campaignLocation;
@@ -2637,7 +2640,7 @@ class PostGateway {
                         $returnAry['company_logo']          = $companyLogo;
                         $returnAry['user_emailid']          = $userDetails->emailid;
                         $returnAry['bittly_url']            = $bittly;
-                        $returnAry['count']                 = count($campaignJobsList);
+                        $returnAry['count']                 = $totalJobsCount;
                         $returnAry['campaign_jobs_list']    = array_values($returnData);
                         $data = $returnAry;
                         
