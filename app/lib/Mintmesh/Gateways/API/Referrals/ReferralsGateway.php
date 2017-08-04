@@ -2557,8 +2557,11 @@ class ReferralsGateway {
             $dataSet['bittly_link']         = $bitlyUrl;
             
             if($posts->post_type == 'campaign'){
+                $campaignId = $this->neoPostRepository->getPostCampaignId($postId);
+                $refId      = $this->neoPostRepository->getUserNodeIdByEmailId($emailData['from_emailid']);
+                $refCmpCode = MyEncrypt::encrypt_blowfish($campaignId.'_'.$refId,Config::get('constants.MINTMESH_ENCCODE'));
                 $dataSet['apply_link']          = $entUrl . "/email/campaign/candidate-details/share?ref=" . $refCode."&refrel=" . $refRelCode."&flag=0&jc=1";
-                $dataSet['view_jobs_link']      = $entUrl . "/email/all-campaigns/share?ref=" . $refCode;
+                $dataSet['view_jobs_link']      = $entUrl . "/email/all-campaigns/share?ref=" . $refCmpCode;
             } else {
                 $dataSet['apply_link']          = $entUrl . "/email/candidate-details/share?ref=" . $refCode."&refrel=" . $refRelCode."&flag=0&jc=0";
                 $dataSet['view_jobs_link']      = $entUrl . "/email/all-jobs/share?ref=" . $refCode."&jc=2";

@@ -1195,6 +1195,17 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         return $result; 
     }
     
+    public function getPostCampaignId($postId = '') {
+        $nodeId = 0;
+        $queryString = "MATCH (c:Campaign)-[:CAMPAIGN_POST]->(p:Post) where ID(p)=".$postId." return ID(c)";
+        $query  = new CypherQuery($this->client, $queryString);
+        $result = $query->getResultSet();
+        if (isset($result[0]) && isset($result[0][0])) {
+            $nodeId = $result[0][0];
+        }
+        return  $nodeId;
+    }
+    
     public function getCompanyJobsCount($emailId='',$companyCode='') {
         $return = 0;
         if(!empty($emailId) && !empty($companyCode)){
