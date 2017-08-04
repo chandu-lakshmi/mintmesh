@@ -2564,7 +2564,7 @@ class ReferralsGateway {
                 $dataSet['view_jobs_link']      = $entUrl . "/email/all-campaigns/share?ref=" . $refCmpCode;
             } else {
                 $dataSet['apply_link']          = $entUrl . "/email/candidate-details/share?ref=" . $refCode."&refrel=" . $refRelCode."&flag=0&jc=0";
-                $dataSet['view_jobs_link']      = $entUrl . "/email/all-jobs/share?ref=" . $refCode."&jc=2";
+                $dataSet['view_jobs_link']      = $entUrl . "/email/all-jobs/share?ref=" . $refCode."&jc=0";
             }
             #redirect email links
             $dataSet['refer_link']          = $entUrl . "/email/referral-details/share?ref=" . $refCode."&flag=0&jc=0";
