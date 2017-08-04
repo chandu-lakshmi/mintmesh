@@ -2490,7 +2490,7 @@ class ReferralsGateway {
       
         if(!empty($emailData)){  
             $dataSet     = array();
-            $email_sent  = '';
+            $email_sent  = $linkType = '';
             $postId      = $emailData['post_id'];
             $refCode     = $emailData['ref_code'];
             $refRelCode  = $emailData['ref_rel_code'];
@@ -2554,8 +2554,14 @@ class ReferralsGateway {
             $dataSet['job_details_link']    = Config::get('constants.MM_ENTERPRISE_URL') . "/email/job-details/share?ref=" . $refCode."";
             $bitlyUrl = $this->urlShortner($dataSet['job_details_link']);
             $dataSet['bittly_link']    = $bitlyUrl;
+            if($posts->post_type == 'campaign'){
+                $linkType   = 'campaign/';
+                $jcType     = 'jc=1';
+            } else {
+                $jcType = 'jc=0';
+            }
             #redirect email links
-            $dataSet['apply_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/candidate-details/share?ref=" . $refCode."&refrel=" . $refRelCode."&flag=0&jc=2";
+            $dataSet['apply_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/".$linkType."candidate-details/share?ref=" . $refCode."&refrel=" . $refRelCode."&flag=0&".$jcType;
             $dataSet['refer_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/referral-details/share?ref=" . $refCode."&flag=0&jc=0";
             $dataSet['view_jobs_link']      = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-jobs/share?ref=" . $refCode."&jc=2";
             $dataSet['drop_cv_link']        = Config::get('constants.MM_ENTERPRISE_URL') . "/email/referral-details/share?ref=" . $refCode."&flag=1&jc=0";
