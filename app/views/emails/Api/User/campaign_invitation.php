@@ -81,7 +81,7 @@
                               </tr>
                               <tr>
                                  <td width="47%">
-                                    <table cellspacing="0" cellpadding="0" width="100%" style="font-size:18px;color:#e99f07;line-height:27px;">
+                                    <table cellspacing="0" cellpadding="0" width="100%" style="font-size:16px;color:#e99f07;line-height:27px;">
                                        <tr>
                                           <td width="45%">
                                              <?php echo $campaign_start_date; ?>
