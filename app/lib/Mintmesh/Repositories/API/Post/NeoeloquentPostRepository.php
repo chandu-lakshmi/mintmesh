@@ -1110,7 +1110,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         if($result->count() != 0){
             return $result[0][0];
         }else{
-            $queryString = "MATCH (u:User)-[:CREATED]->(c:Company)-[:COMPANY_CREATED_CAMPAIGN]->(n:Campaign) where ID(n)=".$input['campaign_id']." and ID(u)=".$input['reference_id']." return n";
+            $queryString = "MATCH (u:User)-[:CREATED|CONNECTED_TO_COMPANY]->(c:Company)-[:COMPANY_CREATED_CAMPAIGN]->(n:Campaign) where ID(n)=".$input['campaign_id']." and ID(u)=".$input['reference_id']." return n";
             $query  = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             if($result->count() != 0){
@@ -1119,6 +1119,20 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
             return false;
         }
         }
+    }
+    
+    public function checkCampaignCreatedByUser($campaignId = '', $emailId = '') {
+        
+        $return = FALSE;
+        if(!empty($campaignId) && !empty($emailId)) {
+            $queryString = "MATCH (n:Campaign) where ID(n)=".$campaignId." and n.created_by = '".$emailId."' return n";
+            $query  = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if($result->count() != 0){
+              $return =  TRUE; 
+            }
+        }
+        return $return;
     }
       
     public function getJobsList($userEmailId='', $companyCode='',$page=0, $search = '') {

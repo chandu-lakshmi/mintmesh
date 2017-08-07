@@ -2352,7 +2352,7 @@ class PostGateway {
         $page           = !empty($input['page_no']) ? $input['page_no'] : 0;
         $searchName     = !empty($input['search_name']) ? $input['search_name'] : '';
         $searchLocation     = !empty($input['search_location']) ? $input['search_location'] : '';
-        $searchExperience   = !empty($input['search_experience']) ? $input['search_experience'] : '';
+        $searchExperience   = !empty($input['search_experience']) ? ($input['search_experience'] != 1) ? $input['search_experience'] : '' : '';
         $timeZone           = isset($input['time_zone']) ? $input['time_zone'] : 0;
         $isShare            = !empty($input['share']) ? $input['share'] : '' ;
         
@@ -2577,16 +2577,17 @@ class PostGateway {
             $returnData     = $data = $returnAry = array();
             $checkRelation  = $this->neoPostRepository->checkCampaignUserRelation($input);
             $reference_id   = !empty($input['reference_id']) ? $input['reference_id'] : 0;
+            $campaignId     = !empty($input['campaign_id']) ? $input['campaign_id'] : 0;
             $userDetails    = $this->neoEnterpriseRepository->getNodeById($reference_id);
+            $createdByUser  = $this->neoPostRepository->checkCampaignCreatedByUser($campaignId, $userDetails->emailid);
             $companyCode    = !empty($checkRelation->company_code) ? $checkRelation->company_code : '';
             #check user Separated Status here
             $separatedStatus = $this->checkReferredUserSeparatedStatus($reference_id, $companyCode);
-            if($separatedStatus){
-                $campaignId     = !empty($input['campaign_id']) ? $input['campaign_id'] : 0;
+            if(!empty($separatedStatus) || !empty($createdByUser)){
                 $page           = !empty($input['page_no']) ? $input['page_no'] : 0;
                 $searchName     = !empty($input['search_name']) ? $input['search_name'] : '';
                 $searchLocation     = !empty($input['search_location']) ? $input['search_location'] : '';
-                $searchExperience   = !empty($input['search_experience']) ? $input['search_experience'] : '';
+                $searchExperience   = !empty($input['search_experience']) ? ($input['search_experience'] != 1) ? $input['search_experience'] : '' : '';
                 $timeZone       = isset($input['time_zone']) ? $input['time_zone'] : 0;
                 $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
                 if($companyCode){
