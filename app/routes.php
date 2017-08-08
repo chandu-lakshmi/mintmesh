@@ -401,6 +401,9 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       // get_configuration
       Route::post("enterprise/upload_resume", "API\Post\PostController@uploadResume");
       Route::post("enterprise/get_resumes_update_status", "API\Post\PostController@getResumesUpdateStatus");
+      //career settings
+      Route::post("enterprise/edit_career_settings", "API\Post\PostController@editCareerSettings");
+      Route::post("enterprise/get_career_settings", "API\Post\PostController@getCareerSettings");
       
 });
 

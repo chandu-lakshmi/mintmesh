@@ -58,6 +58,8 @@ class PostGateway {
     const COMPANY_RESUME_STATUS = 0;
     const COMPANY_RESUME_S3_MOVED_STATUS = 1;
     const COMPANY_RESUME_AI_PARSED_STATUS = 2;
+    const DEFAULT_CAREER_HEROSHOT_IMAGE = 'https://s3-us-west-2.amazonaws.com/mintmesh%2Fstg%2FcompanyLogo/attach_16910035641502174159_1502174167.jpg';
+    const DEFAULT_CAREER_TALENT_NETWORK = 1;
 
     protected $enterpriseRepository, $commonFormatter, $authorizer, $appEncodeDecode,$neoEnterpriseRepository,$userFileUploader,$job2,$paymentRepository;
     protected $createdNeoUser, $postValidator, $referralsRepository, $enterpriseGateway, $userGateway, $contactsRepository, $userEmailManager,$paymentGateway;
@@ -247,6 +249,14 @@ class PostGateway {
     //validation on Not Parsed Resumes
     public function validateNotParsedResumes($input) {
         return $this->doValidation('not_parsed_resumes', 'MINTMESH.user.valid');
+    }
+    //validation on Not Parsed Resumes
+    public function validateEditCareerSettingsInput($input) {
+        return $this->doValidation('edit_career_settings', 'MINTMESH.user.valid');
+    }
+    //validation on Not Parsed Resumes
+    public function validateGetCareerSettingsInput($input) {
+        return $this->doValidation('get_career_settings', 'MINTMESH.user.valid');
     }
     
     public function postJob($input) {
@@ -3418,6 +3428,61 @@ class PostGateway {
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, array());
         
+    }
+    
+    public function editCareerSettings($input) {
+        
+        $data = array();
+        $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
+        
+        $this->neoPostRepository->editCareerSettings($companyCode, $neoInput);
+        
+        if($companyCode){
+           $responseCode   = self::SUCCESS_RESPONSE_CODE;
+           $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+           $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.success')));
+        }else{
+            $responseCode   = self::ERROR_RESPONSE_CODE;
+            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+    }
+    
+    public function getCareerSettings($input) {
+        
+        $data = $returnAry = $crLinks = array();
+        $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
+        #get get Career Settings here
+        $crSettings = $this->neoPostRepository->getCareerSettings($companyCode);
+        
+        if($crSettings){
+            #form career page Hyper links
+            $crLinks['label_one']   = !empty($crSettings->label_one) ? $crSettings->label_one : '';
+            $crLinks['value_one']   = !empty($crSettings->value_one) ? $crSettings->value_one : '';
+            $crLinks['label_two']   = !empty($crSettings->label_two) ? $crSettings->label_two : '';
+            $crLinks['value_two']   = !empty($crSettings->value_two) ? $crSettings->value_two : '';
+            $crLinks['label_three'] = !empty($crSettings->label_three) ? $crSettings->label_three : '';
+            $crLinks['value_three'] = !empty($crSettings->value_three) ? $crSettings->value_three : '';
+            $crLinks['label_four']  = !empty($crSettings->label_four)  ? $crSettings->label_four  : '';
+            $crLinks['value_four']  = !empty($crSettings->value_four)  ? $crSettings->value_four  : '';
+            #return career details form here
+            $returnAry['career_logo']           = !empty($crSettings->career_logo) ? $crSettings->career_logo : !empty($crSettings->logo) ? $crSettings->logo : '';
+            $returnAry['career_description']    = !empty($crSettings->career_description) ? $crSettings->career_description : !empty($crSettings->description) ? $crSettings->description : '';
+            $returnAry['career_heroshot_image'] = !empty($crSettings->career_heroshot_image) ? $crSettings->career_heroshot_image : self::DEFAULT_CAREER_HEROSHOT_IMAGE;
+            $returnAry['career_talent_network'] = !empty($crSettings->career_talent_network) ? $crSettings->career_talent_network : self::DEFAULT_CAREER_TALENT_NETWORK;
+            $returnAry['career_links']          = $crLinks;
+        
+            $data = $returnAry;
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+        } else {
+            $responseCode   = self::ERROR_RESPONSE_CODE;
+            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
     
 }

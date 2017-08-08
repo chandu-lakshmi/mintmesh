@@ -97,6 +97,12 @@ class PostValidator extends Validator {
         ),
         'not_parsed_resumes' => array(
             'authentication_key'  => 'required'
+        ),
+        'edit_career_settings'  => array(
+           'company_code'    => 'required' 
+        ),
+        'get_career_settings'  => array(
+           'company_code'    => 'required' 
         )
     );
 

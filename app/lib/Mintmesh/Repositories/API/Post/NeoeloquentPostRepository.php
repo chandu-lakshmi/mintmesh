@@ -1425,6 +1425,24 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         }
         return $return;
     }
+    
+    public function editCareerSettings($companyCode) {
+        
+    }
+    
+    public function getCareerSettings($companyCode) {
+        $return = 0;
+        if(!empty($companyCode)){
+            $queryString = "MATCH (c:Company{companyCode:'".$companyCode."'}) return c ";
+            //echo $queryString;exit;
+            $query  = new CypherQuery($this->client, $queryString);
+            $result = $query->getResultSet();
+            if(isset($result[0]) && isset($result[0][0])){
+                $return = $result[0][0];
+            }
+        }
+        return $return; 
+    }
 }
 
 ?>
