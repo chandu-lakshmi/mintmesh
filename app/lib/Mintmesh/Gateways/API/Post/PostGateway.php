@@ -3432,16 +3432,49 @@ class PostGateway {
     
     public function editCareerSettings($input) {
         
-        $data = array();
+        $data = $neoInput = $careerLinks = $careerLinksAry = array();
         $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
+        #get get Career Settings here
+        $crSettings = $this->neoPostRepository->getCareerSettings($companyCode);
+        #form career links here
+        $careerLinks = !empty($input['career_links']) ? $input['career_links'] : '';
+        if($careerLinks){
+            foreach ($careerLinks as $row){    
+                $crLinks = array();
+                $crLinks['label']   = $row['label'];
+                $crLinks['url']     = $row['url'];
+                $careerLinksAry[]   = $crLinks;
+            }
+            $careerLinksAry = json_encode($careerLinksAry);
+        }
+        #request for career page logo upload to s3
+        if(!empty($input['request_logo'])){
+            //upload the file
+            $this->userFileUploader->source      =  $input['request_logo'];
+            $this->userFileUploader->destination = Config::get('constants.S3BUCKET_COMPANY_LOGO');
+            $input['career_logo']                = $this->userFileUploader->uploadToS3BySource($input['request_logo']);
+        }
+        #request for career page heroshot image upload to s3
+        if(!empty($input['request_heroshot'])){
+            //upload the file
+            $this->userFileUploader->source      =  $input['request_heroshot'];
+            $this->userFileUploader->destination = Config::get('constants.S3BUCKET_COMPANY_LOGO');
+            $input['career_heroshot_image']      = $this->userFileUploader->uploadToS3BySource($input['request_heroshot']);
+        }
+        #form neo4j input array here
+        $neoInput['career_logo']            = !empty($input['career_logo']) ? $input['career_logo'] : '';
+        $neoInput['career_description']     = !empty($input['career_description']) ? $input['career_description'] : '';
+        $neoInput['career_heroshot_image']  = !empty($input['career_heroshot_image']) ? $input['career_heroshot_image'] : '';
+        $neoInput['career_talent_network']  = !empty($input['career_talent_network']) ? $input['career_talent_network'] : '';
+        $neoInput['career_links']           = $careerLinksAry;
+        #update career settings details here
+        $result = $this->neoPostRepository->editCareerSettings($companyCode, $neoInput);
         
-        $this->neoPostRepository->editCareerSettings($companyCode, $neoInput);
-        
-        if($companyCode){
-           $responseCode   = self::SUCCESS_RESPONSE_CODE;
-           $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
-           $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.success')));
-        }else{
+        if($result){
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.success')));
+        } else {
             $responseCode   = self::ERROR_RESPONSE_CODE;
             $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
             $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.failure')));
