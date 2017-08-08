@@ -3490,21 +3490,13 @@ class PostGateway {
         $crSettings = $this->neoPostRepository->getCareerSettings($companyCode);
         
         if($crSettings){
-            #form career page Hyper links
-            $crLinks['label_one']   = !empty($crSettings->label_one) ? $crSettings->label_one : '';
-            $crLinks['value_one']   = !empty($crSettings->value_one) ? $crSettings->value_one : '';
-            $crLinks['label_two']   = !empty($crSettings->label_two) ? $crSettings->label_two : '';
-            $crLinks['value_two']   = !empty($crSettings->value_two) ? $crSettings->value_two : '';
-            $crLinks['label_three'] = !empty($crSettings->label_three) ? $crSettings->label_three : '';
-            $crLinks['value_three'] = !empty($crSettings->value_three) ? $crSettings->value_three : '';
-            $crLinks['label_four']  = !empty($crSettings->label_four)  ? $crSettings->label_four  : '';
-            $crLinks['value_four']  = !empty($crSettings->value_four)  ? $crSettings->value_four  : '';
+            
             #return career details form here
             $returnAry['career_logo']           = !empty($crSettings->career_logo) ? $crSettings->career_logo : !empty($crSettings->logo) ? $crSettings->logo : '';
             $returnAry['career_description']    = !empty($crSettings->career_description) ? $crSettings->career_description : !empty($crSettings->description) ? $crSettings->description : '';
             $returnAry['career_heroshot_image'] = !empty($crSettings->career_heroshot_image) ? $crSettings->career_heroshot_image : self::DEFAULT_CAREER_HEROSHOT_IMAGE;
             $returnAry['career_talent_network'] = !empty($crSettings->career_talent_network) ? $crSettings->career_talent_network : self::DEFAULT_CAREER_TALENT_NETWORK;
-            $returnAry['career_links']          = $crLinks;
+            $returnAry['career_links']          = '';
         
             $data = $returnAry;
             $responseCode   = self::SUCCESS_RESPONSE_CODE;
