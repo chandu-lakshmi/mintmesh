@@ -3499,9 +3499,12 @@ class PostGateway {
                     $careerLinksArr[] = $crLinks;
                 }
             }
+            #company details
+            $companyLogo = !empty($crSettings->logo) ? $crSettings->logo : '';
+            $description = !empty($crSettings->description) ? $crSettings->description : '';
             #return career details form here
-            $returnAry['career_logo']           = !empty($crSettings->career_logo) ? $crSettings->career_logo : !empty($crSettings->logo) ? $crSettings->logo : '';
-            $returnAry['career_description']    = !empty($crSettings->career_description) ? $crSettings->career_description : !empty($crSettings->description) ? $crSettings->description : '';
+            $returnAry['career_logo']           = !empty($crSettings->career_logo) ? $crSettings->career_logo : $companyLogo;
+            $returnAry['career_description']    = !empty($crSettings->career_description) ? $crSettings->career_description : $description;
             $returnAry['career_heroshot_image'] = !empty($crSettings->career_heroshot_image) ? $crSettings->career_heroshot_image : self::DEFAULT_CAREER_HEROSHOT_IMAGE;
             $returnAry['career_talent_network'] = !empty($crSettings->career_talent_network) ? $crSettings->career_talent_network : self::DEFAULT_CAREER_TALENT_NETWORK;
             $returnAry['career_links']          = $careerLinksArr;
