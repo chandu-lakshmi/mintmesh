@@ -1,5 +1,5 @@
 <?php namespace Mintmesh\Services\FileUploader;
-use Lang;
+use Lang,Image;
 use Config ;
 abstract class FileUploader {
         public $source, $destination , $documentid, $tenantid;
@@ -55,13 +55,12 @@ abstract class FileUploader {
       
             public function uploadToS3BySource($path) {
                         
-//            if (file_exists($path)) {
-                $fileinfo = pathinfo($path);
-                $sourceFile = $path;//$this->source->getpathName();
+                $fileinfo       = pathinfo($path);
+                $sourceFile     = $path;
                 $sourceMimeType = $fileinfo['extension'];
                 $ext = $fileinfo['extension'];
-                $sourceFileName = $fileinfo['filename'];// $this->source->getClientOriginalName();
-                $fileName = $sourceFileName."_".time().".".$ext;
+                $sourceFileName = $fileinfo['filename'];
+                $fileName       = $sourceFileName."_".time().".".$ext;
 
                 $s3 = \AWS::get('s3');                        
                 try {
@@ -81,11 +80,8 @@ abstract class FileUploader {
                 } catch (S3Exception $e) {
                         return $e->getMessage();
                 }
-//            } else {
-//                return false;
-//            }
-            
-        }       
+        }   
+        
         #tenant based resume Upload To S3
         public function resumeUploadToS3() {
                         
@@ -144,5 +140,22 @@ abstract class FileUploader {
 //                return false;
 //            }
             
-        }       
+        }  
+        
+        public function imageResize($width = null, $height = null, $source = '') {
+            
+            if(true && file_exists($source)){
+                $fileinfo       = pathinfo($source);
+                $extension      = $fileinfo['extension'];
+                $destination    = "uploads/resize_".time().".".$extension;
+                #image resize here
+                Image::make ( $source )->resize ( $width, $height, function ($constraint) {
+                        $constraint->aspectRatio ();
+                    } )->save( $destination );
+                unlink($source);
+                $source = $destination;
+            }
+            return $source;
+        }
+           
 }

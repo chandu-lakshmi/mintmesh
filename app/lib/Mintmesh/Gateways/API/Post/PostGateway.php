@@ -60,6 +60,7 @@ class PostGateway {
     const COMPANY_RESUME_AI_PARSED_STATUS = 2;
     const DEFAULT_CAREER_HEROSHOT_IMAGE = 'https://s3-us-west-2.amazonaws.com/mintmesh%2Fstg%2FcompanyLogo/attach_16910035641502174159_1502174167.jpg';
     const DEFAULT_CAREER_TALENT_NETWORK = 'enable';
+    const CAREER_HEROSHOT_IMAGE_HEIGHT = 336;
 
     protected $enterpriseRepository, $commonFormatter, $authorizer, $appEncodeDecode,$neoEnterpriseRepository,$userFileUploader,$job2,$paymentRepository;
     protected $createdNeoUser, $postValidator, $referralsRepository, $enterpriseGateway, $userGateway, $contactsRepository, $userEmailManager,$paymentGateway;
@@ -3451,17 +3452,17 @@ class PostGateway {
         }
         #request for career page logo upload to s3
         if(!empty($input['request_logo'])){
-            //upload the file
-            $this->userFileUploader->source      =  $input['request_logo'];
+            #upload the file
             $this->userFileUploader->destination = Config::get('constants.S3BUCKET_COMPANY_LOGO');
             $input['career_logo']                = $this->userFileUploader->uploadToS3BySource($input['request_logo']);
         }
         #request for career page heroshot image upload to s3
         if(!empty($input['request_heroshot'])){
-            //upload the file
-            $this->userFileUploader->source      =  $input['request_heroshot'];
+            #image Resize
+            $height = self::CAREER_HEROSHOT_IMAGE_HEIGHT;
+            $source = $this->userFileUploader->imageResize(null, $height, $input['request_heroshot']);
             $this->userFileUploader->destination = Config::get('constants.S3BUCKET_COMPANY_LOGO');
-            $input['career_heroshot_image']      = $this->userFileUploader->uploadToS3BySource($input['request_heroshot']);
+            $input['career_heroshot_image']      = $this->userFileUploader->uploadToS3BySource($source);//upload the file
         }
         #form neo4j input array here
         $neoInput['career_logo']            = !empty($input['career_logo']) ? $input['career_logo'] : '';
