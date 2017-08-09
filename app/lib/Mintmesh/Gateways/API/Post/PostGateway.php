@@ -59,7 +59,7 @@ class PostGateway {
     const COMPANY_RESUME_S3_MOVED_STATUS = 1;
     const COMPANY_RESUME_AI_PARSED_STATUS = 2;
     const DEFAULT_CAREER_HEROSHOT_IMAGE = 'https://s3-us-west-2.amazonaws.com/mintmesh%2Fstg%2FcompanyLogo/attach_16910035641502174159_1502174167.jpg';
-    const DEFAULT_CAREER_TALENT_NETWORK = 1;
+    const DEFAULT_CAREER_TALENT_NETWORK = 'enable';
 
     protected $enterpriseRepository, $commonFormatter, $authorizer, $appEncodeDecode,$neoEnterpriseRepository,$userFileUploader,$job2,$paymentRepository;
     protected $createdNeoUser, $postValidator, $referralsRepository, $enterpriseGateway, $userGateway, $contactsRepository, $userEmailManager,$paymentGateway;
@@ -3432,20 +3432,22 @@ class PostGateway {
     
     public function editCareerSettings($input) {
         
-        $data = $neoInput = $careerLinks = $careerLinksAry = array();
+        $data = $neoInput = $careerLinks = $careerLinksArr = array();
         $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
         #get get Career Settings here
         $crSettings = $this->neoPostRepository->getCareerSettings($companyCode);
         #form career links here
         $careerLinks = !empty($input['career_links']) ? $input['career_links'] : '';
         if($careerLinks){
-            foreach ($careerLinks as $row){    
-                $crLinks = array();
-                $crLinks['label']   = $row['label'];
-                $crLinks['url']     = $row['url'];
-                $careerLinksAry[]   = $crLinks;
+            foreach ($careerLinks as $row){
+                if(!empty($row['label']) && !empty($row['url'])){
+                    $crLinks = array();
+                    $crLinks['label']   = $row['label'];
+                    $crLinks['url']     = $row['url'];
+                    $careerLinksArr[]   = $crLinks;
+                }
             }
-            $careerLinksAry = json_encode($careerLinksAry);
+            $careerLinksArr = json_encode($careerLinksArr);
         }
         #request for career page logo upload to s3
         if(!empty($input['request_logo'])){
@@ -3466,7 +3468,7 @@ class PostGateway {
         $neoInput['career_description']     = !empty($input['career_description']) ? $input['career_description'] : '';
         $neoInput['career_heroshot_image']  = !empty($input['career_heroshot_image']) ? $input['career_heroshot_image'] : '';
         $neoInput['career_talent_network']  = !empty($input['career_talent_network']) ? $input['career_talent_network'] : '';
-        $neoInput['career_links']           = $careerLinksAry;
+        $neoInput['career_links']           = $careerLinksArr;
         #update career settings details here
         $result = $this->neoPostRepository->editCareerSettings($companyCode, $neoInput);
         
@@ -3489,14 +3491,16 @@ class PostGateway {
         #get get Career Settings here
         $crSettings = $this->neoPostRepository->getCareerSettings($companyCode);
         if($crSettings){
-            
+            #format career links here
             $careerLinks = !empty($crSettings->career_links) ? json_decode($crSettings->career_links) : '';
             if($careerLinks){
                 foreach($careerLinks as $val){
-                    $crLinks = array();
-                    $crLinks['label'] = $val->label;
-                    $crLinks['url']   = $val->url;
-                    $careerLinksArr[] = $crLinks;
+                    if(!empty($val->label) && !empty($val->url)){
+                        $crLinks = array();
+                        $crLinks['label'] = $val->label;
+                        $crLinks['url']   = $val->url;
+                        $careerLinksArr[] = $crLinks;
+                    }
                 }
             }
             #company details
