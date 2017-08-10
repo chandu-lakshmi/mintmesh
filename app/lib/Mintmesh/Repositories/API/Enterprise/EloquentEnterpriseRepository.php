@@ -1109,13 +1109,12 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         return $result;
     }
     
-    public function getCompanyPurchasedContacts($companyCode='') {
+    public function getCompanyPurchasedContacts($companyId = 0) {
         $result = FALSE;
-        if(!empty($companyCode)){
-            $sql = "select sum(s.employees_no) as count
-                from company_subscriptions s 
-                left join company c on s.company_id = c.id 
-                where c.code = '".$companyCode."'";
+        if(!empty($companyId)){
+            $sql = "select sum(employees_no) as count
+                    from company_subscriptions 
+                    where company_id =".$companyId;
             $sqlResult = DB::SELECT($sql);
             if (isset($sqlResult[0])){
                 $result = $sqlResult[0]->count;
@@ -1124,13 +1123,15 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         return $result;
     }
     
-    public function getCompanyActiveOrInactiveContactsCount($companyCode='') {
+    public function getCompanyActiveOrInactiveContactsCount($companyId = 0, $bucketType = 1) {
         $result = FALSE;
-        if(!empty($companyCode)){
-            $sql = "select count(t.id) as count
-                from contacts t
-                left join company c on t.company_id = c.id 
-                where c.code = '".$companyCode."' and (t.status = 'Active' or t.status='Inactive')";
+        if(!empty($companyId)){
+            $sql = "select count(id) as count
+                    from contacts
+                    where company_id =".$companyId." and (status = 'Active' or status='Inactive') 
+                        and id IN (select distinct(bc.contact_id) 
+                                    from buckets b
+                                    left join buckets_contacts bc on bc.bucket_id = b.id where b.bucket_type =".$bucketType.")";
             $sqlResult = DB::SELECT($sql);
             if (isset($sqlResult[0])){
                 $result = $sqlResult[0]->count;

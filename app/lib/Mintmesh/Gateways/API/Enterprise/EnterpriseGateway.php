@@ -2949,9 +2949,11 @@ class EnterpriseGateway {
         $this->enterpriseRepository->addCompanySubscriptionsLog($companyId, $employeesNo, $startDate, $endDate);
     }
     public function getCompanyAvailableContactsCount($companyCode=''){
-        
-        $activeCount    = $this->enterpriseRepository->getCompanyActiveOrInactiveContactsCount($companyCode);
-        $purchasedCount = $this->enterpriseRepository->getCompanyPurchasedContacts($companyCode);
+        #get company details with company code
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = !empty($companyDetails[0]->id)?$companyDetails[0]->id:0;
+        $activeCount    = $this->enterpriseRepository->getCompanyActiveOrInactiveContactsCount($companyId);
+        $purchasedCount = $this->enterpriseRepository->getCompanyPurchasedContacts($companyId);
         $available      = $purchasedCount - $activeCount;
         $available      = max($available,0);
         return $available;

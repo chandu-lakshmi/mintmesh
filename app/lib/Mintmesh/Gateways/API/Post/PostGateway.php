@@ -18,7 +18,6 @@ use Mintmesh\Repositories\API\Payment\PaymentRepository;
 use Mintmesh\Gateways\API\Payment\PaymentGateway;
 use Mintmesh\Repositories\API\User\NeoUserRepository;
 use Mintmesh\Repositories\API\Post\NeoPostRepository;
-//use Mintmesh\Repositories\API\Globals\NeoGlobalRepository;
 use Mintmesh\Gateways\API\User\UserGateway;
 use Mintmesh\Services\FileUploader\API\User\UserFileUploader;
 use Mintmesh\Services\Emails\API\User\UserEmailManager;
@@ -68,7 +67,6 @@ class PostGateway {
     public function __construct(NeoPostRepository $neoPostRepository, 
                                 UserRepository $userRepository, 
                                 NeoUserRepository $neoUserRepository, 
-//                                NeoGlobalRepository $neoGlobalRepository, 
                                 UserGateway $userGateway, 
                                 UserController $userController, 
                                 ReferralsGateway $referralsGateway, 
@@ -89,7 +87,6 @@ class PostGateway {
                                 
     ) {
         $this->neoPostRepository = $neoPostRepository;
-//        $this->neoGlobalRepository = $neoGlobalRepository;
         $this->userController = $userController;
         $this->userRepository = $userRepository;
         $this->neoEnterpriseRepository = $neoEnterpriseRepository;
