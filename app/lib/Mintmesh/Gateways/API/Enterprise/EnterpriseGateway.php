@@ -856,33 +856,33 @@ class EnterpriseGateway {
      */
     public function enterpriseBucketsList($input) {
         
-        $bucketsListArr = $resultsSetArr = array();    
-        $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser(); //get the logged in user details
-        $params['user_id'] = $this->loggedinUserDetails->id;
-        $params['company_id'] = $input['company_id'];
-        $resultsSetArr = $this->enterpriseRepository->getCompanyBucketsList($params); //get the import contact list
-
+        $bucketsListArr  = $resultsSetArr = $data = array();    
+        $companyId       = !empty($input['company_id']) ? $input['company_id'] : 0 ;
+        $bucketType      = !empty($input['bucket_type']) ? $input['bucket_type']  : 0 ;
+        #get the import contact list here
+        $resultsSetArr  = $this->enterpriseRepository->getCompanyBucketsList($companyId, $bucketType);
         if ($resultsSetArr) { 
             foreach ($resultsSetArr as $result){
                 $record = array();
                 $record['bucket_id']   = (int)$result->bucket_id;
                 $record['bucket_name'] = $result->bucket_name;
+                $record['bucket_type'] = $result->bucket_type;
                 $record['count']       = $result->count;
-                $record['company_id']       = $result->company_id;
-                array_push($bucketsListArr,$record);
-            }  
-            $totalCountObj = $this->enterpriseRepository->contactsCount($params);
+                $record['company_id']  = $result->company_id;
+                $bucketsListArr[]      = $record;
+            } 
+            #get total contacts count
+            $totalCountObj = $this->enterpriseRepository->contactsCount($companyId, $bucketType);
 
-            $responseCode = self::SUCCESS_RESPONSE_CODE;
-            $responseMsg = self::SUCCESS_RESPONSE_MESSAGE;
-            $message = array(Lang::get('MINTMESH.enterprise.retrieve_success'));
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+            $message        = array(Lang::get('MINTMESH.enterprise.retrieve_success'));
             $data['buckets_list'] = $bucketsListArr;
             $data['total_count']  = $totalCountObj->total_count;
         } else {
-            $responseCode = self::ERROR_RESPONSE_CODE;
-            $responseMsg = self::ERROR_RESPONSE_MESSAGE;
-            $message = array(Lang::get('MINTMESH.enterprise.retrieve_failure'));
-            $data = array();
+            $responseCode   = self::ERROR_RESPONSE_CODE;
+            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $message        = array(Lang::get('MINTMESH.enterprise.retrieve_failure'));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $message, $data,false);
     }
@@ -897,6 +897,7 @@ class EnterpriseGateway {
         $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser(); //get the logged in user details
         $params['user_id']      = $this->loggedinUserDetails->id;
         $params['company_id']   = $input['company_id'];
+        $params['bucket_type']  = !empty($input['bucket_type']) ? $input['bucket_type'] : '';
         $params['bucket_id']    = !empty($input['bucket_id']) ? $input['bucket_id'] : 0;
         $params['page_no']      = !empty($input['page_no']) ? $input['page_no'] : 0;
         $params['search']       = !empty($input['search']) ? $input['search'] : 0;
@@ -1782,21 +1783,23 @@ class EnterpriseGateway {
     public function createBucket($input){ 
         
         $response = $data = $setData = array();
-        $createdAt = gmdate("Y-m-d H:i:s");
+        $createdAt      = gmdate("Y-m-d H:i:s");
         $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser();
         $userEmailId    = $this->loggedinUserDetails->emailid;
         $userId         = $this->loggedinUserDetails->id;
-        $companyCode    = !empty($input['company_code'])?$input['company_code']:0;
-        $bucket     = !empty($input['bucket_name'])?$input['bucket_name']:'';
-        $bucketName = $this->appEncodeDecode->filterString($bucket);
+        $companyCode    = !empty($input['company_code']) ? $input['company_code'] : 0;
+        $bucket         = !empty($input['bucket_name']) ? $input['bucket_name'] : '';
+        $bucketType     = !empty($input['bucket_type']) ? $input['bucket_type'] : 1;
+        $bucketName     = $this->appEncodeDecode->filterString($bucket);
         // get the logged in user company details with company code here
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
-        $companyId      = !empty($companyDetails[0]->id)?$companyDetails[0]->id:0; 
-        $isBucketExist  = $this->enterpriseRepository->isBucketExist($userId, $companyId, $bucketName);
+        $companyId      = !empty($companyDetails[0]->id) ? $companyDetails[0]->id : 0; 
+        
+        $isBucketExist  = $this->enterpriseRepository->isBucketExist($companyId, $bucketName, $bucketType);
         //check if bucket name already existed
         if(empty($isBucketExist)){
             //create new bucket in MySql here
-            $bucketId = $this->enterpriseRepository->createNewBucket($userId, $companyId, $bucketName, $createdAt);
+            $bucketId = $this->enterpriseRepository->createNewBucket($userId, $companyId, $bucketName, $createdAt, $bucketType);
             if($bucketId){
                 //set data for Neo4j bucket creation here
                 $setData['default']         = 'dynamic';
@@ -1804,7 +1807,7 @@ class EnterpriseGateway {
                 $setData['bucket_name']     = $bucketName;
                 $setData['user_emailid']    = $userEmailId;
                 $setData['no_of_contacts']  = 0;
-                $this->neoEnterpriseRepository->createNeoNewBucket($setData, $bucketId);//create the new bucket node in Neo4j db
+                $this->neoEnterpriseRepository->createNeoNewBucket($setData, $bucketId, $bucketType);//create the new bucket node in Neo4j db
                 $this->neoEnterpriseRepository->createCompanyBucketRelation($companyId, $bucketId, $setData);//create relation between company node and bucket node 
                 //set the response data here
                 $response['bucket_name']    = $bucketName;

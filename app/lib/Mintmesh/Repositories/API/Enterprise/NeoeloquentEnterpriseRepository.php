@@ -155,9 +155,9 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
         }
         }
     }
-    public function createNeoNewBucket($input = array(), $bucketId = '') {
+    public function createNeoNewBucket($input = array(), $bucketId = '', $bucketType =1) {
         if (!empty($input['bucket_name']) && !empty($bucketId)) {
-            $queryString = "CREATE (n:Contact_bucket) set n.name='" . $input['bucket_name'] . "', n.mysql_id='" . $bucketId . "',n.type='" . $input['default'] . "' ";
+            $queryString = "CREATE (n:Contact_bucket) set n.name='" . $input['bucket_name'] . "', n.mysql_id='" . $bucketId . "',n.type='" . $input['default'] . "', n.bucket_type='" . $bucketType . "' ";
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             return $result;
