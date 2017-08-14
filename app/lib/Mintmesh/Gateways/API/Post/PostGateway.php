@@ -1537,8 +1537,8 @@ class PostGateway {
         $postCampaign   = $postContacts = $campaignContacts = $campaign = $createdCampaign = $campSchedule = $data = array();
         $loggedInUser   = $this->referralsGateway->getLoggedInUser();
         $this->neoLoggedInUserDetails   = $this->neoUserRepository->getNodeByEmailId($loggedInUser->emailid);
-        $userId = $this->neoLoggedInUserDetails->id;
-        $timeZone = !empty($input['time_zone'])?$input['time_zone']:0;  
+        $userId         = $this->neoLoggedInUserDetails->id;
+        $timeZone       = !empty($input['time_zone']) ? $input['time_zone'] : 0;  
         $company        = $this->enterpriseRepository->getUserCompanyMap($loggedInUser['id']);
         $companyId      = $company->company_id;
         $companyCode    = $company->code;
@@ -1568,43 +1568,48 @@ class PostGateway {
          
         $campaign['company_code'] = $companyCode;
         $campaign['status']       = Config::get('constants.POST.STATUSES.ACTIVE');
-         //upload the file
-         if (isset($input['ceos_file_name']) && !empty($input['ceos_file_name'])) {
-                //upload the file
-                $this->userFileUploader->source =  $input['ceos_file_name'];
+        
+            #file upload here
+            if (isset($input['ceos_file_name']) && !empty($input['ceos_file_name'])) {
+                //upload the ceos file
+                $this->userFileUploader->source      =  $input['ceos_file_name'];
                 $this->userFileUploader->destination = Config::get('constants.S3BUCKET_CAMPAIGN_IMAGES');
                 $renamedFileName = $this->userFileUploader->uploadToS3BySource($input['ceos_file_name']);
                 $campaign['ceos_file'] = $renamedFileName;
-                $campaign['ceos_name'] = !empty($input['ceos_org_name'])?$input['ceos_org_name']:'';
+                $campaign['ceos_name'] = !empty($input['ceos_org_name']) ? $input['ceos_org_name'] : '';
             }
             if (isset($input['emp_file_name']) && !empty($input['emp_file_name'])) {
-                //upload the file
-                $this->userFileUploader->source =  $input['emp_file_name'];
+                //upload the emp file
+                $this->userFileUploader->source      =  $input['emp_file_name'];
                 $this->userFileUploader->destination = Config::get('constants.S3BUCKET_CAMPAIGN_IMAGES');
                 $renamedFileName = $this->userFileUploader->uploadToS3BySource($input['emp_file_name']);
                 $campaign['emp_file'] = $renamedFileName;
-                $campaign['emp_name'] = !empty($input['emp_org_name'])?$input['emp_org_name']:'';
+                $campaign['emp_name'] = !empty($input['emp_org_name']) ? $input['emp_org_name'] : '';
             }
+            //edit ceos file s3 path
             if(isset($input['ceos_file_name_s3']) && !empty($input['ceos_file_name_s3'])){
                 $campaign['ceos_file'] = $input['ceos_file_name_s3'];
-                $campaign['ceos_name'] = !empty($input['ceos_org_name_s3'])?$input['ceos_org_name_s3']:'';
+                $campaign['ceos_name'] = !empty($input['ceos_org_name_s3']) ? $input['ceos_org_name_s3'] : '';
             }
+            //edit emp file s3 path
             if(isset($input['emp_file_name_s3']) && !empty($input['emp_file_name_s3'])){
                 $campaign['emp_file'] = $input['emp_file_name_s3'];
-                $campaign['emp_name'] = !empty($input['emp_org_name_s3'])?$input['emp_org_name_s3']:'';
+                $campaign['emp_name'] = !empty($input['emp_org_name_s3']) ? $input['emp_org_name_s3'] : '';
             }
-        if($requestType == 'edit'){            
-            $campaign['ceos_name'] = !empty($campaign['ceos_name'])?$campaign['ceos_name']:'';
-            $campaign['ceos_file'] = !empty($campaign['ceos_file'])?$campaign['ceos_file']:'';
-            $campaign['emp_name'] = !empty($campaign['emp_name'])?$campaign['emp_name']:'';
-            $campaign['emp_file'] = !empty($campaign['emp_file'])?$campaign['emp_file']:'';
-      
+        #check add/edit request    
+        if($requestType == 'edit'){ 
             //updating Campaign details here
-           $editedCampaign = $this->neoPostRepository->editCampaignAndCompanyRelation($companyCode, $campaignId, $campaign, $userEmailId);
+            $campaign['ceos_name']  = !empty($campaign['ceos_name']) ? $campaign['ceos_name'] : '';
+            $campaign['ceos_file']  = !empty($campaign['ceos_file']) ? $campaign['ceos_file'] : '';
+            $campaign['emp_name']   = !empty($campaign['emp_name']) ? $campaign['emp_name'] : '';
+            $campaign['emp_file']   = !empty($campaign['emp_file']) ? $campaign['emp_file'] : '';
+           $editedCampaign          = $this->neoPostRepository->editCampaignAndCompanyRelation($companyCode, $campaignId, $campaign, $userEmailId);
+           
         }  else {
             //creating Campaign And Company Relation here
             $createdCampaign = $this->neoPostRepository->createCampaignAndCompanyRelation($companyCode, $campaign, $userEmailId);
             if (isset($createdCampaign[0]) && isset($createdCampaign[0][0])) {
+                
                 $campaignId = $createdCampaign[0][0]->getID(); 
                 $data['campaign_name']    = $createdCampaign[0][0]->campaign_name;
                 $data['campaign_type']    = $createdCampaign[0][0]->campaign_type;
@@ -1614,64 +1619,67 @@ class PostGateway {
                 $url = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
                 $biltyUrl = $this->urlShortner($url);
                 $data['bittly_url'] = $biltyUrl;
+                //latitude details
                 if(!empty($createdCampaign[0][0]->latitude)){
                     $data['latitude'] = $createdCampaign[0][0]->latitude;
                 }
+                //longitude details
                 if(!empty($createdCampaign[0][0]->longitude)){
                     $data['longitude'] = $createdCampaign[0][0]->longitude;
                 }
+                //if onsite location 
                 if(strtolower($data['location_type']) == 'onsite'){
-                $location = array();
-                $location['address']          = $createdCampaign[0][0]->address;
-                $location['state']            = $createdCampaign[0][0]->state;
-                $location['country']          = $createdCampaign[0][0]->country;
-                $location['city']             = $createdCampaign[0][0]->city;
-                $location['zip_code']         = $createdCampaign[0][0]->zip_code;
-                $data['location'] = $location;
-            }
+                    $location = array();
+                    $location['address']          = $createdCampaign[0][0]->address;
+                    $location['state']            = $createdCampaign[0][0]->state;
+                    $location['country']          = $createdCampaign[0][0]->country;
+                    $location['city']             = $createdCampaign[0][0]->city;
+                    $location['zip_code']         = $createdCampaign[0][0]->zip_code;
+                    $data['location'] = $location;
+                }
             }
         }
         //checking if campaign created or not
         if($campaignId){
             if(!empty($campSchedule)){
-                    //create Campaign Schedule Relation here
-                    foreach($campSchedule as $schedule){
-                        $scheduleAttrs  = array();
-                        $scheduleId     = !empty($schedule['schedule_id'])?$schedule['schedule_id']:'';//if update
-                        $scheduleAttrs['start_date'] = $schedule['start_on_date'];
-                        $scheduleAttrs['start_time'] = $schedule['start_on_time'];
-                        $gmtstart_date = $schedule['start_on_date']." " .$schedule['start_on_time'];    
-                        $scheduleAttrs['gmt_start_date'] = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezoneGmt($gmtstart_date,$timeZone)));  
-                        $scheduleAttrs['end_date']   = $schedule['end_on_date'];
-                        $scheduleAttrs['end_time']   = $schedule['end_on_time'];
-                        $gmtend_date = $schedule['end_on_date']." " .$schedule['end_on_time'];
-                        $scheduleAttrs['gmt_end_date'] = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezoneGmt($gmtend_date,$timeZone)));   
-                        $scheduleAttrs['company_code'] = $companyCode;
-                        
-                        if(!empty($scheduleId)){
-                            //update Campaign Schedule here
-                            $campaignSchedule = $this->neoPostRepository->updateCampaignScheduleRelation($scheduleId, $campaignId, $scheduleAttrs, $userEmailId);
-                        }  else {
-                            //create Campaign Schedule here
-                            $campaignSchedule = $this->neoPostRepository->createCampaignScheduleRelation($campaignId, $scheduleAttrs, $userEmailId);
-                            $cmpSchedule = $campSchedule = array();
-                            foreach ($campaignSchedule as $k => $value){
-                                $value = $value[0];
-                                $cmpSchedule['schedule_id']         = $value->getID();
-                                $gmtstart_date                      = $value->start_date." " .$value->start_time;
-                                $gmt_start_on_date                  = $this->appEncodeDecode->UserTimezone($gmtstart_date,$input['time_zone']);
-                                $cmpSchedule['gmt_start_on_date']   = !empty($gmt_start_on_date)?$gmt_start_on_date:'';
-                                $gmtend_date                        = $value->end_date." " .$value->end_time;
-                                $gmt_end_on_date                    = $this->appEncodeDecode->UserTimezone($gmtend_date,$input['time_zone']);
-                                $cmpSchedule['gmt_end_on_date']     = !empty($gmt_end_on_date)?$gmt_end_on_date:'';
-                                $cmpSchedule['start_on_date']       = date('Y/m/d', strtotime($value->start_date));
-                                $cmpSchedule['start_on_time']       = $value->start_time;
-                                $cmpSchedule['end_on_date']         = date('Y/m/d', strtotime($value->end_date));
-                                $cmpSchedule['end_on_time']         = $value->end_time;
-                                $campSchedule[] = $cmpSchedule; 
-                            }
-                            }
+                //create Campaign Schedule Relation here
+                foreach($campSchedule as $schedule){
+                    $scheduleAttrs  = array();
+                    $scheduleId     = !empty($schedule['schedule_id'])?$schedule['schedule_id']:'';//if update
+                    $scheduleAttrs['start_date'] = $schedule['start_on_date'];
+                    $scheduleAttrs['start_time'] = $schedule['start_on_time'];
+                    $gmtstart_date = $schedule['start_on_date']." " .$schedule['start_on_time'];    
+                    $scheduleAttrs['gmt_start_date'] = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezoneGmt($gmtstart_date,$timeZone)));  
+                    $scheduleAttrs['end_date']   = $schedule['end_on_date'];
+                    $scheduleAttrs['end_time']   = $schedule['end_on_time'];
+                    $gmtend_date = $schedule['end_on_date']." " .$schedule['end_on_time'];
+                    $scheduleAttrs['gmt_end_date'] = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezoneGmt($gmtend_date,$timeZone)));   
+                    $scheduleAttrs['company_code'] = $companyCode;
+
+                    if(!empty($scheduleId)){
+                        //update Campaign Schedule here
+                        $campaignSchedule = $this->neoPostRepository->updateCampaignScheduleRelation($scheduleId, $campaignId, $scheduleAttrs, $userEmailId);
+                    }  else {
+                        //create Campaign Schedule here
+                        $campaignSchedule = $this->neoPostRepository->createCampaignScheduleRelation($campaignId, $scheduleAttrs, $userEmailId);
+                        $cmpSchedule = $campSchedule = array();
+                        foreach ($campaignSchedule as $k => $value){
+                            $value = $value[0];
+                            $cmpSchedule['schedule_id']         = $value->getID();
+                            $gmtstart_date                      = $value->start_date." " .$value->start_time;
+                            $gmt_start_on_date                  = $this->appEncodeDecode->UserTimezone($gmtstart_date,$input['time_zone']);
+                            $cmpSchedule['gmt_start_on_date']   = !empty($gmt_start_on_date) ? $gmt_start_on_date : '';
+                            $gmtend_date                        = $value->end_date." " .$value->end_time;
+                            $gmt_end_on_date                    = $this->appEncodeDecode->UserTimezone($gmtend_date,$input['time_zone']);
+                            $cmpSchedule['gmt_end_on_date']     = !empty($gmt_end_on_date) ? $gmt_end_on_date : '';
+                            $cmpSchedule['start_on_date']       = date('Y/m/d', strtotime($value->start_date));
+                            $cmpSchedule['start_on_time']       = $value->start_time;
+                            $cmpSchedule['end_on_date']         = date('Y/m/d', strtotime($value->end_date));
+                            $cmpSchedule['end_on_time']         = $value->end_time;
+                            $campSchedule[] = $cmpSchedule; 
+                        }
                     }
+                }
             }
             //checking if user selected at least one job or not
             if(!empty($campPostIds)){
@@ -1683,8 +1691,8 @@ class PostGateway {
                     #check Post And Campaign Relation
                     $postCampaignRes = $this->neoPostRepository->checkPostAndCampaignRelation($postId, $campaignId);
                     if(empty($postCampaignRes)){
-                    //creating Campaign And Post Relation here
-                    $postCampaignRes = $this->neoPostRepository->createPostAndCampaignRelation($postId, $campaignId, $postCampaign);
+                        //creating Campaign And Post Relation here
+                        $postCampaignRes = $this->neoPostRepository->createPostAndCampaignRelation($postId, $campaignId, $postCampaign);
                     }
                     //creating Post and contacts Relation here
                     if(!empty($postCampaignRes) && !empty($campBucketIds)){
@@ -1693,15 +1701,15 @@ class PostGateway {
                         $postContacts['company_code'] = $companyCode;
                         $this->createRelationBwPostAndContacts($postId, $postContacts, $campBucketIds, $loggedInUser, $objCompany);
                     }
-                     $vacancies = 0;
-                     foreach($postCampaignRes as $posts){
+                    $vacancies = 0;
+                    foreach($postCampaignRes as $posts){
                         $post = array();
-                        $postDetails = $this->referralsGateway->formPostDetailsArray($posts[0]);
-                        $post['post_id'] = $postDetails['post_id'];
-                        $post['name'] = $postDetails['service_name'];
+                        $postDetails        = $this->referralsGateway->formPostDetailsArray($posts[0]);
+                        $post['post_id']    = $postDetails['post_id'];
+                        $post['name']       = $postDetails['service_name'];
                         $post['no_of_vacancies'] = $postDetails['no_of_vacancies'];
-                        $postAry[] = $post;
-                        $vacancies += !empty($postDetails['no_of_vacancies'])?$postDetails['no_of_vacancies']:'';;
+                        $postAry[]  = $post;
+                        $vacancies += !empty($postDetails['no_of_vacancies']) ? $postDetails['no_of_vacancies'] : '';
                         }
                         $data['total_vacancies'] = $vacancies;
                     }
@@ -1710,13 +1718,13 @@ class PostGateway {
             //checking if user selected at least one bucket or not
             if(!empty($campBucketIds)){
                 $campaignContacts['company_code']   = $companyCode;
-                $campaignContacts['user_name']      = !empty($loggedInUser->fullname)?$loggedInUser->fullname:$loggedInUser->firstname;
+                $campaignContacts['user_name']      = !empty($loggedInUser->fullname) ? $loggedInUser->fullname : $loggedInUser->firstname;
                 $campaignContacts['time_zone']      = $input['time_zone'];
                 $campaignContacts['company_id']     = $companyId;
                 $campaignContacts['company_name']   = $company->name;
                 $campaignContacts['company_logo']   = $company->logo;
-                $campaignContacts['campaign_name']  = !empty($createdCampaign[0][0]->campaign_name)?$createdCampaign[0][0]->campaign_name:$editedCampaign[0][0]->campaign_name; 
-                $campaignContacts['campaign_type']  = !empty($createdCampaign[0][0]->campaign_type)?$createdCampaign[0][0]->campaign_type:$editedCampaign[0][0]->campaign_type; 
+                $campaignContacts['campaign_name']  = !empty($createdCampaign[0][0]->campaign_name) ? $createdCampaign[0][0]->campaign_name : $editedCampaign[0][0]->campaign_name; 
+                $campaignContacts['campaign_type']  = !empty($createdCampaign[0][0]->campaign_type) ? $createdCampaign[0][0]->campaign_type : $editedCampaign[0][0]->campaign_type; 
                 
                 #company logo Aspect Ratio details for email template
                 $companyLogoWidth  = $companyLogoHeight = '';
@@ -1730,11 +1738,11 @@ class PostGateway {
                 
                 if((isset($createdCampaign[0][0]) && $createdCampaign[0][0]->location_type === 'onsite')){
                     
-                   $campaignContacts['campaign_location'] = !empty($createdCampaign[0][0]->zip_code)?$createdCampaign[0][0]->address.', '.$createdCampaign[0][0]->city.', '.$createdCampaign[0][0]->zip_code.', '.$createdCampaign[0][0]->state.', '.$createdCampaign[0][0]->country:$createdCampaign[0][0]->address.', '.$createdCampaign[0][0]->city.', '.$createdCampaign[0][0]->state.', '.$createdCampaign[0][0]->country;
-                }else if(isset($editedCampaign[0][0]) && $editedCampaign[0][0]->location_type === 'onsite'){
-                    $campaignContacts['campaign_location'] = !empty($editedCampaign[0][0]->zip_code)?$editedCampaign[0][0]->address.', '.$editedCampaign[0][0]->city.', '.$editedCampaign[0][0]->zip_code.', '.$editedCampaign[0][0]->state.', '.$editedCampaign[0][0]->country:$editedCampaign[0][0]->address.', '.$editedCampaign[0][0]->city.', '.$editedCampaign[0][0]->state.', '.$editedCampaign[0][0]->country;
-                }
-                else{
+                   $campaignContacts['campaign_location'] = !empty($createdCampaign[0][0]->zip_code) ? $createdCampaign[0][0]->address.', '.$createdCampaign[0][0]->city.', '.$createdCampaign[0][0]->zip_code.', '.$createdCampaign[0][0]->state.', '.$createdCampaign[0][0]->country : $createdCampaign[0][0]->address.', '.$createdCampaign[0][0]->city.', '.$createdCampaign[0][0]->state.', '.$createdCampaign[0][0]->country;
+                } else if (isset($editedCampaign[0][0]) && $editedCampaign[0][0]->location_type === 'onsite'){
+                    
+                    $campaignContacts['campaign_location'] = !empty($editedCampaign[0][0]->zip_code) ? $editedCampaign[0][0]->address.', '.$editedCampaign[0][0]->city.', '.$editedCampaign[0][0]->zip_code.', '.$editedCampaign[0][0]->state.', '.$editedCampaign[0][0]->country : $editedCampaign[0][0]->address.', '.$editedCampaign[0][0]->city.', '.$editedCampaign[0][0]->state.', '.$editedCampaign[0][0]->country;
+                } else {
                     $campaignContacts['campaign_location'] = 'online'; 
                 }
                 $campaignContacts['campaign_start_date'] = $campaignSchedule[0][0]->gmt_start_date;
@@ -1743,16 +1751,16 @@ class PostGateway {
                 $this->createRelationBwCampaignAndContacts($campaignId, $campaignContacts, $campBucketIds, $loggedInUser, $objCompany);
             }
             if(isset($createdCampaign[0][0]->ceos_file)){
-                $data['ceos_file'] = !empty($createdCampaign[0][0]->ceos_file)?$createdCampaign[0][0]->ceos_file:'';
+                $data['ceos_file'] = !empty($createdCampaign[0][0]->ceos_file) ? $createdCampaign[0][0]->ceos_file : '';
             }
             if(isset($createdCampaign[0][0]->emp_file)){
-                $data['emp_file'] = !empty($createdCampaign[0][0]->emp_file)?$createdCampaign[0][0]->emp_file:'';
+                $data['emp_file'] = !empty($createdCampaign[0][0]->emp_file) ? $createdCampaign[0][0]->emp_file : '';
             }
             if(isset($editedCampaign[0][0]->ceos_file)){
-                $data['ceos_file'] = !empty($editedCampaign[0][0]->ceos_file)?$editedCampaign[0][0]->ceos_file:'';
+                $data['ceos_file'] = !empty($editedCampaign[0][0]->ceos_file) ? $editedCampaign[0][0]->ceos_file : '';
             }
             if(isset($editedCampaign[0][0]->emp_file)){
-                $data['emp_file'] = !empty($editedCampaign[0][0]->emp_file)?$editedCampaign[0][0]->emp_file:'';
+                $data['emp_file'] = !empty($editedCampaign[0][0]->emp_file) ? $editedCampaign[0][0]->emp_file : '';
             }
             foreach($campBucketIds as $buckets){
                 $bucket = '';
