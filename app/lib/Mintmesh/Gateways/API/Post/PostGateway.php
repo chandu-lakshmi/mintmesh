@@ -1535,6 +1535,7 @@ class PostGateway {
         $objCompany     = new \stdClass();
         $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
         $postCampaign   = $postContacts = $campaignContacts = $campaign = $createdCampaign = $campSchedule = $data = array();
+        $editedCampaign = $editedCampaignArr = $createdCampaignArr = $createdCampaign = array();
         $loggedInUser   = $this->referralsGateway->getLoggedInUser();
         $this->neoLoggedInUserDetails   = $this->neoUserRepository->getNodeByEmailId($loggedInUser->emailid);
         $userId         = $this->neoLoggedInUserDetails->id;
@@ -1647,39 +1648,42 @@ class PostGateway {
             $campaign['ceos_file']  = !empty($campaign['ceos_file']) ? $campaign['ceos_file'] : '';
             $campaign['emp_name']   = !empty($campaign['emp_name']) ? $campaign['emp_name'] : '';
             $campaign['emp_file']   = !empty($campaign['emp_file']) ? $campaign['emp_file'] : '';
-           $editedCampaign          = $this->neoPostRepository->editCampaignAndCompanyRelation($companyCode, $campaignId, $campaign, $userEmailId);
+            $editedCampaignArr      = $this->neoPostRepository->editCampaignAndCompanyRelation($companyCode, $campaignId, $campaign, $userEmailId);
+            if(isset($editedCampaignArr[0]) && isset($editedCampaignArr[0][0])){
+                $editedCampaign = $editedCampaignArr[0][0];
+            }
            
         }  else {
             //creating Campaign And Company Relation here
-            $createdCampaign = $this->neoPostRepository->createCampaignAndCompanyRelation($companyCode, $campaign, $userEmailId);
-            if (isset($createdCampaign[0]) && isset($createdCampaign[0][0])) {
-                
-                $campaignId = $createdCampaign[0][0]->getID(); 
-                $data['campaign_name']    = $createdCampaign[0][0]->campaign_name;
-                $data['campaign_type']    = $createdCampaign[0][0]->campaign_type;
-                $data['total_vacancies']  = $createdCampaign[0][0]->total_vacancies;
-                $data['location_type']    = $createdCampaign[0][0]->location_type;
+            $createdCampaignArr = $this->neoPostRepository->createCampaignAndCompanyRelation($companyCode, $campaign, $userEmailId);
+            if (isset($createdCampaignArr[0]) && isset($createdCampaignArr[0][0])) {
+                $createdCampaign = $createdCampaignArr[0][0];
+                $campaignId      = $createdCampaign->getID(); 
+                $data['campaign_name']    = $createdCampaign->campaign_name;
+                $data['campaign_type']    = $createdCampaign->campaign_type;
+                $data['total_vacancies']  = $createdCampaign->total_vacancies;
+                $data['location_type']    = $createdCampaign->location_type;
                 $data['camp_ref']         = $refCode = MyEncrypt::encrypt_blowfish($campaignId.'_'.$userId,Config::get('constants.MINTMESH_ENCCODE'));
                 $url = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
                 $biltyUrl = $this->urlShortner($url);
                 $data['bittly_url'] = $biltyUrl;
                 //latitude details
-                if(!empty($createdCampaign[0][0]->latitude)){
-                    $data['latitude'] = $createdCampaign[0][0]->latitude;
+                if(!empty($createdCampaign->latitude)){
+                    $data['latitude'] = $createdCampaign->latitude;
                 }
                 //longitude details
-                if(!empty($createdCampaign[0][0]->longitude)){
-                    $data['longitude'] = $createdCampaign[0][0]->longitude;
+                if(!empty($createdCampaign->longitude)){
+                    $data['longitude'] = $createdCampaign->longitude;
                 }
                 //if onsite location 
                 if(strtolower($data['location_type']) == 'onsite'){
                     $location = array();
-                    $location['address']          = $createdCampaign[0][0]->address;
-                    $location['state']            = $createdCampaign[0][0]->state;
-                    $location['country']          = $createdCampaign[0][0]->country;
-                    $location['city']             = $createdCampaign[0][0]->city;
-                    $location['zip_code']         = $createdCampaign[0][0]->zip_code;
-                    $data['location'] = $location;
+                    $location['address']    = $createdCampaign->address;
+                    $location['state']      = $createdCampaign->state;
+                    $location['country']    = $createdCampaign->country;
+                    $location['city']       = $createdCampaign->city;
+                    $location['zip_code']   = $createdCampaign->zip_code;
+                    $data['location']       = $location;
                 }
             }
         }
@@ -1690,15 +1694,15 @@ class PostGateway {
                 foreach($campSchedule as $schedule){
                     $scheduleAttrs  = array();
                     $scheduleId     = !empty($schedule['schedule_id'])?$schedule['schedule_id']:'';//if update
-                    $scheduleAttrs['start_date'] = $schedule['start_on_date'];
-                    $scheduleAttrs['start_time'] = $schedule['start_on_time'];
-                    $gmtstart_date = $schedule['start_on_date']." " .$schedule['start_on_time'];    
-                    $scheduleAttrs['gmt_start_date'] = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezoneGmt($gmtstart_date,$timeZone)));  
-                    $scheduleAttrs['end_date']   = $schedule['end_on_date'];
-                    $scheduleAttrs['end_time']   = $schedule['end_on_time'];
-                    $gmtend_date = $schedule['end_on_date']." " .$schedule['end_on_time'];
-                    $scheduleAttrs['gmt_end_date'] = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezoneGmt($gmtend_date,$timeZone)));   
-                    $scheduleAttrs['company_code'] = $companyCode;
+                    $scheduleAttrs['start_date']    = $schedule['start_on_date'];
+                    $scheduleAttrs['start_time']    = $schedule['start_on_time'];
+                    $gmtstart_date                  = $schedule['start_on_date']." " .$schedule['start_on_time'];    
+                    $scheduleAttrs['gmt_start_date']= date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezoneGmt($gmtstart_date,$timeZone)));  
+                    $scheduleAttrs['end_date']      = $schedule['end_on_date'];
+                    $scheduleAttrs['end_time']      = $schedule['end_on_time'];
+                    $gmtend_date                    = $schedule['end_on_date']." " .$schedule['end_on_time'];
+                    $scheduleAttrs['gmt_end_date']  = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezoneGmt($gmtend_date,$timeZone)));   
+                    $scheduleAttrs['company_code']  = $companyCode;
 
                     if(!empty($scheduleId)){
                         //update Campaign Schedule here
@@ -1767,8 +1771,8 @@ class PostGateway {
                 $campaignContacts['company_id']     = $companyId;
                 $campaignContacts['company_name']   = $company->name;
                 $campaignContacts['company_logo']   = $company->logo;
-                $campaignContacts['campaign_name']  = !empty($createdCampaign[0][0]->campaign_name) ? $createdCampaign[0][0]->campaign_name : $editedCampaign[0][0]->campaign_name; 
-                $campaignContacts['campaign_type']  = !empty($createdCampaign[0][0]->campaign_type) ? $createdCampaign[0][0]->campaign_type : $editedCampaign[0][0]->campaign_type; 
+                $campaignContacts['campaign_name']  = !empty($createdCampaign->campaign_name) ? $createdCampaign->campaign_name : $editedCampaign->campaign_name; 
+                $campaignContacts['campaign_type']  = !empty($createdCampaign->campaign_type) ? $createdCampaign->campaign_type : $editedCampaign->campaign_type; 
                 
                 #company logo Aspect Ratio details for email template
                 $companyLogoWidth  = $companyLogoHeight = '';
@@ -1780,31 +1784,31 @@ class PostGateway {
                 $campaignContacts['company_logo_width']  = $companyLogoWidth;
                 $campaignContacts['company_logo_height'] = $companyLogoHeight;
                 
-                if((isset($createdCampaign[0][0]) && $createdCampaign[0][0]->location_type === 'onsite')){
+                if((!empty($createdCampaign) && $createdCampaign->location_type === 'onsite')){
                     
-                   $campaignContacts['campaign_location'] = !empty($createdCampaign[0][0]->zip_code) ? $createdCampaign[0][0]->address.', '.$createdCampaign[0][0]->city.', '.$createdCampaign[0][0]->zip_code.', '.$createdCampaign[0][0]->state.', '.$createdCampaign[0][0]->country : $createdCampaign[0][0]->address.', '.$createdCampaign[0][0]->city.', '.$createdCampaign[0][0]->state.', '.$createdCampaign[0][0]->country;
-                } else if (isset($editedCampaign[0][0]) && $editedCampaign[0][0]->location_type === 'onsite'){
+                   $campaignContacts['campaign_location'] = !empty($createdCampaign->zip_code) ? $createdCampaign->address.', '.$createdCampaign->city.', '.$createdCampaign->zip_code.', '.$createdCampaign->state.', '.$createdCampaign->country : $createdCampaign->address.', '.$createdCampaign->city.', '.$createdCampaign->state.', '.$createdCampaign->country;
+                } else if (!empty($editedCampaign) && $editedCampaign->location_type === 'onsite'){
                     
-                    $campaignContacts['campaign_location'] = !empty($editedCampaign[0][0]->zip_code) ? $editedCampaign[0][0]->address.', '.$editedCampaign[0][0]->city.', '.$editedCampaign[0][0]->zip_code.', '.$editedCampaign[0][0]->state.', '.$editedCampaign[0][0]->country : $editedCampaign[0][0]->address.', '.$editedCampaign[0][0]->city.', '.$editedCampaign[0][0]->state.', '.$editedCampaign[0][0]->country;
+                    $campaignContacts['campaign_location'] = !empty($editedCampaign->zip_code) ? $editedCampaign->address.', '.$editedCampaign->city.', '.$editedCampaign->zip_code.', '.$editedCampaign->state.', '.$editedCampaign->country : $editedCampaign->address.', '.$editedCampaign->city.', '.$editedCampaign->state.', '.$editedCampaign->country;
                 } else {
                     $campaignContacts['campaign_location'] = 'online'; 
                 }
                 $campaignContacts['campaign_start_date'] = $campaignSchedule[0][0]->gmt_start_date;
-                $campaignContacts['campaign_end_date'] = $campaignSchedule[0][0]->gmt_end_date;
+                $campaignContacts['campaign_end_date']   = $campaignSchedule[0][0]->gmt_end_date;
                 //creating Campaign And contacts Relation here
                 $this->createRelationBwCampaignAndContacts($campaignId, $campaignContacts, $campBucketIds, $loggedInUser, $objCompany);
             }
-            if(isset($createdCampaign[0][0]->ceos_file)){
-                $data['ceos_file'] = !empty($createdCampaign[0][0]->ceos_file) ? $createdCampaign[0][0]->ceos_file : '';
+            if(!empty($createdCampaign->ceos_file)){
+                $data['ceos_file'] = $createdCampaign->ceos_file ;
             }
-            if(isset($createdCampaign[0][0]->emp_file)){
-                $data['emp_file'] = !empty($createdCampaign[0][0]->emp_file) ? $createdCampaign[0][0]->emp_file : '';
+            if(!empty($createdCampaign->emp_file)){
+                $data['emp_file'] = $createdCampaign->emp_file;
             }
-            if(isset($editedCampaign[0][0]->ceos_file)){
-                $data['ceos_file'] = !empty($editedCampaign[0][0]->ceos_file) ? $editedCampaign[0][0]->ceos_file : '';
+            if(!empty($editedCampaign->ceos_file)){
+                $data['ceos_file'] = $editedCampaign->ceos_file;
             }
-            if(isset($editedCampaign[0][0]->emp_file)){
-                $data['emp_file'] = !empty($editedCampaign[0][0]->emp_file) ? $editedCampaign[0][0]->emp_file : '';
+            if(!empty($editedCampaign->emp_file)){
+                $data['emp_file'] = $editedCampaign->emp_file;
             }
             foreach($campBucketIds as $buckets){
                 $bucket = '';
@@ -1911,82 +1915,91 @@ class PostGateway {
         $loggedInUser   = $this->referralsGateway->getLoggedInUser();
         $this->neoLoggedInUserDetails   = $this->neoUserRepository->getNodeByEmailId($loggedInUser->emailid);
         $userId = $this->neoLoggedInUserDetails->id;
-        $input['time_zone'] = !empty($input['time_zone'])?$input['time_zone']:0;
-        $companyCode    = !empty($input['company_code'])?$input['company_code']:'';
-        $campaignId     = !empty($input['campaign_id'])?$input['campaign_id']:'';
+        
+        $input['time_zone'] = !empty($input['time_zone']) ? $input['time_zone'] : 0;
+        $companyCode    = !empty($input['company_code']) ? $input['company_code'] : '';
+        $campaignId     = !empty($input['campaign_id']) ? $input['campaign_id'] : '';
         $refCode        = MyEncrypt::encrypt_blowfish($campaignId.'_'.$userId,Config::get('constants.MINTMESH_ENCCODE'));
         $campRes        = $this->neoPostRepository->getCampaignById($campaignId);
+        
         if($campRes){
             //form response details here
             $returnData['campaign_name']    = $campRes->campaign_name;
             $returnData['campaign_type']    = $campRes->campaign_type;
             $returnData['total_vacancies']  = $campRes->total_vacancies;
             $returnData['location_type']    = $campRes->location_type;
+            #career page settings
+            $returnData['career_logo']              = !empty($campRes->career_logo) ? $campRes->career_logo : ''; 
+            $returnData['career_description']       = !empty($campRes->career_description) ? $campRes->career_description : '';
+            $returnData['career_heroshot_image']    = !empty($campRes->career_heroshot_image) ? $campRes->career_heroshot_image : '';
+            $returnData['career_talent_network']    = !empty($campRes->career_talent_network) ? $campRes->career_talent_network : '';
+            $returnData['career_links']             = !empty($campRes->career_links) ? json_decode($campRes->career_links) : '';
+            
             $returnData['camp_ref']         = $refCode;
             if($campRes->location_type == 'ACTIVE'){
                $returnData['status'] = 'OPEN'; 
             }else{
                     $returnData['status'] = 'CLOSED'; 
             }
-            $filesAry[0]['ceos_file_name'] = !empty($campRes->ceos_file)?$campRes->ceos_file:'';  
-            $filesAry[0]['ceos_org_name'] = !empty($campRes->ceos_name)?$campRes->ceos_name:'';
-            $filesAry[1]['emp_file_name'] = !empty($campRes->emp_file)?$campRes->emp_file:'';  
-            $filesAry[1]['emp_org_name'] = !empty($campRes->emp_name)?$campRes->emp_name:'';
+            $filesAry[0]['ceos_file_name']  = !empty($campRes->ceos_file) ? $campRes->ceos_file : '';  
+            $filesAry[0]['ceos_org_name']   = !empty($campRes->ceos_name) ? $campRes->ceos_name : '';
+            $filesAry[1]['emp_file_name']   = !empty($campRes->emp_file) ? $campRes->emp_file : '';  
+            $filesAry[1]['emp_org_name']    = !empty($campRes->emp_name) ? $campRes->emp_name : '';
             if((!empty($campRes->ceos_file) && !empty($campRes->ceos_name)) || (!empty($campRes->emp_file) && !empty($campRes->emp_name))){
-            $returnData['files'] = $filesAry;
+                $returnData['files'] = $filesAry;
             }
             if(!empty($campRes->latitude)){
-            $returnData['latitude'] = $campRes->latitude;
+                $returnData['latitude'] = $campRes->latitude;
             }
             if(!empty($campRes->longitude)){
-            $returnData['longitude'] = $campRes->longitude;
+                $returnData['longitude'] = $campRes->longitude;
             }
             //location Details here
             if(strtolower($returnData['location_type']) == 'onsite'){
                 $location = array();
-                $location['address']          = $campRes->address;
-                $location['state']            = $campRes->state;
-                $location['country']          = $campRes->country;
-                $location['city']             = $campRes->city;
-                $location['zip_code']         = $campRes->zip_code;
+                $location['address']    = $campRes->address;
+                $location['state']      = $campRes->state;
+                $location['country']    = $campRes->country;
+                $location['city']       = $campRes->city;
+                $location['zip_code']   = $campRes->zip_code;
                 $returnData['location'] = $location;
             }
             //get Campaign Schedule here
             $scheduleRes   = $this->neoPostRepository->getCampaignSchedule($campaignId);
             foreach ($scheduleRes as $k => $value){
                 $value = $value[0];
-                $schedule['schedule_id']    = $value->getID();
-                $gmtstart_date = $value->start_date." " .$value->start_time;
-                $schedule['gmt_start_on_date'] = !empty($value->gmt_start_date)?date("D M d, Y H:i:s A", strtotime($this->appEncodeDecode->UserTimezone($value->gmt_start_date,$input['time_zone']))):'';
-                $gmtend_date = $value->end_date." " .$value->end_time;
-                $schedule['gmt_end_on_date'] = !empty($value->gmt_end_date)?date("D M d, Y H:i:s A", strtotime($this->appEncodeDecode->UserTimezone($value->gmt_end_date,$input['time_zone']))):'';
-                $currentDate = gmdate("Y-m-d H:i:s");
+                $schedule['schedule_id']        = $value->getID();
+                $gmtstart_date                  = $value->start_date." " .$value->start_time;
+                $schedule['gmt_start_on_date']  = !empty($value->gmt_start_date) ? date("D M d, Y H:i:s A", strtotime($this->appEncodeDecode->UserTimezone($value->gmt_start_date,$input['time_zone']))) : '';
+                $gmtend_date                    = $value->end_date." " .$value->end_time;
+                $schedule['gmt_end_on_date']    = !empty($value->gmt_end_date) ? date("D M d, Y H:i:s A", strtotime($this->appEncodeDecode->UserTimezone($value->gmt_end_date,$input['time_zone']))) : '';
+                $currentDate                    = gmdate("Y-m-d H:i:s");
                 if($value->gmt_end_date < $currentDate ){
-                    $schedule['status']    = 'CLOSED';
+                    $schedule['status']     = 'CLOSED';
                 }else{
                      $schedule['status']    = 'OPEN';
                 }
-                $schedule['start_on_date']  = date('Y/m/d', strtotime($this->appEncodeDecode->UserTimezone($value->gmt_start_date,$input['time_zone'])));
-                $schedule['start_on_time']  = date('H:i', strtotime($this->appEncodeDecode->UserTimezone($value->gmt_start_date,$input['time_zone'])));;
-                $schedule['end_on_date']    = date('Y/m/d', strtotime($this->appEncodeDecode->UserTimezone($value->gmt_end_date,$input['time_zone'])));
-                $schedule['end_on_time']    = date('H:i', strtotime($this->appEncodeDecode->UserTimezone($value->gmt_end_date,$input['time_zone'])));;
+                $schedule['start_on_date']  = date('Y/m/d', strtotime($this->appEncodeDecode->UserTimezone($value->gmt_start_date, $input['time_zone'])));
+                $schedule['start_on_time']  = date('H:i', strtotime($this->appEncodeDecode->UserTimezone($value->gmt_start_date, $input['time_zone'])));;
+                $schedule['end_on_date']    = date('Y/m/d', strtotime($this->appEncodeDecode->UserTimezone($value->gmt_end_date, $input['time_zone'])));
+                $schedule['end_on_time']    = date('H:i', strtotime($this->appEncodeDecode->UserTimezone($value->gmt_end_date, $input['time_zone'])));;
                 $campSchedule[] = $schedule; 
             }
             //get Campaign Posts here
             $postsRes   = $this->neoPostRepository->getCampaignPosts($campaignId,'','');
-            $vacancies = 0;
+            $vacancies  = 0;
             foreach($postsRes as $posts){
                 $post = array();
-                $postDetails = $this->referralsGateway->formPostDetailsArray($posts[0]);
-                $post['post_id'] = $postDetails['post_id'];
-                $post['name'] = $postDetails['service_name'];
-                $post['no_of_vacancies'] = !empty($postDetails['no_of_vacancies'])?$postDetails['no_of_vacancies']:'';
+                $postDetails        = $this->referralsGateway->formPostDetailsArray($posts[0]);
+                $post['post_id']    = $postDetails['post_id'];
+                $post['name']       = $postDetails['service_name'];
+                $post['no_of_vacancies'] = !empty($postDetails['no_of_vacancies']) ? $postDetails['no_of_vacancies'] : '';
                 $postAry[] = $post;
-                $vacancies += !empty($postDetails['no_of_vacancies'])?$postDetails['no_of_vacancies']:'';;
+                $vacancies += !empty($postDetails['no_of_vacancies']) ? $postDetails['no_of_vacancies'] : '';
             }
             $returnData['total_vacancies'] = $vacancies;
             //get Campaign Buckets here
-            $bucketsRes    = !empty($campRes->bucket_id)?explode(',',$campRes->bucket_id):'';
+            $bucketsRes    = !empty($campRes->bucket_id) ? explode(',', $campRes->bucket_id) : '';
             if(!empty($bucketsRes)){
                 foreach($bucketsRes as $buckets){
                     $bucket = '';
@@ -1996,12 +2009,13 @@ class PostGateway {
             }
             //form response details here
             $returnData['schedule']     = $campSchedule;
-            $returnData['job_details']      = $postAry;
+            $returnData['job_details']  = $postAry;
             $returnData['bucket_ids']   = $bucketAry;
-            $url = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
-            $biltyUrl = $this->urlShortner($url);
+            $url        = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
+            $biltyUrl   = $this->urlShortner($url);
             $returnData['bittly_url'] = $biltyUrl;
-            $data = $returnData;
+            $data       = $returnData;
+            
             $responseCode   = self::SUCCESS_RESPONSE_CODE;
             $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
             $responseMessage= array('msg' => array(Lang::get('MINTMESH.campaign.success')));
