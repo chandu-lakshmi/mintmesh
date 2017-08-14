@@ -1615,6 +1615,10 @@ class PostGateway {
                 $careerLinksArr = !empty($crSettings['career_links']) ? $crSettings['career_links'] : '';
             }
             $careerLinksArr = json_encode($careerLinksArr);
+            $careerLogo          = !empty($crSettings['career_logo']) ? $crSettings['career_logo'] : '';
+            $careerDescription   = !empty($crSettings['career_description']) ? $crSettings['career_description'] : '';
+            $careerHeroshotImage = !empty($crSettings['career_heroshot_image']) ? $crSettings['career_heroshot_image'] : '';
+            $careerTalentNetwork = !empty($crSettings['career_talent_network']) ? $crSettings['career_talent_network'] : '';
             #request for career page logo upload to s3
             if(!empty($input['request_logo'])){
                 #upload the file
@@ -1630,10 +1634,10 @@ class PostGateway {
                 $input['career_heroshot_image']      = $this->userFileUploader->uploadToS3BySource($source);//upload the file
             }
             #form neo4j input array here
-            $campaign['career_logo']            = !empty($input['career_logo']) ? $input['career_logo'] : !empty($crSettings['career_logo']) ? $crSettings['career_logo'] : '';
-            $campaign['career_description']     = !empty($input['career_description']) ? $input['career_description'] : !empty($crSettings['career_description']) ? $crSettings['career_description'] : '';
-            $campaign['career_heroshot_image']  = !empty($input['career_heroshot_image']) ? $input['career_heroshot_image'] : !empty($crSettings['career_heroshot_image']) ? $crSettings['career_heroshot_image'] : '';
-            $campaign['career_talent_network']  = !empty($input['career_talent_network']) ? $input['career_talent_network'] : !empty($crSettings['career_talent_network']) ? $crSettings['career_talent_network'] : '';
+            $campaign['career_logo']            = !empty($input['career_logo']) ? $input['career_logo'] : $careerLogo;
+            $campaign['career_description']     = !empty($input['career_description']) ? $input['career_description'] : $careerDescription;
+            $campaign['career_heroshot_image']  = !empty($input['career_heroshot_image']) ? $input['career_heroshot_image'] : $careerHeroshotImage;
+            $campaign['career_talent_network']  = !empty($input['career_talent_network']) ? $input['career_talent_network'] : $careerTalentNetwork;
             $campaign['career_links']           = $careerLinksArr;
             
         #check add/edit request    
