@@ -631,7 +631,7 @@ class PostController extends \BaseController {
             // Validating user input data
             $validation = $this->PostGateway->validateGetCareerSettingsInput($inputUserData);
             if($validation['status'] == 'success') {
-                $response = $this->PostGateway->getCareerSettings($inputUserData);
+                $response = $this->PostGateway->getCareerSettingsApi($inputUserData);
                 return \Response::json($response);
             } else {
                     // returning validation failure

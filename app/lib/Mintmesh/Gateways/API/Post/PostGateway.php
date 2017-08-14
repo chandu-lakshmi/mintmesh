@@ -1596,6 +1596,46 @@ class PostGateway {
                 $campaign['emp_file'] = $input['emp_file_name_s3'];
                 $campaign['emp_name'] = !empty($input['emp_org_name_s3']) ? $input['emp_org_name_s3'] : '';
             }
+            
+            $crSettings = $careerLinksArr = array();
+            #get get Career Settings here
+            $crSettings = $this->getCareerSettings($companyCode);
+            #form career links here
+            $careerLinks = !empty($input['career_links']) ? $input['career_links'] : '';
+            if($careerLinks){
+                foreach ($careerLinks as $row){
+                    if(!empty($row['label']) && !empty($row['url'])){
+                        $crLinks = array();
+                        $crLinks['label']   = $row['label'];
+                        $crLinks['url']     = $row['url'];
+                        $careerLinksArr[]   = $crLinks;
+                    }
+                }
+            } else {
+                $careerLinksArr = !empty($crSettings['career_links']) ? $crSettings['career_links'] : '';
+            }
+            $careerLinksArr = json_encode($careerLinksArr);
+            #request for career page logo upload to s3
+            if(!empty($input['request_logo'])){
+                #upload the file
+                $this->userFileUploader->destination = Config::get('constants.S3BUCKET_COMPANY_LOGO');
+                $input['career_logo']                = $this->userFileUploader->uploadToS3BySource($input['request_logo']);
+            }
+            #request for career page heroshot image upload to s3
+            if(!empty($input['request_heroshot'])){
+                #image Resize
+                $height = self::CAREER_HEROSHOT_IMAGE_HEIGHT;
+                $source = $this->userFileUploader->imageResize(null, $height, $input['request_heroshot']);
+                $this->userFileUploader->destination = Config::get('constants.S3BUCKET_COMPANY_LOGO');
+                $input['career_heroshot_image']      = $this->userFileUploader->uploadToS3BySource($source);//upload the file
+            }
+            #form neo4j input array here
+            $campaign['career_logo']            = !empty($input['career_logo']) ? $input['career_logo'] : !empty($crSettings['career_links']) ? $crSettings['career_links'] : '';
+            $campaign['career_description']     = !empty($input['career_description']) ? $input['career_description'] : !empty($crSettings['career_links']) ? $crSettings['career_links'] : '';
+            $campaign['career_heroshot_image']  = !empty($input['career_heroshot_image']) ? $input['career_heroshot_image'] : !empty($crSettings['career_links']) ? $crSettings['career_links'] : '';
+            $campaign['career_talent_network']  = !empty($input['career_talent_network']) ? $input['career_talent_network'] : !empty($crSettings['career_links']) ? $crSettings['career_links'] : '';
+            $campaign['career_links']           = $careerLinksArr;
+            
         #check add/edit request    
         if($requestType == 'edit'){ 
             //updating Campaign details here
@@ -3490,10 +3530,10 @@ class PostGateway {
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
     
-    public function getCareerSettings($input) {
+    
+    public function getCareerSettings($companyCode) {
         
-        $data = $returnAry = $careerLinksArr = array();
-        $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
+        $returnArr = $careerLinksArr = array();
         #get get Career Settings here
         $crSettings = $this->neoPostRepository->getCareerSettings($companyCode);
         if($crSettings){
@@ -3513,13 +3553,25 @@ class PostGateway {
             $companyLogo = !empty($crSettings->logo) ? $crSettings->logo : '';
             $description = !empty($crSettings->description) ? $crSettings->description : '';
             #return career details form here
-            $returnAry['career_logo']           = !empty($crSettings->career_logo) ? $crSettings->career_logo : $companyLogo;
-            $returnAry['career_description']    = !empty($crSettings->career_description) ? $crSettings->career_description : $description;
-            $returnAry['career_heroshot_image'] = !empty($crSettings->career_heroshot_image) ? $crSettings->career_heroshot_image : self::DEFAULT_CAREER_HEROSHOT_IMAGE;
-            $returnAry['career_talent_network'] = !empty($crSettings->career_talent_network) ? $crSettings->career_talent_network : self::DEFAULT_CAREER_TALENT_NETWORK;
-            $returnAry['career_links']          = $careerLinksArr;
+            $returnArr['career_logo']           = !empty($crSettings->career_logo) ? $crSettings->career_logo : $companyLogo;
+            $returnArr['career_description']    = !empty($crSettings->career_description) ? $crSettings->career_description : $description;
+            $returnArr['career_heroshot_image'] = !empty($crSettings->career_heroshot_image) ? $crSettings->career_heroshot_image : self::DEFAULT_CAREER_HEROSHOT_IMAGE;
+            $returnArr['career_talent_network'] = !empty($crSettings->career_talent_network) ? $crSettings->career_talent_network : self::DEFAULT_CAREER_TALENT_NETWORK;
+            $returnArr['career_links']          = $careerLinksArr;
+        }
+        return $returnArr; 
+    }
+    
+    public function getCareerSettingsApi($input) {
         
-            $data = $returnAry;
+        $data = $returnArr = array();
+        $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
+        #get get Career Settings here
+        $returnArr = $this->getCareerSettings($companyCode);
+        
+        if($returnArr){
+            
+            $data = $returnArr;
             $responseCode   = self::SUCCESS_RESPONSE_CODE;
             $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
             $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
