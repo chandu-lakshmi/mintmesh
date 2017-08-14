@@ -411,8 +411,6 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
     public function createCampaignAndCompanyRelation($companyCode='', $campaign = array(), $userEmailId='') {
         
         $userEmailId = $this->appEncodeDecode->filterString($userEmailId);
-        $careerLinks = !empty($campaign['career_links']) ? $campaign['career_links'] : '';
-        unset($campaign['career_links']);//unset JSON format data
         $queryString = "MATCH (c:Company) WHERE c.companyCode = '". $companyCode ."'
                             CREATE (n:Campaign ";
         if (!empty($campaign)) {
@@ -425,7 +423,6 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         }
         $queryString.=")<-[r:" . Config::get('constants.RELATIONS_TYPES.COMPANY_CREATED_CAMPAIGN') ." ]-(c) ";
         $queryString.=" set r.created_at='".gmdate("Y-m-d H:i:s")."', n.created_at='".gmdate("Y-m-d H:i:s")."', n.created_by = '".$userEmailId."' ";
-        $queryString.=", c.career_links ='".$careerLinks."' ";
         $queryString.=" return n";
         $query = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
