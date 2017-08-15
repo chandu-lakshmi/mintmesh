@@ -2908,7 +2908,7 @@ class PostGateway {
     
      public function decryptCampaignRef($input){
          
-        $data = array();
+        $data = $crSettings = array();
         if(!empty($input['ref']) && isset($input['ref'])){
             
             $referenceCode      = isset($input['ref']) ? MyEncrypt::decrypt_blowfish($input['ref'], Config::get('constants.MINTMESH_ENCCODE')) : 0;
@@ -2918,7 +2918,6 @@ class PostGateway {
             
             if($campaign_id != 0 && $referred_by_id != 0){
                 
-                
                 $timeZone  = isset($input['time_zone']) ? $input['time_zone'] : 0;
                 $startDate = $startTime = $endDate = $endTime = $campaignLocation = '';
                 $userDetails            = $this->neoEnterpriseRepository->getNodeById($referred_by_id);
@@ -2926,9 +2925,8 @@ class PostGateway {
                 $campaignDetails        = $this->neoPostRepository->getCampaignById($campaign_id);
                 $scheduleTimes          = $this->neoPostRepository->getCampaignSchedule($campaign_id);
                 #return details form here
-                $companyLogo            = !empty($companyDetails->logo)?$companyDetails->logo:'';
-                //$campaignTitle        = 'Here is a campaign at '.$companyDetails->name.' for '.$campaignStatus->campaign_name;
-                //$campaignDescription  = 'Start date: '.$scheduleTimes[0][0]->start_date.' and End date: '.$scheduleTimes[0][0]->end_date;
+                $companyLogo    = !empty($companyDetails->logo) ? $companyDetails->logo : '';
+                $companyCode    = !empty($companyDetails->companyCode) ? $companyDetails->companyCode : '';
                 #campaign schedule form here
                 if(isset($scheduleTimes[0]) && !empty($scheduleTimes[0][0])){
                     
@@ -2951,6 +2949,19 @@ class PostGateway {
                 $url                    = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/share?ref=" . $input['ref']."";
                 $bitlyUrl               = $this->urlShortner($url);
                 $bittly                 = $bitlyUrl;
+                #get get Career Settings here
+                $crSettings             = $this->getCareerSettings($companyCode);
+                $careerLogo             = !empty($crSettings['career_logo']) ? $crSettings['career_logo'] : '';
+                $careerDescription      = !empty($crSettings['career_description']) ? $crSettings['career_description'] : '';
+                $careerHeroshotImage    = !empty($crSettings['career_heroshot_image']) ? $crSettings['career_heroshot_image'] : '';
+                $careerTalentNetwork    = !empty($crSettings['career_talent_network']) ? $crSettings['career_talent_network'] : '';
+                $careerLinksArr         = !empty($crSettings['career_links']) ? $crSettings['career_links'] : '';
+                #career page settings
+                $careerLogo             = !empty($campaignDetails->career_logo) ? $campaignDetails->career_logo : $careerLogo;
+                $careerDescription      = !empty($campaignDetails->career_description) ? $campaignDetails->career_description : $careerDescription;
+                $careerHeroshotImage    = !empty($campaignDetails->career_heroshot_image) ? $campaignDetails->career_heroshot_image : $careerHeroshotImage;
+                $careerTalentNetwork    = !empty($campaignDetails->career_talent_network) ? $campaignDetails->career_talent_network : $careerTalentNetwork;
+                $careerLinks            = !empty($campaignDetails->career_links) ? json_decode($campaignDetails->career_links) : $careerLinksArr;
                 #return Array
                 $data = array(
                     "campaign_id"       =>  $campaign_id,
@@ -2959,8 +2970,6 @@ class PostGateway {
                     "campaign_status"   =>  $campaignDetails->status,
                     "company_logo"      =>  $companyLogo,
                     "company_name"      =>  $companyDetails->name,
-                    //"title"           =>  $campaignTitle,
-                    //"description"     =>  $campaignDescription,
                     "campaign_type"     =>  $campaignDetails->campaign_name,
                     "campaign_heading"  =>  $campaignDetails->campaign_name.', '.$campaignDetails->campaign_type,
                     "start_date"        =>  $startDate,
@@ -2969,7 +2978,12 @@ class PostGateway {
                     "end_time"          =>  $endTime,
                     "campaign_location" =>  $campaignLocation,
                     "url"               =>  $url,
-                    "bittly_url"        =>  $bittly
+                    "bittly_url"        =>  $bittly,
+                    "career_logo"           =>  $careerLogo,
+                    "career_description"    =>  $careerDescription,
+                    "career_heroshot_image" =>  $careerHeroshotImage,
+                    "career_talent_network" =>  $careerTalentNetwork,
+                    "career_links"          =>  $careerLinks
                     );
             }
        }
