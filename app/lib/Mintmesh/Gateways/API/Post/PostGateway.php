@@ -2386,10 +2386,12 @@ class PostGateway {
             $companyDetails     = $this->neoPostRepository->getPostCompany($post_id);
             $userDetails        = $this->neoEnterpriseRepository->getNodeById($referred_by_id);
             if(!empty($companyDetails) && !empty($userDetails)){
+                
                 $input['post_id']   = $post_id;
                 $postStatus         = $this->job2->getPost($input);
                 $postDetails        = $this->referralsGateway->formPostDetailsArray($postStatus);
                 $companyLogo        = !empty($companyDetails->logo) ? $companyDetails->logo : '';
+                $companyCode        = !empty($companyDetails->companyCode) ? $companyDetails->companyCode : '';
                 if($input['all_jobs'] == 0){
 
                     $jobTitle       = $companyDetails->name .' looking for '.$postStatus->looking_for;
@@ -2408,7 +2410,16 @@ class PostGateway {
                     $url            = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-jobs/share?ref=" . $input['ref']."";
                     $bitlyUrl       = $this->urlShortner($url);
                     $bittly         = $bitlyUrl;
-                } 
+                }
+                #get get career settings here
+                $crSettings = $this->getCareerSettings($companyCode);
+                #career page settings
+                $careerLogo             = !empty($crSettings['career_logo']) ? $crSettings['career_logo'] : '';
+                $careerDescription      = !empty($crSettings['career_description']) ? $crSettings['career_description'] : '';
+                $careerHeroshotImage    = !empty($crSettings['career_heroshot_image']) ? $crSettings['career_heroshot_image'] : self::DEFAULT_CAREER_HEROSHOT_IMAGE;
+                $careerTalentNetwork    = !empty($crSettings['career_talent_network']) ? $crSettings['career_talent_network'] : self::DEFAULT_CAREER_TALENT_NETWORK;
+                $careerLinks            = !empty($crSettings['career_links']) ? $crSettings['career_links'] : '';
+                
                 $data = array(
                         "post_id"       => $input['post_id'],
                         "reference_id"  => $referred_by_id,
@@ -2423,7 +2434,12 @@ class PostGateway {
                         "location"      => $location,
                         "description"   => $jobDescription,
                         "url"           => $url,
-                        "bittly_url"    => $bittly
+                        "bittly_url"    => $bittly,
+                        "career_logo"           =>  $careerLogo,
+                        "career_description"    =>  $careerDescription,
+                        "career_heroshot_image" =>  $careerHeroshotImage,
+                        "career_talent_network" =>  $careerTalentNetwork,
+                        "career_links"          =>  $careerLinks
                         );
             }
         }
@@ -3379,57 +3395,71 @@ class PostGateway {
     
     public function decryptRequestCandidateResume($input){
         
-       $data = array();
+        $data = array();
        
-       if(!empty($input['refrel']) && !empty($input['ref'])){
+        if(!empty($input['refrel']) && !empty($input['ref'])){
            
-        $refid              = $input['ref'];   
-        $reference_id       = $input['refrel'];   
-        $decryptedRef       = isset($input['refrel']) ? MyEncrypt::decrypt_blowfish($input['refrel'], Config::get('constants.MINTMESH_ENCCODE')) : 0 ;
-        $decryptedAry       = array_map('intval', explode('_',$decryptedRef));	
-	$post_id            = isset($decryptedAry[0]) ? $decryptedAry[0] : 0 ;
-        $gotReferredId      = isset($decryptedAry[1]) ? $decryptedAry[1] : 0 ;
+            $refid              = $input['ref'];   
+            $reference_id       = $input['refrel'];   
+            $decryptedRef       = isset($input['refrel']) ? MyEncrypt::decrypt_blowfish($input['refrel'], Config::get('constants.MINTMESH_ENCCODE')) : 0 ;
+            $decryptedAry       = array_map('intval', explode('_',$decryptedRef));	
+            $post_id            = isset($decryptedAry[0]) ? $decryptedAry[0] : 0 ;
+            $gotReferredId      = isset($decryptedAry[1]) ? $decryptedAry[1] : 0 ;
         
-        if(!empty($post_id) && !empty($gotReferredId)){
-            $companyDetails     = $this->neoPostRepository->getPostCompany($post_id);
-            $companyLogo        = !empty($companyDetails->logo)?$companyDetails->logo:'';
-            
-            $referredDetails     = $this->neoPostRepository->getGotReferredRelationDetailsById($gotReferredId);
-            
-            $postDetails    = !empty($referredDetails[2]) ? $referredDetails[2] : ''; 
-            $relDetails     = !empty($referredDetails[0]) ? $referredDetails[0] : ''; 
-            $userDetails    = !empty($referredDetails[1]) ? $referredDetails[1] : ''; 
-            
-            $postDetails     = $this->referralsGateway->formPostDetailsArray($postDetails);
-            $jobStatus       = !empty($postDetails['status']) ? $postDetails['status'] : ''; 
-            $jobTitle        = !empty($postDetails['service_name']) ? $postDetails['service_name'] : ''; 
-            $jobFunction     = !empty($postDetails['job_function_name']) ? $postDetails['job_function_name'] : ''; 
-            $experience      = !empty($postDetails['experience_range_name']) ? $postDetails['experience_range_name'] : ''; 
-            $location        = !empty($postDetails['service_location']) ? $postDetails['service_location'] : ''; 
-            $jobDescription  = !empty($postDetails['job_description']) ? $postDetails['job_description'] : ''; 
-            $bittly = $url = '';
-            
-            $data = array(
-                "post_id"   => $post_id, 
-                "ref"       => $refid,
-                "refrel"    => $reference_id,
-                "emailid"   => $userDetails->emailid, 
-                "post_status"       => $jobStatus, 
-                "company_logo"      => $companyLogo, 
-                "company_name"      => $companyDetails->name, 
-                "title"             => $jobTitle,
-                "job_title"         => $jobTitle,
-                "job_function"      => $jobFunction,
-                "experience"        => $experience,
-                "location"          => $location,
-                "description"       => $jobDescription,
-                "url"               => $url,
-                "bittly_url"        => $bittly, 
-                "got_referred_id"   => $gotReferredId
+            if(!empty($post_id) && !empty($gotReferredId)){
+                $companyDetails     = $this->neoPostRepository->getPostCompany($post_id);
+                $companyLogo        = !empty($companyDetails->logo) ? $companyDetails->logo : '';
+                $companyCode        = !empty($companyDetails->companyCode) ? $companyDetails->companyCode : '';
+
+                $referredDetails    = $this->neoPostRepository->getGotReferredRelationDetailsById($gotReferredId);
+
+                $postDetails    = !empty($referredDetails[2]) ? $referredDetails[2] : ''; 
+                $relDetails     = !empty($referredDetails[0]) ? $referredDetails[0] : ''; 
+                $userDetails    = !empty($referredDetails[1]) ? $referredDetails[1] : ''; 
+
+                $postDetails     = $this->referralsGateway->formPostDetailsArray($postDetails);
+                $jobStatus       = !empty($postDetails['status']) ? $postDetails['status'] : ''; 
+                $jobTitle        = !empty($postDetails['service_name']) ? $postDetails['service_name'] : ''; 
+                $jobFunction     = !empty($postDetails['job_function_name']) ? $postDetails['job_function_name'] : ''; 
+                $experience      = !empty($postDetails['experience_range_name']) ? $postDetails['experience_range_name'] : ''; 
+                $location        = !empty($postDetails['service_location']) ? $postDetails['service_location'] : ''; 
+                $jobDescription  = !empty($postDetails['job_description']) ? $postDetails['job_description'] : ''; 
+                $bittly = $url = '';
+                #get get career settings here
+                $crSettings = $this->getCareerSettings($companyCode);
+                #career page settings
+                $careerLogo             = !empty($crSettings['career_logo']) ? $crSettings['career_logo'] : '';
+                $careerDescription      = !empty($crSettings['career_description']) ? $crSettings['career_description'] : '';
+                $careerHeroshotImage    = !empty($crSettings['career_heroshot_image']) ? $crSettings['career_heroshot_image'] : self::DEFAULT_CAREER_HEROSHOT_IMAGE;
+                $careerTalentNetwork    = !empty($crSettings['career_talent_network']) ? $crSettings['career_talent_network'] : self::DEFAULT_CAREER_TALENT_NETWORK;
+                $careerLinks            = !empty($crSettings['career_links']) ? $crSettings['career_links'] : '';
+
+                $data = array(
+                    "post_id"   => $post_id, 
+                    "ref"       => $refid,
+                    "refrel"    => $reference_id,
+                    "emailid"   => $userDetails->emailid, 
+                    "post_status"       => $jobStatus, 
+                    "company_logo"      => $companyLogo, 
+                    "company_name"      => $companyDetails->name, 
+                    "title"             => $jobTitle,
+                    "job_title"         => $jobTitle,
+                    "job_function"      => $jobFunction,
+                    "experience"        => $experience,
+                    "location"          => $location,
+                    "description"       => $jobDescription,
+                    "url"               => $url,
+                    "bittly_url"        => $bittly, 
+                    "got_referred_id"   => $gotReferredId,
+                    "career_logo"           =>  $careerLogo,
+                    "career_description"    =>  $careerDescription,
+                    "career_heroshot_image" =>  $careerHeroshotImage,
+                    "career_talent_network" =>  $careerTalentNetwork,
+                    "career_links"          =>  $careerLinks
                 );
+            }
         }
         return $data;
-       }
     }
     
     public function applyJobRef($input) {
