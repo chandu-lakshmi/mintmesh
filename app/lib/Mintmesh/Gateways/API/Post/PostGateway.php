@@ -1616,8 +1616,10 @@ class PostGateway {
                 $careerLinksArr = !empty($crSettings['career_links']) ? $crSettings['career_links'] : '';
             }
             $careerLinksArr = json_encode($careerLinksArr);
+            $careerName          = !empty($crSettings['logo_name']) ? $crSettings['logo_name'] : '';
             $careerLogo          = !empty($crSettings['career_logo']) ? $crSettings['career_logo'] : '';
             $careerDescription   = !empty($crSettings['career_description']) ? $crSettings['career_description'] : '';
+            $heroshotImageName   = !empty($crSettings['heroshot_image_name']) ? $crSettings['heroshot_image_name'] : '';
             $careerHeroshotImage = !empty($crSettings['career_heroshot_image']) ? $crSettings['career_heroshot_image'] : '';
             $careerTalentNetwork = !empty($crSettings['career_talent_network']) ? $crSettings['career_talent_network'] : '';
             #request for career page logo upload to s3
@@ -1635,8 +1637,10 @@ class PostGateway {
                 $input['career_heroshot_image']      = $this->userFileUploader->uploadToS3BySource($source);//upload the file
             }
             #form neo4j input array here
+            $campaign['logo_name']              = !empty($input['logo_name']) ? $input['logo_name'] : $careerName;
             $campaign['career_logo']            = !empty($input['career_logo']) ? $input['career_logo'] : $careerLogo;
             $campaign['career_description']     = !empty($input['career_description']) ? $input['career_description'] : $careerDescription;
+            $campaign['heroshot_image_name']    = !empty($input['heroshot_image_name']) ? $input['heroshot_image_name'] : $heroshotImageName;
             $campaign['career_heroshot_image']  = !empty($input['career_heroshot_image']) ? $input['career_heroshot_image'] : $careerHeroshotImage;
             $campaign['career_talent_network']  = !empty($input['career_talent_network']) ? $input['career_talent_network'] : $careerTalentNetwork;
             $campaign['career_links']           = $careerLinksArr;
@@ -1910,7 +1914,7 @@ class PostGateway {
     
     public function viewCampaign($input) {
         
-        $data = $campSchedule = $scheduleRes = $postAry = $bucketAry  = array();
+        $data = $campSchedule = $scheduleRes = $postAry = $bucketAry  = $crSettings = array();
         $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
         $loggedInUser   = $this->referralsGateway->getLoggedInUser();
         $this->neoLoggedInUserDetails   = $this->neoUserRepository->getNodeByEmailId($loggedInUser->emailid);
@@ -1928,12 +1932,23 @@ class PostGateway {
             $returnData['campaign_type']    = $campRes->campaign_type;
             $returnData['total_vacancies']  = $campRes->total_vacancies;
             $returnData['location_type']    = $campRes->location_type;
+            #get get Career Settings here
+            $crSettings = $this->getCareerSettings($companyCode);
+            $careerName          = !empty($crSettings['logo_name']) ? $crSettings['logo_name'] : '';
+            $careerLogo          = !empty($crSettings['career_logo']) ? $crSettings['career_logo'] : '';
+            $careerDescription   = !empty($crSettings['career_description']) ? $crSettings['career_description'] : '';
+            $heroshotImageName   = !empty($crSettings['heroshot_image_name']) ? $crSettings['heroshot_image_name'] : '';
+            $careerHeroshotImage = !empty($crSettings['career_heroshot_image']) ? $crSettings['career_heroshot_image'] : '';
+            $careerTalentNetwork = !empty($crSettings['career_talent_network']) ? $crSettings['career_talent_network'] : '';
+            $careerLinksArr      = !empty($crSettings['career_links']) ? $crSettings['career_links'] : '';
             #career page settings
-            $returnData['career_logo']              = !empty($campRes->career_logo) ? $campRes->career_logo : ''; 
-            $returnData['career_description']       = !empty($campRes->career_description) ? $campRes->career_description : '';
-            $returnData['career_heroshot_image']    = !empty($campRes->career_heroshot_image) ? $campRes->career_heroshot_image : '';
-            $returnData['career_talent_network']    = !empty($campRes->career_talent_network) ? $campRes->career_talent_network : '';
-            $returnData['career_links']             = !empty($campRes->career_links) ? json_decode($campRes->career_links) : '';
+            $returnData['logo_name']                = !empty($campRes->logo_name) ? $campRes->logo_name : $careerName; 
+            $returnData['career_logo']              = !empty($campRes->career_logo) ? $campRes->career_logo : $careerLogo; 
+            $returnData['career_description']       = !empty($campRes->career_description) ? $campRes->career_description : $careerDescription;
+            $returnData['heroshot_image_name']      = !empty($campRes->heroshot_image_name) ? $campRes->heroshot_image_name : $heroshotImageName;
+            $returnData['career_heroshot_image']    = !empty($campRes->career_heroshot_image) ? $campRes->career_heroshot_image : $careerHeroshotImage;
+            $returnData['career_talent_network']    = !empty($campRes->career_talent_network) ? $campRes->career_talent_network : $careerTalentNetwork;
+            $returnData['career_links']             = !empty($campRes->career_links) ? json_decode($campRes->career_links) : $careerLinksArr;
             
             $returnData['camp_ref']         = $refCode;
             if($campRes->location_type == 'ACTIVE'){
@@ -3528,8 +3543,10 @@ class PostGateway {
             $input['career_heroshot_image']      = $this->userFileUploader->uploadToS3BySource($source);//upload the file
         }
         #form neo4j input array here
+        $neoInput['logo_name']              = !empty($input['logo_name']) ? $input['logo_name'] : '';
         $neoInput['career_logo']            = !empty($input['career_logo']) ? $input['career_logo'] : '';
         $neoInput['career_description']     = !empty($input['career_description']) ? $input['career_description'] : '';
+        $neoInput['heroshot_image_name']    = !empty($input['heroshot_image_name']) ? $input['heroshot_image_name'] : '';
         $neoInput['career_heroshot_image']  = !empty($input['career_heroshot_image']) ? $input['career_heroshot_image'] : '';
         $neoInput['career_talent_network']  = !empty($input['career_talent_network']) ? $input['career_talent_network'] : '';
         $neoInput['career_links']           = $careerLinksArr;
@@ -3571,8 +3588,10 @@ class PostGateway {
             $companyLogo = !empty($crSettings->logo) ? $crSettings->logo : '';
             $description = !empty($crSettings->description) ? $crSettings->description : '';
             #return career details form here
+            $returnArr['logo_name']             = !empty($crSettings->logo_name) ? $crSettings->logo_name : 'logo_name';
             $returnArr['career_logo']           = !empty($crSettings->career_logo) ? $crSettings->career_logo : $companyLogo;
             $returnArr['career_description']    = !empty($crSettings->career_description) ? $crSettings->career_description : $description;
+            $returnArr['heroshot_image_name']   = !empty($crSettings->heroshot_image_name) ? $crSettings->heroshot_image_name : 'heroshot_image';
             $returnArr['career_heroshot_image'] = !empty($crSettings->career_heroshot_image) ? $crSettings->career_heroshot_image : self::DEFAULT_CAREER_HEROSHOT_IMAGE;
             $returnArr['career_talent_network'] = !empty($crSettings->career_talent_network) ? $crSettings->career_talent_network : self::DEFAULT_CAREER_TALENT_NETWORK;
             $returnArr['career_links']          = $careerLinksArr;
