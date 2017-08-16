@@ -2035,40 +2035,44 @@ class EnterpriseGateway {
     public function addContact($input){ 
         
         $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser();
-        $userId      = $this->loggedinUserDetails->id;
-        $emailId     = $this->loggedinUserDetails->emailid;
-        $inputParams = $relationAttrs = array();
-        $companyCode = !empty($input['company_code'])?$input['company_code']:'';
-        $bucketId    = !empty($input['bucket_id'])?$input['bucket_id']:'';
-        $companyId   = !empty($input['company_id'])?$input['company_id']:'';
-        $contactEmailId = !empty($input['emailid'])?$this->appEncodeDecode->filterString(strtolower(trim($input['emailid']))):'';
+        $userId         = $this->loggedinUserDetails->id;
+        $emailId        = $this->loggedinUserDetails->emailid;
+        $inputParams    = $relationAttrs = array();
+        $companyCode    = !empty($input['company_code']) ? $input['company_code'] : '';
+        $bucketId       = !empty($input['bucket_id']) ? $input['bucket_id'] : '';
+        $bucketType     = !empty($input['bucket_type']) ? $input['bucket_type'] : '1';
+        $companyId      = !empty($input['company_id']) ? $input['company_id'] : '';
+        $contactEmailId = !empty($input['emailid']) ? $this->appEncodeDecode->filterString(strtolower(trim($input['emailid']))) : '';
+        #DB input params form here
         $inputParams['company_id']   = $companyId;
         $inputParams['user_id']      = $userId;
         $inputParams['bucket_id']    = $input['bucket_id'];
-        $inputParams['firstname']    = !empty($input['firstname'])?$input['firstname']:'';      
-        $inputParams['lastname']     = !empty($input['lastname'])?$input['lastname']:'';      
+        $inputParams['firstname']    = !empty($input['firstname']) ? $input['firstname'] : '';      
+        $inputParams['lastname']     = !empty($input['lastname']) ? $input['lastname'] : '';      
         $inputParams['emailid']      = $contactEmailId ;      
-        $inputParams['phone']        = !empty($input['phone'])?$input['phone']:'';      
-        $inputParams['status']       = $status = !empty($input['status'])?$input['status']:'Active';  
-        $inputParams['employeeid']   = !empty($input['other_id'])?$input['other_id']:'';      
-         
+        $inputParams['phone']        = !empty($input['phone']) ? $input['phone'] : '';      
+        $inputParams['status']       = $status = !empty($input['status']) ? $input['status'] : 'Active';  
+        $inputParams['employeeid']   = !empty($input['other_id']) ? $input['other_id'] : '';      
+        #neo4j relation input details form here
         $relationAttrs['company_code']      = $companyCode;
         $relationAttrs['loggedin_emailid']  = $emailId;
         $relationAttrs['created_at']        = gmdate("Y-m-d H:i:s");
-        $relationAttrs['firstname']         = !empty($input['firstname'])?$input['firstname']:'';    
-        $relationAttrs['lastname']          = !empty($input['lastname'])?$input['lastname']:'';    
-        $neoInput['firstname']   = $input['firstname'];
-        $neoInput['lastname']    = $input['lastname'];
-        $neoInput['contact_number'] = !empty($input['phone'])?$input['phone']:'';          
-        $neoInput['emailid']     = $contactEmailId;
-        $neoInput['employeeid']  = !empty($input['other_id'])?$input['other_id']:'';
-        $neoInput['status']      = $status;  
+        $relationAttrs['firstname']         = !empty($input['firstname']) ? $input['firstname'] : '';    
+        $relationAttrs['lastname']          = !empty($input['lastname']) ? $input['lastname'] : '';  
+        #neo4j node input params form here
+        $neoInput['firstname']      = $input['firstname'];
+        $neoInput['lastname']       = $input['lastname'];
+        $neoInput['contact_number'] = !empty($input['phone']) ? $input['phone'] : '';          
+        $neoInput['emailid']        = $contactEmailId;
+        $neoInput['employeeid']     = !empty($input['other_id']) ? $input['other_id'] : '';
+        $neoInput['status']         = $status; 
+        #check Contact already exists or not
         $checkContact = $this->enterpriseRepository->checkContact($inputParams);
         if(empty($checkContact)){
             #company available contacts count verification here  
             $availableNo = $this->getCompanyAvailableContactsCount($companyCode);
             #when status is Separated then allow to create or availableNo not zero
-            if(!empty($availableNo) || $status == 'Separated'){
+            if(!empty($availableNo) || $status == 'Separated' || $bucketType == '2'){
 
                 $checkEmployeeId = $this->enterpriseRepository->checkEmpId($input);
                 if(!$checkEmployeeId)
@@ -2076,26 +2080,26 @@ class EnterpriseGateway {
                     $result    = $this->enterpriseRepository->addContact($inputParams); 
                     if(!empty($result)){ 
                         $employeesNo = 1;
-                        $neoResult = $this->neoEnterpriseRepository->createContactNodes($input['bucket_id'],$neoInput,$relationAttrs);
-                        $neoResult = $this->neoEnterpriseRepository->companyAutoConnect($neoInput['emailid'],$relationAttrs);
+                        $neoResult = $this->neoEnterpriseRepository->createContactNodes($input['bucket_id'], $neoInput, $relationAttrs);
+                        $neoResult = $this->neoEnterpriseRepository->companyAutoConnect($neoInput['emailid'], $relationAttrs);
                         #check company bucket active jobs and create relation between user & job
-                        if($status != 'Separated'){
+                        if($status != 'Separated' && $bucketType != '2'){
                             $connectedJobs  = $this->companyJobsAutoConnect($companyCode, $bucketId, $contactEmailId, $emailId);
                         }
                         $responseCode    = self::SUCCESS_RESPONSE_CODE;
                         $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
                         $message = array('msg' => array(Lang::get('MINTMESH.addContact.success')));
-                    }else {
+                    } else {
                         $responseCode    = self::ERROR_RESPONSE_CODE;
                         $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
                         $message = array('msg' => array(Lang::get('MINTMESH.addContact.failure')));
                     } 
-                }else{
+                } else {
                     $responseCode    = self::ERROR_RESPONSE_CODE;
                     $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
                     $message = array('msg' => array(Lang::get('MINTMESH.editContactList.invalidempid')));
                 } 
-            }else{
+            } else {
                 $responseCode    = self::ERROR_RESPONSE_CODE;
                 $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
                 $message = array('msg' => array(Lang::get('MINTMESH.editContactList.contactsLimitExceeded')));
@@ -2106,13 +2110,13 @@ class EnterpriseGateway {
                 $update = $this->enterpriseRepository->updateContact($inputParams);
                 $neoUpdate = $this->neoEnterpriseRepository->updateContactNode($input['bucket_id'],$neoInput,$relationAttrs);
                 #check company bucket active jobs and create relation between user & job
-                if($status != 'Separated'){
+                if($status != 'Separated' && $bucketType != '2'){
                     $connectedJobs  = $this->companyJobsAutoConnect($companyCode, $bucketId, $contactEmailId, $emailId);
                 }
                 $responseCode    = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
                 $message = array('msg' => array(Lang::get('MINTMESH.addContact.contactUpdated')));
-            }else{
+        } else {
                 $responseCode    = self::ERROR_RESPONSE_CODE;
                 $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
                 $message = array('msg' => array(Lang::get('MINTMESH.addContact.contactExists')));
