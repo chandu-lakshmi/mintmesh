@@ -2957,10 +2957,16 @@ class PostGateway {
                 }
                 #get campaign location
                 if($campaignDetails->location_type == 'online'){
-                    $campaignLocation = 'online'; 
+                    $campaignLocation = 'Online'; 
                 }else{
-                    $location = $campaignDetails->address.', '.$campaignDetails->city.', '.$campaignDetails->state.', '.$campaignDetails->country.', '.$campaignDetails->zip_code;
-                    $campaignLocation = str_replace(', ,', ',', $location);//remove double commas
+                    $address    = !empty($campaignDetails->address) ? $campaignDetails->address.', ' : '';
+                    $city       = !empty($campaignDetails->city) ? $campaignDetails->city.', ' : '';
+                    $state      = !empty($campaignDetails->state) ? $campaignDetails->state.', ' : '';
+                    $country    = !empty($campaignDetails->address) ? $campaignDetails->country.', ' : '';
+                    $location   = $address.$city.$state.$country.$campaignDetails->zip_code;
+                    $location   = rtrim($location);
+                    //$location = $campaignDetails->address.', '.$campaignDetails->city.', '.$campaignDetails->state.', '.$campaignDetails->country.', '.$campaignDetails->zip_code;
+                    //$campaignLocation = str_replace(', ,', ',', $location);//remove double commas
                 }
                 #social share links
                 $url                    = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/share?ref=" . $input['ref']."";
