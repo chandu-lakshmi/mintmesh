@@ -1434,6 +1434,7 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
             if (!empty($neoInput)) {
                 $queryString.=" set ";
                 foreach ($neoInput as $k => $v) { 
+                    $v = $this->appEncodeDecode->filterString($v);
                     $queryString.="c.".$k . "='" . $v . "',";
                 }
                 $queryString = rtrim($queryString, ",");

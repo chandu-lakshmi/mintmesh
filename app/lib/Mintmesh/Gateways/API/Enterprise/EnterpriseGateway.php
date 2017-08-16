@@ -3661,7 +3661,7 @@ class EnterpriseGateway {
             } else {
                 $responseCode   = self::ERROR_RESPONSE_CODE;
                 $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
-                $message        = array(Lang::get('MINTMESH.enterprise.retrieve_failure'));
+                $message        = array(Lang::get('MINTMESH.not_parsed_resumes.failure'));
             }
         } else {
                 $responseCode   = self::ERROR_RESPONSE_CODE;
