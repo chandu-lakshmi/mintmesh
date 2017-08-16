@@ -1615,7 +1615,7 @@ class PostGateway {
             } else {
                 $careerLinksArr = !empty($crSettings['career_links']) ? $crSettings['career_links'] : '';
             }
-            $careerLinksArr = json_encode($careerLinksArr);
+            $careerLinksArr = json_encode($careerLinksArr, JSON_UNESCAPED_SLASHES);
             $careerName          = !empty($crSettings['logo_name']) ? $crSettings['logo_name'] : '';
             $careerLogo          = !empty($crSettings['career_logo']) ? $crSettings['career_logo'] : '';
             $careerDescription   = !empty($crSettings['career_description']) ? $crSettings['career_description'] : '';
@@ -3492,9 +3492,9 @@ class PostGateway {
                     $sqlUser    = $this->userRepository->getUserByEmail($referredByEmail);
                     $refUserId  = !empty($sqlUser->id)?$sqlUser->id:0;
                     #get company details by code
-                    $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyDetils->companyCode);
-                    $companyId   = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
-                    $source = self::SOURCE_FROM_EMAIL_UPLOAD;
+                    $companyDetails  = $this->enterpriseRepository->getCompanyDetailsByCode($companyDetils->companyCode);
+                    $companyId       = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+                    $source          = self::SOURCE_FROM_EMAIL_UPLOAD;
                     $renamedFileName = '';
                     #insert company resumes in company resumes table
                     $insertResult = $this->enterpriseRepository->insertInCompanyResumes($companyId, $originalFileName, $refUserId, $source);
@@ -3570,7 +3570,7 @@ class PostGateway {
                     $careerLinksArr[]   = $crLinks;
                 }
             }
-            $careerLinksArr = json_encode($careerLinksArr);
+            $careerLinksArr = json_encode($careerLinksArr, JSON_UNESCAPED_SLASHES);
         }
         #request for career page logo upload to s3
         if(!empty($input['request_logo'])){
@@ -3648,11 +3648,10 @@ class PostGateway {
         $data = $returnArr = array();
         $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
         #get get Career Settings here
-        $returnArr = $this->getCareerSettings($companyCode);
-        
+        $returnArr   = $this->getCareerSettings($companyCode);
+        #check get career settings details not empty
         if($returnArr){
-            
-            $data = $returnArr;
+            $data = $returnArr;//return career settings details
             $responseCode   = self::SUCCESS_RESPONSE_CODE;
             $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
             $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));

@@ -1439,7 +1439,6 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
                 $queryString = rtrim($queryString, ",");
             }
             $queryString.=" return c ";
-            //echo $queryString;exit;
             $query  = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             if(isset($result[0]) && isset($result[0][0])){
