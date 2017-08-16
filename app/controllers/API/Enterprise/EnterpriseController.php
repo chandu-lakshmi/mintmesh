@@ -1172,6 +1172,53 @@ class EnterpriseController extends \BaseController {
             
 	}
         
+        /**
+        * Enterprise company Talent Communitybucket list
+        * 
+        * POST/login
+        * @param string $company_code
+        * 
+        * @return Response
+        */
+	public function getTalentCommunityBuckets()
+	{
+            // Receiving user input data
+            $inputUserData = \Input::all();            
+            // Validating user input data
+            $validation = $this->EnterpriseGateway->validateAddToTalentCommunityInput($inputUserData);            
+            if($validation['status'] == 'success') {
+                $returnResponse = \Response::json($this->EnterpriseGateway->getTalentCommunityBuckets($inputUserData));
+            } else {
+                    // returning validation failure
+                $returnResponse = \Response::json($validation);
+            }
+            
+            return $returnResponse;
+	}
+        
+        
+        /**
+        * user add Contact
+        * 
+        * POST/add_to_talentcommunity
+        * @param string  $access_token The Access token of a user   
+        * @return Response validated status
+        */
+        public function addToTalentCommunity(){
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->EnterpriseGateway->validateAddToTalentCommunityInput($inputUserData);
+            if($validation['status'] == 'success') {
+               $response = $this->EnterpriseGateway->addToTalentCommunity($inputUserData);
+               return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+            
+        }
+        
         /*script to add unsolicited node for old companies
          * 
          */

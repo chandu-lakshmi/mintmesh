@@ -69,29 +69,29 @@ class EnterpriseValidator extends Validator {
                 'awaiting_action_status' =>'required'
         ),
          'connect_to_company'    => array(
-                'company_code'   =>'required'   
+            'company_code'   =>'required'   
         ),
          'view_company_details'    => array(
-                'company_code'   =>'required'   
+            'company_code'   =>'required'   
         ),
          'view_dashboard'    => array(
-                'company_code'   =>'required'   
+            'company_code'   =>'required'   
         ),
         'update_contact_list' =>array(
-                'record_id'        => 'required'
+            'record_id'        => 'required'
         ),
         'delete_contact'      => array(
-                'record_id'        => 'required'
+            'record_id'        => 'required'
         ),
         'create_bucket' =>array(
-                'company_code'        => 'required',
-                'bucket_name'         => 'required'
+            'company_code'        => 'required',
+            'bucket_name'         => 'required'
         ),
         'update_bucket' =>array(
-                'company_code'        => 'required'
+            'company_code'        => 'required'
         ),
         'contacts_file' =>array(
-                'file_name'         => 'required'
+            'file_name'         => 'required'
         ),
         'upload_contacts' =>array(
             'company_code'      => 'required',
@@ -103,26 +103,19 @@ class EnterpriseValidator extends Validator {
             'firstname'         => 'required',
             'emailid'           => 'required'
         ),
-//        'add_permissions'  => array(
-//            'user_id'           => 'required'  
-//        ),
         'add_user' => array(
-                'fullname'              => 'required',
-//                'designation'           => 'required',
-                'emailid'               => 'required|email',
-//                'location'              => 'required',
-                'status'                => 'required'
+            'fullname'              => 'required',
+            'emailid'               => 'required|email',
+            'status'                => 'required'
         ),
         'edit_user'  => array(
-               'fullname'              => 'required',
-//                'designation'           => 'required',
-                'emailid'               => 'required',
-//                'location'              => 'required',
-                'status'                => 'required'
+            'fullname'              => 'required',
+             'emailid'               => 'required',
+             'status'                => 'required'
         ),
         'add_group'  =>  array(
-               'name'                =>  'required',
-               'status'              =>  'required'
+            'name'                =>  'required',
+            'status'              =>  'required'
         ),
         'set_password' => array(
             'password'               =>  'required|min:6|confirmed',
@@ -167,14 +160,14 @@ class EnterpriseValidator extends Validator {
             'signin_url'      => 'required',
             'signout_url'      => 'required',
             'idp_issuer'      => 'required',
-//            'white_listing'      => 'required',
-//            'certificate_org_name'      => 'required',
-//            'certificate_path'      => 'required',
         ),
         'get_configuration' => array(
             'company_code'     =>    'required'
+        ),
+        'add_to_talentcommunity' => array(
+            'company_code'     =>    'required'
         )
-        );
+    );
     
 }
 ?>

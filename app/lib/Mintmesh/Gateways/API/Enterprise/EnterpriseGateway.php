@@ -252,6 +252,10 @@ class EnterpriseGateway {
     public function validateGetConfigurationInput($input) {
         return $this->doValidation('get_configuration', 'MINTMESH.user.valid');
     }
+    //validation on add contact input
+    public function validateAddToTalentCommunityInput($input) {
+        return $this->doValidation('add_to_talentcommunity', 'MINTMESH.user.valid');
+    }
    
     public function doValidation($validatorFilterKey, $langKey) {
         //validator passes method accepts validator filter key as param
@@ -3619,6 +3623,138 @@ class EnterpriseGateway {
             $responseMessage= array('msg' => array(Lang::get('MINTMESH.hcm_details.retrieve_failure')));
           }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data, false);    
+    }
+    
+    /**
+     * View a enterprise Buckets List.
+     *
+     * @return Response
+     */
+    public function getTalentCommunityBuckets($input) {
+        
+        $bucketsListArr  = $resultsSetArr = $data = array(); 
+        $companyCode     = !empty($input['company_code']) ? $input['company_code'] : '';
+        $companyDetails  = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId       = !empty($companyDetails[0]) ? $companyDetails[0]->id : 0;
+        if($companyId){
+            $bucketType      = 2;
+            #get the import contact list here
+            $resultsSetArr  = $this->enterpriseRepository->getCompanyBucketsList($companyId, $bucketType);
+            if ($resultsSetArr) { 
+                foreach ($resultsSetArr as $result){
+                    $record = array();
+                    $record['bucket_id']   = (int)$result->bucket_id;
+                    $record['bucket_name'] = $result->bucket_name;
+                    $record['bucket_type'] = $result->bucket_type;
+                    $record['count']       = $result->count;
+                    $record['company_id']  = $result->company_id;
+                    $bucketsListArr[]      = $record;
+                } 
+                #get total contacts count
+                $totalCountObj = $this->enterpriseRepository->contactsCount($companyId, $bucketType);
+
+                $responseCode   = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                $message        = array(Lang::get('MINTMESH.enterprise.retrieve_success'));
+                $data['buckets_list'] = $bucketsListArr;
+                $data['total_count']  = $totalCountObj->total_count;
+            } else {
+                $responseCode   = self::ERROR_RESPONSE_CODE;
+                $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+                $message        = array(Lang::get('MINTMESH.enterprise.retrieve_failure'));
+            }
+        } else {
+                $responseCode   = self::ERROR_RESPONSE_CODE;
+                $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+                $message        = array(Lang::get('MINTMESH.companyDetails.company_not_exists'));
+            }    
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $message, $data,false);
+    }
+    
+    public function addToTalentCommunity($input){ 
+        
+        $inputParams    = $relationAttrs = array();
+        $companyCode    = !empty($input['company_code']) ? $input['company_code'] : '';
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = !empty($companyDetails[0]) ? $companyDetails[0]->id : 0;
+        #check company details
+        if($companyId){
+            #get input details
+            $bucketId           = !empty($input['bucket_id']) ? $input['bucket_id'] : '';
+            $bucketType         = !empty($input['bucket_type']) ? $input['bucket_type'] : '1';
+            $referenceEmailid   = !empty($input['reference_emailid']) ? $input['reference_emailid'] : '';
+
+            $contactEmailId     = !empty($input['emailid']) ? $this->appEncodeDecode->filterString(strtolower(trim($input['emailid']))) : '';
+            #DB input params form here
+            $inputParams['company_id']   = $companyId;
+            $inputParams['user_id']      = 0;
+            $inputParams['bucket_id']    = $input['bucket_id'];
+            $inputParams['firstname']    = !empty($input['firstname']) ? $input['firstname'] : '';      
+            $inputParams['lastname']     = !empty($input['lastname']) ? $input['lastname'] : '';      
+            $inputParams['emailid']      = $contactEmailId ;      
+            $inputParams['phone']        = !empty($input['phone']) ? $input['phone'] : '';      
+            $inputParams['status']       = $status = !empty($input['status']) ? $input['status'] : 'Active';  
+            $inputParams['employeeid']   = !empty($input['other_id']) ? $input['other_id'] : '';      
+            #neo4j relation input details form here
+            $relationAttrs['company_code']      = $companyCode;
+            $relationAttrs['loggedin_emailid']  = '';
+            $relationAttrs['created_at']        = gmdate("Y-m-d H:i:s");
+            $relationAttrs['firstname']         = !empty($input['firstname']) ? $input['firstname'] : '';    
+            $relationAttrs['lastname']          = !empty($input['lastname']) ? $input['lastname'] : '';  
+            #neo4j node input params form here
+            $neoInput['firstname']      = $input['firstname'];
+            $neoInput['lastname']       = $input['lastname'];
+            $neoInput['contact_number'] = !empty($input['phone']) ? $input['phone'] : '';          
+            $neoInput['emailid']        = $contactEmailId;
+            $neoInput['employeeid']     = !empty($input['other_id']) ? $input['other_id'] : '';
+            $neoInput['status']         = $status; 
+            #check Contact already exists or not
+            $checkContact = $this->enterpriseRepository->checkContact($inputParams);
+            if(empty($checkContact)){
+
+                    $checkEmployeeId = $this->enterpriseRepository->checkEmpId($input);
+                    if(!$checkEmployeeId)
+                    {
+                        $result    = $this->enterpriseRepository->addContact($inputParams); 
+                        if(!empty($result)){ 
+                            $employeesNo    = 1;
+                            $neoResult      = $this->neoEnterpriseRepository->createContactNodes($input['bucket_id'], $neoInput, $relationAttrs);
+                            $neoResult      = $this->neoEnterpriseRepository->companyAutoConnect($neoInput['emailid'], $relationAttrs);
+
+                            $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                            $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+                            $message = array('msg' => array(Lang::get('MINTMESH.addContact.success')));
+                        } else {
+                            $responseCode    = self::ERROR_RESPONSE_CODE;
+                            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                            $message = array('msg' => array(Lang::get('MINTMESH.addContact.failure')));
+                        } 
+                    } else {
+                        $responseCode    = self::ERROR_RESPONSE_CODE;
+                        $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                        $message = array('msg' => array(Lang::get('MINTMESH.editContactList.invalidempid')));
+                    } 
+
+            } else if(isset($checkContact[0]) && $checkContact[0]->bucket_id == '0'){
+
+                    $inputParams['id'] = $checkContact[0]->id;
+                    $update     = $this->enterpriseRepository->updateContact($inputParams);
+                    $neoUpdate  = $this->neoEnterpriseRepository->updateContactNode($input['bucket_id'], $neoInput, $relationAttrs);
+
+                    $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                    $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+                    $message = array('msg' => array(Lang::get('MINTMESH.addContact.contactUpdated')));
+            } else {
+                    $responseCode    = self::ERROR_RESPONSE_CODE;
+                    $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                    $message = array('msg' => array(Lang::get('MINTMESH.addContact.contactExists')));
+                }
+        } else {
+                $responseCode    = self::ERROR_RESPONSE_CODE;
+                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                $message = array('msg' => array(Lang::get('MINTMESH.companyDetails.company_not_exists')));
+            }        
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $message, array());
     }
          
     
