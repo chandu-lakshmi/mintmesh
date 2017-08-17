@@ -863,20 +863,23 @@ class EnterpriseGateway {
         $bucketsListArr  = $resultsSetArr = $data = array();    
         $companyId       = !empty($input['company_id']) ? $input['company_id'] : 0 ;
         $bucketType      = !empty($input['bucket_type']) ? $input['bucket_type']  : 0 ;
-        #get the import contact list here
-        $resultsSetArr  = $this->enterpriseRepository->getCompanyBucketsList($companyId, $bucketType);
-        if ($resultsSetArr) { 
-            foreach ($resultsSetArr as $result){
-                $record = array();
-                $record['bucket_id']   = (int)$result->bucket_id;
-                $record['bucket_name'] = $result->bucket_name;
-                $record['bucket_type'] = $result->bucket_type;
-                $record['count']       = $result->count;
-                $record['company_id']  = $result->company_id;
-                $bucketsListArr[]      = $record;
-            } 
+        
+        if($companyId){
             #get total contacts count
             $totalCountObj = $this->enterpriseRepository->contactsCount($companyId, $bucketType);
+            #get the import contact list here
+            $resultsSetArr  = $this->enterpriseRepository->getCompanyBucketsList($companyId, $bucketType);
+            if ($resultsSetArr) { 
+                foreach ($resultsSetArr as $result){
+                    $record = array();
+                    $record['bucket_id']   = (int)$result->bucket_id;
+                    $record['bucket_name'] = $result->bucket_name;
+                    $record['bucket_type'] = $result->bucket_type;
+                    $record['count']       = $result->count;
+                    $record['company_id']  = $result->company_id;
+                    $bucketsListArr[]      = $record;
+                }
+            }
 
             $responseCode   = self::SUCCESS_RESPONSE_CODE;
             $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
