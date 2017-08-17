@@ -2964,7 +2964,7 @@ class PostGateway {
                     $state      = !empty($campaignDetails->state) ? $campaignDetails->state.', ' : '';
                     $country    = !empty($campaignDetails->address) ? $campaignDetails->country.', ' : '';
                     $location   = $address.$city.$state.$country.$campaignDetails->zip_code;
-                    $campaignLocation   = rtrim($location);
+                    $campaignLocation   = rtrim($location, ", ");
                     //$location = $campaignDetails->address.', '.$campaignDetails->city.', '.$campaignDetails->state.', '.$campaignDetails->country.', '.$campaignDetails->zip_code;
                     //$campaignLocation = str_replace(', ,', ',', $location);//remove double commas
                 }
