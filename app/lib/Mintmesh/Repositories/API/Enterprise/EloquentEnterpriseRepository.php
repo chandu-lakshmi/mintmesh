@@ -685,10 +685,12 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             return $result;
         }
         
-        public function checkContact($input) {
+        public function checkContact($input, $bucketId = '') {
+            
+            $bucketQuery = !empty($bucketId) ? " AND bc.bucket_id='".$bucketId."' " : '';
             $sql = "SELECT c.id, IFNULL(bc.bucket_id,0) AS bucket_id
                     FROM contacts c
-                    LEFT JOIN buckets_contacts bc ON bc.contact_id = c.id  AND bc.company_id='".$input['company_id']."'
+                    LEFT JOIN buckets_contacts bc ON bc.contact_id = c.id  AND bc.company_id='".$input['company_id']."' " .$bucketQuery. "
                     WHERE c.emailid='".$input['emailid']."'  AND c.company_id='".$input['company_id']."'
                     LIMIT 1";
             $result = DB::select($sql);

@@ -2053,7 +2053,7 @@ class EnterpriseGateway {
         #DB input params form here
         $inputParams['company_id']   = $companyId;
         $inputParams['user_id']      = $userId;
-        $inputParams['bucket_id']    = $input['bucket_id'];
+        $inputParams['bucket_id']    = $bucketId;
         $inputParams['firstname']    = !empty($input['firstname']) ? $input['firstname'] : '';      
         $inputParams['lastname']     = !empty($input['lastname']) ? $input['lastname'] : '';      
         $inputParams['emailid']      = $contactEmailId ;      
@@ -2074,7 +2074,7 @@ class EnterpriseGateway {
         $neoInput['employeeid']     = !empty($input['other_id']) ? $input['other_id'] : '';
         $neoInput['status']         = $status; 
         #check Contact already exists or not
-        $checkContact = $this->enterpriseRepository->checkContact($inputParams);
+        $checkContact = $this->enterpriseRepository->checkContact($inputParams, $bucketId);
         if(empty($checkContact)){
             #company available contacts count verification here  
             $availableNo = $this->getCompanyAvailableContactsCount($companyCode);
