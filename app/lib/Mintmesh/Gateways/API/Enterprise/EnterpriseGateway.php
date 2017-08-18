@@ -3683,7 +3683,7 @@ class EnterpriseGateway {
         $responseCode   = self::ERROR_RESPONSE_CODE;
         $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
         
-        $selectedBucketIds  = !empty($input['selected_buckets']) ? explode(',', $input['selected_buckets']) : array();
+        $selectedBucketIds  = !empty($input['bucket_id']) ? explode(',', $input['bucket_id']) : array();
         #check company details
         if($companyId){
             #get input details
@@ -3692,7 +3692,7 @@ class EnterpriseGateway {
             #DB input params form here
             $inputParams['company_id']   = $companyId;
             $inputParams['user_id']      = 0;
-            $inputParams['bucket_id']    = $input['bucket_id'];
+            $inputParams['bucket_id']    = !empty($input['bucket_id']) ? $input['bucket_id'] : '';
             $inputParams['firstname']    = !empty($input['firstname']) ? $input['firstname'] : '';      
             $inputParams['lastname']     = !empty($input['lastname']) ? $input['lastname'] : '';      
             $inputParams['emailid']      = $contactEmailId ;      

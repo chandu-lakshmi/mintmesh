@@ -2533,7 +2533,6 @@ class PostGateway {
             $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
             $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_jobs_list.failure')));
         }
-        
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
     
@@ -2647,6 +2646,8 @@ class PostGateway {
                         $campaignId = $this->neoPostRepository->getPostCampaignId($postId);
                         $refCmpCode = MyEncrypt::encrypt_blowfish($campaignId.'_'.$refById,Config::get('constants.MINTMESH_ENCCODE'));
                         $url = $enterpriseUrl . "/email/campaign/job-details/share?ref=" . $referenceId."&camp_ref=".$refCmpCode; 
+                    } else if($postDetails->post_type == 'internal') {
+                        $url = $enterpriseUrl . "/email/all-jobs/share?ref=" . $referenceId.""; 
                     } else {
                         $url = $enterpriseUrl . "/email/job-details/share?ref=" . $referenceId.""; 
                     }
