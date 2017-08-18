@@ -2620,7 +2620,7 @@ class PostGateway {
     public function applyJobDetails($input){
         
         $jobsListCount  = 0;
-        $compName       = '';
+        $compName       = $refCmpCode = '';
         $resJobsList    = $refAry = $returnData =  $data = array();
         $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
         $referenceId    = isset($input['reference_id'])?$input['reference_id']:'';
@@ -2640,8 +2640,16 @@ class PostGateway {
                 if($separatedStatus){
                     $postDetails      = $this->neoPostRepository->getPosts($post_id);
                     $postResult = $this->referralsGateway->formPostDetailsArray($postDetails);
+                    
                     $postId = $postDetails->getID();
-                    $url = $enterpriseUrl . "/email/job-details/share?ref=" . $referenceId.""; 
+                    if($postDetails->post_type == 'campaign'){
+                        //if campaign job
+                        $campaignId = $this->neoPostRepository->getPostCampaignId($postId);
+                        $refCmpCode = MyEncrypt::encrypt_blowfish($campaignId.'_'.$refById,Config::get('constants.MINTMESH_ENCCODE'));
+                        $url = $enterpriseUrl . "/email/job-details/share?ref=" . $referenceId."&camp_ref=".$refCmpCode; 
+                    } else {
+                        $url = $enterpriseUrl . "/email/job-details/share?ref=" . $referenceId.""; 
+                    }
                     $biltyUrl   = $this->urlShortner($url);
                     $bittly     = $biltyUrl;
                     $record['job_name']         = $postDetails->service_name;
@@ -2654,6 +2662,7 @@ class PostGateway {
                     $record['job_function']     = $postResult['job_function_name'];
                     $record['rewards']          = $this->getPostRewards($postId);
                     $record['ref_code']         = MyEncrypt::encrypt_blowfish($postId.'_'.$refById,Config::get('constants.MINTMESH_ENCCODE'));
+                    $record['camp_ref']         = $refCmpCode;
                     $returnData[] = $record;
                     $data = array("job_details" => array_values($returnData),'company_name'=>$companyDetails->name,'company_logo'=>$companyDetails->logo,'bittly_url'=>$bittly);
                     $responseCode   = self::SUCCESS_RESPONSE_CODE;
