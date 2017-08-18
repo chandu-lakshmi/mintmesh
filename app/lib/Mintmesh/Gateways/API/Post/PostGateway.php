@@ -2646,7 +2646,7 @@ class PostGateway {
                         //if campaign job
                         $campaignId = $this->neoPostRepository->getPostCampaignId($postId);
                         $refCmpCode = MyEncrypt::encrypt_blowfish($campaignId.'_'.$refById,Config::get('constants.MINTMESH_ENCCODE'));
-                        $url = $enterpriseUrl . "/email/job-details/share?ref=" . $referenceId."&camp_ref=".$refCmpCode; 
+                        $url = $enterpriseUrl . "/email/campaign/job-details/share?ref=" . $referenceId."&camp_ref=".$refCmpCode; 
                     } else {
                         $url = $enterpriseUrl . "/email/job-details/share?ref=" . $referenceId.""; 
                     }
