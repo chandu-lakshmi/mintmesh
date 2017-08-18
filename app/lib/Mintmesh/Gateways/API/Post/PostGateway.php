@@ -1940,7 +1940,7 @@ class PostGateway {
             $heroshotImageName   = !empty($crSettings['heroshot_image_name']) ? $crSettings['heroshot_image_name'] : '';
             $careerHeroshotImage = !empty($crSettings['career_heroshot_image']) ? $crSettings['career_heroshot_image'] : '';
             $careerTalentNetwork = !empty($crSettings['career_talent_network']) ? $crSettings['career_talent_network'] : '';
-            $careerLinksArr      = !empty($crSettings['career_links']) ? $crSettings['career_links'] : '';
+            $careerLinksArr      = !empty($crSettings['career_links']) ? $crSettings['career_links'] : array();
             #career page settings
             $returnData['logo_name']                = !empty($campRes->logo_name) ? $campRes->logo_name : $careerName; 
             $returnData['career_logo']              = !empty($campRes->career_logo) ? $campRes->career_logo : $careerLogo; 
