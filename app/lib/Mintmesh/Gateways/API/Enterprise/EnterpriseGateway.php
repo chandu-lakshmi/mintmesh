@@ -3692,13 +3692,12 @@ class EnterpriseGateway {
             #DB input params form here
             $inputParams['company_id']   = $companyId;
             $inputParams['user_id']      = 0;
-            $inputParams['bucket_id']    = !empty($input['bucket_id']) ? $input['bucket_id'] : '';
             $inputParams['firstname']    = !empty($input['firstname']) ? $input['firstname'] : '';      
             $inputParams['lastname']     = !empty($input['lastname']) ? $input['lastname'] : '';      
             $inputParams['emailid']      = $contactEmailId ;      
             $inputParams['phone']        = !empty($input['phone']) ? $input['phone'] : '';      
             $inputParams['status']       = $status = !empty($input['status']) ? $input['status'] : 'Active';  
-            $inputParams['employeeid']   = !empty($input['other_id']) ? $input['other_id'] : '';      
+            $inputParams['employeeid']   = '';//!empty($input['other_id']) ? $input['other_id'] : '';      
             #neo4j relation input details form here
             $relationAttrs['company_code']      = $companyCode;
             $relationAttrs['loggedin_emailid']  = '';
@@ -3710,29 +3709,23 @@ class EnterpriseGateway {
             $neoInput['lastname']       = $input['lastname'];
             $neoInput['contact_number'] = !empty($input['phone']) ? $input['phone'] : '';          
             $neoInput['emailid']        = $contactEmailId;
-            $neoInput['employeeid']     = !empty($input['other_id']) ? $input['other_id'] : '';
+            $neoInput['employeeid']     = '';//!empty($input['other_id']) ? $input['other_id'] : '';
             $neoInput['status']         = $status; 
             #check Contact already exists or not
             $checkContact = $this->enterpriseRepository->checkContact($inputParams);
             if(empty($checkContact)){
 
-                    $checkEmployeeId = $this->enterpriseRepository->checkEmpId($input);
-                    if(!$checkEmployeeId)
-                    {
-                        $addContactResult   = $this->enterpriseRepository->addContactToTalentCommunity($inputParams, $selectedBucketIds); 
-                        if(!empty($addContactResult)){ 
-                            
-                            $neoResult      = $this->neoEnterpriseRepository->createContactNodes($input['bucket_id'], $neoInput, $relationAttrs);
-                            $neoResult      = $this->neoEnterpriseRepository->companyAutoConnect($neoInput['emailid'], $relationAttrs);
-                            $responseCode   = self::SUCCESS_RESPONSE_CODE;
-                            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
-                            $message        = array('msg' => array(Lang::get('MINTMESH.addContact.success')));
-                        } else {
-                            $message = array('msg' => array(Lang::get('MINTMESH.addContact.failure')));
-                        } 
-                    } else {
-                        $message = array('msg' => array(Lang::get('MINTMESH.editContactList.invalidempid')));
-                    } 
+                $addContactResult   = $this->enterpriseRepository->addContactToTalentCommunity($inputParams, $selectedBucketIds); 
+                if(!empty($addContactResult)){ 
+
+                    $neoResult      = $this->neoEnterpriseRepository->createContactNodes($input['bucket_id'], $neoInput, $relationAttrs);
+                    $neoResult      = $this->neoEnterpriseRepository->companyAutoConnect($neoInput['emailid'], $relationAttrs);
+                    $responseCode   = self::SUCCESS_RESPONSE_CODE;
+                    $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                    $message        = array('msg' => array(Lang::get('MINTMESH.addContact.success')));
+                } else {
+                    $message = array('msg' => array(Lang::get('MINTMESH.addContact.failure')));
+                }     
 
             } else if(isset($checkContact[0]) && !empty ($checkContact[0]->id)){
 
