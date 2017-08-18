@@ -2401,7 +2401,11 @@ class PostGateway {
                     $experience     = $postDetails['experience_range_name'];
                     $location       = $postDetails['service_location'];
                     $jobDescription = 'Experience: '.$postDetails['experience_range_name'].', Location: '.$postStatus->service_location;
-                    $url            = Config::get('constants.MM_ENTERPRISE_URL') . "/email/job-details/share?ref=" . $input['ref']."";
+                    if($postType == 'internal'){
+                        $url  = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-jobs/share?ref=" . $input['ref']."";
+                    } else {
+                        $url  = Config::get('constants.MM_ENTERPRISE_URL') . "/email/job-details/share?ref=" . $input['ref']."";
+                    }
                     $bitlyUrl       = $this->urlShortner($url);
                     $bittly         = $bitlyUrl;
                 }else if($input['all_jobs'] == 1){
