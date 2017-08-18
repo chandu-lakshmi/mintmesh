@@ -2043,7 +2043,7 @@ class PostGateway {
     }
     
     private function urlShortner($url){
-        
+        return $url;
         $bitly = Config::get('constants.BITLY_URL').Config::get('constants.BITLY_ACCESS_TOKEN').'&longUrl='.$url;
         try{
             $fp   = '';
