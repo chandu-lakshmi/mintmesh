@@ -2392,6 +2392,7 @@ class PostGateway {
                 $postDetails        = $this->referralsGateway->formPostDetailsArray($postStatus);
                 $companyLogo        = !empty($companyDetails->logo) ? $companyDetails->logo : '';
                 $companyCode        = !empty($companyDetails->companyCode) ? $companyDetails->companyCode : '';
+                $postType           = !empty($postDetails['post_type']) ? $postDetails['post_type'] : '';
                 if($input['all_jobs'] == 0){
 
                     $jobTitle       = $companyDetails->name .' looking for '.$postStatus->looking_for;
@@ -2425,6 +2426,7 @@ class PostGateway {
                         "reference_id"  => $referred_by_id,
                         "emailid"       => $userDetails->emailid,
                         "post_status"   => $postStatus->status,
+                        "post_type"     => $postType,
                         "company_logo"  => $companyLogo,
                         "company_name"  => $companyDetails->name,
                         "company_code"  => $companyCode,
@@ -3432,6 +3434,7 @@ class PostGateway {
                 $experience      = !empty($postDetails['experience_range_name']) ? $postDetails['experience_range_name'] : ''; 
                 $location        = !empty($postDetails['service_location']) ? $postDetails['service_location'] : ''; 
                 $jobDescription  = !empty($postDetails['job_description']) ? $postDetails['job_description'] : ''; 
+                $jobType         = !empty($postDetails['post_type']) ? $postDetails['post_type'] : ''; 
                 $bittly = $url = '';
                 #get get career settings here
                 $crSettings = $this->getCareerSettings($companyCode);
@@ -3448,6 +3451,7 @@ class PostGateway {
                     "refrel"    => $reference_id,
                     "emailid"   => $userDetails->emailid, 
                     "post_status"       => $jobStatus, 
+                    "post_type"         => $jobType, 
                     "company_logo"      => $companyLogo, 
                     "company_name"      => $companyDetails->name, 
                     "company_code"      => $companyCode, 

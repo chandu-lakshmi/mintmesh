@@ -668,21 +668,21 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         } 
         
         public function addContact($input) {
+            
                 $input['created_at'] = gmdate('Y-m-d H:i:s');
 		$input['created_by'] = $input['user_id'];
 		$input['ip_address'] = !empty($_SERVER['REMOTE_ADDR'])?$_SERVER['REMOTE_ADDR']:'127.1.1.0';
+                
                 $sql = "insert into contacts (`user_id`,`company_id`,`import_file_id`,`firstname`,`lastname`,`emailid`,`phone`,`status`,`employeeid`,`updated_at`,`updated_by`,`created_at`,`created_by`,`ip_address`)" ;
                 $sql.=" values('".$input['user_id']."','".$input['company_id']."',' ','".$input['firstname']."','".$input['lastname']."','".$input['emailid']."','".$input['phone']."','".$input['status']."','".$input['employeeid']."'," ;
                 $sql.= " ' ',' ','".$input['created_at']."', '".$input['created_by']."', '".$input['ip_address']."') ";
                 $result = DB::statement($sql);
                 if($result){
-                  $last_insert_id = DB::Select("SELECT LAST_INSERT_ID() as last_id"); 
-                $contactId = $last_insert_id[0]->last_id;
-                DB::statement("insert into buckets_contacts (contact_id,bucket_id,company_id) values ( '".$contactId."','".$input['bucket_id']."','".$input['company_id']."') ");
+                    $last_insert_id = DB::Select("SELECT LAST_INSERT_ID() as last_id"); 
+                    $contactId = $last_insert_id[0]->last_id;
+                    DB::statement("insert into buckets_contacts (contact_id,bucket_id,company_id) values ( '".$contactId."','".$input['bucket_id']."','".$input['company_id']."') ");
                 }
-                return $result;
-            
-            
+            return $result;
         }
         
         public function checkContact($input) {
@@ -1509,5 +1509,72 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
     public function getCompanyList() {
         $sql = 'select code,name from company';
         return $result = DB::Select($sql);
+    }
+    
+    public function addContactToTalentCommunity($input = array(), $selectedBucketIds = array()) {
+            
+            $companyId = $input['company_id'];
+            $input['created_at'] = gmdate('Y-m-d H:i:s');
+            $input['created_by'] = $input['user_id'];
+            $input['ip_address'] = !empty($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '127.1.1.0';
+
+            $sql = "insert into contacts (`user_id`,`company_id`,`import_file_id`,`firstname`,`lastname`,`emailid`,`phone`,`status`,`employeeid`,`updated_at`,`updated_by`,`created_at`,`created_by`,`ip_address`)" ;
+            $sql.=" values('".$input['user_id']."','".$input['company_id']."',' ','".$input['firstname']."','".$input['lastname']."','".$input['emailid']."','".$input['phone']."','".$input['status']."','".$input['employeeid']."'," ;
+            $sql.= " ' ',' ','".$input['created_at']."', '".$input['created_by']."', '".$input['ip_address']."') ";
+            $result = DB::statement($sql);
+            
+            if($result){
+                $last_insert_id = DB::Select("SELECT LAST_INSERT_ID() as last_id"); 
+                $contactId = $last_insert_id[0]->last_id;
+
+                foreach ($selectedBucketIds as $bucketId){
+                    //create relation b/w Buckets and Contacts
+                    $this->setBucketsContacts($bucketId , $contactId, $companyId);
+                }
+            }
+        return $result;
+    }
+    
+    public function contactUpdateInTalentCommunity($input = array(), $selectedBucketIds = array()) {
+        
+        $fields = '';
+        $input['updated_at'] = gmdate('Y-m-d H:i:s');
+        $input['updated_by'] = $input['user_id'];
+        $contactId = $input['id'];
+        $companyId = $input['company_id'];
+        $field_set = array('employeeid','firstname','lastname','phone','status','updated_at','updated_by');
+        
+        foreach($input as $k=>$v){
+            $v = "'".$v."'";
+            if(in_array($k,$field_set))
+            $fields .= $k.'='.$v.',';
+        }
+        
+        if($fields != ''){
+            $sql    = "update contacts set ".trim($fields,',')." where id=".$contactId." ";
+            $result = DB::Statement($sql);
+            foreach ($selectedBucketIds as $bucketId){
+                //create relation b/w Buckets and Contacts
+                $this->setBucketsContacts($bucketId , $contactId, $companyId);
+            }
+        }
+        return $result;
+    }
+    
+    public function setBucketsContacts($bucket_id = '', $contact_id = '', $company_id = '') {
+        $return = FALSE;
+        if(!empty($contact_id) && !empty($bucket_id) && !empty($company_id)){
+            #check relation already exist or not
+            $sql = 'select bucket_id, contact_id, company_id from buckets_contacts where bucket_id = '.$bucket_id.' and contact_id = '.$contact_id.' and company_id = '.$company_id.' limit 1';
+            $selectRel = DB::Select($sql);
+            #if releation not there insert row
+            if(empty($selectRel)){
+                $query = "insert into buckets_contacts (contact_id, bucket_id, company_id)
+                        values(".$contact_id.",".$bucket_id.",".$company_id.")";
+                DB::statement($query);
+            }
+            $return = TRUE;
+        }
+        return $return;
     }
 }

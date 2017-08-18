@@ -262,11 +262,13 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
     }
     
     public function updateContactNode($bucket_id = '', $neoInput = array(), $relationAttrs = array()) {
+        
+        $return = FALSE;
          $queryString = " MATCH (u:User),(b:Contact_bucket)
                             WHERE b.mysql_id = '" . $bucket_id . "' and u.emailid = '" . $neoInput['emailid'] . "' ";
            $queryString .= "set u.firstname='".$neoInput['firstname']."', u.lastname='".$neoInput['lastname']."', u.emailid='".$neoInput['emailid']."'";
            $queryString .= ",u.contact_number='".$neoInput['contact_number']."',u.status='".$neoInput['status']."' ";
-            $queryString.="create unique (u)<-[:" . Config::get('constants.RELATIONS_TYPES.COMPANY_CONTACT_IMPORTED');
+            $queryString.=" create unique (u)<-[:" . Config::get('constants.RELATIONS_TYPES.COMPANY_CONTACT_IMPORTED');
             if (!empty($relationAttrs)) {
                 $queryString.="{";
                 foreach ($relationAttrs as $k => $v) {
@@ -275,15 +277,14 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
                 $queryString = rtrim($queryString, ",");
                 $queryString.="}";
             }
-            $queryString.="]-(b)";
-            $queryString.=" return u";
+            $queryString.="]-(b) return u";
+            
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             if ($result->count()) {
-            return $result;
-            } else {
-            return false;
-            }
+                $return =  $result;
+            } 
+        return $return;
     }
 
     public function viewCompanyDetails($userEmailId='', $companyCode=''){

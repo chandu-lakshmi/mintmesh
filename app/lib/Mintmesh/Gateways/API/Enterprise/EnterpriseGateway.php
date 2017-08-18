@@ -3680,13 +3680,14 @@ class EnterpriseGateway {
         $companyCode    = !empty($input['company_code']) ? $input['company_code'] : '';
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId      = !empty($companyDetails[0]) ? $companyDetails[0]->id : 0;
+        $responseCode   = self::ERROR_RESPONSE_CODE;
+        $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+        
+        $selectedBucketIds  = !empty($input['selected_buckets']) ? explode(',', $input['selected_buckets']) : array();
         #check company details
         if($companyId){
             #get input details
-            $bucketId           = !empty($input['bucket_id']) ? $input['bucket_id'] : '';
-            $bucketType         = !empty($input['bucket_type']) ? $input['bucket_type'] : '1';
             $referenceEmailid   = !empty($input['reference_emailid']) ? $input['reference_emailid'] : '';
-
             $contactEmailId     = !empty($input['emailid']) ? $this->appEncodeDecode->filterString(strtolower(trim($input['emailid']))) : '';
             #DB input params form here
             $inputParams['company_id']   = $companyId;
@@ -3718,43 +3719,37 @@ class EnterpriseGateway {
                     $checkEmployeeId = $this->enterpriseRepository->checkEmpId($input);
                     if(!$checkEmployeeId)
                     {
-                        $result    = $this->enterpriseRepository->addContact($inputParams); 
-                        if(!empty($result)){ 
-                            $employeesNo    = 1;
+                        $addContactResult   = $this->enterpriseRepository->addContactToTalentCommunity($inputParams, $selectedBucketIds); 
+                        if(!empty($addContactResult)){ 
+                            
                             $neoResult      = $this->neoEnterpriseRepository->createContactNodes($input['bucket_id'], $neoInput, $relationAttrs);
                             $neoResult      = $this->neoEnterpriseRepository->companyAutoConnect($neoInput['emailid'], $relationAttrs);
-
-                            $responseCode    = self::SUCCESS_RESPONSE_CODE;
-                            $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
-                            $message = array('msg' => array(Lang::get('MINTMESH.addContact.success')));
+                            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+                            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                            $message        = array('msg' => array(Lang::get('MINTMESH.addContact.success')));
                         } else {
-                            $responseCode    = self::ERROR_RESPONSE_CODE;
-                            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
                             $message = array('msg' => array(Lang::get('MINTMESH.addContact.failure')));
                         } 
                     } else {
-                        $responseCode    = self::ERROR_RESPONSE_CODE;
-                        $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
                         $message = array('msg' => array(Lang::get('MINTMESH.editContactList.invalidempid')));
                     } 
 
-            } else if(isset($checkContact[0]) && $checkContact[0]->bucket_id == '0'){
+            } else if(isset($checkContact[0]) && !empty ($checkContact[0]->id)){
 
                     $inputParams['id'] = $checkContact[0]->id;
-                    $update     = $this->enterpriseRepository->updateContact($inputParams);
-                    $neoUpdate  = $this->neoEnterpriseRepository->updateContactNode($input['bucket_id'], $neoInput, $relationAttrs);
-
-                    $responseCode    = self::SUCCESS_RESPONSE_CODE;
-                    $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
-                    $message = array('msg' => array(Lang::get('MINTMESH.addContact.contactUpdated')));
-            } else {
-                    $responseCode    = self::ERROR_RESPONSE_CODE;
-                    $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                    $updateContact  = $this->enterpriseRepository->contactUpdateInTalentCommunity($inputParams, $selectedBucketIds);
+                    
+                    foreach ($selectedBucketIds as $bucketId){
+                        //update Contact Node and create relation with all selected bucket nodes
+                        $this->neoEnterpriseRepository->updateContactNode($bucketId, $neoInput, $relationAttrs);
+                    }
+                    $responseCode   = self::SUCCESS_RESPONSE_CODE;
+                    $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                    $message        = array('msg' => array(Lang::get('MINTMESH.addContact.contactUpdated')));
+                } else {
                     $message = array('msg' => array(Lang::get('MINTMESH.addContact.contactExists')));
                 }
         } else {
-                $responseCode    = self::ERROR_RESPONSE_CODE;
-                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
                 $message = array('msg' => array(Lang::get('MINTMESH.companyDetails.company_not_exists')));
             }        
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $message, array());
