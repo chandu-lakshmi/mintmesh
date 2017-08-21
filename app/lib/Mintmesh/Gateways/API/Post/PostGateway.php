@@ -3582,7 +3582,8 @@ class PostGateway {
     
     public function editCareerSettings($input) {
         
-        $data = $neoInput = $careerLinks = $careerLinksArr = array();
+        $careerLinksArr   = '';
+        $data = $neoInput = $careerLinks = array();
         $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
         #get get Career Settings here
         $crSettings = $this->neoPostRepository->getCareerSettings($companyCode);
