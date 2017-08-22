@@ -113,15 +113,14 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             return $pushResult[0];
         }
         
-         public function createNewBucket($userId, $companyId, $bucketName, $createdAt){
+         public function createNewBucket($userId, $companyId, $bucketName, $createdAt, $bucketType =1 ){
             
             $result = false;
             $ipAddress = !empty($_SERVER['REMOTE_ADDR'])?$_SERVER['REMOTE_ADDR']:0;
             if (!empty($userId) && !empty($companyId) && !empty($bucketName))
             {   
-                //$sql = "insert into import_contacts_buckets (`user_id`,`company_id`,`name`)" ;
-                $sql = "insert into buckets (`user_id`,`company_id`,`name`,`updated_by`,`created_at`,`ip_address`)" ;
-                $sql.=" values('".$userId."','".$companyId."','".$bucketName."','".$userId."','".$createdAt."','".$ipAddress."')" ;
+                $sql = "insert into buckets (`user_id`,`company_id`,`name`,`bucket_type`,`updated_by`,`created_at`,`ip_address`)" ;
+                $sql.=" values('".$userId."','".$companyId."','".$bucketName."','".$bucketType."','".$userId."','".$createdAt."','".$ipAddress."')" ;
 
                 DB::statement($sql);
                 $last_insert_id = DB::Select("SELECT LAST_INSERT_ID() as last_id"); 
@@ -145,19 +144,18 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
             return $result; 
          }
          
-        public function isBucketExist($userId, $companyId, $bucketName){
+        public function isBucketExist($companyId, $bucketName, $bucketType = 1){
             
             $response = false;
-            if (!empty($userId) && !empty($companyId) && !empty($bucketName))
+            if (!empty($companyId) && !empty($bucketName))
             {  
-                //$sql = "select COUNT(id) as count from import_contacts_buckets where user_id = '".$userId."' and company_id = '".$companyId."' and name like '".$bucketName."' " ;
-                $sql = "select COUNT(id) as count from buckets where user_id = '".$userId."' and company_id = '".$companyId."' and name like '".$bucketName."' and status = 1 " ;
-                //echo $sql;exit;
-                $result = DB::Select($sql);
+                $sql = "select COUNT(id) as count from buckets 
+                        where company_id = '".$companyId."' and bucket_type = ".$bucketType." and name like '".$bucketName."'  and  status = 1 " ;
+                $result   = DB::Select($sql);
                 $response = $result[0]->count;
             } 
             return $response; 
-         } 
+        } 
         
         // Import Contacts on Web
         public function importContactsOnWeb($input, $userId, $bucketId, $companyId, $instanceId)
@@ -327,26 +325,42 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                 ->where('company_id', '=', $companyId)->get();
         }
         
-        public function getCompanyBucketsList($params){
-            $sql = 'SELECT b.name AS bucket_name,b.id as bucket_id, COUNT(DISTINCT bc.contact_id) AS count,b.company_id as company_id 
-                    FROM buckets b
-                    LEFT JOIN buckets_contacts bc ON bc.bucket_id=b.id AND bc.company_id="'.$params['company_id'].'"
-                    WHERE 1 AND (b.company_id = "'.$params['company_id'].'" OR b.company_id = "0") AND b.status = "1"
-                    GROUP BY b.id';
-            $result = DB::select($sql);     
-        return $result;
-           /*return DB::table('buckets')
-                   ->select('name as bucket_name','id as bucket_id')
-                   ->where('company_id', '=', 0)
-                   ->orWhere('company_id','=',$params['company_id'])->get();*/
+        public function getCompanyBucketsList($companyId = 0, $bucketType = 0){
+            $return = $bucketQuery = '';
+            if($companyId){
+                #get with bucket Type
+                if(!empty($bucketType)){
+                    $bucketQuery = " b.bucket_type =".$bucketType." AND ";
+                }
+                $sql = 'SELECT b.name AS bucket_name,b.id as bucket_id, COUNT(DISTINCT bc.contact_id) AS count,b.company_id as company_id, b.bucket_type 
+                        FROM buckets b
+                        LEFT JOIN buckets_contacts bc ON bc.bucket_id=b.id AND bc.company_id='.$companyId.'
+                        WHERE '.$bucketQuery.' b.status =1 AND (b.company_id ='.$companyId.' OR b.company_id =0) 
+                        GROUP BY b.id';
+                $return = DB::select($sql);
+            }
+         return $return;
         }
-        public function contactsCount($params) {
-           $sql = DB::table('contacts')
-                                ->where('company_id', '=', $params['company_id'])->get();
-                                //->where('user_id','=',$params['user_id'])
-                                //->where('bucket_id','=',$params['bucket_id'])->get();
-           $result = DB::select("select FOUND_ROWS() as total_count");     
-           return $result[0];
+        
+        public function contactsCount($companyId = 0, $bucketType = 0) {
+           
+            $return = 0;
+            if($companyId){
+                $sql = "select count(id) as total_count
+                         from contacts
+                         where company_id =".$companyId;
+                #check with bucket Type
+                if(!empty($bucketType)){             
+                    $sql .= " and id IN (select distinct(bc.contact_id) 
+                                    from buckets b
+                                    left join buckets_contacts bc on bc.bucket_id = b.id where b.bucket_type =".$bucketType.")";
+                }
+                $result = DB::select($sql); 
+                if(isset($result[0])){
+                    $return = $result[0];
+                }
+            }
+           return $return;
         }
         
         public function getImportContactsList($params){
@@ -358,18 +372,24 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                     c.firstname, c.lastname, c.emailid, c.phone, c.employeeid, c.status,
                     case when u.id is not null then 1 else 0 end as download_status
                     FROM contacts c ';
-                if(!empty($params['bucket_id']))
-                $sql.= ' LEFT JOIN buckets_contacts bc ON c.id=bc.contact_id';
+                if(!empty($params['bucket_id']))//based on bucket type
+                    $sql.= ' LEFT JOIN buckets_contacts bc ON c.id=bc.contact_id';
                 
                 $sql.= " LEFT JOIN users u ON u.emailid=c.emailid and u.is_enterprise!='1' 
                         where c.company_id='".$params['company_id']."' " ;
-                
+                # based on bucket id
                 if(!empty($params['bucket_id'])){
                     $sql.= " AND bc.bucket_id = '".$params['bucket_id']."' " ;
                 }
-                
+                # based on bucket type
+                if(!empty($params['bucket_type'])){
+                    $sql.= " AND c.id IN (select distinct(bc.contact_id) 
+                                    from buckets b
+                                    left join buckets_contacts bc on bc.bucket_id = b.id where b.bucket_type =".$params['bucket_type'].")  " ;
+                }
+                # based on search key 
                 if (!empty($search) && $search == 'no') {
-                    
+                    #for total downloads search
                     $sql.= " and u.is_enterprise is null ";
                     
                 } else if(!empty($search)){
@@ -379,26 +399,25 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                     $sql.= " OR c.firstname like '%".  $search."%'";
                     $sql.= " OR c.lastname like '%".  $search."%'";
                     $sql.= " OR c.employeeid like '%".  $search."%'";
-                    
+                    #for total downloads search
                     if($search =='yes' || $search =='ye'){
                         $sql.= " OR u.is_enterprise like '%0%'";
                         $sql.= " OR u.is_enterprise like '%2%'";
                     }
-                    
                     $sql.= " OR c.status like '%".  $search."%')";
                 } 
-               
-                $sql .= "order by status";
+                # based on sort
+                $sql .= " order by status";
                 if($params['sort'] == 'desc'){
                     $sql .= " desc";
                 }
+                # based on page no
                 $page = $params['page_no'];
                 if (!empty($page)){
                     $page   = $page-1 ;
                     $offset = $page*50 ;
                     $sql.=  " limit ".$offset.",50 ";
                 } 
-                //echo $sql;exit;
                 $result['Contacts_list'] = DB::select($sql);
                 $result['total_records'] = DB::select("select FOUND_ROWS() as total_count");
             return $result;    
@@ -410,15 +429,20 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                 $sql = 'SELECT  count(u.id) as total_downloads FROM contacts c ';
                 
                 if(!empty($params['bucket_id']))
-                $sql.= ' LEFT JOIN buckets_contacts bc ON c.id=bc.contact_id';
+                    $sql.= ' LEFT JOIN buckets_contacts bc ON c.id=bc.contact_id';
                 
                 $sql.= " LEFT JOIN users u ON u.emailid=c.emailid and u.is_enterprise!='1'
                          where c.company_id='".$params['company_id']."' " ;
                 
-                 if(!empty($params['bucket_id'])){
-                     $sql.= " AND bc.bucket_id = '".$params['bucket_id']."' " ;
-                 }
-                
+                if(!empty($params['bucket_id'])){
+                    $sql.= " AND bc.bucket_id = '".$params['bucket_id']."' " ;
+                }
+                # based on bucket type
+                if(!empty($params['bucket_type'])){
+                    $sql.= " AND c.id IN (select distinct(bc.contact_id) 
+                                    from buckets b
+                                    left join buckets_contacts bc on bc.bucket_id = b.id where b.bucket_type =".$params['bucket_type'].")  " ;
+                }
                 if (!empty($search) && $search == 'no') {
                     
                     $sql.= " and u.is_enterprise is null ";
@@ -438,7 +462,6 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
                     
                     $sql.= " OR c.status like '%".  $search."%')";
                 } 
-                //echo $sql;exit;
                 $result = DB::select($sql);
                 
             return $result;    
@@ -645,27 +668,29 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         } 
         
         public function addContact($input) {
+            
                 $input['created_at'] = gmdate('Y-m-d H:i:s');
 		$input['created_by'] = $input['user_id'];
 		$input['ip_address'] = !empty($_SERVER['REMOTE_ADDR'])?$_SERVER['REMOTE_ADDR']:'127.1.1.0';
+                
                 $sql = "insert into contacts (`user_id`,`company_id`,`import_file_id`,`firstname`,`lastname`,`emailid`,`phone`,`status`,`employeeid`,`updated_at`,`updated_by`,`created_at`,`created_by`,`ip_address`)" ;
                 $sql.=" values('".$input['user_id']."','".$input['company_id']."',' ','".$input['firstname']."','".$input['lastname']."','".$input['emailid']."','".$input['phone']."','".$input['status']."','".$input['employeeid']."'," ;
                 $sql.= " ' ',' ','".$input['created_at']."', '".$input['created_by']."', '".$input['ip_address']."') ";
                 $result = DB::statement($sql);
                 if($result){
-                  $last_insert_id = DB::Select("SELECT LAST_INSERT_ID() as last_id"); 
-                $contactId = $last_insert_id[0]->last_id;
-                DB::statement("insert into buckets_contacts (contact_id,bucket_id,company_id) values ( '".$contactId."','".$input['bucket_id']."','".$input['company_id']."') ");
+                    $last_insert_id = DB::Select("SELECT LAST_INSERT_ID() as last_id"); 
+                    $contactId = $last_insert_id[0]->last_id;
+                    DB::statement("insert into buckets_contacts (contact_id,bucket_id,company_id) values ( '".$contactId."','".$input['bucket_id']."','".$input['company_id']."') ");
                 }
-                return $result;
-            
-            
+            return $result;
         }
         
-        public function checkContact($input) {
+        public function checkContact($input, $bucketId = '') {
+            
+            $bucketQuery = !empty($bucketId) ? " AND bc.bucket_id='".$bucketId."' " : '';
             $sql = "SELECT c.id, IFNULL(bc.bucket_id,0) AS bucket_id
                     FROM contacts c
-                    LEFT JOIN buckets_contacts bc ON bc.contact_id = c.id  AND bc.company_id='".$input['company_id']."' AND bc.bucket_id='".$input['bucket_id']."'
+                    LEFT JOIN buckets_contacts bc ON bc.contact_id = c.id  AND bc.company_id='".$input['company_id']."' " .$bucketQuery. "
                     WHERE c.emailid='".$input['emailid']."'  AND c.company_id='".$input['company_id']."'
                     LIMIT 1";
             $result = DB::select($sql);
@@ -1109,13 +1134,12 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         return $result;
     }
     
-    public function getCompanyPurchasedContacts($companyCode='') {
+    public function getCompanyPurchasedContacts($companyId = 0) {
         $result = FALSE;
-        if(!empty($companyCode)){
-            $sql = "select sum(s.employees_no) as count
-                from company_subscriptions s 
-                left join company c on s.company_id = c.id 
-                where c.code = '".$companyCode."'";
+        if(!empty($companyId)){
+            $sql = "select sum(employees_no) as count
+                    from company_subscriptions 
+                    where company_id =".$companyId;
             $sqlResult = DB::SELECT($sql);
             if (isset($sqlResult[0])){
                 $result = $sqlResult[0]->count;
@@ -1124,13 +1148,15 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
         return $result;
     }
     
-    public function getCompanyActiveOrInactiveContactsCount($companyCode='') {
+    public function getCompanyActiveOrInactiveContactsCount($companyId = 0, $bucketType = 1) {
         $result = FALSE;
-        if(!empty($companyCode)){
-            $sql = "select count(t.id) as count
-                from contacts t
-                left join company c on t.company_id = c.id 
-                where c.code = '".$companyCode."' and (t.status = 'Active' or t.status='Inactive')";
+        if(!empty($companyId)){
+            $sql = "select count(id) as count
+                    from contacts
+                    where company_id =".$companyId." and (status = 'Active' or status='Inactive') 
+                        and id IN (select distinct(bc.contact_id) 
+                                    from buckets b
+                                    left join buckets_contacts bc on bc.bucket_id = b.id where b.bucket_type =".$bucketType.")";
             $sqlResult = DB::SELECT($sql);
             if (isset($sqlResult[0])){
                 $result = $sqlResult[0]->count;
@@ -1485,5 +1511,72 @@ class EloquentEnterpriseRepository extends BaseRepository implements EnterpriseR
     public function getCompanyList() {
         $sql = 'select code,name from company';
         return $result = DB::Select($sql);
+    }
+    
+    public function addContactToTalentCommunity($input = array(), $selectedBucketIds = array()) {
+            
+            $companyId = $input['company_id'];
+            $input['created_at'] = gmdate('Y-m-d H:i:s');
+            $input['created_by'] = $input['user_id'];
+            $input['ip_address'] = !empty($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '127.1.1.0';
+
+            $sql = "insert into contacts (`user_id`,`company_id`,`import_file_id`,`firstname`,`lastname`,`emailid`,`phone`,`status`,`employeeid`,`updated_at`,`updated_by`,`created_at`,`created_by`,`ip_address`)" ;
+            $sql.=" values('".$input['user_id']."','".$input['company_id']."',' ','".$input['firstname']."','".$input['lastname']."','".$input['emailid']."','".$input['phone']."','".$input['status']."','".$input['employeeid']."'," ;
+            $sql.= " ' ',' ','".$input['created_at']."', '".$input['created_by']."', '".$input['ip_address']."') ";
+            $result = DB::statement($sql);
+            
+            if($result){
+                $last_insert_id = DB::Select("SELECT LAST_INSERT_ID() as last_id"); 
+                $contactId = $last_insert_id[0]->last_id;
+
+                foreach ($selectedBucketIds as $bucketId){
+                    //create relation b/w Buckets and Contacts
+                    $this->setBucketsContacts($bucketId , $contactId, $companyId);
+                }
+            }
+        return $result;
+    }
+    
+    public function contactUpdateInTalentCommunity($input = array(), $selectedBucketIds = array()) {
+        
+        $fields = '';
+        $input['updated_at'] = gmdate('Y-m-d H:i:s');
+        $input['updated_by'] = $input['user_id'];
+        $contactId = $input['id'];
+        $companyId = $input['company_id'];
+        $field_set = array('employeeid','firstname','lastname','phone','status','updated_at','updated_by');
+        
+        foreach($input as $k=>$v){
+            $v = "'".$v."'";
+            if(in_array($k,$field_set))
+            $fields .= $k.'='.$v.',';
+        }
+        
+        if($fields != ''){
+            $sql    = "update contacts set ".trim($fields,',')." where id=".$contactId." ";
+            $result = DB::Statement($sql);
+            foreach ($selectedBucketIds as $bucketId){
+                //create relation b/w Buckets and Contacts
+                $this->setBucketsContacts($bucketId , $contactId, $companyId);
+            }
+        }
+        return $result;
+    }
+    
+    public function setBucketsContacts($bucket_id = '', $contact_id = '', $company_id = '') {
+        $return = FALSE;
+        if(!empty($contact_id) && !empty($bucket_id) && !empty($company_id)){
+            #check relation already exist or not
+            $sql = 'select bucket_id, contact_id, company_id from buckets_contacts where bucket_id = '.$bucket_id.' and contact_id = '.$contact_id.' and company_id = '.$company_id.' limit 1';
+            $selectRel = DB::Select($sql);
+            #if releation not there insert row
+            if(empty($selectRel)){
+                $query = "insert into buckets_contacts (contact_id, bucket_id, company_id)
+                        values(".$contact_id.",".$bucket_id.",".$company_id.")";
+                DB::statement($query);
+            }
+            $return = TRUE;
+        }
+        return $return;
     }
 }

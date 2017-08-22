@@ -18,7 +18,6 @@ use Mintmesh\Repositories\API\Payment\PaymentRepository;
 use Mintmesh\Gateways\API\Payment\PaymentGateway;
 use Mintmesh\Repositories\API\User\NeoUserRepository;
 use Mintmesh\Repositories\API\Post\NeoPostRepository;
-//use Mintmesh\Repositories\API\Globals\NeoGlobalRepository;
 use Mintmesh\Gateways\API\User\UserGateway;
 use Mintmesh\Services\FileUploader\API\User\UserFileUploader;
 use Mintmesh\Services\Emails\API\User\UserEmailManager;
@@ -58,6 +57,9 @@ class PostGateway {
     const COMPANY_RESUME_STATUS = 0;
     const COMPANY_RESUME_S3_MOVED_STATUS = 1;
     const COMPANY_RESUME_AI_PARSED_STATUS = 2;
+    const DEFAULT_CAREER_HEROSHOT_IMAGE = 'https://s3-us-west-2.amazonaws.com/mintmesh%2Fstg%2FcompanyLogo/attach_16910035641502174159_1502174167.jpg';
+    const DEFAULT_CAREER_TALENT_NETWORK = 'enable';
+    const CAREER_HEROSHOT_IMAGE_HEIGHT = 336;
 
     protected $enterpriseRepository, $commonFormatter, $authorizer, $appEncodeDecode,$neoEnterpriseRepository,$userFileUploader,$job2,$paymentRepository;
     protected $createdNeoUser, $postValidator, $referralsRepository, $enterpriseGateway, $userGateway, $contactsRepository, $userEmailManager,$paymentGateway;
@@ -65,7 +67,6 @@ class PostGateway {
     public function __construct(NeoPostRepository $neoPostRepository, 
                                 UserRepository $userRepository, 
                                 NeoUserRepository $neoUserRepository, 
-//                                NeoGlobalRepository $neoGlobalRepository, 
                                 UserGateway $userGateway, 
                                 UserController $userController, 
                                 ReferralsGateway $referralsGateway, 
@@ -86,7 +87,6 @@ class PostGateway {
                                 
     ) {
         $this->neoPostRepository = $neoPostRepository;
-//        $this->neoGlobalRepository = $neoGlobalRepository;
         $this->userController = $userController;
         $this->userRepository = $userRepository;
         $this->neoEnterpriseRepository = $neoEnterpriseRepository;
@@ -247,6 +247,14 @@ class PostGateway {
     //validation on Not Parsed Resumes
     public function validateNotParsedResumes($input) {
         return $this->doValidation('not_parsed_resumes', 'MINTMESH.user.valid');
+    }
+    //validation on Not Parsed Resumes
+    public function validateEditCareerSettingsInput($input) {
+        return $this->doValidation('edit_career_settings', 'MINTMESH.user.valid');
+    }
+    //validation on Not Parsed Resumes
+    public function validateGetCareerSettingsInput($input) {
+        return $this->doValidation('get_career_settings', 'MINTMESH.user.valid');
     }
     
     public function postJob($input) {
@@ -1527,10 +1535,11 @@ class PostGateway {
         $objCompany     = new \stdClass();
         $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
         $postCampaign   = $postContacts = $campaignContacts = $campaign = $createdCampaign = $campSchedule = $data = array();
+        $editedCampaign = $editedCampaignArr = $createdCampaignArr = $createdCampaign = array();
         $loggedInUser   = $this->referralsGateway->getLoggedInUser();
         $this->neoLoggedInUserDetails   = $this->neoUserRepository->getNodeByEmailId($loggedInUser->emailid);
-        $userId = $this->neoLoggedInUserDetails->id;
-        $timeZone = !empty($input['time_zone'])?$input['time_zone']:0;  
+        $userId         = $this->neoLoggedInUserDetails->id;
+        $timeZone       = !empty($input['time_zone']) ? $input['time_zone'] : 0;  
         $company        = $this->enterpriseRepository->getUserCompanyMap($loggedInUser['id']);
         $companyId      = $company->company_id;
         $companyCode    = $company->code;
@@ -1560,110 +1569,169 @@ class PostGateway {
          
         $campaign['company_code'] = $companyCode;
         $campaign['status']       = Config::get('constants.POST.STATUSES.ACTIVE');
-         //upload the file
-         if (isset($input['ceos_file_name']) && !empty($input['ceos_file_name'])) {
-                //upload the file
-                $this->userFileUploader->source =  $input['ceos_file_name'];
+        
+            #file upload here
+            if (isset($input['ceos_file_name']) && !empty($input['ceos_file_name'])) {
+                //upload the ceos file
+                $this->userFileUploader->source      =  $input['ceos_file_name'];
                 $this->userFileUploader->destination = Config::get('constants.S3BUCKET_CAMPAIGN_IMAGES');
                 $renamedFileName = $this->userFileUploader->uploadToS3BySource($input['ceos_file_name']);
                 $campaign['ceos_file'] = $renamedFileName;
-                $campaign['ceos_name'] = !empty($input['ceos_org_name'])?$input['ceos_org_name']:'';
+                $campaign['ceos_name'] = !empty($input['ceos_org_name']) ? $input['ceos_org_name'] : '';
             }
             if (isset($input['emp_file_name']) && !empty($input['emp_file_name'])) {
-                //upload the file
-                $this->userFileUploader->source =  $input['emp_file_name'];
+                //upload the emp file
+                $this->userFileUploader->source      =  $input['emp_file_name'];
                 $this->userFileUploader->destination = Config::get('constants.S3BUCKET_CAMPAIGN_IMAGES');
                 $renamedFileName = $this->userFileUploader->uploadToS3BySource($input['emp_file_name']);
                 $campaign['emp_file'] = $renamedFileName;
-                $campaign['emp_name'] = !empty($input['emp_org_name'])?$input['emp_org_name']:'';
+                $campaign['emp_name'] = !empty($input['emp_org_name']) ? $input['emp_org_name'] : '';
             }
+            //edit ceos file s3 path
             if(isset($input['ceos_file_name_s3']) && !empty($input['ceos_file_name_s3'])){
                 $campaign['ceos_file'] = $input['ceos_file_name_s3'];
-                $campaign['ceos_name'] = !empty($input['ceos_org_name_s3'])?$input['ceos_org_name_s3']:'';
+                $campaign['ceos_name'] = !empty($input['ceos_org_name_s3']) ? $input['ceos_org_name_s3'] : '';
             }
+            //edit emp file s3 path
             if(isset($input['emp_file_name_s3']) && !empty($input['emp_file_name_s3'])){
                 $campaign['emp_file'] = $input['emp_file_name_s3'];
-                $campaign['emp_name'] = !empty($input['emp_org_name_s3'])?$input['emp_org_name_s3']:'';
+                $campaign['emp_name'] = !empty($input['emp_org_name_s3']) ? $input['emp_org_name_s3'] : '';
             }
-        if($requestType == 'edit'){            
-            $campaign['ceos_name'] = !empty($campaign['ceos_name'])?$campaign['ceos_name']:'';
-            $campaign['ceos_file'] = !empty($campaign['ceos_file'])?$campaign['ceos_file']:'';
-            $campaign['emp_name'] = !empty($campaign['emp_name'])?$campaign['emp_name']:'';
-            $campaign['emp_file'] = !empty($campaign['emp_file'])?$campaign['emp_file']:'';
-      
+            
+            $crSettings = $careerLinksArr = array();
+            #get get Career Settings here
+            $crSettings = $this->getCareerSettings($companyCode);
+            #form career links here
+            $careerLinks = !empty($input['career_links']) ? $input['career_links'] : '';
+            if($careerLinks){
+                foreach ($careerLinks as $row){
+                    if(!empty($row['label']) && !empty($row['url'])){
+                        $crLinks = array();
+                        $crLinks['label']   = $row['label'];
+                        $crLinks['url']     = $row['url'];
+                        $careerLinksArr[]   = $crLinks;
+                    }
+                }
+            } else {
+                $careerLinksArr = !empty($crSettings['career_links']) ? $crSettings['career_links'] : '';
+            }
+            $careerLinksArr = json_encode($careerLinksArr, JSON_UNESCAPED_SLASHES);
+            $careerName          = !empty($crSettings['logo_name']) ? $crSettings['logo_name'] : '';
+            $careerLogo          = !empty($crSettings['career_logo']) ? $crSettings['career_logo'] : '';
+            $careerDescription   = !empty($crSettings['career_description']) ? $crSettings['career_description'] : '';
+            $heroshotImageName   = !empty($crSettings['heroshot_image_name']) ? $crSettings['heroshot_image_name'] : '';
+            $careerHeroshotImage = !empty($crSettings['career_heroshot_image']) ? $crSettings['career_heroshot_image'] : '';
+            $careerTalentNetwork = !empty($crSettings['career_talent_network']) ? $crSettings['career_talent_network'] : '';
+            #request for career page logo upload to s3
+            if(!empty($input['request_logo'])){
+                #upload the file
+                $this->userFileUploader->destination = Config::get('constants.S3BUCKET_COMPANY_LOGO');
+                $input['career_logo']                = $this->userFileUploader->uploadToS3BySource($input['request_logo']);
+            }
+            #request for career page heroshot image upload to s3
+            if(!empty($input['request_heroshot'])){
+                #image Resize
+                $height = self::CAREER_HEROSHOT_IMAGE_HEIGHT;
+                $source = $this->userFileUploader->imageResize(null, $height, $input['request_heroshot']);
+                $this->userFileUploader->destination = Config::get('constants.S3BUCKET_COMPANY_LOGO');
+                $input['career_heroshot_image']      = $this->userFileUploader->uploadToS3BySource($source);//upload the file
+            }
+            #form neo4j input array here
+            $campaign['logo_name']              = !empty($input['logo_name']) ? $input['logo_name'] : $careerName;
+            $campaign['career_logo']            = !empty($input['career_logo']) ? $input['career_logo'] : $careerLogo;
+            $campaign['career_description']     = !empty($input['career_description']) ? $input['career_description'] : $careerDescription;
+            $campaign['heroshot_image_name']    = !empty($input['heroshot_image_name']) ? $input['heroshot_image_name'] : $heroshotImageName;
+            $campaign['career_heroshot_image']  = !empty($input['career_heroshot_image']) ? $input['career_heroshot_image'] : $careerHeroshotImage;
+            $campaign['career_talent_network']  = !empty($input['career_talent_network']) ? $input['career_talent_network'] : $careerTalentNetwork;
+            $campaign['career_links']           = $careerLinksArr;
+            
+        #check add/edit request    
+        if($requestType == 'edit'){ 
             //updating Campaign details here
-           $editedCampaign = $this->neoPostRepository->editCampaignAndCompanyRelation($companyCode, $campaignId, $campaign, $userEmailId);
+            $campaign['ceos_name']  = !empty($campaign['ceos_name']) ? $campaign['ceos_name'] : '';
+            $campaign['ceos_file']  = !empty($campaign['ceos_file']) ? $campaign['ceos_file'] : '';
+            $campaign['emp_name']   = !empty($campaign['emp_name']) ? $campaign['emp_name'] : '';
+            $campaign['emp_file']   = !empty($campaign['emp_file']) ? $campaign['emp_file'] : '';
+            $editedCampaignArr      = $this->neoPostRepository->editCampaignAndCompanyRelation($companyCode, $campaignId, $campaign, $userEmailId);
+            if(isset($editedCampaignArr[0]) && isset($editedCampaignArr[0][0])){
+                $editedCampaign = $editedCampaignArr[0][0];
+            }
+           
         }  else {
             //creating Campaign And Company Relation here
-            $createdCampaign = $this->neoPostRepository->createCampaignAndCompanyRelation($companyCode, $campaign, $userEmailId);
-            if (isset($createdCampaign[0]) && isset($createdCampaign[0][0])) {
-                $campaignId = $createdCampaign[0][0]->getID(); 
-                $data['campaign_name']    = $createdCampaign[0][0]->campaign_name;
-                $data['campaign_type']    = $createdCampaign[0][0]->campaign_type;
-                $data['total_vacancies']  = $createdCampaign[0][0]->total_vacancies;
-                $data['location_type']    = $createdCampaign[0][0]->location_type;
+            $createdCampaignArr = $this->neoPostRepository->createCampaignAndCompanyRelation($companyCode, $campaign, $userEmailId);
+            if (isset($createdCampaignArr[0]) && isset($createdCampaignArr[0][0])) {
+                $createdCampaign = $createdCampaignArr[0][0];
+                $campaignId      = $createdCampaign->getID(); 
+                $data['campaign_name']    = $createdCampaign->campaign_name;
+                $data['campaign_type']    = $createdCampaign->campaign_type;
+                $data['total_vacancies']  = $createdCampaign->total_vacancies;
+                $data['location_type']    = $createdCampaign->location_type;
                 $data['camp_ref']         = $refCode = MyEncrypt::encrypt_blowfish($campaignId.'_'.$userId,Config::get('constants.MINTMESH_ENCCODE'));
                 $url = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
                 $biltyUrl = $this->urlShortner($url);
                 $data['bittly_url'] = $biltyUrl;
-                if(!empty($createdCampaign[0][0]->latitude)){
-                    $data['latitude'] = $createdCampaign[0][0]->latitude;
+                //latitude details
+                if(!empty($createdCampaign->latitude)){
+                    $data['latitude'] = $createdCampaign->latitude;
                 }
-                if(!empty($createdCampaign[0][0]->longitude)){
-                    $data['longitude'] = $createdCampaign[0][0]->longitude;
+                //longitude details
+                if(!empty($createdCampaign->longitude)){
+                    $data['longitude'] = $createdCampaign->longitude;
                 }
+                //if onsite location 
                 if(strtolower($data['location_type']) == 'onsite'){
-                $location = array();
-                $location['address']          = $createdCampaign[0][0]->address;
-                $location['state']            = $createdCampaign[0][0]->state;
-                $location['country']          = $createdCampaign[0][0]->country;
-                $location['city']             = $createdCampaign[0][0]->city;
-                $location['zip_code']         = $createdCampaign[0][0]->zip_code;
-                $data['location'] = $location;
-            }
+                    $location = array();
+                    $location['address']    = $createdCampaign->address;
+                    $location['state']      = $createdCampaign->state;
+                    $location['country']    = $createdCampaign->country;
+                    $location['city']       = $createdCampaign->city;
+                    $location['zip_code']   = $createdCampaign->zip_code;
+                    $data['location']       = $location;
+                }
             }
         }
         //checking if campaign created or not
         if($campaignId){
             if(!empty($campSchedule)){
-                    //create Campaign Schedule Relation here
-                    foreach($campSchedule as $schedule){
-                        $scheduleAttrs  = array();
-                        $scheduleId     = !empty($schedule['schedule_id'])?$schedule['schedule_id']:'';//if update
-                        $scheduleAttrs['start_date'] = $schedule['start_on_date'];
-                        $scheduleAttrs['start_time'] = $schedule['start_on_time'];
-                        $gmtstart_date = $schedule['start_on_date']." " .$schedule['start_on_time'];    
-                        $scheduleAttrs['gmt_start_date'] = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezoneGmt($gmtstart_date,$timeZone)));  
-                        $scheduleAttrs['end_date']   = $schedule['end_on_date'];
-                        $scheduleAttrs['end_time']   = $schedule['end_on_time'];
-                        $gmtend_date = $schedule['end_on_date']." " .$schedule['end_on_time'];
-                        $scheduleAttrs['gmt_end_date'] = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezoneGmt($gmtend_date,$timeZone)));   
-                        $scheduleAttrs['company_code'] = $companyCode;
-                        
-                        if(!empty($scheduleId)){
-                            //update Campaign Schedule here
-                            $campaignSchedule = $this->neoPostRepository->updateCampaignScheduleRelation($scheduleId, $campaignId, $scheduleAttrs, $userEmailId);
-                        }  else {
-                            //create Campaign Schedule here
-                            $campaignSchedule = $this->neoPostRepository->createCampaignScheduleRelation($campaignId, $scheduleAttrs, $userEmailId);
-                            $cmpSchedule = $campSchedule = array();
-                            foreach ($campaignSchedule as $k => $value){
-                                $value = $value[0];
-                                $cmpSchedule['schedule_id']         = $value->getID();
-                                $gmtstart_date                      = $value->start_date." " .$value->start_time;
-                                $gmt_start_on_date                  = $this->appEncodeDecode->UserTimezone($gmtstart_date,$input['time_zone']);
-                                $cmpSchedule['gmt_start_on_date']   = !empty($gmt_start_on_date)?$gmt_start_on_date:'';
-                                $gmtend_date                        = $value->end_date." " .$value->end_time;
-                                $gmt_end_on_date                    = $this->appEncodeDecode->UserTimezone($gmtend_date,$input['time_zone']);
-                                $cmpSchedule['gmt_end_on_date']     = !empty($gmt_end_on_date)?$gmt_end_on_date:'';
-                                $cmpSchedule['start_on_date']       = date('Y/m/d', strtotime($value->start_date));
-                                $cmpSchedule['start_on_time']       = $value->start_time;
-                                $cmpSchedule['end_on_date']         = date('Y/m/d', strtotime($value->end_date));
-                                $cmpSchedule['end_on_time']         = $value->end_time;
-                                $campSchedule[] = $cmpSchedule; 
-                            }
-                            }
+                //create Campaign Schedule Relation here
+                foreach($campSchedule as $schedule){
+                    $scheduleAttrs  = array();
+                    $scheduleId     = !empty($schedule['schedule_id'])?$schedule['schedule_id']:'';//if update
+                    $scheduleAttrs['start_date']    = $schedule['start_on_date'];
+                    $scheduleAttrs['start_time']    = $schedule['start_on_time'];
+                    $gmtstart_date                  = $schedule['start_on_date']." " .$schedule['start_on_time'];    
+                    $scheduleAttrs['gmt_start_date']= date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezoneGmt($gmtstart_date,$timeZone)));  
+                    $scheduleAttrs['end_date']      = $schedule['end_on_date'];
+                    $scheduleAttrs['end_time']      = $schedule['end_on_time'];
+                    $gmtend_date                    = $schedule['end_on_date']." " .$schedule['end_on_time'];
+                    $scheduleAttrs['gmt_end_date']  = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezoneGmt($gmtend_date,$timeZone)));   
+                    $scheduleAttrs['company_code']  = $companyCode;
+
+                    if(!empty($scheduleId)){
+                        //update Campaign Schedule here
+                        $campaignSchedule = $this->neoPostRepository->updateCampaignScheduleRelation($scheduleId, $campaignId, $scheduleAttrs, $userEmailId);
+                    }  else {
+                        //create Campaign Schedule here
+                        $campaignSchedule = $this->neoPostRepository->createCampaignScheduleRelation($campaignId, $scheduleAttrs, $userEmailId);
+                        $cmpSchedule = $campSchedule = array();
+                        foreach ($campaignSchedule as $k => $value){
+                            $value = $value[0];
+                            $cmpSchedule['schedule_id']         = $value->getID();
+                            $gmtstart_date                      = $value->start_date." " .$value->start_time;
+                            $gmt_start_on_date                  = $this->appEncodeDecode->UserTimezone($gmtstart_date,$input['time_zone']);
+                            $cmpSchedule['gmt_start_on_date']   = !empty($gmt_start_on_date) ? $gmt_start_on_date : '';
+                            $gmtend_date                        = $value->end_date." " .$value->end_time;
+                            $gmt_end_on_date                    = $this->appEncodeDecode->UserTimezone($gmtend_date,$input['time_zone']);
+                            $cmpSchedule['gmt_end_on_date']     = !empty($gmt_end_on_date) ? $gmt_end_on_date : '';
+                            $cmpSchedule['start_on_date']       = date('Y/m/d', strtotime($value->start_date));
+                            $cmpSchedule['start_on_time']       = $value->start_time;
+                            $cmpSchedule['end_on_date']         = date('Y/m/d', strtotime($value->end_date));
+                            $cmpSchedule['end_on_time']         = $value->end_time;
+                            $campSchedule[] = $cmpSchedule; 
+                        }
                     }
+                }
             }
             //checking if user selected at least one job or not
             if(!empty($campPostIds)){
@@ -1675,8 +1743,8 @@ class PostGateway {
                     #check Post And Campaign Relation
                     $postCampaignRes = $this->neoPostRepository->checkPostAndCampaignRelation($postId, $campaignId);
                     if(empty($postCampaignRes)){
-                    //creating Campaign And Post Relation here
-                    $postCampaignRes = $this->neoPostRepository->createPostAndCampaignRelation($postId, $campaignId, $postCampaign);
+                        //creating Campaign And Post Relation here
+                        $postCampaignRes = $this->neoPostRepository->createPostAndCampaignRelation($postId, $campaignId, $postCampaign);
                     }
                     //creating Post and contacts Relation here
                     if(!empty($postCampaignRes) && !empty($campBucketIds)){
@@ -1685,15 +1753,15 @@ class PostGateway {
                         $postContacts['company_code'] = $companyCode;
                         $this->createRelationBwPostAndContacts($postId, $postContacts, $campBucketIds, $loggedInUser, $objCompany);
                     }
-                     $vacancies = 0;
-                     foreach($postCampaignRes as $posts){
+                    $vacancies = 0;
+                    foreach($postCampaignRes as $posts){
                         $post = array();
-                        $postDetails = $this->referralsGateway->formPostDetailsArray($posts[0]);
-                        $post['post_id'] = $postDetails['post_id'];
-                        $post['name'] = $postDetails['service_name'];
+                        $postDetails        = $this->referralsGateway->formPostDetailsArray($posts[0]);
+                        $post['post_id']    = $postDetails['post_id'];
+                        $post['name']       = $postDetails['service_name'];
                         $post['no_of_vacancies'] = $postDetails['no_of_vacancies'];
-                        $postAry[] = $post;
-                        $vacancies += !empty($postDetails['no_of_vacancies'])?$postDetails['no_of_vacancies']:'';;
+                        $postAry[]  = $post;
+                        $vacancies += !empty($postDetails['no_of_vacancies']) ? $postDetails['no_of_vacancies'] : '';
                         }
                         $data['total_vacancies'] = $vacancies;
                     }
@@ -1702,13 +1770,13 @@ class PostGateway {
             //checking if user selected at least one bucket or not
             if(!empty($campBucketIds)){
                 $campaignContacts['company_code']   = $companyCode;
-                $campaignContacts['user_name']      = !empty($loggedInUser->fullname)?$loggedInUser->fullname:$loggedInUser->firstname;
+                $campaignContacts['user_name']      = !empty($loggedInUser->fullname) ? $loggedInUser->fullname : $loggedInUser->firstname;
                 $campaignContacts['time_zone']      = $input['time_zone'];
                 $campaignContacts['company_id']     = $companyId;
                 $campaignContacts['company_name']   = $company->name;
                 $campaignContacts['company_logo']   = $company->logo;
-                $campaignContacts['campaign_name']  = !empty($createdCampaign[0][0]->campaign_name)?$createdCampaign[0][0]->campaign_name:$editedCampaign[0][0]->campaign_name; 
-                $campaignContacts['campaign_type']  = !empty($createdCampaign[0][0]->campaign_type)?$createdCampaign[0][0]->campaign_type:$editedCampaign[0][0]->campaign_type; 
+                $campaignContacts['campaign_name']  = !empty($createdCampaign->campaign_name) ? $createdCampaign->campaign_name : $editedCampaign->campaign_name; 
+                $campaignContacts['campaign_type']  = !empty($createdCampaign->campaign_type) ? $createdCampaign->campaign_type : $editedCampaign->campaign_type; 
                 
                 #company logo Aspect Ratio details for email template
                 $companyLogoWidth  = $companyLogoHeight = '';
@@ -1720,31 +1788,31 @@ class PostGateway {
                 $campaignContacts['company_logo_width']  = $companyLogoWidth;
                 $campaignContacts['company_logo_height'] = $companyLogoHeight;
                 
-                if((isset($createdCampaign[0][0]) && $createdCampaign[0][0]->location_type === 'onsite')){
+                if((!empty($createdCampaign) && $createdCampaign->location_type === 'onsite')){
                     
-                   $campaignContacts['campaign_location'] = !empty($createdCampaign[0][0]->zip_code)?$createdCampaign[0][0]->address.', '.$createdCampaign[0][0]->city.', '.$createdCampaign[0][0]->zip_code.', '.$createdCampaign[0][0]->state.', '.$createdCampaign[0][0]->country:$createdCampaign[0][0]->address.', '.$createdCampaign[0][0]->city.', '.$createdCampaign[0][0]->state.', '.$createdCampaign[0][0]->country;
-                }else if(isset($editedCampaign[0][0]) && $editedCampaign[0][0]->location_type === 'onsite'){
-                    $campaignContacts['campaign_location'] = !empty($editedCampaign[0][0]->zip_code)?$editedCampaign[0][0]->address.', '.$editedCampaign[0][0]->city.', '.$editedCampaign[0][0]->zip_code.', '.$editedCampaign[0][0]->state.', '.$editedCampaign[0][0]->country:$editedCampaign[0][0]->address.', '.$editedCampaign[0][0]->city.', '.$editedCampaign[0][0]->state.', '.$editedCampaign[0][0]->country;
-                }
-                else{
+                   $campaignContacts['campaign_location'] = !empty($createdCampaign->zip_code) ? $createdCampaign->address.', '.$createdCampaign->city.', '.$createdCampaign->zip_code.', '.$createdCampaign->state.', '.$createdCampaign->country : $createdCampaign->address.', '.$createdCampaign->city.', '.$createdCampaign->state.', '.$createdCampaign->country;
+                } else if (!empty($editedCampaign) && $editedCampaign->location_type === 'onsite'){
+                    
+                    $campaignContacts['campaign_location'] = !empty($editedCampaign->zip_code) ? $editedCampaign->address.', '.$editedCampaign->city.', '.$editedCampaign->zip_code.', '.$editedCampaign->state.', '.$editedCampaign->country : $editedCampaign->address.', '.$editedCampaign->city.', '.$editedCampaign->state.', '.$editedCampaign->country;
+                } else {
                     $campaignContacts['campaign_location'] = 'online'; 
                 }
                 $campaignContacts['campaign_start_date'] = $campaignSchedule[0][0]->gmt_start_date;
-                $campaignContacts['campaign_end_date'] = $campaignSchedule[0][0]->gmt_end_date;
+                $campaignContacts['campaign_end_date']   = $campaignSchedule[0][0]->gmt_end_date;
                 //creating Campaign And contacts Relation here
                 $this->createRelationBwCampaignAndContacts($campaignId, $campaignContacts, $campBucketIds, $loggedInUser, $objCompany);
             }
-            if(isset($createdCampaign[0][0]->ceos_file)){
-                $data['ceos_file'] = !empty($createdCampaign[0][0]->ceos_file)?$createdCampaign[0][0]->ceos_file:'';
+            if(!empty($createdCampaign->ceos_file)){
+                $data['ceos_file'] = $createdCampaign->ceos_file ;
             }
-            if(isset($createdCampaign[0][0]->emp_file)){
-                $data['emp_file'] = !empty($createdCampaign[0][0]->emp_file)?$createdCampaign[0][0]->emp_file:'';
+            if(!empty($createdCampaign->emp_file)){
+                $data['emp_file'] = $createdCampaign->emp_file;
             }
-            if(isset($editedCampaign[0][0]->ceos_file)){
-                $data['ceos_file'] = !empty($editedCampaign[0][0]->ceos_file)?$editedCampaign[0][0]->ceos_file:'';
+            if(!empty($editedCampaign->ceos_file)){
+                $data['ceos_file'] = $editedCampaign->ceos_file;
             }
-            if(isset($editedCampaign[0][0]->emp_file)){
-                $data['emp_file'] = !empty($editedCampaign[0][0]->emp_file)?$editedCampaign[0][0]->emp_file:'';
+            if(!empty($editedCampaign->emp_file)){
+                $data['emp_file'] = $editedCampaign->emp_file;
             }
             foreach($campBucketIds as $buckets){
                 $bucket = '';
@@ -1846,87 +1914,107 @@ class PostGateway {
     
     public function viewCampaign($input) {
         
-        $data = $campSchedule = $scheduleRes = $postAry = $bucketAry  = array();
+        $data = $campSchedule = $scheduleRes = $postAry = $bucketAry  = $crSettings = array();
         $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
         $loggedInUser   = $this->referralsGateway->getLoggedInUser();
         $this->neoLoggedInUserDetails   = $this->neoUserRepository->getNodeByEmailId($loggedInUser->emailid);
         $userId = $this->neoLoggedInUserDetails->id;
-        $input['time_zone'] = !empty($input['time_zone'])?$input['time_zone']:0;
-        $companyCode    = !empty($input['company_code'])?$input['company_code']:'';
-        $campaignId     = !empty($input['campaign_id'])?$input['campaign_id']:'';
+        
+        $input['time_zone'] = !empty($input['time_zone']) ? $input['time_zone'] : 0;
+        $companyCode    = !empty($input['company_code']) ? $input['company_code'] : '';
+        $campaignId     = !empty($input['campaign_id']) ? $input['campaign_id'] : '';
         $refCode        = MyEncrypt::encrypt_blowfish($campaignId.'_'.$userId,Config::get('constants.MINTMESH_ENCCODE'));
         $campRes        = $this->neoPostRepository->getCampaignById($campaignId);
+        
         if($campRes){
             //form response details here
             $returnData['campaign_name']    = $campRes->campaign_name;
             $returnData['campaign_type']    = $campRes->campaign_type;
             $returnData['total_vacancies']  = $campRes->total_vacancies;
             $returnData['location_type']    = $campRes->location_type;
+            #get get Career Settings here
+            $crSettings = $this->getCareerSettings($companyCode);
+            $careerName          = !empty($crSettings['logo_name']) ? $crSettings['logo_name'] : '';
+            $careerLogo          = !empty($crSettings['career_logo']) ? $crSettings['career_logo'] : '';
+            $careerDescription   = !empty($crSettings['career_description']) ? $crSettings['career_description'] : '';
+            $heroshotImageName   = !empty($crSettings['heroshot_image_name']) ? $crSettings['heroshot_image_name'] : '';
+            $careerHeroshotImage = !empty($crSettings['career_heroshot_image']) ? $crSettings['career_heroshot_image'] : '';
+            $careerTalentNetwork = !empty($crSettings['career_talent_network']) ? $crSettings['career_talent_network'] : '';
+            $careerLinksArr      = !empty($crSettings['career_links']) ? $crSettings['career_links'] : array();
+            #career page settings
+            $returnData['logo_name']                = !empty($campRes->logo_name) ? $campRes->logo_name : $careerName; 
+            $returnData['career_logo']              = !empty($campRes->career_logo) ? $campRes->career_logo : $careerLogo; 
+            $returnData['career_description']       = !empty($campRes->career_description) ? $campRes->career_description : $careerDescription;
+            $returnData['heroshot_image_name']      = !empty($campRes->heroshot_image_name) ? $campRes->heroshot_image_name : $heroshotImageName;
+            $returnData['career_heroshot_image']    = !empty($campRes->career_heroshot_image) ? $campRes->career_heroshot_image : $careerHeroshotImage;
+            $returnData['career_talent_network']    = !empty($campRes->career_talent_network) ? $campRes->career_talent_network : $careerTalentNetwork;
+            $returnData['career_links']             = !empty($campRes->career_links) ? json_decode($campRes->career_links) : $careerLinksArr;
+            
             $returnData['camp_ref']         = $refCode;
             if($campRes->location_type == 'ACTIVE'){
                $returnData['status'] = 'OPEN'; 
             }else{
                     $returnData['status'] = 'CLOSED'; 
             }
-            $filesAry[0]['ceos_file_name'] = !empty($campRes->ceos_file)?$campRes->ceos_file:'';  
-            $filesAry[0]['ceos_org_name'] = !empty($campRes->ceos_name)?$campRes->ceos_name:'';
-            $filesAry[1]['emp_file_name'] = !empty($campRes->emp_file)?$campRes->emp_file:'';  
-            $filesAry[1]['emp_org_name'] = !empty($campRes->emp_name)?$campRes->emp_name:'';
+            $filesAry[0]['ceos_file_name']  = !empty($campRes->ceos_file) ? $campRes->ceos_file : '';  
+            $filesAry[0]['ceos_org_name']   = !empty($campRes->ceos_name) ? $campRes->ceos_name : '';
+            $filesAry[1]['emp_file_name']   = !empty($campRes->emp_file) ? $campRes->emp_file : '';  
+            $filesAry[1]['emp_org_name']    = !empty($campRes->emp_name) ? $campRes->emp_name : '';
             if((!empty($campRes->ceos_file) && !empty($campRes->ceos_name)) || (!empty($campRes->emp_file) && !empty($campRes->emp_name))){
-            $returnData['files'] = $filesAry;
+                $returnData['files'] = $filesAry;
             }
             if(!empty($campRes->latitude)){
-            $returnData['latitude'] = $campRes->latitude;
+                $returnData['latitude'] = $campRes->latitude;
             }
             if(!empty($campRes->longitude)){
-            $returnData['longitude'] = $campRes->longitude;
+                $returnData['longitude'] = $campRes->longitude;
             }
             //location Details here
             if(strtolower($returnData['location_type']) == 'onsite'){
                 $location = array();
-                $location['address']          = $campRes->address;
-                $location['state']            = $campRes->state;
-                $location['country']          = $campRes->country;
-                $location['city']             = $campRes->city;
-                $location['zip_code']         = $campRes->zip_code;
+                $location['address']    = $campRes->address;
+                $location['state']      = $campRes->state;
+                $location['country']    = $campRes->country;
+                $location['city']       = $campRes->city;
+                $location['zip_code']   = $campRes->zip_code;
                 $returnData['location'] = $location;
             }
             //get Campaign Schedule here
             $scheduleRes   = $this->neoPostRepository->getCampaignSchedule($campaignId);
             foreach ($scheduleRes as $k => $value){
                 $value = $value[0];
-                $schedule['schedule_id']    = $value->getID();
-                $gmtstart_date = $value->start_date." " .$value->start_time;
-                $schedule['gmt_start_on_date'] = !empty($value->gmt_start_date)?date("D M d, Y H:i:s A", strtotime($this->appEncodeDecode->UserTimezone($value->gmt_start_date,$input['time_zone']))):'';
-                $gmtend_date = $value->end_date." " .$value->end_time;
-                $schedule['gmt_end_on_date'] = !empty($value->gmt_end_date)?date("D M d, Y H:i:s A", strtotime($this->appEncodeDecode->UserTimezone($value->gmt_end_date,$input['time_zone']))):'';
-                $currentDate = gmdate("Y-m-d H:i:s");
+                $schedule['schedule_id']        = $value->getID();
+                $gmtstart_date                  = $value->start_date." " .$value->start_time;
+                $schedule['gmt_start_on_date']  = !empty($value->gmt_start_date) ? date("D M d, Y H:i:s A", strtotime($this->appEncodeDecode->UserTimezone($value->gmt_start_date,$input['time_zone']))) : '';
+                $gmtend_date                    = $value->end_date." " .$value->end_time;
+                $schedule['gmt_end_on_date']    = !empty($value->gmt_end_date) ? date("D M d, Y H:i:s A", strtotime($this->appEncodeDecode->UserTimezone($value->gmt_end_date,$input['time_zone']))) : '';
+                $currentDate                    = gmdate("Y-m-d H:i:s");
                 if($value->gmt_end_date < $currentDate ){
-                    $schedule['status']    = 'CLOSED';
+                    $schedule['status']     = 'CLOSED';
                 }else{
                      $schedule['status']    = 'OPEN';
                 }
-                $schedule['start_on_date']  = date('Y/m/d', strtotime($this->appEncodeDecode->UserTimezone($value->gmt_start_date,$input['time_zone'])));
-                $schedule['start_on_time']  = date('H:i', strtotime($this->appEncodeDecode->UserTimezone($value->gmt_start_date,$input['time_zone'])));;
-                $schedule['end_on_date']    = date('Y/m/d', strtotime($this->appEncodeDecode->UserTimezone($value->gmt_end_date,$input['time_zone'])));
-                $schedule['end_on_time']    = date('H:i', strtotime($this->appEncodeDecode->UserTimezone($value->gmt_end_date,$input['time_zone'])));;
+                $schedule['start_on_date']  = date('Y/m/d', strtotime($this->appEncodeDecode->UserTimezone($value->gmt_start_date, $input['time_zone'])));
+                $schedule['start_on_time']  = date('H:i', strtotime($this->appEncodeDecode->UserTimezone($value->gmt_start_date, $input['time_zone'])));;
+                $schedule['end_on_date']    = date('Y/m/d', strtotime($this->appEncodeDecode->UserTimezone($value->gmt_end_date, $input['time_zone'])));
+                $schedule['end_on_time']    = date('H:i', strtotime($this->appEncodeDecode->UserTimezone($value->gmt_end_date, $input['time_zone'])));;
                 $campSchedule[] = $schedule; 
             }
             //get Campaign Posts here
             $postsRes   = $this->neoPostRepository->getCampaignPosts($campaignId,'','');
-            $vacancies = 0;
+            $vacancies  = 0;
             foreach($postsRes as $posts){
                 $post = array();
-                $postDetails = $this->referralsGateway->formPostDetailsArray($posts[0]);
-                $post['post_id'] = $postDetails['post_id'];
-                $post['name'] = $postDetails['service_name'];
-                $post['no_of_vacancies'] = !empty($postDetails['no_of_vacancies'])?$postDetails['no_of_vacancies']:'';
+                $postDetails        = $this->referralsGateway->formPostDetailsArray($posts[0]);
+                $post['post_id']    = $postDetails['post_id'];
+                $post['name']       = $postDetails['service_name'];
+                $post['no_of_vacancies'] = !empty($postDetails['no_of_vacancies']) ? $postDetails['no_of_vacancies'] : '';
                 $postAry[] = $post;
-                $vacancies += !empty($postDetails['no_of_vacancies'])?$postDetails['no_of_vacancies']:'';;
+                $vacancies += !empty($postDetails['no_of_vacancies']) ? $postDetails['no_of_vacancies'] : '';
             }
             $returnData['total_vacancies'] = $vacancies;
             //get Campaign Buckets here
-            $bucketsRes    = !empty($campRes->bucket_id)?explode(',',$campRes->bucket_id):'';
+            $bucketsRes    = !empty($campRes->bucket_id) ? explode(',', $campRes->bucket_id) : '';
             if(!empty($bucketsRes)){
                 foreach($bucketsRes as $buckets){
                     $bucket = '';
@@ -1936,12 +2024,13 @@ class PostGateway {
             }
             //form response details here
             $returnData['schedule']     = $campSchedule;
-            $returnData['job_details']      = $postAry;
+            $returnData['job_details']  = $postAry;
             $returnData['bucket_ids']   = $bucketAry;
-            $url = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
-            $biltyUrl = $this->urlShortner($url);
+            $url        = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
+            $biltyUrl   = $this->urlShortner($url);
             $returnData['bittly_url'] = $biltyUrl;
-            $data = $returnData;
+            $data       = $returnData;
+            
             $responseCode   = self::SUCCESS_RESPONSE_CODE;
             $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
             $responseMessage= array('msg' => array(Lang::get('MINTMESH.campaign.success')));
@@ -2297,10 +2386,13 @@ class PostGateway {
             $companyDetails     = $this->neoPostRepository->getPostCompany($post_id);
             $userDetails        = $this->neoEnterpriseRepository->getNodeById($referred_by_id);
             if(!empty($companyDetails) && !empty($userDetails)){
+                
                 $input['post_id']   = $post_id;
                 $postStatus         = $this->job2->getPost($input);
                 $postDetails        = $this->referralsGateway->formPostDetailsArray($postStatus);
                 $companyLogo        = !empty($companyDetails->logo) ? $companyDetails->logo : '';
+                $companyCode        = !empty($companyDetails->companyCode) ? $companyDetails->companyCode : '';
+                $postType           = !empty($postDetails['post_type']) ? $postDetails['post_type'] : '';
                 if($input['all_jobs'] == 0){
 
                     $jobTitle       = $companyDetails->name .' looking for '.$postStatus->looking_for;
@@ -2309,7 +2401,7 @@ class PostGateway {
                     $experience     = $postDetails['experience_range_name'];
                     $location       = $postDetails['service_location'];
                     $jobDescription = 'Experience: '.$postDetails['experience_range_name'].', Location: '.$postStatus->service_location;
-                    $url            = Config::get('constants.MM_ENTERPRISE_URL') . "/email/job-details/share?ref=" . $input['ref']."";
+                    $url            = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-jobs/share?ref=" . $input['ref']."";
                     $bitlyUrl       = $this->urlShortner($url);
                     $bittly         = $bitlyUrl;
                 }else if($input['all_jobs'] == 1){
@@ -2319,14 +2411,25 @@ class PostGateway {
                     $url            = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-jobs/share?ref=" . $input['ref']."";
                     $bitlyUrl       = $this->urlShortner($url);
                     $bittly         = $bitlyUrl;
-                } 
+                }
+                #get get career settings here
+                $crSettings = $this->getCareerSettings($companyCode);
+                #career page settings
+                $careerLogo             = !empty($crSettings['career_logo']) ? $crSettings['career_logo'] : '';
+                $careerDescription      = !empty($crSettings['career_description']) ? $crSettings['career_description'] : '';
+                $careerHeroshotImage    = !empty($crSettings['career_heroshot_image']) ? $crSettings['career_heroshot_image'] : self::DEFAULT_CAREER_HEROSHOT_IMAGE;
+                $careerTalentNetwork    = !empty($crSettings['career_talent_network']) ? $crSettings['career_talent_network'] : self::DEFAULT_CAREER_TALENT_NETWORK;
+                $careerLinks            = !empty($crSettings['career_links']) ? $crSettings['career_links'] : '';
+                
                 $data = array(
                         "post_id"       => $input['post_id'],
                         "reference_id"  => $referred_by_id,
                         "emailid"       => $userDetails->emailid,
                         "post_status"   => $postStatus->status,
+                        "post_type"     => $postType,
                         "company_logo"  => $companyLogo,
                         "company_name"  => $companyDetails->name,
+                        "company_code"  => $companyCode,
                         "title"         => $jobTitle,
                         "job_title"     => $jobName,
                         "job_function"  => $jobFunction,
@@ -2334,7 +2437,12 @@ class PostGateway {
                         "location"      => $location,
                         "description"   => $jobDescription,
                         "url"           => $url,
-                        "bittly_url"    => $bittly
+                        "bittly_url"    => $bittly,
+                        "career_logo"           =>  $careerLogo,
+                        "career_description"    =>  $careerDescription,
+                        "career_heroshot_image" =>  $careerHeroshotImage,
+                        "career_talent_network" =>  $careerTalentNetwork,
+                        "career_links"          =>  $careerLinks
                         );
             }
         }
@@ -2343,59 +2451,69 @@ class PostGateway {
     }
     
     public function applyJobsList($input){
+        
         $jobsListCount  = 0;
-        $compName       = '';
+        $compName       = $compLogo = '';
         $resJobsList    = $refAry = $returnData =  $data = array();
         $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
         $referenceId    = isset($input['reference_id'])?$input['reference_id']:'';
         $page           = !empty($input['page_no']) ? $input['page_no'] : 0;
-        $search_for     = !empty($input['search']) ? $input['search'] : 0;
+        $searchName     = !empty($input['search_name']) ? $input['search_name'] : '';
+        $searchLocation     = !empty($input['search_location']) ? $input['search_location'] : '';
+        $searchExperience   = !empty($input['search_experience']) ? ($input['search_experience'] != 1) ? $input['search_experience'] : '' : '';
+        $timeZone           = isset($input['time_zone']) ? $input['time_zone'] : 0;
+        $isShare            = !empty($input['share']) ? $input['share'] : '' ;
+        
         if(!empty($referenceId)){
+            
             $refId          = MyEncrypt::decrypt_blowfish($referenceId, Config::get('constants.MINTMESH_ENCCODE'));
             $url = $enterpriseUrl . "/email/all-jobs/share?ref=" . $referenceId.""; 
             $biltyUrl       = $this->urlShortner($url);
             $bittly         = $biltyUrl;
             $refAry         = array_map('intval', explode('_', $refId));
-            $post_id        = isset($refAry[0])?$refAry[0]:0;  
-            $refById        = isset($refAry[1])?$refAry[1]:0;
+            $post_id        = isset($refAry[0]) ? $refAry[0] : 0;  
+            $refById        = isset($refAry[1]) ? $refAry[1] : 0;
             $neoInput['post_id'] = $post_id;
             $neoInput['referred_by_id'] = $refById;
             
             $checkRelation  = $this->job2->checkRel($neoInput);
-            $companyCode    = !empty($checkRelation[0][0]->company_code)?$checkRelation[0][0]->company_code:'';
+            $companyCode    = !empty($checkRelation[0][0]->company_code) ? $checkRelation[0][0]->company_code : '';
             if($companyCode){
                 #check user Separated Status here
                 $separatedStatus = $this->checkReferredUserSeparatedStatus($refById, $companyCode);
                 if($separatedStatus){
-                    $resJobsList      = $this->neoPostRepository->getApplyJobsList($companyCode, $refById,$page,$search_for,$input);
-                    foreach ($resJobsList as $result){
-                        $record         = array();
-                        $postRes        = $result[0];//post details 
-                        $postDetails    = $this->referralsGateway->formPostDetailsArray($postRes);
-                        $compRes        = $result[1];//company details 
-                        $jobsListCount  = !empty($result[2])?$result[2]:0;//count of result set
-
-                        $postId   = $postRes->getID();
-                        $compName = $compRes->name;
-                        $compLogo = !empty($compRes->logo)?$compRes->logo:'';
-                        //form the return jobs list here
-                        $record['job_name']         = $postRes->service_name;
-                        $record['experience']       = $postDetails['experience_range_name'];
-                        $record['vacancies']        = $postRes->no_of_vacancies;
-                        $record['location']         = $postRes->service_location;
-                        $record['job_description']  = $postRes->job_description;
-                        $record['status']           = $postRes->status;
-                        $record['post_type']        = $postRes->post_type;
-                        $record['ref_code']         = MyEncrypt::encrypt_blowfish($postId.'_'.$refById,Config::get('constants.MINTMESH_ENCCODE'));
-
-                        $returnData[] = $record; 
+                    $resJobsList      = $this->neoPostRepository->getApplyJobsList($companyCode, $refById, $page, $isShare, $searchName, $searchLocation, $searchExperience);
+                    
+                    if(isset($resJobsList[0])){
+                        $jobsListCount  = !empty($resJobsList[0][1]) ? $resJobsList[0][1] : 0;//count of result set
+                        $compRes        = !empty($resJobsList[0][2]) ? $resJobsList[0][2] : 0;//company details 
+                        $compName       = !empty($compRes->name) ? $compRes->name : '';
+                        $compLogo       = !empty($compRes->logo) ? $compRes->logo : '';
+                    
+                        foreach ($resJobsList as $result){
+                            $record         = array();
+                            $postRes        = $result[0];//post details 
+                            $postDetails    = $this->referralsGateway->formPostDetailsArray($postRes);
+                            $postId         = $postRes->getID();
+                            //form the return jobs list here
+                            $record['job_name']         = $postRes->service_name;
+                            $record['experience']       = $postDetails['experience_range_name'];
+                            $record['vacancies']        = $postRes->no_of_vacancies;
+                            $record['location']         = $postRes->service_location;
+                            $record['job_description']  = $postRes->job_description;
+                            $record['status']           = $postRes->status;
+                            $record['post_type']        = $postRes->post_type;
+                            $record['ref_code']         = MyEncrypt::encrypt_blowfish($postId.'_'.$refById,Config::get('constants.MINTMESH_ENCCODE'));
+                            $returnData[] = $record; 
+                        }
                     }
+                    
                     if($returnData){
-                    $data = array("jobs_list" => array_values($returnData),'count'=>$jobsListCount, 'company_name'=>$compName,'company_logo' => $compLogo,'bittly_url' => $bittly);
-                    $responseCode   = self::SUCCESS_RESPONSE_CODE;
-                    $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
-                    $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_jobs_list.success')));
-                    }else{
+                        $data = array("jobs_list" => array_values($returnData),'count'=>$jobsListCount, 'company_name'=>$compName,'company_logo' => $compLogo,'bittly_url' => $bittly);
+                        $responseCode   = self::SUCCESS_RESPONSE_CODE;
+                        $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                        $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_jobs_list.success')));
+                    } else {
                         $responseCode   = self::ERROR_RESPONSE_CODE;
                         $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
                         $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_jobs_list.no_jobs')));
@@ -2406,17 +2524,15 @@ class PostGateway {
                     $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_jobs_list.user_separated')));
                 }
             } else {
-                    $responseCode   = self::ERROR_RESPONSE_CODE;
-                    $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
-                    $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_jobs_list.failure')));
-                }    
-        } 
-        else {
+                $responseCode   = self::ERROR_RESPONSE_CODE;
+                $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+                $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_jobs_list.failure')));
+            }    
+        } else {
             $responseCode   = self::ERROR_RESPONSE_CODE;
             $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
             $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_jobs_list.failure')));
         }
-        
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
     
@@ -2503,7 +2619,7 @@ class PostGateway {
     public function applyJobDetails($input){
         
         $jobsListCount  = 0;
-        $compName       = '';
+        $compName       = $refCmpCode = '';
         $resJobsList    = $refAry = $returnData =  $data = array();
         $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
         $referenceId    = isset($input['reference_id'])?$input['reference_id']:'';
@@ -2523,8 +2639,18 @@ class PostGateway {
                 if($separatedStatus){
                     $postDetails      = $this->neoPostRepository->getPosts($post_id);
                     $postResult = $this->referralsGateway->formPostDetailsArray($postDetails);
+                    
                     $postId = $postDetails->getID();
-                    $url = $enterpriseUrl . "/email/job-details/share?ref=" . $referenceId.""; 
+                    if($postDetails->post_type == 'campaign'){
+                        //if campaign job
+                        $campaignId = $this->neoPostRepository->getPostCampaignId($postId);
+                        $refCmpCode = MyEncrypt::encrypt_blowfish($campaignId.'_'.$refById,Config::get('constants.MINTMESH_ENCCODE'));
+                        $url = $enterpriseUrl . "/email/campaign/job-details/share?ref=" . $referenceId."&camp_ref=".$refCmpCode; 
+                    } else if($postDetails->post_type == 'internal') {
+                        $url = $enterpriseUrl . "/email/all-jobs/share?ref=" . $referenceId.""; 
+                    } else {
+                        $url = $enterpriseUrl . "/email/job-details/share?ref=" . $referenceId.""; 
+                    }
                     $biltyUrl   = $this->urlShortner($url);
                     $bittly     = $biltyUrl;
                     $record['job_name']         = $postDetails->service_name;
@@ -2537,6 +2663,7 @@ class PostGateway {
                     $record['job_function']     = $postResult['job_function_name'];
                     $record['rewards']          = $this->getPostRewards($postId);
                     $record['ref_code']         = MyEncrypt::encrypt_blowfish($postId.'_'.$refById,Config::get('constants.MINTMESH_ENCCODE'));
+                    $record['camp_ref']         = $refCmpCode;
                     $returnData[] = $record;
                     $data = array("job_details" => array_values($returnData),'company_name'=>$companyDetails->name,'company_logo'=>$companyDetails->logo,'bittly_url'=>$bittly);
                     $responseCode   = self::SUCCESS_RESPONSE_CODE;
@@ -2565,62 +2692,89 @@ class PostGateway {
     
     public function campaignJobsList($input){
         
-            $returnData = $data = array();
+            $returnData     = $data = $returnAry = array();
             $checkRelation  = $this->neoPostRepository->checkCampaignUserRelation($input);
             $reference_id   = !empty($input['reference_id']) ? $input['reference_id'] : 0;
+            $campaignId     = !empty($input['campaign_id']) ? $input['campaign_id'] : 0;
             $userDetails    = $this->neoEnterpriseRepository->getNodeById($reference_id);
-            $companyCode    = !empty($checkRelation->company_code)?$checkRelation->company_code:'';
+            $createdByUser  = $this->neoPostRepository->checkCampaignCreatedByUser($campaignId, $userDetails->emailid);
+            $companyCode    = !empty($checkRelation->company_code) ? $checkRelation->company_code : '';
             #check user Separated Status here
             $separatedStatus = $this->checkReferredUserSeparatedStatus($reference_id, $companyCode);
-            if($separatedStatus){
+            if(!empty($separatedStatus) || !empty($createdByUser)){
                 $page           = !empty($input['page_no']) ? $input['page_no'] : 0;
+                $searchName     = !empty($input['search_name']) ? $input['search_name'] : '';
+                $searchLocation     = !empty($input['search_location']) ? $input['search_location'] : '';
+                $searchExperience   = !empty($input['search_experience']) ? ($input['search_experience'] != 1) ? $input['search_experience'] : '' : '';
+                $timeZone       = isset($input['time_zone']) ? $input['time_zone'] : 0;
                 $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
-                $search_for     = !empty($input['search']) ? $input['search'] : 0;
                 if($companyCode){
-                    $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
-                    $companyLogo = !empty($companyDetails[0]->logo)?$companyDetails[0]->logo:'';
-                    $campaignDetails = $this->neoPostRepository->getCampaignById($input['campaign_id']);
-                    $campaignSchedule = $this->neoPostRepository->getCampaignSchedule($input['campaign_id']);  
-                    $refCode = MyEncrypt::encrypt_blowfish($input['campaign_id'].'_'.$input['reference_id'],Config::get('constants.MINTMESH_ENCCODE'));
-                    $url = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
-                    $biltyUrl = $this->urlShortner($url);
-                    $bittly   = $biltyUrl;
-                    $startDate = $this->appEncodeDecode->UserTimezone($campaignSchedule[0][0]->gmt_start_date,$input['time_zone']); 
-                    $endDate = $this->appEncodeDecode->UserTimezone($campaignSchedule[0][0]->gmt_end_date,$input['time_zone']); 
-                    $start_date = \Carbon\Carbon::parse($startDate)->format('dS M Y');
-                    $end_date = \Carbon\Carbon::parse($endDate)->format('dS M Y');
-                    $start_time = \Carbon\Carbon::parse($startDate)->format('h:i A');
-                    $end_time = \Carbon\Carbon::parse($endDate)->format('h:i A');
+                    
+                    $companyDetails     = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+                    $companyLogo        = !empty($companyDetails[0]->logo) ? $companyDetails[0]->logo : '';
+                    $campaignDetails    = $this->neoPostRepository->getCampaignById($input['campaign_id']);
+                    $campaignSchedule   = $this->neoPostRepository->getCampaignSchedule($input['campaign_id']);  
+                    #Campaign Schedule details
+                    $startDate      = $this->appEncodeDecode->UserTimezone($campaignSchedule[0][0]->gmt_start_date, $timeZone); 
+                    $endDate        = $this->appEncodeDecode->UserTimezone($campaignSchedule[0][0]->gmt_end_date, $timeZone); 
+                    $start_date     = \Carbon\Carbon::parse($startDate)->format('dS M Y');
+                    $end_date       = \Carbon\Carbon::parse($endDate)->format('dS M Y');
+                    $start_time     = \Carbon\Carbon::parse($startDate)->format('h:i A');
+                    $end_time       = \Carbon\Carbon::parse($endDate)->format('h:i A');
+                    #Campaign Location Details
                     if($campaignDetails->location_type == 'onsite'){
                         $campaignLocation = $campaignDetails->address.','.$campaignDetails->city.','.$campaignDetails->state.','.$campaignDetails->country.','.$campaignDetails->zip_code;
                     }else{
                         $campaignLocation = 'online';
                     }
-                    $status = Config::get('constants.REFERRALS.STATUSES.ACTIVE');
-                    $campaignJobsList      = $this->neoPostRepository->getCampaignPosts($input['campaign_id'], $page, $search_for, $status);
-                    foreach ($campaignJobsList as $result){
-                        $record         = array();
-                        $postRes        = $result[0];//post details 
-                        $postDetails    = $this->referralsGateway->formPostDetailsArray($postRes);
-                        $postId   = $postRes->getID();
-    //                    //form the return jobs list here
-                        $record['reference_id']         = $input['reference_id'];
-                        $record['job_name']         = $postRes->service_name;
-                        $record['experience']       = $postDetails['experience_range_name'];
-                        $record['vacancies']        = $postRes->no_of_vacancies;
-                        $record['location']         = $postRes->service_location;
-                        $record['job_description']  = $postRes->job_description;
-                        $record['status']           = $postRes->status;
-                        $record['post_type']        = $postRes->post_type;
-                        $record['post_id']          = $postId;
-                        $record['ref_code']         = MyEncrypt::encrypt_blowfish($postId.'_'.$record['reference_id'],Config::get('constants.MINTMESH_ENCCODE'));
-                          $returnData[] = $record; 
-                    }
-                    if($returnData){
-                    $data = array("bittly_url"=>$bittly,"campaign_jobs_list" => array_values($returnData),"campaign_name" => $campaignDetails->campaign_name,"campaign_type" => $campaignDetails->campaign_type, "campaign_location" => $campaignLocation,"campaign_start_date" => $start_date,"campaign_start_time" => $start_time,"campaign_end_date"=>$end_date,"campaign_end_time" => $end_time,"company_name" =>$companyDetails[0]->name,"company_logo"=>$companyLogo,"user_emailid"=>$userDetails->emailid,"count"=>count($campaignJobsList));
-                    $responseCode   = self::SUCCESS_RESPONSE_CODE;
-                    $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
-                    $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_jobs_list.success')));
+                    $status     = Config::get('constants.REFERRALS.STATUSES.ACTIVE');
+                    $refCode    = MyEncrypt::encrypt_blowfish($input['campaign_id'].'_'.$input['reference_id'],Config::get('constants.MINTMESH_ENCCODE'));
+                    $url        = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
+                    $biltyUrl   = $this->urlShortner($url);
+                    $bittly     = $biltyUrl;
+                    #get campaign jobs list here
+                    $campaignJobsList      = $this->neoPostRepository->campaignJobsList($campaignId, $page, $searchName, $searchLocation, $searchExperience);
+                    $totalJobsCount        = isset($campaignJobsList[0]) ? !empty($campaignJobsList[0][1]) ? $campaignJobsList[0][1] : 0 : 0;
+                    #check jobs count
+                    if($totalJobsCount){
+                    
+                        foreach ($campaignJobsList as $result){
+                            $record         = array();
+                            $postRes        = $result[0];//post details 
+                            $postDetails    = $this->referralsGateway->formPostDetailsArray($postRes);
+                            $postId         = $postRes->getID();
+                            #form the return jobs list here
+                            $record['reference_id']     = $input['reference_id'];
+                            $record['job_name']         = $postRes->service_name;
+                            $record['experience']       = $postDetails['experience_range_name'];
+                            $record['vacancies']        = $postRes->no_of_vacancies;
+                            $record['location']         = $postRes->service_location;
+                            $record['job_description']  = $postRes->job_description;
+                            $record['status']           = $postRes->status;
+                            $record['post_type']        = $postRes->post_type;
+                            $record['post_id']          = $postId;
+                            $record['ref_code']         = MyEncrypt::encrypt_blowfish($postId.'_'.$record['reference_id'],Config::get('constants.MINTMESH_ENCCODE'));
+                            $returnData[] = $record; 
+                        }
+                        #return response array
+                        $returnAry['campaign_name']         = $campaignDetails->campaign_name;
+                        $returnAry['campaign_type']         = $campaignDetails->campaign_type; 
+                        $returnAry['campaign_location']     = $campaignLocation;
+                        $returnAry['campaign_start_date']   = $start_date;
+                        $returnAry['campaign_start_time']   = $start_time;
+                        $returnAry['campaign_end_date']     = $end_date;
+                        $returnAry['campaign_end_time']     = $end_time;
+                        $returnAry['company_name']          = $companyDetails[0]->name;
+                        $returnAry['company_logo']          = $companyLogo;
+                        $returnAry['user_emailid']          = $userDetails->emailid;
+                        $returnAry['bittly_url']            = $bittly;
+                        $returnAry['count']                 = $totalJobsCount;
+                        $returnAry['campaign_jobs_list']    = array_values($returnData);
+                        $data = $returnAry;
+                        
+                        $responseCode   = self::SUCCESS_RESPONSE_CODE;
+                        $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                        $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_jobs_list.success')));
                     }else{
                         $responseCode   = self::ERROR_RESPONSE_CODE;
                         $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
@@ -2782,36 +2936,90 @@ class PostGateway {
     }
     
      public function decryptCampaignRef($input){
-        $data = array();
+         
+        $data = $crSettings = array();
         if(!empty($input['ref']) && isset($input['ref'])){
-            $mail_parse_ref     = isset($input['ref'])?MyEncrypt::decrypt_blowfish($input['ref'],Config::get('constants.MINTMESH_ENCCODE')):0;
-            $mail_parse_ref_val = array_map('intval',explode('_',$mail_parse_ref));	
-            $campaign_id        = isset($mail_parse_ref_val[0])?$mail_parse_ref_val[0]:0;
-            $referred_by_id     = isset($mail_parse_ref_val[1])?$mail_parse_ref_val[1]:0;
+            
+            $referenceCode      = isset($input['ref']) ? MyEncrypt::decrypt_blowfish($input['ref'], Config::get('constants.MINTMESH_ENCCODE')) : 0;
+            $referenceValue     = array_map('intval', explode('_',$referenceCode));	
+            $campaign_id        = isset($referenceValue[0]) ? $referenceValue[0] : 0;
+            $referred_by_id     = isset($referenceValue[1]) ? $referenceValue[1] : 0;
             
             if($campaign_id != 0 && $referred_by_id != 0){
+                
+                $timeZone  = isset($input['time_zone']) ? $input['time_zone'] : 0;
+                $startDate = $startTime = $endDate = $endTime = $campaignLocation = '';
                 $userDetails            = $this->neoEnterpriseRepository->getNodeById($referred_by_id);
                 $companyDetails         = $this->neoPostRepository->getCampaignCompany($campaign_id);
-                $input['campaign_id']   = $campaign_id;
-                $campaignStatus         = $this->neoPostRepository->getCampaignById($input['campaign_id']);
-                $scheduleTimes          = $this->neoPostRepository->getCampaignSchedule($input['campaign_id']);
-                $companyLogo            = !empty($companyDetails->logo)?$companyDetails->logo:'';
-                $campaignTitle          = 'Here is a campaign at '.$companyDetails->name.' for '.$campaignStatus->campaign_name;
-                $campaignDescription    = 'Start date: '.$scheduleTimes[0][0]->start_date.' and End date: '.$scheduleTimes[0][0]->end_date;
+                $campaignDetails        = $this->neoPostRepository->getCampaignById($campaign_id);
+                $scheduleTimes          = $this->neoPostRepository->getCampaignSchedule($campaign_id);
+                #return details form here
+                $companyLogo    = !empty($companyDetails->logo) ? $companyDetails->logo : '';
+                $companyCode    = !empty($companyDetails->companyCode) ? $companyDetails->companyCode : '';
+                #campaign schedule form here
+                if(isset($scheduleTimes[0]) && !empty($scheduleTimes[0][0])){
+                    
+                    $schedule   = $scheduleTimes[0][0];
+                    $startGmDate= $this->appEncodeDecode->UserTimezone($schedule->gmt_start_date, $timeZone); 
+                    $endGmDate  = $this->appEncodeDecode->UserTimezone($schedule->gmt_end_date, $timeZone); 
+                    $startDate  = \Carbon\Carbon::parse($startGmDate)->format('dS M Y');
+                    $endDate    = \Carbon\Carbon::parse($endGmDate)->format('dS M Y');
+                    $startTime  = \Carbon\Carbon::parse($startGmDate)->format('h:i A');
+                    $endTime    = \Carbon\Carbon::parse($endGmDate)->format('h:i A');
+                }
+                #get campaign location
+                if($campaignDetails->location_type == 'online'){
+                    $campaignLocation = 'Online'; 
+                }else{
+                    $address    = !empty($campaignDetails->address) ? $campaignDetails->address.', ' : '';
+                    $city       = !empty($campaignDetails->city) ? $campaignDetails->city.', ' : '';
+                    $state      = !empty($campaignDetails->state) ? $campaignDetails->state.', ' : '';
+                    $country    = !empty($campaignDetails->address) ? $campaignDetails->country.', ' : '';
+                    $location   = $address.$city.$state.$country.$campaignDetails->zip_code;
+                    $campaignLocation   = rtrim($location, ", ");
+                    //$location = $campaignDetails->address.', '.$campaignDetails->city.', '.$campaignDetails->state.', '.$campaignDetails->country.', '.$campaignDetails->zip_code;
+                    //$campaignLocation = str_replace(', ,', ',', $location);//remove double commas
+                }
+                #social share links
                 $url                    = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-campaigns/share?ref=" . $input['ref']."";
                 $bitlyUrl               = $this->urlShortner($url);
                 $bittly                 = $bitlyUrl;
+                #get get Career Settings here
+                $crSettings             = $this->getCareerSettings($companyCode);
+                $careerLogo             = !empty($crSettings['career_logo']) ? $crSettings['career_logo'] : '';
+                $careerDescription      = !empty($crSettings['career_description']) ? $crSettings['career_description'] : '';
+                $careerHeroshotImage    = !empty($crSettings['career_heroshot_image']) ? $crSettings['career_heroshot_image'] : '';
+                $careerTalentNetwork    = !empty($crSettings['career_talent_network']) ? $crSettings['career_talent_network'] : '';
+                $careerLinksArr         = !empty($crSettings['career_links']) ? $crSettings['career_links'] : '';
+                #career page settings
+                $careerLogo             = !empty($campaignDetails->career_logo) ? $campaignDetails->career_logo : $careerLogo;
+                $careerDescription      = !empty($campaignDetails->career_description) ? $campaignDetails->career_description : $careerDescription;
+                $careerHeroshotImage    = !empty($campaignDetails->career_heroshot_image) ? $campaignDetails->career_heroshot_image : $careerHeroshotImage;
+                $careerTalentNetwork    = !empty($campaignDetails->career_talent_network) ? $campaignDetails->career_talent_network : $careerTalentNetwork;
+                $careerLinks            = !empty($campaignDetails->career_links) ? json_decode($campaignDetails->career_links) : $careerLinksArr;
+                #return Array
                 $data = array(
-                    "campaign_id"       =>  $input['campaign_id'],
+                    "campaign_id"       =>  $campaign_id,
                     "reference_id"      =>  $referred_by_id,
                     "emailid"           =>  $userDetails->emailid,
-                    "campaign_status"   =>  $campaignStatus->status,
-                    "company_logo"  =>  $companyLogo,
-                    "company_name"  =>  $companyDetails->name,
-                    "title"         =>  $campaignTitle,
-                    "description"   =>  $campaignDescription,
-                    "url"           =>  $url,
-                    "bittly_url"    =>  $bittly
+                    "campaign_status"   =>  $campaignDetails->status,
+                    "company_logo"      =>  $companyLogo,
+                    "company_name"      =>  $companyDetails->name,
+                    "company_code"      =>  $companyCode,
+                    "campaign_type"     =>  $campaignDetails->campaign_name,
+                    "campaign_heading"  =>  $campaignDetails->campaign_name.', '.$campaignDetails->campaign_type,
+                    "start_date"        =>  $startDate,
+                    "start_time"        =>  $startTime,
+                    "end_date"          =>  $endDate,
+                    "end_time"          =>  $endTime,
+                    "campaign_location" =>  $campaignLocation,
+                    "url"               =>  $url,
+                    "bittly_url"        =>  $bittly,
+                    "career_logo"           =>  $careerLogo,
+                    "career_description"    =>  $careerDescription,
+                    "career_heroshot_image" =>  $careerHeroshotImage,
+                    "career_talent_network" =>  $careerTalentNetwork,
+                    "career_links"          =>  $careerLinks
                     );
             }
        }
@@ -3207,57 +3415,74 @@ class PostGateway {
     
     public function decryptRequestCandidateResume($input){
         
-       $data = array();
+        $data = array();
        
-       if(!empty($input['refrel']) && !empty($input['ref'])){
+        if(!empty($input['refrel']) && !empty($input['ref'])){
            
-        $refid              = $input['ref'];   
-        $reference_id       = $input['refrel'];   
-        $decryptedRef       = isset($input['refrel']) ? MyEncrypt::decrypt_blowfish($input['refrel'], Config::get('constants.MINTMESH_ENCCODE')) : 0 ;
-        $decryptedAry       = array_map('intval', explode('_',$decryptedRef));	
-	$post_id            = isset($decryptedAry[0]) ? $decryptedAry[0] : 0 ;
-        $gotReferredId      = isset($decryptedAry[1]) ? $decryptedAry[1] : 0 ;
+            $refid              = $input['ref'];   
+            $reference_id       = $input['refrel'];   
+            $decryptedRef       = isset($input['refrel']) ? MyEncrypt::decrypt_blowfish($input['refrel'], Config::get('constants.MINTMESH_ENCCODE')) : 0 ;
+            $decryptedAry       = array_map('intval', explode('_',$decryptedRef));	
+            $post_id            = isset($decryptedAry[0]) ? $decryptedAry[0] : 0 ;
+            $gotReferredId      = isset($decryptedAry[1]) ? $decryptedAry[1] : 0 ;
         
-        if(!empty($post_id) && !empty($gotReferredId)){
-            $companyDetails     = $this->neoPostRepository->getPostCompany($post_id);
-            $companyLogo        = !empty($companyDetails->logo)?$companyDetails->logo:'';
-            
-            $referredDetails     = $this->neoPostRepository->getGotReferredRelationDetailsById($gotReferredId);
-            
-            $postDetails    = !empty($referredDetails[2]) ? $referredDetails[2] : ''; 
-            $relDetails     = !empty($referredDetails[0]) ? $referredDetails[0] : ''; 
-            $userDetails    = !empty($referredDetails[1]) ? $referredDetails[1] : ''; 
-            
-            $postDetails     = $this->referralsGateway->formPostDetailsArray($postDetails);
-            $jobStatus       = !empty($postDetails['status']) ? $postDetails['status'] : ''; 
-            $jobTitle        = !empty($postDetails['service_name']) ? $postDetails['service_name'] : ''; 
-            $jobFunction     = !empty($postDetails['job_function_name']) ? $postDetails['job_function_name'] : ''; 
-            $experience      = !empty($postDetails['experience_range_name']) ? $postDetails['experience_range_name'] : ''; 
-            $location        = !empty($postDetails['service_location']) ? $postDetails['service_location'] : ''; 
-            $jobDescription  = !empty($postDetails['job_description']) ? $postDetails['job_description'] : ''; 
-            $bittly = $url = '';
-            
-            $data = array(
-                "post_id"   => $post_id, 
-                "ref"       => $refid,
-                "refrel"    => $reference_id,
-                "emailid"   => $userDetails->emailid, 
-                "post_status"       => $jobStatus, 
-                "company_logo"      => $companyLogo, 
-                "company_name"      => $companyDetails->name, 
-                "title"             => $jobTitle,
-                "job_title"         => $jobTitle,
-                "job_function"      => $jobFunction,
-                "experience"        => $experience,
-                "location"          => $location,
-                "description"       => $jobDescription,
-                "url"               => $url,
-                "bittly_url"        => $bittly, 
-                "got_referred_id"   => $gotReferredId
+            if(!empty($post_id) && !empty($gotReferredId)){
+                $companyDetails     = $this->neoPostRepository->getPostCompany($post_id);
+                $companyLogo        = !empty($companyDetails->logo) ? $companyDetails->logo : '';
+                $companyCode        = !empty($companyDetails->companyCode) ? $companyDetails->companyCode : '';
+
+                $referredDetails    = $this->neoPostRepository->getGotReferredRelationDetailsById($gotReferredId);
+
+                $postDetails    = !empty($referredDetails[2]) ? $referredDetails[2] : ''; 
+                $relDetails     = !empty($referredDetails[0]) ? $referredDetails[0] : ''; 
+                $userDetails    = !empty($referredDetails[1]) ? $referredDetails[1] : ''; 
+
+                $postDetails     = $this->referralsGateway->formPostDetailsArray($postDetails);
+                $jobStatus       = !empty($postDetails['status']) ? $postDetails['status'] : ''; 
+                $jobTitle        = !empty($postDetails['service_name']) ? $postDetails['service_name'] : ''; 
+                $jobFunction     = !empty($postDetails['job_function_name']) ? $postDetails['job_function_name'] : ''; 
+                $experience      = !empty($postDetails['experience_range_name']) ? $postDetails['experience_range_name'] : ''; 
+                $location        = !empty($postDetails['service_location']) ? $postDetails['service_location'] : ''; 
+                $jobDescription  = !empty($postDetails['job_description']) ? $postDetails['job_description'] : ''; 
+                $jobType         = !empty($postDetails['post_type']) ? $postDetails['post_type'] : ''; 
+                $bittly = $url = '';
+                #get get career settings here
+                $crSettings = $this->getCareerSettings($companyCode);
+                #career page settings
+                $careerLogo             = !empty($crSettings['career_logo']) ? $crSettings['career_logo'] : '';
+                $careerDescription      = !empty($crSettings['career_description']) ? $crSettings['career_description'] : '';
+                $careerHeroshotImage    = !empty($crSettings['career_heroshot_image']) ? $crSettings['career_heroshot_image'] : self::DEFAULT_CAREER_HEROSHOT_IMAGE;
+                $careerTalentNetwork    = !empty($crSettings['career_talent_network']) ? $crSettings['career_talent_network'] : self::DEFAULT_CAREER_TALENT_NETWORK;
+                $careerLinks            = !empty($crSettings['career_links']) ? $crSettings['career_links'] : '';
+
+                $data = array(
+                    "post_id"   => $post_id, 
+                    "ref"       => $refid,
+                    "refrel"    => $reference_id,
+                    "emailid"   => $userDetails->emailid, 
+                    "post_status"       => $jobStatus, 
+                    "post_type"         => $jobType, 
+                    "company_logo"      => $companyLogo, 
+                    "company_name"      => $companyDetails->name, 
+                    "company_code"      => $companyCode, 
+                    "title"             => $jobTitle,
+                    "job_title"         => $jobTitle,
+                    "job_function"      => $jobFunction,
+                    "experience"        => $experience,
+                    "location"          => $location,
+                    "description"       => $jobDescription,
+                    "url"               => $url,
+                    "bittly_url"        => $bittly, 
+                    "got_referred_id"   => $gotReferredId,
+                    "career_logo"           =>  $careerLogo,
+                    "career_description"    =>  $careerDescription,
+                    "career_heroshot_image" =>  $careerHeroshotImage,
+                    "career_talent_network" =>  $careerTalentNetwork,
+                    "career_links"          =>  $careerLinks
                 );
+            }
         }
         return $data;
-       }
     }
     
     public function applyJobRef($input) {
@@ -3290,9 +3515,9 @@ class PostGateway {
                     $sqlUser    = $this->userRepository->getUserByEmail($referredByEmail);
                     $refUserId  = !empty($sqlUser->id)?$sqlUser->id:0;
                     #get company details by code
-                    $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyDetils->companyCode);
-                    $companyId   = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
-                    $source = self::SOURCE_FROM_EMAIL_UPLOAD;
+                    $companyDetails  = $this->enterpriseRepository->getCompanyDetailsByCode($companyDetils->companyCode);
+                    $companyId       = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+                    $source          = self::SOURCE_FROM_EMAIL_UPLOAD;
                     $renamedFileName = '';
                     #insert company resumes in company resumes table
                     $insertResult = $this->enterpriseRepository->insertInCompanyResumes($companyId, $originalFileName, $refUserId, $source);
@@ -3349,6 +3574,117 @@ class PostGateway {
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, array());
         
+    }
+    
+    public function editCareerSettings($input) {
+        
+        $careerLinksArr   = '';
+        $data = $neoInput = $careerLinks = array();
+        $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
+        #get get Career Settings here
+        $crSettings = $this->neoPostRepository->getCareerSettings($companyCode);
+        #form career links here
+        $careerLinks = !empty($input['career_links']) ? $input['career_links'] : '';
+        if($careerLinks){
+            foreach ($careerLinks as $row){
+                if(!empty($row['label']) && !empty($row['url'])){
+                    $crLinks = array();
+                    $crLinks['label']   = $row['label'];
+                    $crLinks['url']     = $row['url'];
+                    $careerLinksArr[]   = $crLinks;
+                }
+            }
+            $careerLinksArr = json_encode($careerLinksArr, JSON_UNESCAPED_SLASHES);
+        }
+        #request for career page logo upload to s3
+        if(!empty($input['request_logo'])){
+            #upload the file
+            $this->userFileUploader->destination = Config::get('constants.S3BUCKET_COMPANY_LOGO');
+            $input['career_logo']                = $this->userFileUploader->uploadToS3BySource($input['request_logo']);
+        }
+        #request for career page heroshot image upload to s3
+        if(!empty($input['request_heroshot'])){
+            #image Resize
+            $height = self::CAREER_HEROSHOT_IMAGE_HEIGHT;
+            $source = $this->userFileUploader->imageResize(null, $height, $input['request_heroshot']);
+            $this->userFileUploader->destination = Config::get('constants.S3BUCKET_COMPANY_LOGO');
+            $input['career_heroshot_image']      = $this->userFileUploader->uploadToS3BySource($source);//upload the file
+        }
+        #form neo4j input array here
+        $neoInput['logo_name']              = !empty($input['logo_name']) ? $input['logo_name'] : '';
+        $neoInput['career_logo']            = !empty($input['career_logo']) ? $input['career_logo'] : '';
+        $neoInput['career_description']     = !empty($input['career_description']) ? $input['career_description'] : '';
+        $neoInput['heroshot_image_name']    = !empty($input['heroshot_image_name']) ? $input['heroshot_image_name'] : '';
+        $neoInput['career_heroshot_image']  = !empty($input['career_heroshot_image']) ? $input['career_heroshot_image'] : '';
+        $neoInput['career_talent_network']  = !empty($input['career_talent_network']) ? $input['career_talent_network'] : '';
+        $neoInput['career_links']           = $careerLinksArr;
+        #update career settings details here
+        $result = $this->neoPostRepository->editCareerSettings($companyCode, $neoInput);
+        
+        if($result){
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.success')));
+        } else {
+            $responseCode   = self::ERROR_RESPONSE_CODE;
+            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.apply_job.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+    }
+    
+    
+    public function getCareerSettings($companyCode) {
+        
+        $returnArr = $careerLinksArr = array();
+        #get get Career Settings here
+        $crSettings = $this->neoPostRepository->getCareerSettings($companyCode);
+        if($crSettings){
+            #format career links here
+            $careerLinks = !empty($crSettings->career_links) ? json_decode($crSettings->career_links) : '';
+            if($careerLinks){
+                foreach($careerLinks as $val){
+                    if(!empty($val->label) && !empty($val->url)){
+                        $crLinks = array();
+                        $crLinks['label'] = $val->label;
+                        $crLinks['url']   = $val->url;
+                        $careerLinksArr[] = $crLinks;
+                    }
+                }
+            }
+            #company details
+            $companyLogo = !empty($crSettings->logo) ? $crSettings->logo : '';
+            $description = !empty($crSettings->description) ? $crSettings->description : '';
+            #return career details form here
+            $returnArr['logo_name']             = !empty($crSettings->logo_name) ? $crSettings->logo_name : 'logo_name';
+            $returnArr['career_logo']           = !empty($crSettings->career_logo) ? $crSettings->career_logo : $companyLogo;
+            $returnArr['career_description']    = !empty($crSettings->career_description) ? $crSettings->career_description : $description;
+            $returnArr['heroshot_image_name']   = !empty($crSettings->heroshot_image_name) ? $crSettings->heroshot_image_name : 'heroshot_image';
+            $returnArr['career_heroshot_image'] = !empty($crSettings->career_heroshot_image) ? $crSettings->career_heroshot_image : self::DEFAULT_CAREER_HEROSHOT_IMAGE;
+            $returnArr['career_talent_network'] = !empty($crSettings->career_talent_network) ? $crSettings->career_talent_network : self::DEFAULT_CAREER_TALENT_NETWORK;
+            $returnArr['career_links']          = $careerLinksArr;
+        }
+        return $returnArr; 
+    }
+    
+    public function getCareerSettingsApi($input) {
+        
+        $data = $returnArr = array();
+        $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
+        #get get Career Settings here
+        $returnArr   = $this->getCareerSettings($companyCode);
+        #check get career settings details not empty
+        if($returnArr){
+            $data = $returnArr;//return career settings details
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+        } else {
+            $responseCode   = self::ERROR_RESPONSE_CODE;
+            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
     
 }

@@ -133,7 +133,8 @@ return array(
                 'Aloha\Twilio\Support\Laravel\ServiceProvider',
                 'F2m2\Apidocs\ApidocsServiceProvider',
                 'Aws\Laravel\AwsServiceProvider',
-                'Maatwebsite\Excel\ExcelServiceProvider'
+                'Maatwebsite\Excel\ExcelServiceProvider',
+                'Intervention\Image\ImageServiceProvider'
 	),
 
 	/*
@@ -203,7 +204,8 @@ return array(
 		'Authorizer' 		=> 'LucaDegasperi\OAuth2Server\Facades\AuthorizerFacade',
                 'Twilio' => 'Twilio\Support\Laravel\Facade',
                 'AWS'               => 'Aws\Laravel\AwsFacade',
-                'Excel'             => 'Maatwebsite\Excel\Facades\Excel'
+                'Excel'             => 'Maatwebsite\Excel\Facades\Excel',
+                'Image'             => 'Intervention\Image\Facades\Image'
 	),
 
 );

@@ -2490,11 +2490,12 @@ class ReferralsGateway {
       
         if(!empty($emailData)){  
             $dataSet     = array();
-            $email_sent  = '';
+            $email_sent  = $linkType = '';
             $postId      = $emailData['post_id'];
             $refCode     = $emailData['ref_code'];
             $refRelCode  = $emailData['ref_rel_code'];
             $fullName    = $emailData['to_firstname'] . ' ' . $emailData['to_lastname'];
+            $entUrl      = Config::get('constants.MM_ENTERPRISE_URL');
             $posts       = $this->neoPostRepository->getPosts($postId);
             $postDetails = $this->formPostDetailsArray($posts);
             $freeService = $postDetails['free_service']; 
@@ -2548,17 +2549,26 @@ class ReferralsGateway {
                     }   
                 }
             }
-            $dataSet['free_service']= $freeService;
-            $dataSet['discovery']   = $discovery;
-            $dataSet['referral']    = $referral;
-            $dataSet['job_details_link']    = Config::get('constants.MM_ENTERPRISE_URL') . "/email/job-details/share?ref=" . $refCode."";
-            $bitlyUrl = $this->urlShortner($dataSet['job_details_link']);
-            $dataSet['bittly_link']    = $bitlyUrl;
+            $dataSet['free_service']        = $freeService;
+            $dataSet['discovery']           = $discovery;
+            $dataSet['referral']            = $referral;
+            $dataSet['job_details_link']    = $entUrl . "/email/job-details/share?ref=" . $refCode."";
+            $bitlyUrl                       = $this->urlShortner($dataSet['job_details_link']);
+            $dataSet['bittly_link']         = $bitlyUrl;
+            
+            if($posts->post_type == 'campaign'){
+                $campaignId = $this->neoPostRepository->getPostCampaignId($postId);
+                $refId      = $this->neoPostRepository->getUserNodeIdByEmailId($emailData['from_emailid']);
+                $refCmpCode = MyEncrypt::encrypt_blowfish($campaignId.'_'.$refId,Config::get('constants.MINTMESH_ENCCODE'));
+                $dataSet['apply_link']          = $entUrl . "/email/campaign/candidate-details/share?ref=" . $refCode."&refrel=" . $refRelCode."&flag=0&jc=1";
+                $dataSet['view_jobs_link']      = $entUrl . "/email/all-campaigns/share?ref=" . $refCmpCode;
+            } else {
+                $dataSet['apply_link']          = $entUrl . "/email/candidate-details/share?ref=" . $refCode."&refrel=" . $refRelCode."&flag=0&jc=0";
+                $dataSet['view_jobs_link']      = $entUrl . "/email/all-jobs/share?ref=" . $refCode."&jc=0";
+            }
             #redirect email links
-            $dataSet['apply_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/candidate-details/share?ref=" . $refCode."&refrel=" . $refRelCode."&flag=0&jc=2";
-            $dataSet['refer_link']          = Config::get('constants.MM_ENTERPRISE_URL') . "/email/referral-details/share?ref=" . $refCode."&flag=0&jc=0";
-            $dataSet['view_jobs_link']      = Config::get('constants.MM_ENTERPRISE_URL') . "/email/all-jobs/share?ref=" . $refCode."&jc=2";
-            $dataSet['drop_cv_link']        = Config::get('constants.MM_ENTERPRISE_URL') . "/email/referral-details/share?ref=" . $refCode."&flag=1&jc=0";
+            $dataSet['refer_link']          = $entUrl . "/email/referral-details/share?ref=" . $refCode."&flag=0&jc=0";
+            $dataSet['drop_cv_link']        = $entUrl . "/email/referral-details/share?ref=" . $refCode."&flag=1&jc=0";
             #set email required params
             $this->userEmailManager->templatePath   = Lang::get('MINTMESH.email_template_paths.contacts_job_invitation');
             $this->userEmailManager->emailId        = $emailData['to_emailid'];//target email id

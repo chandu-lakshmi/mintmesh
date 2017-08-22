@@ -181,7 +181,7 @@ class job2 extends Command {
                                     $gotReferredId = $result[0][1];
                                 }
                                 #updte s3 path in company resumes table
-                                $updateResult    = $this->enterpriseRepository->updateCompanyResumes($documentId, $renamedFileName, $gotReferredId);
+                                $updateResult    = $this->updateCompanyResumes($documentId, $renamedFileName, $gotReferredId);
                                 
                             }else{
                                 DB::statement("UPDATE cm_mails c set c.flag = '2' where c.id='" . $id . "'");

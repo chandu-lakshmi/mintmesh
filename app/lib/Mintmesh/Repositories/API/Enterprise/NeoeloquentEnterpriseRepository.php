@@ -51,22 +51,12 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
         $query = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
         return $result[0][0];
-        //return $this->neoUser->create($input);
+        
     }
 
     public function getNodeByEmailId($email = '') {
         return $this->neoEnterpriseUser->whereEmailid($this->appEncodeDecode->filterString(strtolower($email)))->first();
     }
-
-//        public function updateEnterpriseUser($input)
-//        {
-//         
-//            $queryString = "MATCH (n:User) where not n:User:Mintmesh and n.emailid='".$input['emailid']."'
-//                                SET n:Mintmesh, n.is_enterprise=1, n.fullname='".$input['fullname']."'
-//                                RETURN n";
-//            $query = new CypherQuery($this->client, $queryString);
-//            return $result = $query->getResultSet();        
-//        }
 
     public function createCompany($input) {
         $queryString = "CREATE (n:Company";
@@ -84,7 +74,7 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
         $query = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
         return $result[0][0];
-        //return $this->neoUser->create($input);
+        
     }
 
     public function updateCompanyLabel($companyCode = "", $name = "", $website = "", $logo = "", $images = "",$description="",$industry="",$file="",$file_org_name="") {
@@ -110,7 +100,7 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
                                  create unique (m)-[r:" . $relation . "";
 
             $queryString.="]->(c)  set r.created_at='" . gmdate("Y-m-d H:i:s") . "'";
-            //echo $queryString;exit;
+            
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             return true;
@@ -155,9 +145,9 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
         }
         }
     }
-    public function createNeoNewBucket($input = array(), $bucketId = '') {
+    public function createNeoNewBucket($input = array(), $bucketId = '', $bucketType = 1) {
         if (!empty($input['bucket_name']) && !empty($bucketId)) {
-            $queryString = "CREATE (n:Contact_bucket) set n.name='" . $input['bucket_name'] . "', n.mysql_id='" . $bucketId . "',n.type='" . $input['default'] . "' ";
+            $queryString = "CREATE (n:Contact_bucket) set n.name='" . $input['bucket_name'] . "', n.mysql_id='" . $bucketId . "',n.type='" . $input['default'] . "', n.bucket_type='" . $bucketType . "' ";
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             return $result;
@@ -262,11 +252,13 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
     }
     
     public function updateContactNode($bucket_id = '', $neoInput = array(), $relationAttrs = array()) {
+        
+        $return = FALSE;
          $queryString = " MATCH (u:User),(b:Contact_bucket)
                             WHERE b.mysql_id = '" . $bucket_id . "' and u.emailid = '" . $neoInput['emailid'] . "' ";
            $queryString .= "set u.firstname='".$neoInput['firstname']."', u.lastname='".$neoInput['lastname']."', u.emailid='".$neoInput['emailid']."'";
            $queryString .= ",u.contact_number='".$neoInput['contact_number']."',u.status='".$neoInput['status']."' ";
-            $queryString.="create unique (u)<-[:" . Config::get('constants.RELATIONS_TYPES.COMPANY_CONTACT_IMPORTED');
+            $queryString.=" create unique (u)<-[:" . Config::get('constants.RELATIONS_TYPES.COMPANY_CONTACT_IMPORTED');
             if (!empty($relationAttrs)) {
                 $queryString.="{";
                 foreach ($relationAttrs as $k => $v) {
@@ -275,15 +267,14 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
                 $queryString = rtrim($queryString, ",");
                 $queryString.="}";
             }
-            $queryString.="]-(b)";
-            $queryString.=" return u";
+            $queryString.="]-(b) return u";
+            
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             if ($result->count()) {
-            return $result;
-            } else {
-            return false;
-            }
+                $return =  $result;
+            } 
+        return $return;
     }
 
     public function viewCompanyDetails($userEmailId='', $companyCode=''){
@@ -320,7 +311,7 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
                         create unique (c)-[r:".$relationType."";
 
             $queryString.="]->(i)  set r.created_at='".date("Y-m-d H:i:s")."' return i";
-            //echo $queryString;exit;
+            
             $query = new CypherQuery($this->client, $queryString);
             return $result = $query->getResultSet();
     }  
@@ -331,8 +322,6 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
         if(!empty($email)){
             $queryString = "MATCH (u:User:Mintmesh)-[r:CREATED|CONNECTED_TO_COMPANY]-(c:Company)
                             where u.emailid='".$email."' return c order by r.created_at desc ";
-//            $queryString.= " UNION MATCH (u:User:Mintmesh)-[r:COMPANY_CONTACT_IMPORTED]-(b:Contact_bucket)-[:BUCKET_IMPORTED]-(c:Company)
-//                             where u.emailid='".$email."' and r.company_code=c.companyCode return c order by r.created_at desc";
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();   
         }
@@ -360,8 +349,6 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
         if (!empty($companyCode)) {  
             $queryString = "Match (u:User:Mintmesh)-[r:CONNECTED_TO_COMPANY | CREATED]-(c:Company)
                             where u.emailid='" . $userEmailId . "' and c.companyCode='" . $companyCode . "' return r";
-//            $queryString.= " UNION MATCH (u:User:Mintmesh)-[r:COMPANY_CONTACT_IMPORTED]-(b:Contact_bucket)-[:BUCKET_IMPORTED]-(c:Company) 
-//                             where u.emailid='" . $userEmailId . "' and c.companyCode='" . $companyCode . "' and r.company_code=c.companyCode return r";
             $query  = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             $response  = $result->count(); 
@@ -384,13 +371,13 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
     public function getCompanyUserPosts($userEmail='', $companyCode ='',$filterLimit=''){
         $response = array();
         if(!empty($userEmail) && !empty($companyCode)){
-//            $queryString = "MATCH (u:User{emailid:'" . $userEmail . "'})-[r:POSTED]-(p:Post {status:'ACTIVE'})-[:POSTED_FOR]-(:Company{companyCode:'" . $companyCode . "'}) ";
+
             $queryString = "MATCH (u:User)-[r:POSTED]-(p:Post {status:'ACTIVE'})-[:POSTED_FOR]-(:Company{companyCode:'" . $companyCode . "'}) ";
             if(!empty($filterLimit)){
                 $queryString.= " where p.created_at >= '" . $filterLimit . "'";
             }
             $queryString.= "return distinct(u),p order by p.created_at desc ";
-//            echo $queryString;exit;
+
             $query = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet(); 
             $response['count']  = $result->count();
@@ -404,7 +391,7 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
         if(!empty($companyCode)){
         $queryString = "MATCH (u:User)-[r:POSTED]->(p:Post)-[:POSTED_FOR]-(:Company{companyCode:'" . $companyCode . "'}) "; 
         $queryString.= "return p order by p.created_at desc ";
-//        echo $queryString;exit;
+
         $query = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();   
         }
@@ -548,7 +535,7 @@ class NeoeloquentEnterpriseRepository extends BaseRepository implements NeoEnter
         $query = new CypherQuery($this->client, $queryString);
         $result = $query->getResultSet();
         return $result[0][0];
-        //return $this->neoUser->create($input);
+        
     }
     
     public function getUsers($email='') {

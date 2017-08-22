@@ -593,6 +593,52 @@ class PostController extends \BaseController {
             }
         }
         
+        /**
+	 * edit career settings details
+         * 
+         * POST/edit_career_settings
+         * @param string $access_token the access token of enterprise app user
+         * @param string $company_code 
+	 * @return Response
+	 */
+        public function editCareerSettings()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->PostGateway->validateEditCareerSettingsInput($inputUserData);
+            if($validation['status'] == 'success') {
+                $response = $this->PostGateway->editCareerSettings($inputUserData);
+                return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+        }
+        
+        /**
+	 * get career settings details
+         * 
+         * POST/get_career_settings
+         * @param string $access_token the access token of enterprise app user
+         * @param string $company_code 
+	 * @return Response
+	 */
+        public function getCareerSettings()
+        {
+            // Receiving user input data
+            $inputUserData = \Input::all();
+            // Validating user input data
+            $validation = $this->PostGateway->validateGetCareerSettingsInput($inputUserData);
+            if($validation['status'] == 'success') {
+                $response = $this->PostGateway->getCareerSettingsApi($inputUserData);
+                return \Response::json($response);
+            } else {
+                    // returning validation failure
+                return \Response::json($validation);
+            }
+        }
+        
         
 }
 
