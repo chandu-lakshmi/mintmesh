@@ -23,6 +23,7 @@ class SFManager extends IntegrationManager {
     public $requestParams = array();
 
     const SUCCESS_RESPONSE_CODE = 200;
+    const IMAGE_DEFAULT_HIGHT = 120;
     const API_END_POINT = 'API_END_POINT';
     const DCNAME = 'DCNAME';
     const USERNAME = 'USERNAME';
@@ -204,6 +205,14 @@ class SFManager extends IntegrationManager {
                         #for reply emailid 
                         $replyToName = Config::get('constants.MINTMESH_SUPPORT.REFERRER_NAME');
                         $replyToHost = Config::get('constants.MINTMESH_SUPPORT.REFERRER_HOST');
+                        
+                        #company logo Aspect Ratio details for email template
+                        $companyLogoWidth = $companyLogoHeight = '';
+                        if(!empty($companyLogo)){
+                            $companyLogoAspectRatio = $this->getImageAspectRatio($companyLogo);
+                            $companyLogoWidth       = !empty($companyLogoAspectRatio['width']) ? $companyLogoAspectRatio['width'] : '';
+                            $companyLogoHeight      = !empty($companyLogoAspectRatio['height']) ? $companyLogoAspectRatio['height'] : '';
+                        }
 
                         $neoCompanyBucketContacts = $this->getImportContactsList($params);
                         //$inviteCount = !empty($neoCompanyBucketContacts['total_records'][0]->total_count)?$neoCompanyBucketContacts['total_records'][0]->total_count:0;
@@ -245,6 +254,8 @@ class SFManager extends IntegrationManager {
                                 $emailData['post_id'] = $postId;
                                 $emailData['post_type'] = $neoInput['post_type'];
                                 $emailData['company_logo'] = $companyLogo;
+                                $emailData['company_logo_width']    = $companyLogoWidth;
+                                $emailData['company_logo_height']   = $companyLogoHeight;
                                 $emailData['to_firstname'] = $contacts->firstname;
                                 $emailData['to_lastname'] = $contacts->lastname;
                                 $emailData['to_emailid'] = $contacts->emailid;
@@ -571,6 +582,24 @@ class SFManager extends IntegrationManager {
     public function getUserByEmail($emailId=''){    
         return DB::table('users')
                ->where('emailid', '=', $emailId)->get();
+    }
+    
+    public function getImageAspectRatio($imagePath = '') {
+        
+        $return = $result = array();
+        if($imagePath){
+            $file_headers   = @get_headers($imagePath);
+            if(isset($file_headers[0]) && $file_headers[0] == 'HTTP/1.1 200 OK') {
+                $result = getimagesize($imagePath);
+                if(isset($result[0]) && isset($result[1])){
+                    $height     = self::IMAGE_DEFAULT_HIGHT; 
+                    $newWidth   = ($result[0]/$result[1])*$height;
+                    $return['width']  = round($newWidth);
+                    $return['height'] = $height;
+                }  
+            }
+        }
+        return $return;
     }
 
 }
