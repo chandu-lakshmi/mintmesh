@@ -39,6 +39,11 @@ class UserServiceProvider extends ServiceProvider {
                 $this->app->bind('Mintmesh\Repositories\API\Post\NeoPostRepository',
                         'Mintmesh\Repositories\API\Post\NeoeloquentPostRepository');
                 
+                $this->app->bind('Mintmesh\Repositories\API\Candidates\CandidatesRepository',
+                        'Mintmesh\Repositories\API\Candidates\EloquentCandidatesRepository',
+                        'Mintmesh\Repositories\API\Candidates\NeoCandidatesRepository',
+                        'Mintmesh\Repositories\API\Candidates\NeoeloquentCandidatesRepository');
+                
                 $this->app->bind('Mintmesh\Repositories\API\Globals\NeoGlobalRepository',
                         'Mintmesh\Repositories\API\Globals\NeoeloquentGlobalRepository');
 	}

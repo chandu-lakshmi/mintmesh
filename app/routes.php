@@ -408,6 +408,8 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       //career settings
       Route::post("enterprise/edit_career_settings", "API\Post\PostController@editCareerSettings");
       Route::post("enterprise/get_career_settings", "API\Post\PostController@getCareerSettings");
+      //candidate management
+      Route::post("enterprise/get_candidate_email_templates", "API\Candidates\CandidatesController@getCandidateEmailTemplates");
       
 });
 
