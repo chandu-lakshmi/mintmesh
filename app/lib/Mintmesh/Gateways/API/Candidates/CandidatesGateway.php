@@ -11,6 +11,7 @@ namespace Mintmesh\Gateways\API\Candidates;
  */
 use Mintmesh\Repositories\API\Referrals\ReferralsRepository;
 use Mintmesh\Repositories\API\Candidates\CandidatesRepository;
+use Mintmesh\Repositories\API\Candidates\NeoCandidatesRepository;
 use Mintmesh\Repositories\API\Enterprise\EnterpriseRepository;
 use Mintmesh\Repositories\API\User\UserRepository;
 use Mintmesh\Repositories\API\Post\NeoPostRepository;
@@ -49,7 +50,7 @@ class CandidatesGateway {
     const CAREER_HEROSHOT_IMAGE_HEIGHT = 336;
 
     protected $enterpriseRepository, $commonFormatter, $authorizer, $appEncodeDecode,$neoEnterpriseRepository,$userFileUploader;
-    protected $createdNeoUser, $candidatesValidator, $referralsRepository, $enterpriseGateway, $userEmailManager, $candidatesRepository;
+    protected $createdNeoUser, $candidatesValidator, $referralsRepository, $enterpriseGateway, $userEmailManager, $candidatesRepository, $neoCandidatesRepository;
 
     public function __construct(ReferralsGateway $referralsGateway, 
                                 EnterpriseGateway $enterpriseGateway,
@@ -61,9 +62,9 @@ class CandidatesGateway {
                                 EnterpriseRepository $enterpriseRepository,
                                 UserFileUploader $userFileUploader,
                                 UserEmailManager $userEmailManager,
-                                CandidatesRepository $candidatesRepository
+                                CandidatesRepository $candidatesRepository,
+                                NeoCandidatesRepository $neoCandidatesRepository
     ) {
-        
         
         $this->referralsRepository      = $referralsRepository;
         $this->referralsGateway         = $referralsGateway;
@@ -76,6 +77,7 @@ class CandidatesGateway {
         $this->userFileUploader         = $userFileUploader;
         $this->userEmailManager         = $userEmailManager;
         $this->candidatesRepository     = $candidatesRepository;
+        $this->neoCandidatesRepository  = $neoCandidatesRepository;
     }
     
     public function doValidation($validatorFilterKey, $langKey) {
@@ -96,9 +98,14 @@ class CandidatesGateway {
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $message, $data);
     }
     
-    //validation on validate Get Job Details Input
+    //validation on validate Get Candidate Email Templates Input
     public function validateGetCandidateEmailTemplatesInput($input) {
         return $this->doValidation('get_candidate_email_templates', 'MINTMESH.user.valid');
+    }
+    
+    //validation on validate Get Candidate Details Input
+    public function validateGetCandidateDetailsInput($input) {
+        return $this->doValidation('get_candidate_details', 'MINTMESH.user.valid');
     }
     
     public function getCandidateEmailTemplates($param) {
@@ -108,6 +115,46 @@ class CandidatesGateway {
         
         $returnArr = $this->candidatesRepository->getCandidateEmailTemplates($param);
         
+        #check get career settings details not empty
+        if($returnArr){
+            $data = $returnArr;//return career settings details
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+        } else {
+            $responseCode   = self::ERROR_RESPONSE_CODE;
+            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+        
+    }
+    
+    public function getCandidateDetails($input) {
+        
+        $data = $returnArr = array();
+        $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
+        $referredId  = !empty($input['referred_id']) ? $input['referred_id'] : '';
+        
+        //$resultArr =  $this->neoCandidatesRepository->getCandidateDetails($companyCode, $referredId);
+        
+        $returnArr['name']          = 'K. NITIN RANGANATH';
+        $returnArr['location']      = 'Hyderabad, Telangana';
+        $returnArr['emailid']       = 'nitinranganath@gmail.com';
+        $returnArr['phone']         = '+91 9852458752';
+        $returnArr['qualification'] = 'B Tech (CSC) From JNTU, Hyderabad';
+        $returnArr['certification'] = 'Android Developer Certification from Google .Inc';
+        $returnArr['referred_by']   = 'Vikram Krishna';
+        $returnArr['current_company_name']      = 'EnterPi Software Solutions Pvt Ltd';
+        $returnArr['current_company_details']   = 'May 2015 - Present(2 years 3 months)';
+        $returnArr['current_company_location']  = 'Hyderabad Area, India';
+        $returnArr['current_company_position']  = 'Sr Android Engineer';
+        $returnArr['previous_company_name']     = 'HTC Global Services (India) Private Ltd';
+        $returnArr['previous_company_details']  = 'May 2013 - May 2015 Present(2 years)';
+        $returnArr['previous_company_location'] = 'Bangalore Area, India';
+        $returnArr['previous_company_position'] = 'Jr. Android Engineer';
+        $returnArr['skills']                    = array("Java & XML, C, C++", "Building to Devices", "Cocoa Touch", "Develop software solutions by studying information needs, conferring with users.", "Distubuting an App (prefearably for an app on the App Store");
+
         #check get career settings details not empty
         if($returnArr){
             $data = $returnArr;//return career settings details

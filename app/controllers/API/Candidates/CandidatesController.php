@@ -46,6 +46,32 @@ class CandidatesController extends \BaseController {
         }
     return $return;
     }
+    
+    /**
+     * Get Posts
+     * 
+     * POST/get_candidate_details
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code 
+     * @param integer $referred_id 
+     * @return Response
+     */
+    public function getCandidateDetails() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validateGetCandidateDetailsInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->getCandidateDetails($inputUserData));
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    }
             
 }
 

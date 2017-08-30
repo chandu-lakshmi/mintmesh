@@ -2086,6 +2086,7 @@ class PostGateway {
                 $record     = array();
                 $post       = $result[0];//post details
                 $user       = $result[1];//user details
+                
                 if(!empty($user->emailid) && isset($user->emailid)){
                     $record['referred_by_phone']= 0;
                     $record['from_user'] = $result[1]->emailid;
@@ -2098,6 +2099,7 @@ class PostGateway {
                 #form the referrals here
                 $record['id']               = $result[2]->getID();
                 $record['post_id']          = $result[0]->getID();
+                $record['candidate_id']     = $result[1]->getID();
                 $record['referred_by']      = $result[2]->referred_by;
                 $record['relation_count']   = $result[2]->relation_count;
                 if($relation->one_way_status != 'UNSOLICITED'){
