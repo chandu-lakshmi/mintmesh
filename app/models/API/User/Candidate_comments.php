@@ -7,12 +7,12 @@
  */
 
 
-class Candidate_Email_Templates extends Eloquent {
+class Candidate_Comments extends Eloquent {
         public $timestamps = false;
         //the mysql database table used by user model
-	protected $table  = 'candidate_email_templates';
+	protected $table  = 'candidate_comments';
 
-	protected $fillable = array('company_id', 'subject', 'body', 'status', 'created_by', 'created_at', 'updated_at');
+	protected $fillable = array('company_id', 'candidate_id','comment',  'created_by', 'created_at', 'updated_at');
         
         // Definig mysql connection
 	protected $connection = 'mysql';

@@ -52,9 +52,10 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
 //                        "emailactivationcode" => $emailActivationCode
 //            );
 //            return $this->candidateEmailTemplates->create($user);
-
-            $sql = 'SELECT * FROM candidate_module_types';
+            //$emailTemplates = Candidate_Email_Templates::all();
+           $sql = 'SELECT id,company_id,subject,body FROM candidate_email_templates where status=1';
            return  $selectRel = DB::Select($sql);
+           // return $emailTemplates;
             
         }
 }

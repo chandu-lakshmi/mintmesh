@@ -115,6 +115,15 @@ class CandidatesGateway {
         
         $returnArr = $this->candidatesRepository->getCandidateEmailTemplates($param);
         
+        //$returnArrNew = array();
+        foreach($returnArr as  &$resVal){
+            $arrayReplace = array('{%fname%}', '{%lanem%}', '{%Name%}');
+            $arrayReplaceBy = array('Sreenivas', 'Reddy', 'Thanks');
+            $body_text = str_replace($arrayReplace, $arrayReplaceBy, $resVal->body);
+            $resVal->body =  $body_text;
+        }
+        
+        
         #check get career settings details not empty
         if($returnArr){
             $data = $returnArr;//return career settings details
