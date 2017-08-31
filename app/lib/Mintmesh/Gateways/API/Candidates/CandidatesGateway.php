@@ -164,16 +164,17 @@ class CandidatesGateway {
         
         $relation   = $resultArr[0];
         $candidate  = $resultArr[1];
-        print_r($candidate).exit;
+        
         
         $candidateEmail = $candidate->emailid;
         #get referred by name here
+        $candidateName  = $this->postGateway->getCandidateFullNameByEmail($candidateEmail, $relation->referred_by, $companyId);    
         $referredByName = $this->postGateway->getReferredbyUserFullName($relation->referred_by, $companyId);    
-        //print_r($name).exit;
-        $returnArr['name']          = 'K. NITIN RANGANATH';
-        $returnArr['location']      = 'Hyderabad, Telangana';
+        
+        $returnArr['name']          = $candidateName;
         $returnArr['emailid']       = $candidateEmail;//'nitinranganath@gmail.com';
-        $returnArr['phone']         = '+91 9852458752';
+        $returnArr['phone']         = !empty($candidate->phone) ? $candidate->phone : '';'+91 9852458752';
+        $returnArr['location']      = !empty($candidate->location) ? $candidate->location : '';//'Hyderabad, Telangana';
         $returnArr['qualification'] = 'B Tech (CSC) From JNTU, Hyderabad';
         $returnArr['certification'] = 'Android Developer Certification from Google .Inc';
         $returnArr['referred_by']   = $referredByName;
