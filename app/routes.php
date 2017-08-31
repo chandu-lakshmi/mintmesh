@@ -411,6 +411,7 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       //candidate management
       Route::post("enterprise/get_candidate_email_templates", "API\Candidates\CandidatesController@getCandidateEmailTemplates");
       Route::post("enterprise/get_candidate_details", "API\Candidates\CandidatesController@getCandidateDetails");
+      Route::post("enterprise/get_company_employees", "API\Candidates\CandidatesController@getCompanyEmployees");
       
 });
 
