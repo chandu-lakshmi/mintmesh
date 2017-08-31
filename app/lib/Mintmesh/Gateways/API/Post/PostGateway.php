@@ -2115,58 +2115,19 @@ class PostGateway {
                 $record['created_at']       = date('M d, Y',strtotime($this->appEncodeDecode->UserTimezone($relation->created_at,$input['time_zone'])));
                 $record['awt_status']       = $relation->awaiting_action_status;
                 #get the user details here
-                $referralName = $userName = '';
-                $nonMMUser    = new \stdClass();
-                
                 if(!empty($user->emailid) && !empty($relation->referred_by)){
-                    
-                    
+                    #get candidate details from company contacts table 
                     $referralName = $this->getCandidateFullNameByEmail($user->emailid, $relation->referred_by, $company->company_id );
-                    /*
-                    #get candidate details from company contacts table
-                    $userDetails = $this->enterpriseRepository->getContactByEmailId($user->emailid, $company->company_id);
-                    if(!empty($userDetails)){
-                        
-                        $userName = $userDetails[0]->firstname.' '.$userDetails[0]->lastname;
-                    }
-                    #get the candidate details from neo4j user node
-                    $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($user->emailid);
-                    $neoReferralName = !empty($neoUserDetails['fullname']) ? $neoUserDetails['fullname'] : $neoUserDetails['firstname'];
-                    
-                    #get the candidate details from referred by user Import contacts neo4j email Relation
-                    if(empty($neoUserDetails['firstname']) && empty($neoUserDetails['fullname'])){
-                        
-                        $nonMMUser    = $this->contactsRepository->getImportRelationDetailsByEmail($relation->referred_by, $user->emailid);
-                        $referralName = !empty($nonMMUser->fullname) ? $nonMMUser->fullname : !empty($nonMMUser->firstname) ? $nonMMUser->firstname : "The contact";
-                    } else {
-                        
-                        $referralName = !empty($userName) ? $userName : $neoReferralName;
-                    } */
-                    
-                }  else {
-                    
-                    if(empty($user->firstname) && !empty($relation->referred_by)){
-                        $referralName = $this->getCandidateFullNameByPhone($relation->referred_by, $user->phone);
-                        /*
-                        #get the candidate details from referred by user Import contacts neo4j phone Relation
-                        $nonMMUser     = $this->contactsRepository->getImportRelationDetailsByPhone($relation->referred_by, $user->phone);
-                        $referralName  = !empty($nonMMUser->fullname) ? $nonMMUser->fullname : !empty($nonMMUser->firstname) ? $nonMMUser->firstname : "The contact";
-                        */
-                    }
+                }  else if(empty($user->firstname) && !empty($relation->referred_by)) {
+                    #get the candidate details from referred by user Import contacts neo4j phone Relation
+                    $referralName = $this->getCandidateFullNameByPhone($relation->referred_by, $user->phone);   
+                } else {
+                    $referralName = 'The contact';
                 }
                 #get referred by name here
-                
                 $referrerName = $this->getReferredbyUserFullName($relation->referred_by, $company->company_id);
-                /*$referrerDetails = $this->enterpriseRepository->getContactByEmailId($relation->referred_by,$company->company_id);
-                if(!empty($referrerDetails)){
-                    
-                    $referrerName = $referrerDetails[0]->firstname.' '.$referrerDetails[0]->lastname;
-                } else {
-                    $neoReferrerDetails = $this->neoUserRepository->getNodeByEmailId($relation->referred_by);
-                    $neoReferrerName    = !empty($neoReferrerDetails['fullname']) ? $neoReferrerDetails['fullname'] : $neoReferrerDetails['firstname'];
-                }*/
+               
                 $record['fullname']         = !empty($referralName) ? $referralName : 'The contact';
-                //$record['referred_by_name'] = !empty($referrerName) ? $referrerName : $neoReferrerName;
                 $record['referred_by_name'] = $referrerName;
                 $returnData[] = $record;
             }
