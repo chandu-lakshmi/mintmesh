@@ -13,12 +13,13 @@ use Mintmesh\Repositories\API\Referrals\ReferralsRepository;
 use Mintmesh\Repositories\API\Candidates\CandidatesRepository;
 use Mintmesh\Repositories\API\Candidates\NeoCandidatesRepository;
 use Mintmesh\Repositories\API\Enterprise\EnterpriseRepository;
-use Mintmesh\Repositories\API\User\UserRepository;
+use Mintmesh\Repositories\API\User\NeoUserRepository;
 use Mintmesh\Repositories\API\Post\NeoPostRepository;
 use Mintmesh\Services\FileUploader\API\User\UserFileUploader;
 use Mintmesh\Services\Emails\API\User\UserEmailManager;
 use Mintmesh\Gateways\API\Enterprise\EnterpriseGateway;
 use Mintmesh\Gateways\API\Referrals\ReferralsGateway;
+use Mintmesh\Gateways\API\Post\PostGateway;
 use Mintmesh\Services\Validators\API\Candidates\CandidatesValidator;
 use Mintmesh\Services\ResponseFormatter\API\CommonFormatter;
 use LucaDegasperi\OAuth2Server\Authorizer;
@@ -49,8 +50,9 @@ class CandidatesGateway {
     const COMPANY_RESUME_S3_MOVED_STATUS = 1;
     const CAREER_HEROSHOT_IMAGE_HEIGHT = 336;
 
-    protected $enterpriseRepository, $commonFormatter, $authorizer, $appEncodeDecode,$neoEnterpriseRepository,$userFileUploader;
+    protected $enterpriseRepository, $commonFormatter, $authorizer, $appEncodeDecode,$neoEnterpriseRepository,$userFileUploader, $neoUserRepository;
     protected $createdNeoUser, $candidatesValidator, $referralsRepository, $enterpriseGateway, $userEmailManager, $candidatesRepository, $neoCandidatesRepository;
+    protected $postGateway;
 
     public function __construct(ReferralsGateway $referralsGateway, 
                                 EnterpriseGateway $enterpriseGateway,
@@ -63,7 +65,9 @@ class CandidatesGateway {
                                 UserFileUploader $userFileUploader,
                                 UserEmailManager $userEmailManager,
                                 CandidatesRepository $candidatesRepository,
-                                NeoCandidatesRepository $neoCandidatesRepository
+                                NeoCandidatesRepository $neoCandidatesRepository,
+                                NeoUserRepository $neoUserRepository,
+                                PostGateway $postGateway
     ) {
         
         $this->referralsRepository      = $referralsRepository;
@@ -78,6 +82,8 @@ class CandidatesGateway {
         $this->userEmailManager         = $userEmailManager;
         $this->candidatesRepository     = $candidatesRepository;
         $this->neoCandidatesRepository  = $neoCandidatesRepository;
+        $this->neoUserRepository        = $neoUserRepository;
+        $this->postGateway              = $postGateway;
     }
     
     public function doValidation($validatorFilterKey, $langKey) {
@@ -145,15 +151,27 @@ class CandidatesGateway {
         $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
         $referredId  = !empty($input['referred_id']) ? $input['referred_id'] : '';
         
-        //$resultArr =  $this->neoCandidatesRepository->getCandidateDetails($companyCode, $referredId);
+        #get company details by code
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+        #get candidate details
+        $resultArr      = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $referredId);
         
+        $relation   = $resultArr[0];
+        $candidate  = $resultArr[1];
+        print_r($candidate).exit;
+        
+        $candidateEmail = $candidate->emailid;
+        #get referred by name here
+        $referredByName = $this->postGateway->getReferredbyUserFullName($relation->referred_by, $companyId);    
+        //print_r($name).exit;
         $returnArr['name']          = 'K. NITIN RANGANATH';
         $returnArr['location']      = 'Hyderabad, Telangana';
-        $returnArr['emailid']       = 'nitinranganath@gmail.com';
+        $returnArr['emailid']       = $candidateEmail;//'nitinranganath@gmail.com';
         $returnArr['phone']         = '+91 9852458752';
         $returnArr['qualification'] = 'B Tech (CSC) From JNTU, Hyderabad';
         $returnArr['certification'] = 'Android Developer Certification from Google .Inc';
-        $returnArr['referred_by']   = 'Vikram Krishna';
+        $returnArr['referred_by']   = $referredByName;
         $returnArr['current_company_name']      = 'EnterPi Software Solutions Pvt Ltd';
         $returnArr['current_company_details']   = 'May 2015 - Present(2 years 3 months)';
         $returnArr['current_company_location']  = 'Hyderabad Area, India';
