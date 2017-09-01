@@ -117,6 +117,11 @@ class CandidatesGateway {
         return $this->doValidation('get_candidate_details', 'MINTMESH.user.valid');
     }
     
+    //validation on validate Get Candidate Email Templates Input
+    public function validategetCompanyEmployeesInput($input) {
+        return $this->doValidation('get_company_employees', 'MINTMESH.user.valid');
+    }
+    
     public function getCandidateEmailTemplates($param) {
         
         $data = $returnArr = array();
@@ -238,6 +243,32 @@ class CandidatesGateway {
         
     }
     
+    
+    
+     public function getCompanyEmployees($param) {
+        
+        $data = $returnArr = array();
+        $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
+        
+        $returnArr = $this->candidatesRepository->getCompanyEmployees($param);
+        
+       
+        
+        
+        #check get career settings details not empty
+        if($returnArr){
+            $data = $returnArr;//return career settings details
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+        } else {
+            $responseCode   = self::ERROR_RESPONSE_CODE;
+            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+        
+    }
        
 }
 

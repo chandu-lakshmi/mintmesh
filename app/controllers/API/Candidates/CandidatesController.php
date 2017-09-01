@@ -72,6 +72,33 @@ class CandidatesController extends \BaseController {
         }
     return $return;
     }
+    
+    
+    /**
+     * Get Posts
+     * 
+     * POST/get_company_employees
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code 
+     * @return Response
+     */
+    public function getCompanyEmployees() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validategetCompanyEmployeesInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->getCompanyEmployees($inputUserData));
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    }
+    
             
 }
 
