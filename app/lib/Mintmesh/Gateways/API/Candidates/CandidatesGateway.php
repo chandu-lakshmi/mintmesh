@@ -176,6 +176,7 @@ class CandidatesGateway {
     public function getCandidateFullDetails($candidateEmail = '') {
         
         #variable declaration here
+        $certification = "";
         $skillsArray = $extraDetails = $returnArr = $neoUserDetails = $moreDetails = array();
         if($candidateEmail){
             #get the user details neo4j node here
@@ -205,12 +206,20 @@ class CandidatesGateway {
                     $returnArr[$k] = $v ;
                 }
             }
+            #get Certification details form here
+            if(!empty($returnArr['Certification'])){
+                foreach ($returnArr['Certification'] as $val){
+                    $certification .= $val['description'].", ";
+                }
+                $returnArr['Certification'] = rtrim($certification, ', ');
+            }
         }
         return $returnArr;
     }
     
     public function getCandidateDetails($input) {
         
+        $skills = '';
         $data = $returnArr = array();
         $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
         $referredId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
@@ -225,14 +234,14 @@ class CandidatesGateway {
         $candidate  = $resultArr[1];
         
         $candidateEmail = $candidate->emailid;
-        //$candidateArr  = $this->getCandidateFullDetails($candidateEmail);
-        //print_r($candidateArr).exit;
-//        $skills = '';
-//        foreach ($candidateArr['skills'] as $val){
-//            $skills .= $val['name'].", ";
-//        }
-//        $skills = rtrim($skills, ', ');
-//        print_r($skills).exit;
+        $candidateArr  = $this->getCandidateFullDetails($candidateEmail);
+        #get skills form here
+        if(!empty($candidateArr['skills'])){
+            foreach ($candidateArr['skills'] as $val){
+                $skills .= $val['name'].", ";
+            }
+            $skills = rtrim($skills, ', ');
+        }
         #get referred by name here
         $candidateName  = $this->postGateway->getCandidateFullNameByEmail($candidateEmail, $relation->referred_by, $companyId);    
         $referredByName = $this->postGateway->getReferredbyUserFullName($relation->referred_by, $companyId);    
@@ -243,7 +252,7 @@ class CandidatesGateway {
         $returnArr['phone']         = !empty($candidateArr['phone']) ? $candidateArr['phone'] : '';//'+91 9852458752';
         $returnArr['location']      = !empty($candidateArr['location']) ? $candidateArr['location'] : '';//'Hyderabad, Telangana';
         $returnArr['qualification'] = 'B Tech (CSC) From JNTU, Hyderabad';
-        $returnArr['certification'] = 'Android Developer Certification from Google .Inc';
+        $returnArr['certification'] = !empty($candidateArr['Certification']) ? $candidateArr['Certification'] : '' ;//'Android Developer Certification from Google .Inc';
         $returnArr['referred_by']   = $referredByName;
         $returnArr['current_company_name']      = 'EnterPi Software Solutions Pvt Ltd';
         $returnArr['current_company_details']   = 'May 2015 - Present(2 years 3 months)';
@@ -253,7 +262,7 @@ class CandidatesGateway {
         $returnArr['previous_company_details']  = 'May 2013 - May 2015 Present(2 years)';
         $returnArr['previous_company_location'] = 'Bangalore Area, India';
         $returnArr['previous_company_position'] = 'Jr. Android Engineer';
-        $returnArr['skills']                    = array("Java & XML, C, C++", "Building to Devices", "Cocoa Touch", "Develop software solutions by studying information needs, conferring with users.", "Distubuting an App (prefearably for an app on the App Store");
+        $returnArr['skills']                    = $skills;//array("Java & XML, C, C++", "Building to Devices", "Cocoa Touch", "Develop software solutions by studying information needs, conferring with users.", "Distubuting an App (prefearably for an app on the App Store");
 
         #check get career settings details not empty
         if($returnArr){
