@@ -422,6 +422,37 @@ class CandidatesGateway {
        
         $returnArr = $this->candidatesRepository->insertComment($param,$userId);
         
+<<<<<<< HEAD
+=======
+        //$returnArr = $this->candidatesRepository->getCandidateActivities($input);
+        $returnArr[0] = array('activity_id'       => '5002',
+                        'activity_type'     => 'CANDIDATE_STATUS',
+                        'activity_status'   => 'pending',
+                        'activity_message'  => 'status changed to',
+                        'activity_by'       => 'ramesh s',
+                        'activity_on'       => '1 hour ago'
+                        );
+        $returnArr[1] = array('activity_id'       => '5012',
+                        'activity_type'     => 'CANDIDATE_EMAILS',
+                        'activity_message'  => 'sent email',
+                        'activity_by'       => 'raju',
+                        'activity_on'       => 'jul 10,2017'
+                        );
+        $returnArr[2] = array('activity_id'       => '5302',
+                        'activity_type'     => 'CANDIDATE_COMMENTS',
+                        'activity_message'  => 'given assignment for machine test',
+                        'activity_by'       => 'karthik j',
+                        'activity_on'       => '2 days ago'
+                        );
+        $returnArr[3] = array('activity_id'       => '4002',
+                        'activity_type'     => 'CANDIDATE_STATUS',
+                        'activity_status'   => 'interview',
+                        'activity_message'  => 'status changed to',
+                        'activity_by'       => 'gopi v',
+                        'activity_on'       => '2 hour ago'
+                        );
+        
+>>>>>>> 7a6f8533f391e80cb3ccc3e62a9e7a8198d4d34a
         #check get career settings details not empty
         if($returnArr){
             //$data = $returnArr;//return career settings details
