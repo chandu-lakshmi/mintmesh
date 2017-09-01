@@ -12,7 +12,7 @@ class CandidatesValidator extends Validator {
         ),
         'get_candidate_details' => array(
             'company_code'  => 'required',
-            'referred_id'   => 'required'
+            'reference_id'  => 'required'
         ),
         'get_company_employees' => array(
             'company_code'  => 'required',
