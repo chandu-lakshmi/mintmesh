@@ -366,13 +366,13 @@ class CandidatesGateway {
         $returnArr[0] = array('activity_id'       => '5002',
                         'activity_type'     => 'CANDIDATE_STATUS',
                         'activity_status'   => 'pending',
-                        'activity_message'  => 'status changed to pending',
+                        'activity_message'  => 'status changed to',
                         'activity_by'       => 'ramesh s',
                         'activity_on'       => '1 hour ago'
                         );
         $returnArr[1] = array('activity_id'       => '5012',
                         'activity_type'     => 'CANDIDATE_EMAILS',
-                        'activity_message'  => 'status changed to pending',
+                        'activity_message'  => 'sent email',
                         'activity_by'       => 'raju',
                         'activity_on'       => 'jul 10,2017'
                         );
@@ -385,7 +385,7 @@ class CandidatesGateway {
         $returnArr[3] = array('activity_id'       => '4002',
                         'activity_type'     => 'CANDIDATE_STATUS',
                         'activity_status'   => 'interview',
-                        'activity_message'  => 'status changed to interview',
+                        'activity_message'  => 'status changed to',
                         'activity_by'       => 'gopi v',
                         'activity_on'       => '2 hour ago'
                         );
