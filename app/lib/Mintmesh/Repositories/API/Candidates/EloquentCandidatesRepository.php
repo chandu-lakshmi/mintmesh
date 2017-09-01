@@ -67,6 +67,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
             
         }
         
+
          public function addCandidateComment($param,$userId){
            
              $sql = 'select c.id from company c where c.code="'.$param['company_code'].'"';

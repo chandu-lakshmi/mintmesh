@@ -17,6 +17,7 @@ class CandidatesValidator extends Validator {
         'get_company_employees' => array(
             'company_code'  => 'required',
         ),
+
         'add_candidate_schedule' => array(
             'company_code'  => 'required',
             'reference_id'  => 'required',
@@ -42,7 +43,7 @@ class CandidatesValidator extends Validator {
             'insert_comment' => array(
             'company_code'  => 'required',
             'comment'  => 'required',
-        )
+        )   
     );
 
 }
