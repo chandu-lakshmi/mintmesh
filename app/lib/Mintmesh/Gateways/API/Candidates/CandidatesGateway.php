@@ -226,7 +226,7 @@ class CandidatesGateway {
         
         $candidateEmail = $candidate->emailid;
         //$candidateArr  = $this->getCandidateFullDetails($candidateEmail);
-        //print_r($candidateArr['skills']).exit;
+        //print_r($candidateArr).exit;
 //        $skills = '';
 //        foreach ($candidateArr['skills'] as $val){
 //            $skills .= $val['name'].", ";
@@ -237,6 +237,7 @@ class CandidatesGateway {
         $candidateName  = $this->postGateway->getCandidateFullNameByEmail($candidateEmail, $relation->referred_by, $companyId);    
         $referredByName = $this->postGateway->getReferredbyUserFullName($relation->referred_by, $companyId);    
         
+        $returnArr['candidate_id']  = '123456';
         $returnArr['name']          = $candidateName;
         $returnArr['emailid']       = $candidateEmail;//'nitinranganath@gmail.com';
         $returnArr['phone']         = !empty($candidateArr['phone']) ? $candidateArr['phone'] : '';//'+91 9852458752';
