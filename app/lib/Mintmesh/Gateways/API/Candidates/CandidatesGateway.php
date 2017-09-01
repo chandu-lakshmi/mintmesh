@@ -362,7 +362,34 @@ class CandidatesGateway {
         $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId = !empty($input['reference_id']) ? $input['reference_id'] : '';
         
-        $returnArr = $this->candidatesRepository->getCandidateActivities($input);
+        //$returnArr = $this->candidatesRepository->getCandidateActivities($input);
+        $returnArr[0] = array('activity_id'       => '5002',
+                        'activity_type'     => 'CANDIDATE_STATUS',
+                        'activity_status'   => 'pending',
+                        'activity_message'  => 'status changed to pending',
+                        'activity_by'       => 'ramesh s',
+                        'activity_on'       => '1 hour ago'
+                        );
+        $returnArr[1] = array('activity_id'       => '5012',
+                        'activity_type'     => 'CANDIDATE_EMAILS',
+                        'activity_message'  => 'status changed to pending',
+                        'activity_by'       => 'raju',
+                        'activity_on'       => 'jul 10,2017'
+                        );
+        $returnArr[2] = array('activity_id'       => '5302',
+                        'activity_type'     => 'CANDIDATE_COMMENTS',
+                        'activity_message'  => 'given assignment for machine test',
+                        'activity_by'       => 'karthik j',
+                        'activity_on'       => '2 days ago'
+                        );
+        $returnArr[3] = array('activity_id'       => '4002',
+                        'activity_type'     => 'CANDIDATE_STATUS',
+                        'activity_status'   => 'interview',
+                        'activity_message'  => 'status changed to interview',
+                        'activity_by'       => 'gopi v',
+                        'activity_on'       => '2 hour ago'
+                        );
+        
         #check get career settings details not empty
         if($returnArr){
             $data = $returnArr;//return career settings details
