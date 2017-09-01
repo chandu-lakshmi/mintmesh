@@ -384,7 +384,8 @@ class CandidatesGateway {
     
     
     public function getCandidateActivities($input) {
-        $returnArr = array();
+        
+        $returnArr = $data = array();
         //$returnArr = $this->candidatesRepository->getCandidateActivities($input);
         $returnArr[0] = array('activity_id'       => '5002',
                         'activity_type'     => 'CANDIDATE_STATUS',
@@ -416,7 +417,7 @@ class CandidatesGateway {
 
         #check get career settings details not empty
         if($returnArr){
-            //$data = $returnArr;//return career settings details
+            $data = $returnArr;//return career settings details
             $responseCode   = self::SUCCESS_RESPONSE_CODE;
             $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
             $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
