@@ -213,7 +213,7 @@ class CandidatesGateway {
         
         $data = $returnArr = array();
         $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
-        $referredId  = !empty($input['referred_id']) ? $input['referred_id'] : '';
+        $referredId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
         
         #get company details by code
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
@@ -226,15 +226,21 @@ class CandidatesGateway {
         
         $candidateEmail = $candidate->emailid;
         //$candidateArr  = $this->getCandidateFullDetails($candidateEmail);
-        
+        //print_r($candidateArr['skills']).exit;
+//        $skills = '';
+//        foreach ($candidateArr['skills'] as $val){
+//            $skills .= $val['name'].", ";
+//        }
+//        $skills = rtrim($skills, ', ');
+//        print_r($skills).exit;
         #get referred by name here
         $candidateName  = $this->postGateway->getCandidateFullNameByEmail($candidateEmail, $relation->referred_by, $companyId);    
         $referredByName = $this->postGateway->getReferredbyUserFullName($relation->referred_by, $companyId);    
         
         $returnArr['name']          = $candidateName;
         $returnArr['emailid']       = $candidateEmail;//'nitinranganath@gmail.com';
-        $returnArr['phone']         = !empty($candidate->phone) ? $candidate->phone : '';//'+91 9852458752';
-        $returnArr['location']      = !empty($candidate->location) ? $candidate->location : '';//'Hyderabad, Telangana';
+        $returnArr['phone']         = !empty($candidateArr['phone']) ? $candidateArr['phone'] : '';//'+91 9852458752';
+        $returnArr['location']      = !empty($candidateArr['location']) ? $candidateArr['location'] : '';//'Hyderabad, Telangana';
         $returnArr['qualification'] = 'B Tech (CSC) From JNTU, Hyderabad';
         $returnArr['certification'] = 'Android Developer Certification from Google .Inc';
         $returnArr['referred_by']   = $referredByName;
