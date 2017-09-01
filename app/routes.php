@@ -412,10 +412,12 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       Route::post("enterprise/get_candidate_email_templates", "API\Candidates\CandidatesController@getCandidateEmailTemplates");
       Route::post("enterprise/get_candidate_details", "API\Candidates\CandidatesController@getCandidateDetails");
       Route::post("enterprise/get_company_employees", "API\Candidates\CandidatesController@getCompanyEmployees");
+
       Route::post("enterprise/add_candidate_schedule", "API\Candidates\CandidatesController@addCandidateSchedule");
       Route::post("enterprise/add_candidate_email", "API\Candidates\CandidatesController@addCandidateEmail");
       Route::post("enterprise/add_candidate_comment", "API\Candidates\CandidatesController@addCandidateComment");
       Route::post("enterprise/get_candidate_activities", "API\Candidates\CandidatesController@getCandidateActivities");
+      Route::post("enterprise/insert_comment", "API\Candidates\CandidatesController@insertComment");
       
 });
 

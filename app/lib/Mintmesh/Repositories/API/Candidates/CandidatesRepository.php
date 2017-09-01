@@ -10,6 +10,17 @@ interface CandidatesRepository {
      
      
      public function getCompanyEmployees($input);
+     
+     
+     public function addCandidateComment($input,$userId);
+     
+     
+     public function addCandidateEmail($input,$arrayuser);
+     
+     public function addCandidateSchedule($input,$userId);
+     
+     
+     public function getCandidateActivities($input,$userId);
    
      
 }

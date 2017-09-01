@@ -19,19 +19,29 @@ class CandidatesValidator extends Validator {
         ),
         'add_candidate_schedule' => array(
             'company_code'  => 'required',
-            'reference_id'  => 'required'
+            'reference_id'  => 'required',
+            'candidate_id'  => 'required'
         ),
         'add_candidate_email' => array(
             'company_code'  => 'required',
-            'reference_id'  => 'required'
+            'reference_id'  => 'required',
+            'candidate_id'  => 'required',
+            'subject'  => 'required',
+            'body'  => 'required',
         ),
         'add_candidate_comment' => array(
             'company_code'  => 'required',
-            'reference_id'  => 'required'
+            'reference_id'  => 'required',
+            'candidate_id'  => 'required',
+            'comment'  => 'required',
         ),
         'get_candidate_activities' => array(
             'company_code'  => 'required',
             'reference_id'  => 'required'
+        ),
+            'insert_comment' => array(
+            'company_code'  => 'required',
+            'comment'  => 'required',
         )
     );
 

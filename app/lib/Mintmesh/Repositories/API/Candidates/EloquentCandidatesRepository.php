@@ -66,4 +66,93 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
            return  $selectRel = DB::Select($sql);
             
         }
+        
+         public function addCandidateComment($param,$userId){
+           
+             $sql = 'select c.id from company c where c.code="'.$param['company_code'].'"';
+             $selectRel = DB::Select($sql);
+             $company_id = $selectRel[0]->id;
+             
+            
+             $sql = "insert into candidate_comments (`company_id`,`reference_id`,`candidate_id`,`comment`,`created_by`,`created_at`)" ;
+            $sql.=" values('".$company_id."','".$param['reference_id']."','".$param['candidate_id']."','".$this->appEncodeDecode->filterString($param['comment'])."','".$userId."','".gmdate('Y-m-d H:i:s')."')" ;
+            $result = DB::statement($sql);
+            
+             $sql_log = "insert into candidate_activity_logs (`company_id`,`reference_id`,`candidate_id`,`module_type`,`status`,`activity_text`,`created_by`,`created_at`)" ;
+            $sql_log.=" values('".$company_id."','".$param['reference_id']."','".$param['candidate_id']."','3','1','Comment Added','".$userId."','".gmdate('Y-m-d H:i:s')."')" ;
+            
+            $result = DB::statement($sql_log);
+            
+            
+            return $result;
+            
+            //return  $this->candidateComments->create($arrayComment);
+           
+            
+        }
+        
+        public function addCandidateEmail($param,$arrayuser){
+             $sql = 'select c.id from company c where c.code="'.$param['company_code'].'"';
+             $selectRel = DB::Select($sql);
+             $company_id = $selectRel[0]->id;
+             $fromname = '';
+             $fromname = $arrayuser['firstname'].' '.$arrayuser['lastname'];
+             
+            
+             $sql = "insert into candidate_sent_emails (`company_id`,`reference_id`,`candidate_id`,`to`,`from`,`subject`,`body`,`attachment_id`,`created_by`,`created_at`)" ;
+            $sql.=" values('".$company_id."','".$param['reference_id']."','".$param['candidate_id']."','".$param['to']."','".$fromname."','".$this->appEncodeDecode->filterString($param['subject'])."','".$this->appEncodeDecode->filterString($param['body'])."','','".$arrayuser['id']."','".gmdate('Y-m-d H:i:s')."')" ;
+            $result = DB::statement($sql);
+            
+             $sql_log = "insert into candidate_activity_logs (`company_id`,`reference_id`,`candidate_id`,`module_type`,`status`,`activity_text`,`created_by`,`created_at`)" ;
+            $sql_log.=" values('".$company_id."','".$param['reference_id']."','".$param['candidate_id']."','2','1','Email Sent','".$arrayuser['id']."','".gmdate('Y-m-d H:i:s')."')" ;
+            
+            $result = DB::statement($sql_log);
+            
+            
+            return $result;
+            
+            //return  $this->candidateComments->create($arrayComment);
+           
+            
+        }
+        
+        
+        
+         public function addCandidateSchedule($param,$userId){
+          
+             $sql = 'select c.id from company c where c.code="'.$param['company_code'].'"';
+             $selectRel = DB::Select($sql);
+             $company_id = $selectRel[0]->id;
+             
+            
+             $sql = "insert into candidate_schedule (`company_id`,`reference_id`,`candidate_id`,`schedule_for`,`interview_date`,`interview_from_time`,`interview_to_time`,`time_zone`,`interview_location`,`notes`,`created_by`,`created_at`)" ;
+            $sql.=" values('".$company_id."','".$param['reference_id']."','".$param['candidate_id']."','".$param['schedule_for']."','".$param['interview_date']."','".$this->appEncodeDecode->filterString($param['interview_from_time'])."','".$this->appEncodeDecode->filterString($param['interview_to_time'])."','".$this->appEncodeDecode->filterString($param['time_zone'])."','".$this->appEncodeDecode->filterString($param['interview_location'])."','".$this->appEncodeDecode->filterString($param['notes'])."','".$userId."','".gmdate('Y-m-d H:i:s')."')" ;
+            $result = DB::statement($sql);
+            
+             $sql_log = "insert into candidate_activity_logs (`company_id`,`reference_id`,`candidate_id`,`module_type`,`status`,`activity_text`,`created_by`,`created_at`)" ;
+            $sql_log.=" values('".$company_id."','".$param['reference_id']."','".$param['candidate_id']."','1','1','".$param['schedule_for']." Schedule','".$userId."','".gmdate('Y-m-d H:i:s')."')" ;
+            
+            $result = DB::statement($sql_log);
+            
+            
+            return $result;
+            
+            //return  $this->candidateComments->create($arrayComment);
+           
+            
+        }
+        
+        public function getCandidateActivities($param,$userId) {
+            
+           $sql = 'select c.id from company c where c.code="'.$param['company_code'].'"';
+             $selectRel = DB::Select($sql);
+             $company_id = $selectRel[0]->id; 
+           
+           $sql = "SELECT id,company_id,reference_id,candidate_id,module_type,activity_text,created_by,created_at FROM candidate_activity_logs where company_id = '".$company_id."' AND reference_id= '".$param['reference_id']."' order by id desc ";
+           return  $selectRel = DB::Select($sql);
+           // return $emailTemplates;
+            
+        }
+        
+        
 }
