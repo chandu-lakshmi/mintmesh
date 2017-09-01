@@ -20,6 +20,7 @@ use Mintmesh\Services\Emails\API\User\UserEmailManager;
 use Mintmesh\Gateways\API\Enterprise\EnterpriseGateway;
 use Mintmesh\Gateways\API\Referrals\ReferralsGateway;
 use Mintmesh\Gateways\API\Post\PostGateway;
+use Mintmesh\Gateways\API\User\UserGateway;
 use Mintmesh\Services\Validators\API\Candidates\CandidatesValidator;
 use Mintmesh\Services\ResponseFormatter\API\CommonFormatter;
 use LucaDegasperi\OAuth2Server\Authorizer;
@@ -52,7 +53,7 @@ class CandidatesGateway {
 
     protected $enterpriseRepository, $commonFormatter, $authorizer, $appEncodeDecode,$neoEnterpriseRepository,$userFileUploader, $neoUserRepository;
     protected $createdNeoUser, $candidatesValidator, $referralsRepository, $enterpriseGateway, $userEmailManager, $candidatesRepository, $neoCandidatesRepository;
-    protected $postGateway;
+    protected $postGateway, $userGateway;
 
     public function __construct(ReferralsGateway $referralsGateway, 
                                 EnterpriseGateway $enterpriseGateway,
@@ -67,7 +68,8 @@ class CandidatesGateway {
                                 CandidatesRepository $candidatesRepository,
                                 NeoCandidatesRepository $neoCandidatesRepository,
                                 NeoUserRepository $neoUserRepository,
-                                PostGateway $postGateway
+                                PostGateway $postGateway,
+                                UserGateway $userGateway
     ) {
         
         $this->referralsRepository      = $referralsRepository;
@@ -84,6 +86,7 @@ class CandidatesGateway {
         $this->neoCandidatesRepository  = $neoCandidatesRepository;
         $this->neoUserRepository        = $neoUserRepository;
         $this->postGateway              = $postGateway;
+        $this->userGateway              = $userGateway;
     }
     
     public function doValidation($validatorFilterKey, $langKey) {
@@ -145,6 +148,42 @@ class CandidatesGateway {
         
     }
     
+    public function getCandidateFullDetails($candidateEmail = '') {
+        
+        #variable declaration here
+        $skillsArray = $extraDetails = $returnArr = $neoUserDetails = $moreDetails = array();
+        if($candidateEmail){
+            #get the user details neo4j node here
+            $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($candidateEmail);
+            #form the user details array here
+            $returnArr      = $this->userGateway->formUserDetailsArray($neoUserDetails);
+            #get user professional details here
+            $moreDetails    = $this->neoUserRepository->getMoreDetails($candidateEmail);
+            if (!empty($moreDetails))
+            {
+                $extraDetails = $this->userGateway->formUserMoreDetailsArray($moreDetails);
+            }
+            #get user skills here
+            $skills = $this->neoUserRepository->getUserSkills($candidateEmail);
+            if (!empty($skills))
+            {
+                foreach ($skills as $skill)
+                {
+                    $skillsArray[] = $skill[0]->getProperties();
+                }
+                $extraDetails['skills'] = $skillsArray ;
+            }
+            #merge all result arrays here
+            if (!empty($extraDetails))
+            {
+                foreach ($extraDetails as $k=>$v){
+                    $returnArr[$k] = $v ;
+                }
+            }
+        }
+        return $returnArr;
+    }
+    
     public function getCandidateDetails($input) {
         
         $data = $returnArr = array();
@@ -160,15 +199,16 @@ class CandidatesGateway {
         $relation   = $resultArr[0];
         $candidate  = $resultArr[1];
         
-        
         $candidateEmail = $candidate->emailid;
+        //$candidateArr  = $this->getCandidateFullDetails($candidateEmail);
+        
         #get referred by name here
         $candidateName  = $this->postGateway->getCandidateFullNameByEmail($candidateEmail, $relation->referred_by, $companyId);    
         $referredByName = $this->postGateway->getReferredbyUserFullName($relation->referred_by, $companyId);    
         
         $returnArr['name']          = $candidateName;
         $returnArr['emailid']       = $candidateEmail;//'nitinranganath@gmail.com';
-        $returnArr['phone']         = !empty($candidate->phone) ? $candidate->phone : '';'+91 9852458752';
+        $returnArr['phone']         = !empty($candidate->phone) ? $candidate->phone : '';//'+91 9852458752';
         $returnArr['location']      = !empty($candidate->location) ? $candidate->location : '';//'Hyderabad, Telangana';
         $returnArr['qualification'] = 'B Tech (CSC) From JNTU, Hyderabad';
         $returnArr['certification'] = 'Android Developer Certification from Google .Inc';
