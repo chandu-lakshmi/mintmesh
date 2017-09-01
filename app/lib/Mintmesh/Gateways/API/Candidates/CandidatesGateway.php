@@ -337,6 +337,7 @@ class CandidatesGateway {
         
         $returnArr = $this->candidatesRepository->addCandidateEmail($input,$arrayuser);
         #check get career settings details not empty
+        
         if($returnArr){
             //$data = $returnArr;//return career settings details
             $responseCode   = self::SUCCESS_RESPONSE_CODE;
