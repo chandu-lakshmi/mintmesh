@@ -119,7 +119,8 @@ return array(
         "contacts_job_active_invitation" => "emails.Api.User.job_Active",
         "contacts_campaign_invitation" => "emails.Api.User.campaign_invitation",
         "user_activation" => "emails.Api.User.user_activation",
-        "candidate_invitation" => "emails.Api.User.candidate_invitation"
+        "candidate_invitation" => "emails.Api.User.candidate_invitation",
+        "candidate_interview_schedule" => "emails.Api.User.candidate_interview_schedule"
     ),
     "activate_user" => array(
         "success" => "Successfully activated",

@@ -321,6 +321,31 @@ class CandidatesGateway {
             $userId             = $this->loggedinUserDetails->id;
         } 
         
+        /*
+        $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.candidate_interview_schedule');
+        $this->userEmailManager->emailId = $input['to'];
+        $this->userEmailManager->dataSet = $dataSet;
+        $this->userEmailManager->subject = $subject;
+        $email_sent = $this->userEmailManager->sendMail();
+        //log email status
+        $emailStatus = 0;
+        if (!empty($email_sent)) {
+            $emailStatus = 1;
+            $returnArr = $this->candidatesRepository->addCandidateEmail($input,$arrayuser);
+        }
+        $emailLog = array(
+            'emails_types_id'   => 5,
+            'from_user'         => $arrayuser['id'],
+            'from_email'        => $arrayuser['emailid'],
+            'to_email'          => $this->appEncodeDecode->filterString(strtolower($input['to'])),
+            'related_code'      => $companyCode,
+            'sent'              => $emailStatus,
+            'ip_address'        => $_SERVER['REMOTE_ADDR']
+        );
+        $this->userRepository->logEmail($emailLog); */
+        
+        
+        
         $returnArr = $this->candidatesRepository->addCandidateSchedule($input,$userId);
         #check get career settings details not empty
         if($returnArr){
