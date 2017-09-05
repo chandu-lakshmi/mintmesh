@@ -13,6 +13,7 @@ use Mintmesh\Repositories\API\Referrals\ReferralsRepository;
 use Mintmesh\Repositories\API\Candidates\CandidatesRepository;
 use Mintmesh\Repositories\API\Candidates\NeoCandidatesRepository;
 use Mintmesh\Repositories\API\Enterprise\EnterpriseRepository;
+use Mintmesh\Repositories\API\User\UserRepository;
 use Mintmesh\Repositories\API\User\NeoUserRepository;
 use Mintmesh\Repositories\API\Post\NeoPostRepository;
 use Mintmesh\Services\FileUploader\API\User\UserFileUploader;
@@ -51,7 +52,7 @@ class CandidatesGateway {
     const COMPANY_RESUME_S3_MOVED_STATUS = 1;
     const CAREER_HEROSHOT_IMAGE_HEIGHT = 336;
 
-    protected $enterpriseRepository, $commonFormatter, $authorizer, $appEncodeDecode,$neoEnterpriseRepository,$userFileUploader, $neoUserRepository;
+    protected $enterpriseRepository, $commonFormatter, $authorizer, $appEncodeDecode,$neoEnterpriseRepository,$userFileUploader, $neoUserRepository,$userRepository;
     protected $createdNeoUser, $candidatesValidator, $referralsRepository, $enterpriseGateway, $userEmailManager, $candidatesRepository, $neoCandidatesRepository;
     protected $postGateway, $userGateway;
 
@@ -67,6 +68,7 @@ class CandidatesGateway {
                                 UserEmailManager $userEmailManager,
                                 CandidatesRepository $candidatesRepository,
                                 NeoCandidatesRepository $neoCandidatesRepository,
+                                UserRepository $userRepository, 
                                 NeoUserRepository $neoUserRepository,
                                 PostGateway $postGateway,
                                 UserGateway $userGateway
@@ -84,6 +86,7 @@ class CandidatesGateway {
         $this->userEmailManager         = $userEmailManager;
         $this->candidatesRepository     = $candidatesRepository;
         $this->neoCandidatesRepository  = $neoCandidatesRepository;
+        $this->userRepository = $userRepository;
         $this->neoUserRepository        = $neoUserRepository;
         $this->postGateway              = $postGateway;
         $this->userGateway              = $userGateway;
@@ -176,6 +179,7 @@ class CandidatesGateway {
     public function getCandidateFullDetails($candidateEmail = '') {
         
         #variable declaration here
+        $certification = "";
         $skillsArray = $extraDetails = $returnArr = $neoUserDetails = $moreDetails = array();
         if($candidateEmail){
             #get the user details neo4j node here
@@ -205,12 +209,20 @@ class CandidatesGateway {
                     $returnArr[$k] = $v ;
                 }
             }
+            #get Certification details form here
+            if(!empty($returnArr['Certification'])){
+                foreach ($returnArr['Certification'] as $val){
+                    $certification .= $val['description'].", ";
+                }
+                $returnArr['Certification'] = rtrim($certification, ', ');
+            }
         }
         return $returnArr;
     }
     
     public function getCandidateDetails($input) {
         
+        $skills = '';
         $data = $returnArr = array();
         $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
         $referredId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
@@ -225,14 +237,14 @@ class CandidatesGateway {
         $candidate  = $resultArr[1];
         
         $candidateEmail = $candidate->emailid;
-        //$candidateArr  = $this->getCandidateFullDetails($candidateEmail);
-        //print_r($candidateArr).exit;
-//        $skills = '';
-//        foreach ($candidateArr['skills'] as $val){
-//            $skills .= $val['name'].", ";
-//        }
-//        $skills = rtrim($skills, ', ');
-//        print_r($skills).exit;
+        $candidateArr  = $this->getCandidateFullDetails($candidateEmail);
+        #get skills form here
+        if(!empty($candidateArr['skills'])){
+            foreach ($candidateArr['skills'] as $val){
+                $skills .= $val['name'].", ";
+            }
+            $skills = rtrim($skills, ', ');
+        }
         #get referred by name here
         $candidateName  = $this->postGateway->getCandidateFullNameByEmail($candidateEmail, $relation->referred_by, $companyId);    
         $referredByName = $this->postGateway->getReferredbyUserFullName($relation->referred_by, $companyId);    
@@ -243,7 +255,7 @@ class CandidatesGateway {
         $returnArr['phone']         = !empty($candidateArr['phone']) ? $candidateArr['phone'] : '';//'+91 9852458752';
         $returnArr['location']      = !empty($candidateArr['location']) ? $candidateArr['location'] : '';//'Hyderabad, Telangana';
         $returnArr['qualification'] = 'B Tech (CSC) From JNTU, Hyderabad';
-        $returnArr['certification'] = 'Android Developer Certification from Google .Inc';
+        $returnArr['certification'] = !empty($candidateArr['Certification']) ? $candidateArr['Certification'] : '' ;//'Android Developer Certification from Google .Inc';
         $returnArr['referred_by']   = $referredByName;
         $returnArr['current_company_name']      = 'EnterPi Software Solutions Pvt Ltd';
         $returnArr['current_company_details']   = 'May 2015 - Present(2 years 3 months)';
@@ -253,7 +265,7 @@ class CandidatesGateway {
         $returnArr['previous_company_details']  = 'May 2013 - May 2015 Present(2 years)';
         $returnArr['previous_company_location'] = 'Bangalore Area, India';
         $returnArr['previous_company_position'] = 'Jr. Android Engineer';
-        $returnArr['skills']                    = array("Java & XML, C, C++", "Building to Devices", "Cocoa Touch", "Develop software solutions by studying information needs, conferring with users.", "Distubuting an App (prefearably for an app on the App Store");
+        $returnArr['skills']                    = $skills;//array("Java & XML, C, C++", "Building to Devices", "Cocoa Touch", "Develop software solutions by studying information needs, conferring with users.", "Distubuting an App (prefearably for an app on the App Store");
 
         #check get career settings details not empty
         if($returnArr){
@@ -333,19 +345,51 @@ class CandidatesGateway {
         $referenceId = !empty($input['reference_id']) ? $input['reference_id'] : '';
         
         $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser(); //get the logged in user details
+       
         if($this->loggedinUserDetails){
-            
-            
             $arrayuser['id'] = $this->loggedinUserDetails->id;
             $arrayuser['firstname'] = $this->loggedinUserDetails->firstname;
             $arrayuser['lastname'] = $this->loggedinUserDetails->lastname;
             $arrayuser['middlename'] = $this->loggedinUserDetails->middlename;
+            $arrayuser['emailid'] = $this->loggedinUserDetails->emailid;
         } 
+        $company_logo = '';
+        if($companyCode){
+         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+         $company_logo      = !empty($companyDetails[0]->logo)?$companyDetails[0]->logo:''; 
+        }
+        $subject = $input['subject'];
+             if(!empty($input['custom_subject'])){
+                 $subject = $input['custom_subject'];
+             }
+        $dataSet['body'] = $input['body'];
+        $dataSet['company_logo'] = $company_logo;
         
-        $returnArr = $this->candidatesRepository->addCandidateEmail($input,$arrayuser);
+        $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.candidate_invitation');
+        $this->userEmailManager->emailId = $input['to'];
+        $this->userEmailManager->dataSet = $dataSet;
+        $this->userEmailManager->subject = $subject;
+        $email_sent = $this->userEmailManager->sendMail();
+        //log email status
+        $emailStatus = 0;
+        if (!empty($email_sent)) {
+            $emailStatus = 1;
+            $returnArr = $this->candidatesRepository->addCandidateEmail($input,$arrayuser);
+        }
+        $emailLog = array(
+            'emails_types_id'   => 5,
+            'from_user'         => $arrayuser['id'],
+            'from_email'        => $arrayuser['emailid'],
+            'to_email'          => $this->appEncodeDecode->filterString(strtolower($input['to'])),
+            'related_code'      => $companyCode,
+            'sent'              => $emailStatus,
+            'ip_address'        => $_SERVER['REMOTE_ADDR']
+        );
+        $this->userRepository->logEmail($emailLog);
+        
         #check get career settings details not empty
         
-        if($returnArr){
+        if($emailStatus==1){
             //$data = $returnArr;//return career settings details
             $responseCode   = self::SUCCESS_RESPONSE_CODE;
             $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
