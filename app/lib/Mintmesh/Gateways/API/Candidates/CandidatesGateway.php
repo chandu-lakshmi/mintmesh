@@ -71,7 +71,8 @@ class CandidatesGateway {
                                 UserRepository $userRepository, 
                                 NeoUserRepository $neoUserRepository,
                                 PostGateway $postGateway,
-                                UserGateway $userGateway
+                                UserGateway $userGateway,
+                                NeoPostRepository $neoPostRepository
     ) {
         
         $this->referralsRepository      = $referralsRepository;
@@ -90,6 +91,7 @@ class CandidatesGateway {
         $this->neoUserRepository        = $neoUserRepository;
         $this->postGateway              = $postGateway;
         $this->userGateway              = $userGateway;
+        $this->neoPostRepository        = $neoPostRepository;
     }
     
     public function doValidation($validatorFilterKey, $langKey) {
@@ -216,63 +218,86 @@ class CandidatesGateway {
                 }
                 $returnArr['Certification'] = rtrim($certification, ', ');
             }
+            #get qualification form here
+            if(isset($returnArr['Education']) && !empty($returnArr['Education'][0])) {
+                $value = $returnArr['Education'][0];
+                $description   = isset($value['description']) ? $value['description'] : '';
+                $degree        = isset($value['degree']) ? "(".$value['degree'].")" : '';
+                $schoolCollege = isset($value['school_college']) ? " From ".$value['school_college'] : '';
+                $returnArr['qualification'] = $description.$degree.$schoolCollege;
+            }
         }
         return $returnArr;
     }
     
     public function getCandidateDetails($input) {
         
-        $skills = '';
-        $data = $returnArr = array();
-        $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
-        $referredId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
-        
+        $data   = $returnArr = $resultArr = $contactArr = array();
+        $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
+        $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
+        $candidateId  = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
+        $contactId    = !empty($input['contact_id']) ? $input['contact_id'] : '';
         #get company details by code
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
-        #get candidate details
-        $resultArr      = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $referredId);
-        
-        $relation   = $resultArr[0];
-        $candidate  = $resultArr[1];
-        
-        $candidateEmail = $candidate->emailid;
-        $candidateArr  = $this->getCandidateFullDetails($candidateEmail);
-        #get skills form here
-        if(!empty($candidateArr['skills'])){
-            foreach ($candidateArr['skills'] as $val){
-                $skills .= $val['name'].", ";
-            }
-            $skills = rtrim($skills, ', ');
+        #get conadidate id by contact id
+        if($contactId){
+            $contactArr   = $this->enterpriseRepository->getContactById($contactId);
+            $contactEmail = isset($contactArr[0]) ? $contactArr[0]->emailid : '';
+            $candidateId  = $this->neoPostRepository->getUserNodeIdByEmailId($contactEmail);
         }
-        #get referred by name here
-        $candidateName  = $this->postGateway->getCandidateFullNameByEmail($candidateEmail, $relation->referred_by, $companyId);    
-        $referredByName = $this->postGateway->getReferredbyUserFullName($relation->referred_by, $companyId);    
+        #get candidate details
+        $resultArr  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
         
-        $returnArr['candidate_id']  = '123456';
-        $returnArr['name']          = $candidateName;
-        $returnArr['emailid']       = $candidateEmail;//'nitinranganath@gmail.com';
-        $returnArr['phone']         = !empty($candidateArr['phone']) ? $candidateArr['phone'] : '';//'+91 9852458752';
-        $returnArr['location']      = !empty($candidateArr['location']) ? $candidateArr['location'] : '';//'Hyderabad, Telangana';
-        $returnArr['qualification'] = 'B Tech (CSC) From JNTU, Hyderabad';
-        $returnArr['certification'] = !empty($candidateArr['Certification']) ? $candidateArr['Certification'] : '' ;//'Android Developer Certification from Google .Inc';
-        $returnArr['referred_by']   = $referredByName;
-        $returnArr['current_company_name']      = 'EnterPi Software Solutions Pvt Ltd';
-        $returnArr['current_company_details']   = 'May 2015 - Present(2 years 3 months)';
-        $returnArr['current_company_location']  = 'Hyderabad Area, India';
-        $returnArr['current_company_position']  = 'Sr Android Engineer';
-        $returnArr['previous_company_name']     = 'HTC Global Services (India) Private Ltd';
-        $returnArr['previous_company_details']  = 'May 2013 - May 2015 Present(2 years)';
-        $returnArr['previous_company_location'] = 'Bangalore Area, India';
-        $returnArr['previous_company_position'] = 'Jr. Android Engineer';
-        $returnArr['skills']                    = $skills;//array("Java & XML, C, C++", "Building to Devices", "Cocoa Touch", "Develop software solutions by studying information needs, conferring with users.", "Distubuting an App (prefearably for an app on the App Store");
+        if(!empty($resultArr)){
+            
+            $qualification  = $candidateName = $referredByName = $skills = '';
+            $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
+            $relation       = isset($resultArr[1]) ? $resultArr[1] : '';
+            $candidateEmail = $candidate->emailid;
+            $candidateId    = $candidate->getID();
+            $candidateArr   = $this->getCandidateFullDetails($candidateEmail);
+            #get skills form here
+            if(!empty($candidateArr['skills'])){
+                foreach ($candidateArr['skills'] as $val){
+                    $skills .= $val['name'].", ";
+                }
+                $skills = rtrim($skills, ', ');
+            }
+            #get referred by name here
+            $referredBy     = !empty($relation->referred_by) ? $relation->referred_by : '';
+            $referredByName = $this->postGateway->getReferredbyUserFullName($referredBy, $companyId);
+            $candidateName  = $this->postGateway->getCandidateFullNameByEmail($candidateEmail, $referredBy, $companyId);    
 
-        #check get career settings details not empty
-        if($returnArr){
-            $data = $returnArr;//return career settings details
-            $responseCode   = self::SUCCESS_RESPONSE_CODE;
-            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
-            $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+            $returnArr['candidate_id']  = $candidateId;
+            $returnArr['name']          = $candidateName;
+            $returnArr['emailid']       = $candidateEmail;//'nitinranganath@gmail.com';
+            $returnArr['phone']         = !empty($candidateArr['phone']) ? $candidateArr['phone'] : '';//'+91 9852458752';
+            $returnArr['location']      = !empty($candidateArr['location']) ? $candidateArr['location'] : '';//'Hyderabad, Telangana';
+            $returnArr['qualification'] = !empty($candidateArr['qualification']) ? $candidateArr['qualification'] : '' ;//$qualification;//'B Tech (CSC) From JNTU, Hyderabad';
+            $returnArr['certification'] = !empty($candidateArr['Certification']) ? $candidateArr['Certification'] : '' ;//'Android Developer Certification from Google .Inc';
+            $returnArr['referred_by']   = $referredByName;
+            $returnArr['skills']        = $skills;//array("Java & XML, C, C++", "Building to Devices", "Cocoa Touch");
+            #candidate professional details
+            $returnArr['current_company_name']      = 'EnterPi Software Solutions Pvt Ltd';
+            $returnArr['current_company_details']   = 'May 2015 - Present(2 years 3 months)';
+            $returnArr['current_company_location']  = 'Hyderabad Area, India';
+            $returnArr['current_company_position']  = 'Sr Android Engineer';
+            $returnArr['previous_company_name']     = 'HTC Global Services (India) Private Ltd';
+            $returnArr['previous_company_details']  = 'May 2013 - May 2015 Present(2 years)';
+            $returnArr['previous_company_location'] = 'Bangalore Area, India';
+            $returnArr['previous_company_position'] = 'Jr. Android Engineer';
+            #check get career settings details not empty
+            if($returnArr){
+                $data = $returnArr;//return career settings details
+                $responseCode   = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+            } else {
+                $responseCode   = self::ERROR_RESPONSE_CODE;
+                $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+                $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            }
         } else {
             $responseCode   = self::ERROR_RESPONSE_CODE;
             $responseMsg    = self::ERROR_RESPONSE_MESSAGE;

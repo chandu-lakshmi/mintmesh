@@ -27,11 +27,16 @@ class NeoeloquentCandidatesRepository extends BaseRepository implements NeoCandi
         $this->client->getTransport()->setAuth($this->db_user, $this->db_pwd);
     }
     
-    public function getCandidateDetails($companyCode = '', $referredId = '') {
+    public function getCandidateDetails($companyCode = '', $candidateId = '', $referenceId = '') {
         
-           $return = 0;
-        if(!empty($companyCode) && !empty($referredId)){
-            $queryString = "MATCH (p:Post)<-[r:GOT_REFERRED]-(u) where ID(r)=".$referredId."  return r,u";
+        $return = 0;
+        if(($candidateId || $referenceId)){
+            
+            if($referenceId) { 
+                $queryString = "MATCH (p:Post)<-[r:GOT_REFERRED]-(u) where ID(r)=".$referenceId."  return u,r";
+            } elseif ($candidateId) {
+                $queryString = "MATCH (u:User) where ID(u)=".$candidateId."  return u";
+            }
             $query  = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();
             if(isset($result[0]) && isset($result[0][0])){

@@ -650,28 +650,20 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         }
     }
     
-    public function getUserNodeIdByEmailId($emailId ='') {
-            $nodeId = 0;
-            $emailId = $this->appEncodeDecode->filterString($emailId);
+    public function getUserNodeIdByEmailId($emailId = '') {
+        
+        $nodeId = 0;
+        if($emailId) {
+            $emailId     = $this->appEncodeDecode->filterString($emailId);
             $queryString = "MATCH (u:User) where u.emailid='".$emailId."'  return ID(u)";
             $query  = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();   
             if (isset($result[0]) && isset($result[0][0])) {
-                    $nodeId = $result[0][0];
-                }
-        return  $nodeId;   
-       }
-       
-    public function ptest() {
-            $return = array();
-            $queryString = "MATCH (u)-[r:GOT_REFERRED]->(p:Post) where  r.resume_parsed=0 return r,u,p limit 1";
-            $query  = new CypherQuery($this->client, $queryString);
-            $result = $query->getResultSet();
-            if($result->count()){
-                $return = $result;
+                $nodeId = $result[0][0];
             }
-        return  $return;   
-       }
+        }
+        return  $nodeId;   
+    }
        
     public function checkCandidateReferred($postId=0, $emailid='') {
         $queryString = "MATCH (u:User)-[r:GOT_REFERRED]->(p:Post) where u.emailid='".$emailid."' and ID(p)=".$postId." and r.status<>'DECLINED' return r";

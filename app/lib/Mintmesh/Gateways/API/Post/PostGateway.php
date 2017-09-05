@@ -3696,7 +3696,7 @@ class PostGateway {
         $referralName = $userName = '';
         $nonMMUser    = new \stdClass();
 
-        if(!empty($referral) && !empty($referredBy)){
+        if(!empty($referral)){
 
             #get candidate details from company contacts table
             $userDetails = $this->enterpriseRepository->getContactByEmailId($referral, $companyId);
@@ -3709,7 +3709,7 @@ class PostGateway {
             $neoReferralName = !empty($neoUserDetails['fullname']) ? $neoUserDetails['fullname'] : $neoUserDetails['firstname'];
 
             #get the candidate details from referred by user Import contacts neo4j email Relation
-            if(empty($neoUserDetails['firstname']) && empty($neoUserDetails['fullname'])){
+            if(empty($neoUserDetails['firstname']) && empty($neoUserDetails['fullname']) && !empty($referredBy)){
 
                 $nonMMUser    = $this->contactsRepository->getImportRelationDetailsByEmail($referredBy, $referral);
                 $referralName = !empty($nonMMUser->fullname) ? $nonMMUser->fullname : !empty($nonMMUser->firstname) ? $nonMMUser->firstname : "The contact";
