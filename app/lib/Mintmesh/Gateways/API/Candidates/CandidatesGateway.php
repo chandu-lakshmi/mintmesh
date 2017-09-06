@@ -143,16 +143,32 @@ class CandidatesGateway {
         return $this->doValidation('get_candidate_activities', 'MINTMESH.user.valid');
     }
     
-    public function getCandidateEmailTemplates($param) {
-        
+    public function getCandidateEmailTemplates($input) {
         $data = $returnArr = array();
         $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
+        $referenceId = !empty($input['reference_id']) ? $input['reference_id'] : '';
+        $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
         
-        $returnArr = $this->candidatesRepository->getCandidateEmailTemplates($param);
+        $resultArr  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
+        $candidatefirstname = $candidatelastname = $service_name = $company = '';
+        if($resultArr){
+            $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
+            $relation       = isset($resultArr[1]) ? $resultArr[1] : '';
+            $postDetails       = isset($resultArr[2]) ? $resultArr[2] : '';
+            $service_name = $postDetails->service_name;
+            $company = $postDetails->company;
+            $candidateEmail = $candidate->emailid; 
+            $candidatefirstname = !empty($candidate->firstname) ? $candidate->firstname : '';
+            $candidatelastname = !empty($candidate->lastname) ? $candidate->lastname : '';
+            $input['to'] = $candidate->emailid;
+            
+        }
+        
+        $returnArr = $this->candidatesRepository->getCandidateEmailTemplates($input);
         
         //$returnArrNew = array();
         foreach($returnArr as  &$resVal){
-            $arrayReplace = array( "%fname%" => "sreenivas", "%lname%" => "reddy","%company%" => "Epi","%jobtitle%" => "sr Developer");
+            $arrayReplace = array( "%fname%" => $candidatefirstname, "%lname%" => $candidatelastname,"%company%" => $company,"%jobtitle%" => $service_name);
             $body_text = strtr($resVal->body, $arrayReplace);
             $subject = strtr($resVal->subject, $arrayReplace);
             //$arrayReplace = array('{%fname%}', '{%lanem%}', '{%Name%}');
@@ -339,16 +355,38 @@ class CandidatesGateway {
      public function addCandidateSchedule($input) {
         
         $data = $returnArr = array();
+        $candidatefirstname = $candidatelastname = $service_name = $company = '';
         $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId = !empty($input['reference_id']) ? $input['reference_id'] : '';
-         $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser(); //get the logged in user details
+        $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
+        $input['interview_date'] = date('Y-m-d', strtotime($input['interview_date']));
+        $resultArr  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
+        if($resultArr){
+            $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
+            $relation       = isset($resultArr[1]) ? $resultArr[1] : '';
+            $postDetails       = isset($resultArr[2]) ? $resultArr[2] : '';
+            $service_name = $postDetails->service_name;
+            $company = $postDetails->company;
+            $candidateEmail = $candidate->emailid; 
+            $input['to'] = $candidate->emailid;
+            $candidatefirstname = !empty($candidate->firstname) ? $candidate->firstname : '';
+            $candidatelastname = !empty($candidate->lastname) ? $candidate->lastname : '';
+           
+        }
+        
+        
+        $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser(); //get the logged in user details
         if($this->loggedinUserDetails){
             $userId             = $this->loggedinUserDetails->id;
         } 
+        $subject = ' Interview with '.$company;
+        $dataSet['message'] = 'You are invited to an interview with '.$company; 
+        $dataSet['interview_when'] = date('D j M Y', strtotime($input['interview_date'])).' '.$input['interview_from_time'].date('A', strtotime($input['interview_date'])).'-'.$input['interview_to_time'].date('A', strtotime($input['interview_date']));
+        $dataSet['interview_timezone'] = $input['interview_time_zone'];
+        $dataSet['interview_who'] = $candidatefirstname.' '.$candidatelastname;
         
-        /*
         $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.candidate_interview_schedule');
-        $this->userEmailManager->emailId = $input['to'];
+        $this->userEmailManager->emailId = $candidateEmail;
         $this->userEmailManager->dataSet = $dataSet;
         $this->userEmailManager->subject = $subject;
         $email_sent = $this->userEmailManager->sendMail();
@@ -356,24 +394,51 @@ class CandidatesGateway {
         $emailStatus = 0;
         if (!empty($email_sent)) {
             $emailStatus = 1;
-            $returnArr = $this->candidatesRepository->addCandidateEmail($input,$arrayuser);
+            $returnArr = $this->candidatesRepository->addCandidateSchedule($input,$userId);
         }
         $emailLog = array(
-            'emails_types_id'   => 5,
+            'emails_types_id'   => 10,
             'from_user'         => $arrayuser['id'],
             'from_email'        => $arrayuser['emailid'],
-            'to_email'          => $this->appEncodeDecode->filterString(strtolower($input['to'])),
+            'to_email'          => $this->appEncodeDecode->filterString(strtolower($candidateEmail)),
             'related_code'      => $companyCode,
             'sent'              => $emailStatus,
             'ip_address'        => $_SERVER['REMOTE_ADDR']
         );
-        $this->userRepository->logEmail($emailLog); */
+        $this->userRepository->logEmail($emailLog); 
+        if(!empty($input['attendees'])){
+         $emails = explode(',', $this->config->get('attendees'));
+	 foreach ($emails as $email) {
+            if ($email && preg_match('/^[^\@]+@.*\.[a-z]{2,6}$/i', $email)) {
+                    $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.candidate_interview_schedule');
+        $this->userEmailManager->emailId = $email;
+        $this->userEmailManager->dataSet = $dataSet;
+        $this->userEmailManager->subject = $subject;
+        $email_sent = $this->userEmailManager->sendMail();
+        //log email status
+        $emailStatus = 0;
+        if (!empty($email_sent)) {
+            $emailStatus = 1;
+        }
+        $emailLog = array(
+            'emails_types_id'   => 10,
+            'from_user'         => $arrayuser['id'],
+            'from_email'        => $arrayuser['emailid'],
+            'to_email'          => $this->appEncodeDecode->filterString(strtolower($candidateEmail)),
+            'related_code'      => $companyCode,
+            'sent'              => $emailStatus,
+            'ip_address'        => $_SERVER['REMOTE_ADDR']
+        );
+        $this->userRepository->logEmail($emailLog);
+            }
+        
+         } 
+        }
         
         
-        
-        $returnArr = $this->candidatesRepository->addCandidateSchedule($input,$userId);
         #check get career settings details not empty
-        if($returnArr){
+        if($emailStatus==1){
+            
             //$data = $returnArr;//return career settings details
             $responseCode   = self::SUCCESS_RESPONSE_CODE;
             $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
@@ -393,7 +458,16 @@ class CandidatesGateway {
         $data = $returnArr = array();
         $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId = !empty($input['reference_id']) ? $input['reference_id'] : '';
+        $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
         
+        $resultArr  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
+        
+        if($resultArr){
+            $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
+            $relation       = isset($resultArr[1]) ? $resultArr[1] : '';
+            $candidateEmail = $candidate->emailid; 
+            $input['to'] = $candidate->emailid;
+        }
         $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser(); //get the logged in user details
        
         if($this->loggedinUserDetails){
@@ -416,7 +490,7 @@ class CandidatesGateway {
         $dataSet['company_logo'] = $company_logo;
         
         $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.candidate_invitation');
-        $this->userEmailManager->emailId = $input['to'];
+        $this->userEmailManager->emailId = $candidateEmail;
         $this->userEmailManager->dataSet = $dataSet;
         $this->userEmailManager->subject = $subject;
         $email_sent = $this->userEmailManager->sendMail();
@@ -427,10 +501,10 @@ class CandidatesGateway {
             $returnArr = $this->candidatesRepository->addCandidateEmail($input,$arrayuser);
         }
         $emailLog = array(
-            'emails_types_id'   => 5,
+            'emails_types_id'   => 9,
             'from_user'         => $arrayuser['id'],
             'from_email'        => $arrayuser['emailid'],
-            'to_email'          => $this->appEncodeDecode->filterString(strtolower($input['to'])),
+            'to_email'          => $this->appEncodeDecode->filterString(strtolower($candidateEmail)),
             'related_code'      => $companyCode,
             'sent'              => $emailStatus,
             'ip_address'        => $_SERVER['REMOTE_ADDR']
