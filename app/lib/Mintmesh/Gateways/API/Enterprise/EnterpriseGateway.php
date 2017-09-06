@@ -1550,6 +1550,7 @@ class EnterpriseGateway {
                         if(!empty($referrerDetails)){
                         $referrerName = $referrerDetails[0]->firstname.' '.$referrerDetails[0]->lastname;}
                         $neoReferrerDetails = $this->neoUserRepository->getNodeByEmailId($postRelDetails['referred_by']);
+                        
                         $neoReferrerName = !empty($neoReferrerDetails['fullname'])?$neoReferrerDetails['fullname']:$neoReferrerDetails['firstname'];
                         $returnDetails['job_title']      = !empty($postDetails['service_name']) ? $postDetails['service_name'] : 'See Job Description';
                         $returnDetails['status']         = $postRelDetails['one_way_status'];
@@ -1557,8 +1558,9 @@ class EnterpriseGateway {
                         $returnDetails['created_at']     = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
                         $returnDetails['referral']       = !empty($referralName)?$referralName:'The contact';
                         $returnDetails['referral_img']   = !empty($userDetails['dp_renamed_name'])?$userDetails['dp_renamed_name']:'';
-                        $returnDetails['referred_by']    = !empty($referrerName)?$referrerName:$neoReferrerName;
+                        $returnDetails['referred_by']    = !empty($referrerName) ? $referrerName : $neoReferrerName;
                         $returnDetails['referred_by_img']= $neoReferrerDetails['dp_renamed_name'];
+                        $returnDetails['referred_by_id'] = $neoReferrerDetails['id'];
                         $returnDetails['service_cost']   = !empty($postDetails['service_cost'])?$postDetails['service_cost']:0;
                         
                         $returnReferralDetails[]    = $returnDetails;
@@ -1626,6 +1628,7 @@ class EnterpriseGateway {
                             $returnDetails['referral_img']   =  !empty($userDetails['dp_renamed_name'])?$userDetails['dp_renamed_name']:'';
                             $returnDetails['referred_by']    =  !empty($referrerName)?$referrerName:$neoReferrerName;
                             $returnDetails['referred_by_img']=  $neoReferredByDetails['dp_renamed_name'];
+                            $returnDetails['referred_by_id'] =  $neoReferredByDetails['id'];
                             $returnDetails['free_service']   =  !empty($postDetails['free_service'])?$postDetails['free_service']:'0';
                             $returnDetails['rewards']        =  $PostRewards;
 
@@ -1651,10 +1654,10 @@ class EnterpriseGateway {
                 
                 $referrerDetails = $this->enterpriseRepository->getContactByEmailId($referralUser,$companyId);
                 if(!empty($referrerDetails)){
-                $referrerName = $referrerDetails[0]->firstname.' '.$referrerDetails[0]->lastname;}
+                    $referrerName = $referrerDetails[0]->firstname.' '.$referrerDetails[0]->lastname;
+                }
                 $neoReferredByDetails = $this->neoUserRepository->getNodeByEmailId($referralUser);
-                $neoReferrerName = !empty($neoReferredByDetails['fullname'])?$neoReferredByDetails['fullname']:$neoReferredByDetails['firstname'];
-                        
+                $neoReferrerName      = !empty($neoReferredByDetails['fullname']) ? $neoReferredByDetails['fullname'] : $neoReferredByDetails['firstname'];
                 //get user designation here
                 if (!empty($neoReferredByDetails) && $neoReferredByDetails->completed_experience == '1'){
                     $result = $this->neoEnterpriseRepository->getDesignation($referralUser);
@@ -1665,14 +1668,15 @@ class EnterpriseGateway {
                     }
                 } 
                 //set the return response here
-                $record['name']     = !empty($referrerName)?$referrerName:!empty($neoReferrerName)?$neoReferrerName:'The contact';
-                $record['image']    = !empty($neoReferredByDetails->dp_renamed_name)?$neoReferredByDetails->dp_renamed_name:'';
-                $record['designation'] = !empty($designation)?$designation:'';
-                $record['count']       = $referralsCount;
-                $returnTopReferrals[]  = $record;
+                $record['name']     = !empty($referrerName) ? $referrerName : !empty($neoReferrerName) ? $neoReferrerName : 'The contact';
+                $record['image']    = !empty($neoReferredByDetails->dp_renamed_name) ? $neoReferredByDetails->dp_renamed_name : '';
+                $record['count']    = $referralsCount;
+                $record['designation']      = !empty($designation) ? $designation : '';
+                $record['referred_by_id']   = isset($neoReferredByDetails['id']) ? $neoReferredByDetails['id'] : '' ;
+                $returnTopReferrals[]       = $record;
             }
         }
-       return $return = array('top_referrals' =>$returnTopReferrals);
+       return $return = array('top_referrals' => $returnTopReferrals);
     }
     
     public function getCompanyProfile(){
