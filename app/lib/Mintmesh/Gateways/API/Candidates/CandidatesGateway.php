@@ -277,7 +277,7 @@ class CandidatesGateway {
             $returnArr['qualification'] = !empty($candidateArr['qualification']) ? $candidateArr['qualification'] : '' ;//$qualification;//'B Tech (CSC) From JNTU, Hyderabad';
             $returnArr['certification'] = !empty($candidateArr['Certification']) ? $candidateArr['Certification'] : '' ;//'Android Developer Certification from Google .Inc';
             $returnArr['referred_by']   = $referredByName;
-            $returnArr['skills']        = $skills;//array("Java & XML, C, C++", "Building to Devices", "Cocoa Touch");
+            $returnArr['skills']        = array($skills);//array("Java & XML, C, C++", "Building to Devices", "Cocoa Touch");
             #candidate professional details
             $returnArr['current_company_name']      = 'EnterPi Software Solutions Pvt Ltd';
             $returnArr['current_company_details']   = 'May 2015 - Present(2 years 3 months)';

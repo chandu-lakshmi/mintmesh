@@ -33,7 +33,7 @@ class NeoeloquentCandidatesRepository extends BaseRepository implements NeoCandi
         if(($candidateId || $referenceId)){
             
             if($referenceId) { 
-                $queryString = "MATCH (p:Post)<-[r:GOT_REFERRED]-(u) where ID(r)=".$referenceId."  return u,r";
+                $queryString = "MATCH (p:Post)<-[r:GOT_REFERRED]-(u) where ID(r)=".$referenceId."  return u,r,p";
             } elseif ($candidateId) {
                 $queryString = "MATCH (u:User) where ID(u)=".$candidateId."  return u";
             }

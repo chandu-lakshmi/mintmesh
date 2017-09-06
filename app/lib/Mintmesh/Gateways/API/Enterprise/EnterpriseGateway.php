@@ -1526,6 +1526,7 @@ class EnterpriseGateway {
                         $userDetails    = $this->referralsGateway->formPostDetailsArray($details[0]);
                         $postRelDetails = $this->referralsGateway->formPostDetailsArray($details[1]);
                         $postDetails    = $this->referralsGateway->formPostDetailsArray($details[2]);
+                        $relationId     = $details[1]->getID();
                         if(!empty($userDetails['emailid'])){
                         $referralDetails = $this->enterpriseRepository->getContactByEmailId($userDetails['emailid'],$companyId);
                         if(!empty($referralDetails)){
@@ -1552,6 +1553,7 @@ class EnterpriseGateway {
                         $neoReferrerDetails = $this->neoUserRepository->getNodeByEmailId($postRelDetails['referred_by']);
                         
                         $neoReferrerName = !empty($neoReferrerDetails['fullname'])?$neoReferrerDetails['fullname']:$neoReferrerDetails['firstname'];
+                        $returnDetails['id']             = $relationId;
                         $returnDetails['job_title']      = !empty($postDetails['service_name']) ? $postDetails['service_name'] : 'See Job Description';
                         $returnDetails['status']         = $postRelDetails['one_way_status'];
                         $createdAt = $postRelDetails['created_at'];
@@ -1592,6 +1594,7 @@ class EnterpriseGateway {
                         $userDetails    = $this->referralsGateway->formPostDetailsArray($details[0]);
                         $postRelDetails = $this->referralsGateway->formPostDetailsArray($details[1]);
                         $postDetails    = $this->referralsGateway->formPostDetailsArray($details[2]);
+                        $relationId     = $details[1]->getID();
                         
                       if(!empty($postRelDetails['awaiting_action_status']) && $postRelDetails['awaiting_action_status'] === 'HIRED'){
                           if(!empty($userDetails['emailid'])){
@@ -1620,6 +1623,7 @@ class EnterpriseGateway {
                             $neoReferredByDetails = $this->neoUserRepository->getNodeByEmailId($postRelDetails['referred_by']);
                             $neoReferrerName = !empty($neoReferredByDetails['fullname'])?$neoReferredByDetails['fullname']:$neoReferredByDetails['firstname'];
                         
+                            $returnDetails['id']             =  $relationId;
                             $returnDetails['job_title']      =  $postDetails['service_name'];
                             $returnDetails['status']         =  $postRelDetails['one_way_status'];
                             $createdAt = $postRelDetails['awaiting_action_updated_at'];
