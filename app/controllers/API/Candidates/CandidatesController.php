@@ -205,6 +205,58 @@ class CandidatesController extends \BaseController {
     return $return;
     }
     
+    /**
+     * Get Posts
+     * 
+     * POST/get_candidate_tag_jobs_list
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code 
+     * @param integer $reference_id 
+     * @return Response
+     */
+    public function getCandidateTagJobsList() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validateGetCandidateTagJobsListInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->getCandidateTagJobsList($inputUserData));
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    }
+    
+    /**
+     * Get Posts
+     * 
+     * POST/add_candidate_tag_jobs
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code 
+     * @param integer $reference_id 
+     * @return Response
+     */
+    public function addCandidateTagJobs() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validateAddCandidateTagJobsInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->addCandidateTagJobs($inputUserData));
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    }
+    
             
 }
 

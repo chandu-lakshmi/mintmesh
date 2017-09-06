@@ -416,6 +416,8 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       Route::post("enterprise/add_candidate_email", "API\Candidates\CandidatesController@addCandidateEmail");
       Route::post("enterprise/add_candidate_comment", "API\Candidates\CandidatesController@addCandidateComment");
       Route::post("enterprise/get_candidate_activities", "API\Candidates\CandidatesController@getCandidateActivities");
+      Route::post("enterprise/get_candidate_tag_jobs_list", "API\Candidates\CandidatesController@getCandidateTagJobsList");
+      Route::post("enterprise/add_candidate_tag_jobs", "API\Candidates\CandidatesController@addCandidateTagJobs");
       
 });
 

@@ -142,6 +142,14 @@ class CandidatesGateway {
     public function validateGetCandidateActivitiesInput($input) {
         return $this->doValidation('get_candidate_activities', 'MINTMESH.user.valid');
     }
+    //validation on validate Get Candidate Tag Jobs Input
+    public function validateGetCandidateTagJobsListInput($input) {
+        return $this->doValidation('get_candidate_tag_jobs_list', 'MINTMESH.user.valid');
+    }
+    //validation on validate Add Candidate Tag Jobs Input
+    public function validateAddCandidateTagJobsInput($input) {
+        return $this->doValidation('add_candidate_tag_jobs', 'MINTMESH.user.valid');
+    }
     
     public function getCandidateEmailTemplates($input) {
         $data = $returnArr = array();
@@ -604,6 +612,58 @@ class CandidatesGateway {
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
         
+    }
+    
+    public function addCandidateTagJobs($input) {
+        
+    #check get career settings details not empty
+        if($returnArr){
+            $data = $returnArr;//return career settings details
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+        } else {
+            $responseCode   = self::ERROR_RESPONSE_CODE;
+            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+    }
+    
+    public function getCandidateTagJobsList($input) {
+        
+        $data = $returnArr = $resultArr =  array();
+        $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
+        $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
+        $candidate_id = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
+        $search       = !empty($input['search']) ? $input['search'] : '';
+        #get Tag Jobs List here
+        $resultArr = $this->neoCandidatesRepository->getCandidateTagJobsList($companyCode, $search);
+        
+        if(is_array ($resultArr)){
+            
+            foreach ($resultArr as $val) {
+                $post = array();
+                $val  = isset($val[0]) ? $val[0] : '';
+                $post['post_id']   = isset ($val->getID()) ? $val->getID() : '';
+                $post['post_name'] = isset ($val->service_name) ? $val->service_name : '';
+                $post['post_type'] = isset ($val->post_type) ? $val->post_type : '';
+                $returnArr[] = $post;
+            }
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+            if($returnArr){
+                $data = $returnArr;//return career settings details
+                $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+            } else {
+                $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            }
+        } else {
+            $responseCode   = self::ERROR_RESPONSE_CODE;
+            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
        
 }
