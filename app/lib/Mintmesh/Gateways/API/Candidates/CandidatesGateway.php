@@ -647,7 +647,6 @@ class CandidatesGateway {
                 $val  = isset($val[0]) ? $val[0] : '';
                 $post['post_id']   = $val->getID();
                 $post['post_name'] = isset ($val->service_name) ? $val->service_name : '';
-                $post['post_type'] = isset ($val->post_type) ? $val->post_type : '';
                 $returnArr[] = $post;
             }
             $responseCode   = self::SUCCESS_RESPONSE_CODE;
