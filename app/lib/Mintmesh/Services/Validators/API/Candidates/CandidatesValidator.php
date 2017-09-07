@@ -67,7 +67,7 @@ class CandidatesValidator extends Validator {
             'company_code'  => 'required',
             'reference_id'  => 'required',
             'candidate_id'  => 'required'
-        ),
+        )
               
     );
 

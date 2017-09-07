@@ -800,30 +800,31 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
        return $return; 
     }
     
-    public function referCandidate($neoInput='',$input='') {
+    public function referCandidate($neoInput = array(), $input = array()) {
+        
         $queryString = "Match (p:Post),(u:User)
-                                    where ID(p)=". $input['post_id'] ." and u.emailid='" . $neoInput['referral'] . "'
-                                    create unique (u)-[r:" . Config::get('constants.REFERRALS.GOT_REFERRED');
+                            where ID(p)=". $input['post_id'] ." and u.emailid='" . $neoInput['referral'] . "'
+                create unique (u)-[r:" . Config::get('constants.REFERRALS.GOT_REFERRED');
          if (!empty($neoInput)) {
-                    $queryString.="{";
+             
+                $queryString.="{";
                     foreach ($neoInput as $k => $v) {
                         $queryString.=$k.":'".$this->appEncodeDecode->filterString($v)."'," ;
                     }
                     $queryString = rtrim($queryString, ",");
-                    $queryString.="}";
-                    }
-                    $queryString .= "]->(p) set ";
-                    if($neoInput['one_way_status'] != 'UNSOLICITED'){
-                    $queryString.="p.total_referral_count = p.total_referral_count + 1,";
-                    }
-                    $queryString .= "r.resume_parsed=0";
-                    if($neoInput['one_way_status'] == 'UNSOLICITED'){
-                        $queryString .= ",p.unsolicited_count = p.unsolicited_count + 1";
-                    }
-                    $queryString .=  " return count(p),u,ID(r)";
-                    $query = new CypherQuery($this->client, $queryString);
-                    $result = $query->getResultSet();
-                    return $result;
+                $queryString.="}";
+            }
+            $queryString .= "]->(p) set r.resume_parsed = 0";
+            #update count here
+            if($neoInput['one_way_status'] == 'UNSOLICITED'){
+                $queryString .= ",p.unsolicited_count = p.unsolicited_count + 1 ";
+            } else {
+                $queryString.=",p.total_referral_count = p.total_referral_count + 1 ";
+            }
+            $queryString .=  " return count(p),u,ID(r)";
+            $query   = new CypherQuery($this->client, $queryString);
+            $result  = $query->getResultSet();
+        return $result;
         
     }
     
