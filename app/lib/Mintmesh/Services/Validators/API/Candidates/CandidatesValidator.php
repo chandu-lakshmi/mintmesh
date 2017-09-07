@@ -55,8 +55,9 @@ class CandidatesValidator extends Validator {
             'company_code'  => 'required'
         ),
         'add_candidate_tag_jobs' => array(
-            'company_code'  => 'required',
-            'reference_id'  => 'required'
+            'reference_id'  => 'required_without_all:candidate_id,contact_id',
+            'candidate_id'  => 'required_without_all:reference_id,contact_id',
+            'contact_id'    => 'required_without_all:reference_id,candidate_id'
         )
               
     );
