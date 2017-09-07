@@ -8,12 +8,7 @@ interface CandidatesRepository {
      */
      public function getCandidateEmailTemplates($input);
      
-     
-     public function getCompanyEmployees($input);
-     
-     
      public function addCandidateComment($companyId,$comment,$referenceId,$candidateId,$userId);
-     
      
      public function addCandidateEmail($input,$arrayuser,$companyId,$referenceId,$candidateId);
      
