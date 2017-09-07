@@ -895,27 +895,34 @@ class CandidatesGateway {
     
     public function getCandidateReferralList($input) {
         
-        $data = $returnArr = $resultArr =  array();
+        $data = $returnArr = $resultArr = $referralArr = array();
         $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
-        $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
+        $candidateId  = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
         $search       = !empty($input['search']) ? $input['search'] : '';
-        #get Tag Jobs List here
-        $resultArr = $this->neoCandidatesRepository->getCandidateReferralList($companyCode, $candidateId, $search);
+        #get Candidate Details
+        $resultArr  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
         
         if(!empty($resultArr)){
             
-            foreach ($resultArr as $val) {
-                $post = array();
-                $val  = isset($val[0]) ? $val[0] : '';
-                $post['post_id']   = $val->getID();
-                $post['post_name'] = isset ($val->service_name) ? $val->service_name : '';
-                $returnArr[] = $post;
+            $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
+            $candidateId    = $candidate->getID();
+            #get Candidate Referral List here
+            $referralArr = $this->neoCandidatesRepository->getCandidateReferralList($companyCode, $candidateId, $search);
+        
+            foreach ($referralArr as $val) {
+                
+                $record   = array();
+                $postVal  = isset($val[0]) ? $val[0] : '';
+                $refVal   = isset($val[1]) ? $val[1] : '';
+                $record['reference_id']   = $refVal->getID();
+                $record['post_name']      = isset ($postVal->service_name) ? $postVal->service_name : '';
+                $returnArr[] = $record;
             }
             $responseCode   = self::SUCCESS_RESPONSE_CODE;
             $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
             if($returnArr){
-                $data = $returnArr;//return career settings details
+                $data = $returnArr;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
             } else {
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));

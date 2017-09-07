@@ -51,7 +51,7 @@ class NeoeloquentCandidatesRepository extends BaseRepository implements NeoCandi
         $return = FALSE;  
         if ($companyCode) {
             #required query string parameters form here
-            $searchQuery = $limitQuery = '';
+            $searchQuery = '';
             if (!empty($search)) {
                 $search = $this->appEncodeDecode->filterString($search);
                 $searchQuery =  "and (p.service_name =~ '(?i).*". $search .".*' or p.service_location =~ '(?i).*". $search .".*') ";
@@ -66,21 +66,20 @@ class NeoeloquentCandidatesRepository extends BaseRepository implements NeoCandi
         return $return;
     }
     
-    public function getCandidateReferralList($companyCode = '', $search = "", $candidateId = "") {
+    public function getCandidateReferralList($companyCode = '', $candidateId = "", $search = "") {
         
         $return = FALSE;  
         if (!empty($companyCode) && !empty($candidateId)) {
             #required query string parameters form here
-            $searchQuery = $limitQuery = '';
+            $searchQuery = '';
             if (!empty($search)) {
                 $search = $this->appEncodeDecode->filterString($search);
-                $searchQuery =  "and (p.service_name =~ '(?i).*". $search .".*' or p.service_location =~ '(?i).*". $search .".*') ";
+                $searchQuery =  " and p.service_name =~ '(?i).*". $search .".*' ";
             }    
-            $baseQuery = "MATCH (u:User)-[r:GOT_REFERRED]-(p:Post{status:'ACTIVE'})-[:POSTED_FOR]-(:Company{companyCode:'" . $companyCode . "'}) where ID(u)=256811  ";        
+            $baseQuery = "MATCH (u:User)-[r:GOT_REFERRED]-(p:Post{status:'ACTIVE'})-[:POSTED_FOR]-(:Company{companyCode:'" . $companyCode . "'}) where ID(u)=".$candidateId;        
             #query string formation here
             $queryString  = $baseQuery.$searchQuery;
-            $queryString .= " return p ORDER BY p.created_at DESC";
-            echo $queryString;exit;
+            $queryString .= " return distinct(p),r ORDER BY r.created_at DESC";
             $query = new CypherQuery($this->client, $queryString);
             $return = $query->getResultSet();
         } 
