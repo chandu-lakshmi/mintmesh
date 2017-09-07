@@ -375,12 +375,13 @@ class CandidatesGateway {
      public function addCandidateSchedule($input) {
         
         $data = $returnArr = array();
-        $candidatefirstname = $candidatelastname = $service_name = $company = '';
+        $candidatefirstname = $candidatelastname = $service_name = $company = $candidateEmail = '';
         $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
         $input['interview_date'] = date('Y-m-d', strtotime($input['interview_date']));
         $resultArr  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
+        
         if($resultArr){
             $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
             $relation       = isset($resultArr[1]) ? $resultArr[1] : '';
@@ -481,12 +482,13 @@ class CandidatesGateway {
      public function addCandidateEmail($input) {
         
         $data = $returnArr = array();
+        $candidatefirstname = $candidatelastname = $service_name = $company = $candidateEmail = '';
         $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
         
         $resultArr  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
-        
+        $candidateEmail = '';
         if($resultArr){
             $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
             $relation       = isset($resultArr[1]) ? $resultArr[1] : '';
@@ -521,6 +523,7 @@ class CandidatesGateway {
         $this->userEmailManager->emailId = $candidateEmail;
         $this->userEmailManager->dataSet = $dataSet;
         $this->userEmailManager->subject = $subject;
+        
         $email_sent = $this->userEmailManager->sendMail();
         //log email status
         $emailStatus = 0;
