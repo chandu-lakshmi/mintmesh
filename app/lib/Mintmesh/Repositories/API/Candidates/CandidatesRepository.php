@@ -12,20 +12,20 @@ interface CandidatesRepository {
      public function getCompanyEmployees($input);
      
      
-     public function addCandidateComment($input,$userId);
+     public function addCandidateComment($companyId,$comment,$referenceId,$candidateId,$userId);
      
      
-     public function addCandidateEmail($input,$arrayuser);
+     public function addCandidateEmail($input,$arrayuser,$companyId,$referenceId,$candidateId);
      
-     public function addCandidateSchedule($input,$userId);
-     
-     
-     public function getCandidateActivities($input);
-     
-     public function getCandidateComments($input);
+     public function addCandidateSchedule($input,$userId,$referenceId,$candidateId,$companyId);
      
      
-     public function getCandidateSentEmails($input);
+     public function getCandidateActivities($companyId,$referenceId,$candidateId);
+     
+     public function getCandidateComments($companyId,$referenceId,$candidateId);
+     
+     
+     public function getCandidateSentEmails($referenceId,$candidateId,$companyId);
    
      
 }

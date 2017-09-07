@@ -22,8 +22,8 @@ class CandidatesValidator extends Validator {
 
         'add_candidate_schedule' => array(
             'company_code'  => 'required',
-            'reference_id'  => 'required',
-            'candidate_id'  => 'required',
+            'reference_id'  => 'required_without_all:candidate_id,contact_id',
+            'candidate_id'  => 'required_without_all:reference_id,contact_id',
             'schedule_for'  => 'required',
             'attendees'  => 'required',
             'interview_date'  => 'required',
@@ -35,16 +35,16 @@ class CandidatesValidator extends Validator {
         ),
         'add_candidate_email' => array(
             'company_code'  => 'required',
-            'reference_id'  => 'required',
-            'candidate_id'  => 'required',
+            'reference_id'  => 'required_without_all:candidate_id,contact_id',
+            'candidate_id'  => 'required_without_all:reference_id,contact_id',
             'to'  => 'required',
             'subject'  => 'required',
             'body'  => 'required'
         ),
         'add_candidate_comment' => array(
             'company_code'  => 'required',
-            'reference_id'  => 'required',
-            'candidate_id'  => 'required',
+            'reference_id'  => 'required_without_all:candidate_id,contact_id',
+            'candidate_id'  => 'required_without_all:reference_id,contact_id',
             'comment'       => 'required'
         ),
         'get_candidate_activities' => array(

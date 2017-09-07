@@ -385,7 +385,6 @@ class CandidatesGateway {
         $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
         $input['interview_date'] = date('Y-m-d', strtotime($input['interview_date']));
         $resultArr  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
-        
         if($resultArr){
             $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
             $relation       = isset($resultArr[1]) ? $resultArr[1] : '';
@@ -394,11 +393,16 @@ class CandidatesGateway {
             $company = $postDetails->company;
             $candidateEmail = $candidate->emailid; 
             $input['to'] = $candidate->emailid;
+            $candidateId = $candidate->getID();
             $candidatefirstname = !empty($candidate->firstname) ? $candidate->firstname : '';
             $candidatelastname = !empty($candidate->lastname) ? $candidate->lastname : '';
            
         }
-        
+        if($companyCode){
+         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+         $company_logo      = !empty($companyDetails[0]->logo)?$companyDetails[0]->logo:''; 
+         $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+        }
         
         $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser(); //get the logged in user details
         if($this->loggedinUserDetails){
@@ -419,12 +423,13 @@ class CandidatesGateway {
         $this->userEmailManager->emailId = $candidateEmail;
         $this->userEmailManager->dataSet = $dataSet;
         $this->userEmailManager->subject = $subject;
+        
         $email_sent = $this->userEmailManager->sendMail();
         //log email status
         $emailStatus = 0;
         if (!empty($email_sent)) {
             $emailStatus = 1;
-            $returnArr = $this->candidatesRepository->addCandidateSchedule($input,$userId);
+            $returnArr = $this->candidatesRepository->addCandidateSchedule($input,$userId,$referenceId,$candidateId,$companyId);
         }
         $emailLog = array(
             'emails_types_id'   => 10,
@@ -498,6 +503,7 @@ class CandidatesGateway {
             $relation       = isset($resultArr[1]) ? $resultArr[1] : '';
             $candidateEmail = $candidate->emailid; 
             $input['to'] = $candidate->emailid;
+            $candidateId = $candidate->getID();
             $candidatefirstname = !empty($candidate->firstname) ? $candidate->firstname : '';
             $candidatelastname = !empty($candidate->lastname) ? $candidate->lastname : '';
             $input['to_name'] = $candidatefirstname.' '.$candidatelastname;
@@ -516,7 +522,11 @@ class CandidatesGateway {
         if($companyCode){
          $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
          $company_logo      = !empty($companyDetails[0]->logo)?$companyDetails[0]->logo:''; 
+         $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
         }
+       
+        
+        
         $subject = $input['subject'];
              if(!empty($input['custom_subject'])){
                  $subject = $input['custom_subject'];
@@ -533,7 +543,7 @@ class CandidatesGateway {
         $emailStatus = 0;
         if (!empty($email_sent)) {
             $emailStatus = 1;
-            $returnArr = $this->candidatesRepository->addCandidateEmail($input,$arrayuser);
+            $returnArr = $this->candidatesRepository->addCandidateEmail($input,$arrayuser,$companyId,$referenceId,$candidateId);
         }
         $emailLog = array(
             'emails_types_id'   => 9,
@@ -568,16 +578,25 @@ class CandidatesGateway {
         $data = $returnArr = $arrayuser = array();
         $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId = !empty($input['reference_id']) ? $input['reference_id'] : '';
-        $candidate_id = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
+        $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
+        $comment = !empty($input['comment']) ? $input['comment'] : '';
+        
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
         
         $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser(); //get the logged in user details
-        
-        
         if($this->loggedinUserDetails){
             $userId             = $this->loggedinUserDetails->id;
-        } 
+        }
         
-        $returnArr = $this->candidatesRepository->addCandidateComment($input,$userId);
+        $resultArr  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
+        if($resultArr){
+            $neoInput       = $refInput = array();
+            $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
+            $candidateEmail = $candidate->emailid;
+            $candidateId    = $candidate->getID();
+        }
+        $returnArr = $this->candidatesRepository->addCandidateComment($companyId,$comment,$referenceId,$candidateId,$userId);
         #check get career settings details not empty
         if($returnArr){
            // $data = $returnArr;//return career settings details
@@ -597,7 +616,22 @@ class CandidatesGateway {
     public function getCandidateActivities($input) {
         //echo '<pre>'; print_r($input); die;
         $returnArr = $data = $arrayReturn = array();
-        $returnArr = $this->candidatesRepository->getCandidateActivities($input);
+        $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
+        $referenceId = !empty($input['reference_id']) ? $input['reference_id'] : '';
+        $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
+        $resultArr  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
+        if($resultArr){
+            $neoInput       = $refInput = array();
+            $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
+            $candidateEmail = $candidate->emailid;
+            $candidateId    = $candidate->getID();
+            $candidateId = $candidate->getID();
+        }
+        
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+        
+        $returnArr = $this->candidatesRepository->getCandidateActivities($companyId,$referenceId,$candidateId);
         if($returnArr){
             foreach($returnArr as $res){
                 $timelinedate = '';
@@ -772,9 +806,10 @@ class CandidatesGateway {
         $data = $returnArr = $arrayReturn = array();
         $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
-        $candidate_id = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
-        
-        $returnArr = $this->candidatesRepository->getCandidateComments($param);
+        $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+        $returnArr = $this->candidatesRepository->getCandidateComments($companyId,$referenceId,$candidateId);
         if($returnArr){
             foreach($returnArr as $res){
                 $timelinedate = '';
@@ -787,12 +822,9 @@ class CandidatesGateway {
                         'comment'     => $res->comment,
                         'created_by'       => 'by '.$res->created_by,
                         'created_at'       => $timelinedate
-                    
                 );
             }    
         }
-        
-        
         #check get career settings details not empty
         if($arrayReturn){
             $data = $arrayReturn;//return career settings details
@@ -814,9 +846,12 @@ class CandidatesGateway {
         $data = $returnArr = array();
         $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
-        $candidate_id = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
+        $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
         
-        $returnArr = $this->candidatesRepository->getCandidateSentEmails($param);
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+        
+        $returnArr = $this->candidatesRepository->getCandidateSentEmails($referenceId,$candidateId,$companyId);
         
        if($returnArr){
             foreach($returnArr as $res){
