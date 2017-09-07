@@ -67,6 +67,12 @@ class CandidatesValidator extends Validator {
             'company_code'  => 'required',
             'reference_id'  => 'required',
             'candidate_id'  => 'required'
+        ),
+        'get_candidate_referral_list' => array(
+            'company_code'  => 'required',
+            'reference_id'  => 'required_without_all:candidate_id,contact_id',
+            'candidate_id'  => 'required_without_all:reference_id,contact_id',
+            'contact_id'    => 'required_without_all:reference_id,candidate_id'
         )
               
     );

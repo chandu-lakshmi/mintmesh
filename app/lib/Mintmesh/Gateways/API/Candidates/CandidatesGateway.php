@@ -157,6 +157,10 @@ class CandidatesGateway {
     public function validategetCandidateSentEmailsInput($input) {
         return $this->doValidation('get_candidate_sent_emails', 'MINTMESH.user.valid');
     }
+    //validate Get Candidate Referral List Input
+    public function validateGetCandidateReferralListInput($input) {
+        return $this->doValidation('get_candidate_referral_list', 'MINTMESH.user.valid');
+    }
     
     public function getCandidateEmailTemplates($input) {
         $data = $returnArr = array();
@@ -311,7 +315,7 @@ class CandidatesGateway {
             $returnArr['skills']        = !empty($skills) ? array($skills) : array();//array("Java & XML, C, C++", "Building to Devices", "Cocoa Touch");
             #referral details form here
             $returnArr['document_id']   = !empty($relation->document_id) ? $relation->document_id : 0;
-            $returnArr['resume_name']   = !empty($relation->resume_original_name) ? $relation->resume_original_name : '';
+            $returnArr['resume_name']   = !empty($relation->resume_original_name) ? $relation->resume_original_name : Lang::get('MINTMESH.candidates.awaiting_resume');
             $returnArr['resume_path']   = !empty($relation->resume_path) ? $relation->resume_path : '';
             $returnArr['referred_by']   = $referredByName;
             #candidate professional details form here
@@ -660,7 +664,7 @@ class CandidatesGateway {
         $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId  = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
         $contactId    = !empty($input['contact_id']) ? $input['contact_id'] : '';
-        $post_ids     = !empty($input['job_ids']) ? $input['job_ids'] : '';
+        $post_ids     = !empty($input['job_ids']) ? explode(',', $input['job_ids']) : array();
         $pending      = Config::get('constants.REFERRALS.STATUSES.PENDING');
         #get loggedin User Detils here
         $this->loggedinUser = $this->referralsGateway->getLoggedInUser();
@@ -849,6 +853,41 @@ class CandidatesGateway {
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
         
+    }
+    
+    public function getCandidateReferralList($input) {
+        
+        $data = $returnArr = $resultArr =  array();
+        $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
+        $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
+        $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
+        $search       = !empty($input['search']) ? $input['search'] : '';
+        #get Tag Jobs List here
+        $resultArr = $this->neoCandidatesRepository->getCandidateReferralList($companyCode, $candidateId, $search);
+        
+        if(!empty($resultArr)){
+            
+            foreach ($resultArr as $val) {
+                $post = array();
+                $val  = isset($val[0]) ? $val[0] : '';
+                $post['post_id']   = $val->getID();
+                $post['post_name'] = isset ($val->service_name) ? $val->service_name : '';
+                $returnArr[] = $post;
+            }
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+            if($returnArr){
+                $data = $returnArr;//return career settings details
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+            } else {
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            }
+        } else {
+            $responseCode   = self::ERROR_RESPONSE_CODE;
+            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
        
 }

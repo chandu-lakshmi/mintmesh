@@ -66,6 +66,27 @@ class NeoeloquentCandidatesRepository extends BaseRepository implements NeoCandi
         return $return;
     }
     
+    public function getCandidateReferralList($companyCode = '', $search = "", $candidateId = "") {
+        
+        $return = FALSE;  
+        if (!empty($companyCode) && !empty($candidateId)) {
+            #required query string parameters form here
+            $searchQuery = $limitQuery = '';
+            if (!empty($search)) {
+                $search = $this->appEncodeDecode->filterString($search);
+                $searchQuery =  "and (p.service_name =~ '(?i).*". $search .".*' or p.service_location =~ '(?i).*". $search .".*') ";
+            }    
+            $baseQuery = "MATCH (u:User)-[r:GOT_REFERRED]-(p:Post{status:'ACTIVE'})-[:POSTED_FOR]-(:Company{companyCode:'" . $companyCode . "'}) where ID(u)=256811  ";        
+            #query string formation here
+            $queryString  = $baseQuery.$searchQuery;
+            $queryString .= " return p ORDER BY p.created_at DESC";
+            echo $queryString;exit;
+            $query = new CypherQuery($this->client, $queryString);
+            $return = $query->getResultSet();
+        } 
+        return $return;
+    }
+    
 }
 
 ?>
