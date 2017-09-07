@@ -16,10 +16,6 @@ class CandidatesValidator extends Validator {
             'candidate_id'  => 'required_without_all:reference_id,contact_id',
             'contact_id'    => 'required_without_all:reference_id,candidate_id'
         ),
-        'get_company_employees' => array(
-            'company_code'  => 'required',
-        ),
-
         'add_candidate_schedule' => array(
             'company_code'  => 'required',
             'reference_id'  => 'required_without_all:candidate_id,contact_id',
@@ -49,24 +45,30 @@ class CandidatesValidator extends Validator {
         ),
         'get_candidate_activities' => array(
             'company_code'  => 'required',
-            'reference_id'  => 'required'
+            'reference_id'  => 'required_without_all:candidate_id,contact_id',
+            'candidate_id'  => 'required_without_all:reference_id,contact_id',
+            'contact_id'    => 'required_without_all:reference_id,candidate_id'
         ),
         'get_candidate_tag_jobs_list' => array(
             'company_code'  => 'required'
         ),
         'add_candidate_tag_jobs' => array(
             'company_code'  => 'required',
-            'reference_id'  => 'required'
+            'reference_id'  => 'required_without_all:candidate_id,contact_id',
+            'candidate_id'  => 'required_without_all:reference_id,contact_id',
+            'contact_id'    => 'required_without_all:reference_id,candidate_id'
         ),
         'get_candidate_comments' => array(
             'company_code'  => 'required',
-            'reference_id'  => 'required',
-            'candidate_id'  => 'required'
+            'reference_id'  => 'required_without_all:candidate_id,contact_id',
+            'candidate_id'  => 'required_without_all:reference_id,contact_id',
+            'contact_id'    => 'required_without_all:reference_id,candidate_id'
         ),
         'get_candidate_sent_emails' => array(
             'company_code'  => 'required',
-            'reference_id'  => 'required',
-            'candidate_id'  => 'required'
+            'reference_id'  => 'required_without_all:candidate_id,contact_id',
+            'candidate_id'  => 'required_without_all:reference_id,contact_id',
+            'contact_id'    => 'required_without_all:reference_id,candidate_id'
         ),
         'get_candidate_referral_list' => array(
             'company_code'  => 'required',

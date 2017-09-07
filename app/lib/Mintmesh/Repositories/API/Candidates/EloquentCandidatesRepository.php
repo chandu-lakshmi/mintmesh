@@ -58,15 +58,6 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
            // return $emailTemplates;
             
         }
-        public function getCompanyEmployees($param){
-           //print_r($param);
-            $sql = 'select cs.user_id,cs.firstname,cs.lastname,cs.emailid from company c
-                    right join contacts cs ON (c.id=cs.company_id)
-                    where c.code="'.$param['company_code'].'"';
-           return  $selectRel = DB::Select($sql);
-            
-        }
-        
 
          public function addCandidateComment($companyId,$comment,$referenceId,$candidateId,$userId){
              $sql = "insert into candidate_comments (`company_id`,`reference_id`,`candidate_id`,`comment`,`created_by`,`created_at`)" ;
