@@ -57,7 +57,17 @@ class CandidatesValidator extends Validator {
         'add_candidate_tag_jobs' => array(
             'company_code'  => 'required',
             'reference_id'  => 'required'
-        )
+        ),
+        'get_candidate_comments' => array(
+            'company_code'  => 'required',
+            'reference_id'  => 'required',
+            'candidate_id'  => 'required'
+        ),
+        'get_candidate_sent_emails' => array(
+            'company_code'  => 'required',
+            'reference_id'  => 'required',
+            'candidate_id'  => 'required'
+        ),
               
     );
 

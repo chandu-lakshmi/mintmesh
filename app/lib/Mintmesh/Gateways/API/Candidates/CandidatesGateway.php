@@ -150,6 +150,13 @@ class CandidatesGateway {
     public function validateAddCandidateTagJobsInput($input) {
         return $this->doValidation('add_candidate_tag_jobs', 'MINTMESH.user.valid');
     }
+    public function validategetCandidateCommentsActivitiesInput($input) {
+        return $this->doValidation('get_candidate_comments', 'MINTMESH.user.valid');
+    }
+    
+    public function validategetCandidateSentEmailsInput($input) {
+        return $this->doValidation('get_candidate_sent_emails', 'MINTMESH.user.valid');
+    }
     
     public function getCandidateEmailTemplates($input) {
         $data = $returnArr = array();
@@ -386,6 +393,11 @@ class CandidatesGateway {
         $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser(); //get the logged in user details
         if($this->loggedinUserDetails){
             $userId             = $this->loggedinUserDetails->id;
+            $arrayuser['id'] = $this->loggedinUserDetails->id;
+            $arrayuser['firstname'] = $this->loggedinUserDetails->firstname;
+            $arrayuser['lastname'] = $this->loggedinUserDetails->lastname;
+            $arrayuser['middlename'] = $this->loggedinUserDetails->middlename;
+            $arrayuser['emailid'] = $this->loggedinUserDetails->emailid;
         } 
         $subject = ' Interview with '.$company;
         $dataSet['message'] = 'You are invited to an interview with '.$company; 
@@ -475,6 +487,10 @@ class CandidatesGateway {
             $relation       = isset($resultArr[1]) ? $resultArr[1] : '';
             $candidateEmail = $candidate->emailid; 
             $input['to'] = $candidate->emailid;
+            $candidatefirstname = !empty($candidate->firstname) ? $candidate->firstname : '';
+            $candidatelastname = !empty($candidate->lastname) ? $candidate->lastname : '';
+            $input['to_name'] = $candidatefirstname.' '.$candidatelastname;
+            
         }
         $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser(); //get the logged in user details
        
@@ -496,7 +512,6 @@ class CandidatesGateway {
              }
         $dataSet['body'] = $input['body'];
         $dataSet['company_logo'] = $company_logo;
-        
         $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.candidate_invitation');
         $this->userEmailManager->emailId = $candidateEmail;
         $this->userEmailManager->dataSet = $dataSet;
@@ -568,9 +583,28 @@ class CandidatesGateway {
     
     
     public function getCandidateActivities($input) {
-        
-        $returnArr = $data = array();
-        //$returnArr = $this->candidatesRepository->getCandidateActivities($input);
+        //echo '<pre>'; print_r($input); die;
+        $returnArr = $data = $arrayReturn = array();
+        $returnArr = $this->candidatesRepository->getCandidateActivities($input);
+        if($returnArr){
+            foreach($returnArr as $res){
+                $timelinedate = '';
+                $createdat = $res->created_at;
+                $timeZone   = !empty($input['time_zone']) ? $input['time_zone'] : 0;
+                $createdAt= date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($createdat, $timeZone)));
+                $timelinedate = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
+                $arrayReturn[] = array(
+                        'activity_id'       => $res->id,
+                        'activity_type'     => $res->module_name,
+                        'activity_status'   => $res->activity_text,
+                        'activity_message'  => '',
+                        'activity_by'       => 'by '.$res->created_by,
+                        'activity_on'       => $timelinedate
+                    
+                );
+            }
+        }
+      /*  
         $returnArr[0] = array('activity_id'       => '5002',
                         'activity_type'     => 'CANDIDATE_STATUS',
                         'activity_status'   => 'pending',
@@ -597,11 +631,11 @@ class CandidatesGateway {
                         'activity_by'       => 'gopi v',
                         'activity_on'       => '2 hour ago'
                         );
-        
+        */
 
         #check get career settings details not empty
-        if($returnArr){
-            $data = $returnArr;//return career settings details
+        if($arrayReturn){
+            $data = $arrayReturn;//return career settings details
             $responseCode   = self::SUCCESS_RESPONSE_CODE;
             $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
             $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
@@ -663,6 +697,99 @@ class CandidatesGateway {
             $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+    }
+    
+    
+    
+     public function getCandidateComments($param) {
+        
+        $data = $returnArr = $arrayReturn = array();
+        $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
+        $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
+        $candidate_id = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
+        
+        $returnArr = $this->candidatesRepository->getCandidateComments($param);
+        if($returnArr){
+            foreach($returnArr as $res){
+                $timelinedate = '';
+                $createdat = $res->created_at;
+                $timeZone   = !empty($param['time_zone']) ? $param['time_zone'] : 0;
+                $createdAt= date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($createdat, $timeZone)));
+                $timelinedate = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
+                $arrayReturn[] = array(
+                        'id'       => $res->id,
+                        'comment'     => $res->comment,
+                        'created_by'       => 'by '.$res->created_by,
+                        'created_at'       => $timelinedate
+                    
+                );
+            }    
+        }
+        
+        
+        #check get career settings details not empty
+        if($arrayReturn){
+            $data = $arrayReturn;//return career settings details
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+        } else {
+            $responseCode   = self::ERROR_RESPONSE_CODE;
+            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+        
+    }
+    
+    
+    public function getCandidateSentEmails($param) {
+        
+        $data = $returnArr = array();
+        $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
+        $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
+        $candidate_id = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
+        
+        $returnArr = $this->candidatesRepository->getCandidateSentEmails($param);
+        
+       if($returnArr){
+            foreach($returnArr as $res){
+                $timelinedate = '';
+                $createdat = $res->created_at;
+                $timeZone   = !empty($param['time_zone']) ? $param['time_zone'] : 0;
+                $createdAt= date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($createdat, $timeZone)));
+                $timelinedate = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
+                $subject = $res->subject;
+                if(!empty($res->custom_subject)){
+                     $subject = $res->custom_subject;
+                }
+                $arrayReturn[] = array(
+                        'id'       => $res->id,
+                        'to_name'       => $res->to_name,
+                        'from'     => $res->from,
+                        'subject'     => $subject,
+                        'body'     => $res->body,
+                        'created_by'       => 'by '.$res->created_by,
+                        'created_at'       => $timelinedate
+                    
+                );
+            }    
+        }
+        
+        
+        #check get career settings details not empty
+        if($arrayReturn){
+            $data = $arrayReturn;//return career settings details
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+        } else {
+            $responseCode   = self::ERROR_RESPONSE_CODE;
+            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+        
     }
        
 }

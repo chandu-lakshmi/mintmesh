@@ -20,7 +20,12 @@ interface CandidatesRepository {
      public function addCandidateSchedule($input,$userId);
      
      
-     public function getCandidateActivities($input,$userId);
+     public function getCandidateActivities($input);
+     
+     public function getCandidateComments($input);
+     
+     
+     public function getCandidateSentEmails($input);
    
      
 }

@@ -257,6 +257,58 @@ class CandidatesController extends \BaseController {
     return $return;
     }
     
+     /**
+     * Get Posts
+     * 
+     * POST/get_candidate_activities
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code 
+     * @param integer $reference_id 
+     * @return Response
+     */
+    public function getCandidateComments() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validategetCandidateCommentsActivitiesInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->getCandidateComments($inputUserData));
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    }
+    
+    
+     /**
+     * Get Posts
+     * 
+     * POST/get_candidate_activities
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code 
+     * @param integer $reference_id 
+     * @return Response
+     */
+    public function getCandidateSentEmails() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validategetCandidateSentEmailsInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->getCandidateSentEmails($inputUserData));
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    }
             
 }
 
