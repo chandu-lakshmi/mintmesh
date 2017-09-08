@@ -495,6 +495,7 @@ class CandidatesGateway {
             $dataSet['name']          = $candidateName;
             $dataSet['email']         = $candidateEmail;
             $dataSet['email_subject'] = $emailSubject;
+            $dataSet['subject_id']    = $subjectId;
             $dataSet['email_body']    = $emailBody;
             $dataSet['company_logo']  = $companyLogo;
             #send email here

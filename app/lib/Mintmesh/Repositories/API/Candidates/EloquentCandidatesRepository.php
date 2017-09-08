@@ -110,13 +110,14 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
             $userEmail      = $logUser['user_emailid'];
             $candidateName  = $candidate['name'];
             $candidateEmail = $candidate['email'];
+            $subjectId      = $candidate['subject_id'];
             $emailSubject   = $this->appEncodeDecode->filterString($candidate['email_subject']);
             $emailBody      = $this->appEncodeDecode->filterString($candidate['email_body']);
             
             if(!empty($companyId) && (!empty($referenceId) || !empty($candidateId))){
                 #insert Candidate Email details here
                 $sql = "INSERT INTO candidate_sent_emails (`company_id`,`reference_id`,`candidate_id`,`to`,`to_name`,`from`,`subject`,`custom_subject`,`body`,`attachment_id`,`created_by`,`created_at`)" ;
-                $sql.=" VALUES('".$companyId."', '".$referenceId."', '".$candidateId."', '".$candidateEmail."', '".$candidateName."', '".$userName."', '".$emailSubject."', '".$custom_subject."', '".$emailBody."', '', '".$userId."', '".$createdAt."')" ;
+                $sql.=" VALUES('".$companyId."', '".$referenceId."', '".$candidateId."', '".$candidateEmail."', '".$candidateName."', '".$userName."', '".$subjectId."', '".$emailSubject."', '".$emailBody."', '', '".$userId."', '".$createdAt."')" ;
                 $return = DB::statement($sql);
                 #add Candidate Activity Logs here
                 $moduleType   = 2;
