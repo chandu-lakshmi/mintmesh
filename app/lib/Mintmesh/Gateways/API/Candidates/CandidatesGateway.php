@@ -506,6 +506,7 @@ class CandidatesGateway {
         $this->userEmailManager->emailId = $candidateEmail;
         $this->userEmailManager->dataSet = $dataSet;
         $this->userEmailManager->subject = $subject;
+        $this->userEmailManager->name = 'karthik';
         
         $email_sent = $this->userEmailManager->sendMail();
         //log email status
