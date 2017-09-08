@@ -22,14 +22,14 @@
 <body style="background:#E1E1E1; padding:0px; margin:0px; font-family: 'arial', sans-serif;font-weight:300;font-size:18px;" >
 <table bgcolor="#FFFFFF" width="500" border="0" cellpadding="0" cellspacing="0" class="main_table" style="background:#fff;  margin:20px auto 0px;" >
   <tr>
-    <td align="center" valign="top"  style="padding:20px 20px 10px;"><img src="<?php echo $company_logo ; ?>"   align="center" style="max-width:100%;text-align:center;" alt="logo" title="Text">
+    <td align="center" valign="top"  style="padding:20px 20px 10px;"><img src=""   align="center" style="max-width:100%;text-align:center;" alt="logo" title="Text">
       <!--<h2 style="text-align:center;font-weight:normal;font-family: 'arial', sans-serif;font-weight:300;font-size:24px;margin-bottom:10px;margin-top:20px;color:#000000;">Change your Password</h2>-->
       <hr style="border-top:1px solid #c8c8c8;margin-top:20px;"></td>
   </tr>
   <tr>
     <td valign="top" class="textContent" style="padding:20px 20px 10px;line-height:135%;letter-spacing:0.2px;font-size:18px; font-weight:normal; color:#777777;">
      
-      <p><?php echo $body; ?></p>
+      <p>hello</p>
     </td>
   </tr>
   <tr>

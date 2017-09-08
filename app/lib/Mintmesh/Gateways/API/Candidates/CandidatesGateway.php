@@ -51,6 +51,8 @@ class CandidatesGateway {
     const COMPANY_RESUME_STATUS = 0;
     const COMPANY_RESUME_S3_MOVED_STATUS = 1;
     const CAREER_HEROSHOT_IMAGE_HEIGHT = 336;
+    const EMAIL_FAILURE_STATUS = 0;
+    const EMAIL_SUCCESS_STATUS = 1;
 
     protected $enterpriseRepository, $commonFormatter, $authorizer, $appEncodeDecode,$neoEnterpriseRepository,$userFileUploader, $neoUserRepository,$userRepository;
     protected $createdNeoUser, $candidatesValidator, $referralsRepository, $enterpriseGateway, $userEmailManager, $candidatesRepository, $neoCandidatesRepository;
@@ -459,86 +461,81 @@ class CandidatesGateway {
     
      public function addCandidateEmail($input) {
         
-        $data = $returnArr = array();
-        $candidatefirstname = $candidatelastname = $service_name = $company = $candidateEmail = '';
+        $data = $returnArr  = array();
+        #basic input params
         $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
+        #email input
+        $emailSubject = !empty($input['subject']) ? $input['subject'] : '';
+        $emailBody    = !empty($input['body']) ? $input['body'] : '';
+        $subjectId    = !empty($input['subject_id']) ? $input['subject_id'] : '';
+        #get company Details by company code
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyLogo    = !empty($companyDetails[0]->logo) ? $companyDetails[0]->logo : ''; 
+        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+        #get the logged in user details
+        $this->loggedinUser = $this->referralsGateway->getLoggedInUser(); 
+        $userId             = $this->loggedinUser->id;
+        $userFirstName      = $this->loggedinUser->firstname;
+        $userLastName       = $this->loggedinUser->lastname;
+        $userEmailId        = $this->loggedinUser->emailid;
+        #get candidate details here
+        $resultArr   = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
         
-        $resultArr  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
-        $candidateEmail = '';
         if($resultArr){
+            
             $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
             $relation       = isset($resultArr[1]) ? $resultArr[1] : '';
             $candidateEmail = $candidate->emailid; 
-            $input['to'] = $candidate->emailid;
-            $candidateId = $candidate->getID();
-            $candidatefirstname = !empty($candidate->firstname) ? $candidate->firstname : '';
-            $candidatelastname = !empty($candidate->lastname) ? $candidate->lastname : '';
-            $input['to_name'] = $candidatefirstname.' '.$candidatelastname;
+            $candidateId    = $candidate->getID();
+            $referredBy     = !empty($relation->referred_by) ? $relation->referred_by : '';
+            $candidateName  = $this->postGateway->getCandidateFullNameByEmail($candidateEmail, $referredBy, $companyId);    
+            #email input form here
+            $dataSet = array();
+            $dataSet['name']         = $candidateName;
+            $dataSet['email_body']   = $emailBody;
+            $dataSet['company_logo'] = $companyLogo;
+
+            $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.candidate_invitation');
+            $this->userEmailManager->emailId = $candidateEmail;
+            $this->userEmailManager->dataSet = $dataSet;
+            $this->userEmailManager->subject = $emailSubject;
+            $this->userEmailManager->name    = $candidateName;
+            $email_sent = $this->userEmailManager->sendMail();
+            //log email status
+            $emailStatus = self::EMAIL_FAILURE_STATUS;
+            if (!empty($email_sent)) {
+                $emailStatus = self::EMAIL_SUCCESS_STATUS;
+                $returnArr   = $this->candidatesRepository->addCandidateEmail($input, $arrayuser, $companyId, $referenceId, $candidateId);
+            }
+            $emailLog = array(
+                'emails_types_id'   => 9,
+                'from_user'         => $arrayuser['id'],
+                'from_email'        => $arrayuser['emailid'],
+                'to_email'          => $this->appEncodeDecode->filterString(strtolower($candidateEmail)),
+                'related_code'      => $companyCode,
+                'sent'              => $emailStatus,
+                'ip_address'        => $_SERVER['REMOTE_ADDR']
+            );
+            $this->userRepository->logEmail($emailLog);
+
+            if($emailStatus == 1){
+                $responseCode   = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.resendActivationLink.success')));
+            } else {
+                $responseCode   = self::ERROR_RESPONSE_CODE;
+                $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.resendActivationLink.failure')));
+            }
             
-        }
-        $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser(); //get the logged in user details
-       
-        if($this->loggedinUserDetails){
-            $arrayuser['id'] = $this->loggedinUserDetails->id;
-            $arrayuser['firstname'] = $this->loggedinUserDetails->firstname;
-            $arrayuser['lastname'] = $this->loggedinUserDetails->lastname;
-            $arrayuser['middlename'] = $this->loggedinUserDetails->middlename;
-            $arrayuser['emailid'] = $this->loggedinUserDetails->emailid;
-        } 
-        $company_logo = '';
-        if($companyCode){
-         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
-         $company_logo      = !empty($companyDetails[0]->logo)?$companyDetails[0]->logo:''; 
-         $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
-        }
-       
-        
-        
-        $subject = $input['subject'];
-             if(!empty($input['custom_subject'])){
-                 $subject = $input['custom_subject'];
-             }
-        $dataSet['body'] = $input['body'];
-        $dataSet['company_logo'] = $company_logo;
-        $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.candidate_invitation');
-        $this->userEmailManager->emailId = $candidateEmail;
-        $this->userEmailManager->dataSet = $dataSet;
-        $this->userEmailManager->subject = $subject;
-        
-        $email_sent = $this->userEmailManager->sendMail();
-        //log email status
-        $emailStatus = 0;
-        if (!empty($email_sent)) {
-            $emailStatus = 1;
-            $returnArr = $this->candidatesRepository->addCandidateEmail($input,$arrayuser,$companyId,$referenceId,$candidateId);
-        }
-        $emailLog = array(
-            'emails_types_id'   => 9,
-            'from_user'         => $arrayuser['id'],
-            'from_email'        => $arrayuser['emailid'],
-            'to_email'          => $this->appEncodeDecode->filterString(strtolower($candidateEmail)),
-            'related_code'      => $companyCode,
-            'sent'              => $emailStatus,
-            'ip_address'        => $_SERVER['REMOTE_ADDR']
-        );
-        $this->userRepository->logEmail($emailLog);
-        
-        #check get career settings details not empty
-        
-        if($emailStatus == 1){
-            //$data = $returnArr;//return career settings details
-            $responseCode   = self::SUCCESS_RESPONSE_CODE;
-            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.resendActivationLink.success')));
         } else {
             $responseCode   = self::ERROR_RESPONSE_CODE;
             $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
             $responseMessage = array('msg' => array(Lang::get('MINTMESH.resendActivationLink.failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
-        
     }
     
     
