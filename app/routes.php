@@ -420,6 +420,7 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       Route::post("enterprise/get_candidate_comments", "API\Candidates\CandidatesController@getCandidateComments");
       Route::post("enterprise/get_candidate_sent_emails", "API\Candidates\CandidatesController@getCandidateSentEmails");
       Route::post("enterprise/get_candidate_referral_list", "API\Candidates\CandidatesController@getCandidateReferralList");
+      Route::post("enterprise/get_candidate_schedules", "API\Candidates\CandidatesController@getCandidateSchedules");
       
 });
 

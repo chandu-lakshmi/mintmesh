@@ -21,6 +21,8 @@ interface CandidatesRepository {
      
      
      public function getCandidateSentEmails($referenceId,$candidateId,$companyId);
+     
+     public function getCandidateSchedules($companyId,$referenceId,$candidateId);
    
      
 }

@@ -232,7 +232,7 @@ class CandidatesController extends \BaseController {
      /**
      * Get Posts
      * 
-     * POST/get_candidate_activities
+     * POST/get_candidate_comments
      * 
      * @param string $access_token The Access token of a user
      * @param string $company_code 
@@ -259,7 +259,7 @@ class CandidatesController extends \BaseController {
      /**
      * Get Posts
      * 
-     * POST/get_candidate_activities
+     * POST/get_candidate_sent_emails
      * 
      * @param string $access_token The Access token of a user
      * @param string $company_code 
@@ -307,7 +307,32 @@ class CandidatesController extends \BaseController {
         }
     return $return;
     }
-            
+         
+    /**
+     * Get Posts
+     * 
+     * POST/get_candidate_schedules
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code 
+     * @param integer $reference_id 
+     * @return Response
+     */
+    public function getCandidateSchedules() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validategetCandidateSchedulesActivitiesInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->getCandidateSchedules($inputUserData));
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    }
 }
 
 ?>

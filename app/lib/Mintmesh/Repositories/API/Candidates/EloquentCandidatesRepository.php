@@ -159,5 +159,20 @@ INNER JOIN users u ON (u.id=cse.created_by) where cse.company_id = '".$companyId
             
         }
         
+        public function getCandidateSchedules($companyId,$referenceId,$candidateId) {
+           $where = '';  
+          if(!empty($referenceId)){
+              $where = " AND cs.reference_id= '".$referenceId."' AND cs.candidate_id= '".$candidateId."' ";
+          }else{
+              $where = " AND cs.candidate_id= '".$referenceId."' ";
+          }
+            
+           $sql = "SELECT cs.id,cs.schedule_for,cs.attendees,cs.interview_date,cs.interview_from_time,cs.interview_to_time,cs.interview_time_zone,cs.interview_location,cs.notes, CONCAT(u.firstname,'',u.lastname) AS created_by,cs.created_at FROM candidate_schedule cs
+INNER JOIN users u ON (u.id=cs.created_by) where cs.company_id = '".$companyId."' $where order by id desc ";
+           return  $selectRel = DB::Select($sql);
+           // return $emailTemplates;
+            
+        }
+        
         
 }

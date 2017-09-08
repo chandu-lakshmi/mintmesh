@@ -156,6 +156,9 @@ class CandidatesGateway {
     public function validateGetCandidateReferralListInput($input) {
         return $this->doValidation('get_candidate_referral_list', 'MINTMESH.user.valid');
     }
+    public function validategetCandidateSchedulesActivitiesInput($input) {
+        return $this->doValidation('get_candidate_schedules', 'MINTMESH.user.valid');
+    }
     
     public function getCandidateEmailTemplates($input) {
         $data = $returnArr = array();
@@ -923,6 +926,64 @@ class CandidatesGateway {
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
        
+    public function getCandidateSchedules($param) {
+        
+        $data = $returnArr = $arrayReturn = array();
+        $companyCode  = !empty($param['company_code']) ? $param['company_code'] : '';
+        $referenceId  = !empty($param['reference_id']) ? $param['reference_id'] : '';
+        $candidateId = !empty($param['candidate_id']) ? $param['candidate_id'] : '';
+        
+        $resultArrs  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
+        
+        if(!empty($resultArrs)){
+            
+            $neoInput       = $refInput = array();
+            $candidate      = isset($resultArrs[0]) ? $resultArrs[0] : '';
+            $candidateEmail = $candidate->emailid;
+            $candidateId    = $candidate->getID();
+        }    
+        
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+        $returnArr = $this->candidatesRepository->getCandidateSchedules($companyId,$referenceId,$candidateId);
+        if($returnArr){
+            foreach($returnArr as $res){
+                $timelinedate = '';
+                $createdat = $res->created_at;
+                $timeZone   = !empty($param['time_zone']) ? $param['time_zone'] : 0;
+                $createdAt= date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($createdat, $timeZone)));
+                $timelinedate = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
+                $arrayReturn[] = array(
+                        'id'                    => $res->id,
+                        'schedule_for'          => $res->schedule_for,
+                        'attendees'             => $res->attendees,
+                        'interview_date'        => date('D j M Y', strtotime($res->interview_date)),
+                        'interview_from_time'   => $res->interview_from_time.date('A', strtotime($res->interview_from_time)),
+                        'interview_to_time'     => $res->interview_to_time.date('A', strtotime($res->interview_to_time)),
+                        'interview_time_zone'   => $res->interview_time_zone,
+                        'interview_location'    => $res->interview_location,
+                        'notes'                 => $res->notes,
+                        'created_by'            => 'by '.$res->created_by,
+                        'created_at'            => $timelinedate
+                );
+            }    
+        }
+        
+          
+        #check get career settings details not empty
+        if($arrayReturn){
+            $data = $arrayReturn;//return career settings details
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+        } else {
+            $responseCode   = self::ERROR_RESPONSE_CODE;
+            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+        
+    }
 }
 
 ?>
