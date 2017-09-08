@@ -163,54 +163,53 @@ class CandidatesGateway {
     }
     
     public function getCandidateEmailTemplates($input) {
+        
         $data = $returnArr = array();
         $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
+        #get company details by code
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+        $companyName    = isset($companyDetails[0]) ? $companyDetails[0]->name : 0;
         
         $resultArr  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
-        $candidatefirstname = $candidatelastname = $service_name = $company = '';
+        
         if($resultArr){
             $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
             $relation       = isset($resultArr[1]) ? $resultArr[1] : '';
-            $postDetails       = isset($resultArr[2]) ? $resultArr[2] : '';
-            $service_name = $postDetails->service_name;
-            $company = $postDetails->company;
+            $postDetails    = isset($resultArr[2]) ? $resultArr[2] : '';
+            $serviceName    = $postDetails->service_name;
             $candidateEmail = $candidate->emailid; 
-            $candidatefirstname = !empty($candidate->firstname) ? $candidate->firstname : '';
-            $candidatelastname = !empty($candidate->lastname) ? $candidate->lastname : '';
-            $input['to'] = $candidate->emailid;
             
-        }
-        
-        $returnArr = $this->candidatesRepository->getCandidateEmailTemplates($input);
-        
-        //$returnArrNew = array();
-        foreach($returnArr as  &$resVal){
-            $arrayReplace = array( "%fname%" => $candidatefirstname, "%lname%" => $candidatelastname,"%company%" => $company,"%jobtitle%" => $service_name);
-            $body_text = strtr($resVal->body, $arrayReplace);
-            $subject = strtr($resVal->subject, $arrayReplace);
-            //$arrayReplace = array('{%fname%}', '{%lanem%}', '{%Name%}');
-            //$arrayReplaceBy = array('Sreenivas', 'Reddy', 'Thanks');
-            //$body_text = str_replace($arrayReplace, $arrayReplaceBy, $resVal->body);
-            $resVal->subject =  $subject;
-            $resVal->body =  $body_text;
-        }
-        
-        
-        #check get career settings details not empty
-        if($returnArr){
-            $data = $returnArr;//return career settings details
-            $responseCode   = self::SUCCESS_RESPONSE_CODE;
-            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+            $referredBy         = !empty($relation->referred_by) ? $relation->referred_by : '';
+            $candidateName      = $this->postGateway->getCandidateFullNameByEmail($candidateEmail, $referredBy, $companyId);    
+            $returnArr          = $this->candidatesRepository->getCandidateEmailTemplates();
+
+            foreach($returnArr as  &$resVal){
+                $arrayReplace    = array( "%fname%" => $candidateName, "%company%" => $companyName, "%jobtitle%" => $serviceName);
+                $body_text       = strtr($resVal->body, $arrayReplace);
+                $subject         = strtr($resVal->subject, $arrayReplace);
+                $resVal->subject = $subject;
+                $resVal->body    = $body_text;
+            }
+
+            if($returnArr){
+                $data = $returnArr;
+                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+            } else {
+                $responseCode    = self::ERROR_RESPONSE_CODE;
+                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            }
         } else {
-            $responseCode   = self::ERROR_RESPONSE_CODE;
-            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
             $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
-        
     }
     
     public function getCandidateFullDetails($candidateEmail = '') {
@@ -551,37 +550,39 @@ class CandidatesGateway {
         $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
-        $comment = !empty($input['comment']) ? $input['comment'] : '';
-        
+        $comment     = !empty($input['comment']) ? $input['comment'] : '';
+        #get company details here
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
-        
-        $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser(); //get the logged in user details
-        if($this->loggedinUserDetails){
-            $userId             = $this->loggedinUserDetails->id;
-        }
-        
+        #get Logged In User details here
+        $this->loggedinUser = $this->referralsGateway->getLoggedInUser(); 
+        $userId   = $this->loggedinUser->id;
+        #get candidate details here
         $resultArr  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
         if($resultArr){
             $neoInput       = $refInput = array();
             $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
             $candidateEmail = $candidate->emailid;
             $candidateId    = $candidate->getID();
-        }
-        $returnArr = $this->candidatesRepository->addCandidateComment($companyId,$comment,$referenceId,$candidateId,$userId);
-        #check get career settings details not empty
-        if($returnArr){
-           // $data = $returnArr;//return career settings details
-            $responseCode   = self::SUCCESS_RESPONSE_CODE;
-            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.user.create_success')));
+        
+            $returnArr = $this->candidatesRepository->addCandidateComment($companyId, $comment, $referenceId, $candidateId, $userId);
+            #check get career settings details not empty
+            if($returnArr){
+               // $data = $returnArr;//return career settings details
+                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.user.create_success')));
+            } else {
+                $responseCode    = self::ERROR_RESPONSE_CODE;
+                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.user.create_failure')));
+            }
         } else {
-            $responseCode   = self::ERROR_RESPONSE_CODE;
-            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
             $responseMessage = array('msg' => array(Lang::get('MINTMESH.user.create_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
-        
     }
     
     
