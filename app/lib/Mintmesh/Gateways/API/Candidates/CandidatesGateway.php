@@ -467,9 +467,9 @@ class CandidatesGateway {
         $referenceId = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
         #email input
-        $emailSubject = !empty($input['subject']) ? $input['subject'] : '';
-        $emailBody    = !empty($input['body']) ? $input['body'] : '';
-        $subjectId    = !empty($input['subject_id']) ? $input['subject_id'] : '';
+        $emailSubject  = !empty($input['email_subject_custom']) ? $input['email_subject_custom'] : !empty($input['email_subject']) ? $input['email_subject'] : '';
+        $emailBody     = !empty($input['email_body']) ? $input['email_body'] : '';
+        $subjectId     = !empty($input['subject_id']) ? $input['subject_id'] : '';
         #get company Details by company code
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyLogo    = !empty($companyDetails[0]->logo) ? $companyDetails[0]->logo : ''; 
@@ -526,18 +526,18 @@ class CandidatesGateway {
             $this->userRepository->logEmail($emailLog);
 
             if($emailStatus == self::EMAIL_SUCCESS_STATUS){
-                $responseCode   = self::SUCCESS_RESPONSE_CODE;
-                $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.resendActivationLink.success')));
             } else {
-                $responseCode   = self::ERROR_RESPONSE_CODE;
-                $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+                $responseCode    = self::ERROR_RESPONSE_CODE;
+                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.resendActivationLink.failure')));
             }
             
         } else {
-            $responseCode   = self::ERROR_RESPONSE_CODE;
-            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
             $responseMessage = array('msg' => array(Lang::get('MINTMESH.resendActivationLink.failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
