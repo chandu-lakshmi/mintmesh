@@ -499,6 +499,9 @@ class CandidatesGateway {
              }
         $dataSet['body'] = $input['body'];
         $dataSet['company_logo'] = $company_logo;
+        $dataSet = '';
+        $subject = 'hello';
+        $candidateEmail = 'j.karthik@enterpi.com';
         $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.candidate_invitation');
         $this->userEmailManager->emailId = $candidateEmail;
         $this->userEmailManager->dataSet = $dataSet;
