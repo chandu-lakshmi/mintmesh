@@ -770,9 +770,20 @@ class CandidatesGateway {
      public function getCandidateComments($param) {
         
         $data = $returnArr = $arrayReturn = array();
-        $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
-        $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
-        $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
+        $companyCode  = !empty($param['company_code']) ? $param['company_code'] : '';
+        $referenceId  = !empty($param['reference_id']) ? $param['reference_id'] : '';
+        $candidateId = !empty($param['candidate_id']) ? $param['candidate_id'] : '';
+        
+        $resultArrs  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
+        
+        if(!empty($resultArrs)){
+            
+            $neoInput       = $refInput = array();
+            $candidate      = isset($resultArrs[0]) ? $resultArrs[0] : '';
+            $candidateEmail = $candidate->emailid;
+            $candidateId    = $candidate->getID();
+        }    
+        
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
         $returnArr = $this->candidatesRepository->getCandidateComments($companyId,$referenceId,$candidateId);
@@ -809,10 +820,21 @@ class CandidatesGateway {
     
     public function getCandidateSentEmails($param) {
         
-        $data = $returnArr = array();
-        $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
-        $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
-        $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
+        $data = $returnArr = $arrayReturn = array();
+        $companyCode  = !empty($param['company_code']) ? $param['company_code'] : '';
+        $referenceId  = !empty($param['reference_id']) ? $param['reference_id'] : '';
+        $candidateId = !empty($param['candidate_id']) ? $param['candidate_id'] : '';
+        
+        $resultArrs  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
+        
+        if(!empty($resultArrs)){
+            
+            $neoInput       = $refInput = array();
+            $candidate      = isset($resultArrs[0]) ? $resultArrs[0] : '';
+            $candidateEmail = $candidate->emailid;
+            $candidateId    = $candidate->getID();
+        }  
+        
         
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
