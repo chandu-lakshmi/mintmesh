@@ -21,8 +21,10 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
     const COMPANY_RESUME_STATUS = 0;
     const COMPANY_RESUME_S3_MOVED_STATUS = 1;
     const COMPANY_RESUME_AI_PARSED_STATUS = 2;
-        
-        public function __construct(User $user,
+    const DEFAULT_CANDIDATE_ACTIVITY_STATUS = 1;
+
+
+    public function __construct(User $user,
                                     Company_Profile $companyProfile,
                                     Company_Resumes $companyResumes,
                                     Groups $groups,
@@ -58,6 +60,15 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
            // return $emailTemplates;
             
         }
+        public function getCompanyEmployees($param){
+           //print_r($param);
+            $sql = 'select cs.user_id,cs.firstname,cs.lastname,cs.emailid from company c
+                    right join contacts cs ON (c.id=cs.company_id)
+                    where c.code="'.$param['company_code'].'"';
+           return  $selectRel = DB::Select($sql);
+            
+        }
+        
 
          public function addCandidateComment($companyId,$comment,$referenceId,$candidateId,$userId){
              $sql = "insert into candidate_comments (`company_id`,`reference_id`,`candidate_id`,`comment`,`created_by`,`created_at`)" ;
@@ -77,22 +88,42 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
             
         }
         
-        public function addCandidateEmail($param,$arrayuser,$companyId,$referenceId,$candidateId){
-             $fromname = '';
-             $fromname = $arrayuser['firstname'].' '.$arrayuser['lastname'];
-             $custom_subject = '';
-             if(!empty($param['custom_subject'])){
-                 $custom_subject = $param['custom_subject'];
-             }
+        public function addCandidateActivityLogs($companyId = '', $referenceId = '', $candidateId = '', $userId = '', $moduleType = '', $activityText = '') {
             
-             $sql = "insert into candidate_sent_emails (`company_id`,`reference_id`,`candidate_id`,`to`,`to_name`,`from`,`subject`,`custom_subject`,`body`,`attachment_id`,`created_by`,`created_at`)" ;
-            $sql.=" values('".$companyId."','".$referenceId."','".$candidateId."','".$param['to']."','".$param['to_name']."','".$fromname."','".$this->appEncodeDecode->filterString($param['subject'])."','".$custom_subject."','".$this->appEncodeDecode->filterString($param['body'])."','','".$arrayuser['id']."','".gmdate('Y-m-d H:i:s')."')" ;
-            $result = DB::statement($sql);
+            $return     = FALSE;
+            $createdAt  = gmdate('Y-m-d H:i:s');
+            $status     = self::DEFAULT_CANDIDATE_ACTIVITY_STATUS;
+            if($companyId){
+                #insert Candidate Activity Logs here
+                $sql = "INSERT INTO candidate_activity_logs (`company_id`,`reference_id`,`candidate_id`,`module_type`,`status`,`activity_text`,`created_by`,`created_at`)" ;
+                $sql.=" VALUES(".$companyId.", ".$referenceId.", ".$candidateId.", ".$moduleType.", ".$status.", '".$activityText."', ".$userId.", '".$createdAt."')" ;
+                $return = DB::statement($sql);
+            }
+            return $return;
+        }
+        
+        public function addCandidateEmail($candidate = array(), $logUser = array(), $companyId = 0, $referenceId = 0, $candidateId = 0){
+             
+            $createdAt      = gmdate('Y-m-d H:i:s');
+            $userName       = $logUser['user_name'];
+            $userId         = $logUser['user_id'];
+            $userEmail      = $logUser['user_emailid'];
+            $candidateName  = $candidate['name'];
+            $candidateEmail = $candidate['email'];
+            $emailSubject   = $this->appEncodeDecode->filterString($candidate['email_subject']);
+            $emailBody      = $this->appEncodeDecode->filterString($candidate['email_body']);
             
-             $sql_log = "insert into candidate_activity_logs (`company_id`,`reference_id`,`candidate_id`,`module_type`,`status`,`activity_text`,`created_by`,`created_at`)" ;
-            $sql_log.=" values('".$companyId."','".$referenceId."','".$candidateId."','2','1','Email Sent','".$arrayuser['id']."','".gmdate('Y-m-d H:i:s')."')" ;
-            $result = DB::statement($sql_log);
-            return $result;
+            if(!empty($companyId) && (!empty($referenceId) || !empty($candidateId))){
+                #insert Candidate Email details here
+                $sql = "INSERT INTO candidate_sent_emails (`company_id`,`reference_id`,`candidate_id`,`to`,`to_name`,`from`,`subject`,`custom_subject`,`body`,`attachment_id`,`created_by`,`created_at`)" ;
+                $sql.=" VALUES('".$companyId."', '".$referenceId."', '".$candidateId."', '".$candidateEmail."', '".$candidateName."', '".$userName."', '".$emailSubject."', '".$custom_subject."', '".$emailBody."', '', '".$userId."', '".$createdAt."')" ;
+                $return = DB::statement($sql);
+                #add Candidate Activity Logs here
+                $moduleType   = 2;
+                $activityText = 'Email Sent';
+                $activityLog  = $this->addCandidateActivityLogs($companyId, $referenceId, $candidateId, $userId, $moduleType, $activityText);
+            }
+            return $return;
         }
         
         

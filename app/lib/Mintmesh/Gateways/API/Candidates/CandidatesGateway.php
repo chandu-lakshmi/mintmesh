@@ -477,14 +477,13 @@ class CandidatesGateway {
         #get the logged in user details
         $this->loggedinUser = $this->referralsGateway->getLoggedInUser(); 
         $userId             = $this->loggedinUser->id;
-        $userFirstName      = $this->loggedinUser->firstname;
-        $userLastName       = $this->loggedinUser->lastname;
+        $userName           = $this->loggedinUser->firstname.' '.$this->loggedinUser->lastname;
         $userEmailId        = $this->loggedinUser->emailid;
         #get candidate details here
         $resultArr   = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
         
         if($resultArr){
-            
+            #form cndidate details here
             $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
             $relation       = isset($resultArr[1]) ? $resultArr[1] : '';
             $candidateEmail = $candidate->emailid; 
@@ -492,27 +491,33 @@ class CandidatesGateway {
             $referredBy     = !empty($relation->referred_by) ? $relation->referred_by : '';
             $candidateName  = $this->postGateway->getCandidateFullNameByEmail($candidateEmail, $referredBy, $companyId);    
             #email input form here
-            $dataSet = array();
-            $dataSet['name']         = $candidateName;
-            $dataSet['email_body']   = $emailBody;
-            $dataSet['company_logo'] = $companyLogo;
-
+            $dataSet = $userArr = array();
+            $dataSet['name']          = $candidateName;
+            $dataSet['email']         = $candidateEmail;
+            $dataSet['email_subject'] = $emailSubject;
+            $dataSet['email_body']    = $emailBody;
+            $dataSet['company_logo']  = $companyLogo;
+            #send email here
             $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.candidate_invitation');
             $this->userEmailManager->emailId = $candidateEmail;
             $this->userEmailManager->dataSet = $dataSet;
             $this->userEmailManager->subject = $emailSubject;
             $this->userEmailManager->name    = $candidateName;
             $email_sent = $this->userEmailManager->sendMail();
+            #logged in user here
+            $userArr['user_id']      =  $userId;
+            $userArr['user_name']    =  $userName;
+            $userArr['user_emailid'] =  $userEmailId;
             //log email status
             $emailStatus = self::EMAIL_FAILURE_STATUS;
             if (!empty($email_sent)) {
                 $emailStatus = self::EMAIL_SUCCESS_STATUS;
-                $returnArr   = $this->candidatesRepository->addCandidateEmail($input, $arrayuser, $companyId, $referenceId, $candidateId);
+                $returnArr   = $this->candidatesRepository->addCandidateEmail($dataSet, $arrayuser, $companyId, $referenceId, $candidateId);
             }
             $emailLog = array(
                 'emails_types_id'   => 9,
-                'from_user'         => $arrayuser['id'],
-                'from_email'        => $arrayuser['emailid'],
+                'from_user'         => $userId,
+                'from_email'        => $userEmailId,
                 'to_email'          => $this->appEncodeDecode->filterString(strtolower($candidateEmail)),
                 'related_code'      => $companyCode,
                 'sent'              => $emailStatus,
@@ -520,7 +525,7 @@ class CandidatesGateway {
             );
             $this->userRepository->logEmail($emailLog);
 
-            if($emailStatus == 1){
+            if($emailStatus == self::EMAIL_SUCCESS_STATUS){
                 $responseCode   = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.resendActivationLink.success')));
