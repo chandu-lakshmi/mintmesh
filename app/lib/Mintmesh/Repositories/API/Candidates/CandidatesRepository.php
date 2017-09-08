@@ -6,7 +6,7 @@ interface CandidatesRepository {
     /*
      * Create new Enterprise user resource in storage
      */
-     public function getCandidateEmailTemplates($input);
+     public function getCandidateEmailTemplates();
      
      public function addCandidateComment($companyId,$comment,$referenceId,$candidateId,$userId);
      
