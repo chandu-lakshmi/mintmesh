@@ -512,7 +512,7 @@ class CandidatesGateway {
             $emailStatus = self::EMAIL_FAILURE_STATUS;
             if (!empty($email_sent)) {
                 $emailStatus = self::EMAIL_SUCCESS_STATUS;
-                $returnArr   = $this->candidatesRepository->addCandidateEmail($dataSet, $arrayuser, $companyId, $referenceId, $candidateId);
+                $returnArr   = $this->candidatesRepository->addCandidateEmail($dataSet, $userArr, $companyId, $referenceId, $candidateId);
             }
             $emailLog = array(
                 'emails_types_id'   => 9,
