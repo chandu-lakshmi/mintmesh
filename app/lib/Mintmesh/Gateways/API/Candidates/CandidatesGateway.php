@@ -390,7 +390,7 @@ class CandidatesGateway {
             $this->userEmailManager->emailId = $candidateEmail;
             $this->userEmailManager->dataSet = $dataSet;
             $this->userEmailManager->subject = $subject;
-
+            $this->userEmailManager->name    = $candidateName;
             $emailSent = $this->userEmailManager->sendMail();
             //log email status
             $emailStatus = self::EMAIL_FAILURE_STATUS;
@@ -420,6 +420,7 @@ class CandidatesGateway {
                         $this->userEmailManager->emailId = $email;
                         $this->userEmailManager->dataSet = $dataSet;
                         $this->userEmailManager->subject = $subject;
+                        $this->userEmailManager->name    = $companyName;
                         $email_sent = $this->userEmailManager->sendMail();
                         //log email status
                         $emailStatus = self::EMAIL_FAILURE_STATUS;
@@ -784,7 +785,7 @@ class CandidatesGateway {
                             'activity_type'     => 'candidate_comments',
                             'activity_status'   => $activity->comment,
                             'activity_message'  => '',
-                            'activity_by'       => 'by '.$activity->created_by,
+                            'activity_by'       => $activity->created_by,
                             'activity_on'       => $timelinedate
                     );
                 }    
