@@ -161,6 +161,9 @@ class CandidatesGateway {
     public function validategetCandidateSchedulesActivitiesInput($input) {
         return $this->doValidation('get_candidate_schedules', 'MINTMESH.user.valid');
     }
+    public function validateEditCandidateReferralStatusInput($input) {
+        return $this->doValidation('edit_candidate_referral_status', 'MINTMESH.user.valid');
+    }
     
     public function getCandidateEmailTemplates($input) {
         
@@ -323,6 +326,7 @@ class CandidatesGateway {
             $returnArr['resume_path']   = !empty($relation->resume_path) ? $relation->resume_path : '';
             $returnArr['referred_by']   = $referredByName;
             $returnArr['referred_at']   = $createdAt;
+            $returnArr['referral_status']   = !empty($relation->referral_status) ? $relation->referral_status : '';
             #candidate professional details form here
             $returnArr['current_company_name']      = '';//'EnterPi Software Solutions Pvt Ltd';
             $returnArr['current_company_details']   = '';//'May 2015 - Present(2 years 3 months)';
@@ -964,6 +968,55 @@ class CandidatesGateway {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
             $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+    }
+    
+    public function editCandidateReferralStatus($input) {
+        
+        $data = $returnArr = $resultArr =  array();
+        $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
+        $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
+        $candidateId  = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
+        $refStatus    = !empty($input['referral_status']) ? strtoupper($input['referral_status']) : '';
+        #get loggedin User Detils here
+        $this->loggedinUser = $this->referralsGateway->getLoggedInUser();
+        $userId             = $this->loggedinUser->id;
+        $userEmailId        = $this->loggedinUser->emailid;
+        #get company details by code
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+        #get candidate details
+        $resultArr  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
+        
+        if(!empty($resultArr)){
+            
+            $neoInput       = $refInput = array();
+            $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
+            $candidateEmail = $candidate->emailid;
+            $candidateId    = $candidate->getID();
+            $moduleType     = 4;
+            $activityText   = $refStatus;
+             
+            if($referenceId){
+                $returnArr    = $this->neoCandidatesRepository->editCandidateReferralStatus($referenceId, $refStatus, $userEmailId);
+                $activityLogs = $this->candidatesRepository->addCandidateActivityLogs($companyId, $referenceId, $candidateId, $userId, $moduleType, $activityText) ;
+            }
+            #check Candidate Refer status
+            if($returnArr){
+                $data = $returnArr;
+                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.apply_job.ref_success')));
+            } else {
+                $responseCode    = self::ERROR_RESPONSE_CODE;
+                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.apply_job.failure')));
+            }
+        } else {
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.apply_job.referrer_invalid')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }

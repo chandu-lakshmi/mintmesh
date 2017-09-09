@@ -86,6 +86,26 @@ class NeoeloquentCandidatesRepository extends BaseRepository implements NeoCandi
         return $return;
     }
     
+    public function editCandidateReferralStatus($referenceId = "", $status = "", $updatedBy = "") {
+        
+        $return = FALSE;  
+        if ($referenceId) {
+            
+            if(!empty($status) && !empty($updatedBy)){
+                $status   = $this->appEncodeDecode->filterString(strtoupper($status));
+                $setQuery = " set  r.referral_status ='".$status."', r.referral_status_by ='".$updatedBy."' ";
+            }
+            #required query string parameters form here    
+            $baseQuery = "MATCH (u:User)-[r:GOT_REFERRED]-(p:Post) where ID(r)=".$referenceId;        
+            #query string formation here
+            $queryString  = $baseQuery.$setQuery;
+            $queryString .= " return r";
+            $query = new CypherQuery($this->client, $queryString);
+            $return = $query->getResultSet();
+        } 
+        return $return;
+    }
+    
 }
 
 ?>
