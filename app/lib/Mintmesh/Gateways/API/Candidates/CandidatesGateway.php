@@ -817,56 +817,58 @@ class CandidatesGateway {
         $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId  = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
-        
+        #get company details here
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+        #get candidate details here
         $resultArrs  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
-        
         if(!empty($resultArrs)){
             
             $neoInput       = $refInput = array();
             $candidate      = isset($resultArrs[0]) ? $resultArrs[0] : '';
             $candidateEmail = $candidate->emailid;
             $candidateId    = $candidate->getID();
-        }  
-        
-        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
-        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
-        
-        $returnArr = $this->candidatesRepository->getCandidateSentEmails($companyId, $referenceId, $candidateId);
-        
-       if($returnArr){
-            foreach($returnArr as $res){
-                $timelinedate = '';
-                $createdAt = $res->created_at;
-                $timeZone   = !empty($input['time_zone']) ? $input['time_zone'] : 0;
-                $timelinedate = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
-                $subject = $res->subject;
-                if(!empty($res->custom_subject)){
-                     $subject = $res->custom_subject;
-                }
-                $arrayReturn[] = array(
-                        'id'            => $res->id,
-                        'to_name'       => $res->to_name,
-                        'from'          => $res->from,
-                        'subject'       => $subject,
-                        'body'          => $res->body,
-                        'created_by'    => 'by '.$res->created_by,
-                        'created_at'    => $timelinedate
-                );
-            }    
-        }
-        #check get career settings details not empty
-        if($arrayReturn){
-            $data = $arrayReturn;//return career settings details
-            $responseCode   = self::SUCCESS_RESPONSE_CODE;
-            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
-            $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+            #get Candidate Sent Emails here
+            $sentEmailsArr  = $this->candidatesRepository->getCandidateSentEmails($companyId, $referenceId, $candidateId);
+
+            if($sentEmailsArr){
+                
+                foreach($sentEmailsArr as $email){
+                    $timelinedate   = '';
+                    $createdAt      = $email->created_at;
+                    $timelinedate   = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
+                    $subject        = $email->subject;
+                    if(!empty($email->custom_subject)){
+                         $subject = $email->custom_subject;
+                    }
+                    $arrayReturn[] = array(
+                            'id'            => $email->id,
+                            'to_name'       => $email->to_name,
+                            'from_name'     => $email->from,
+                            'subject'       => $subject,
+                            'body'          => $email->body,
+                            'created_by'    => $email->created_by,
+                            'created_at'    => $timelinedate
+                    );
+                }    
+            }
+            
+            if($arrayReturn){
+                $data = $arrayReturn;
+                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+            } else {
+                $responseCode    = self::ERROR_RESPONSE_CODE;
+                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            }
         } else {
-            $responseCode   = self::ERROR_RESPONSE_CODE;
-            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
-        
     }
     
     public function getCandidateReferralList($input) {
