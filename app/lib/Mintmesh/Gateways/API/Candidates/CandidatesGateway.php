@@ -476,7 +476,8 @@ class CandidatesGateway {
         $referenceId = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
         #email input
-        $emailSubject  = !empty($input['email_subject_custom']) ? $input['email_subject_custom'] : !empty($input['email_subject']) ? $input['email_subject'] : '';
+        $emailSubject  = !empty($input['email_subject']) ? $input['email_subject'] : '';
+        $emailSubject  = !empty($input['email_subject_custom']) ? $input['email_subject_custom'] : $emailSubject;
         $emailBody     = !empty($input['email_body']) ? $input['email_body'] : '';
         $subjectId     = !empty($input['subject_id']) ? $input['subject_id'] : '';
         #get company Details by company code
