@@ -271,6 +271,7 @@ class CandidatesGateway {
         $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId  = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
         $contactId    = !empty($input['contact_id']) ? $input['contact_id'] : '';
+        $timeZone     = !empty($input['time_zone']) ? $input['time_zone'] : 0;
         #get company details by code
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
@@ -285,7 +286,7 @@ class CandidatesGateway {
         
         if(!empty($resultArr)){
             
-            $qualification  = $candidateName = $referredByName = $skills = '';
+            $qualification  = $candidateName = $referredByName = $skills = $createdAt = '';
             $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
             $relation       = isset($resultArr[1]) ? $resultArr[1] : '';
             $candidateEmail = $candidate->emailid;
@@ -302,11 +303,15 @@ class CandidatesGateway {
             $referredBy     = !empty($relation->referred_by) ? $relation->referred_by : '';
             $referredByName = $this->postGateway->getReferredbyUserFullName($referredBy, $companyId);
             $candidateName  = $this->postGateway->getCandidateFullNameByEmail($candidateEmail, $referredBy, $companyId);    
-
+            
+            if(!empty($relation->created_at)){
+                $createdAt = date("M d,Y", strtotime($this->appEncodeDecode->UserTimezone($relation->created_at, $timeZone)));
+            }
             $returnArr['candidate_id']  = $candidateId;
             $returnArr['name']          = $candidateName;
             $returnArr['emailid']       = $candidateEmail;//'nitinranganath@gmail.com';
             $returnArr['phone']         = !empty($candidateArr['phone']) ? $candidateArr['phone'] : '';//'+91 9852458752';
+            $returnArr['dp_path']       = !empty($candidateArr['dp_path']) ? $candidateArr['dp_path'] : '';
             #candidate qualification details form here
             $returnArr['location']      = !empty($candidateArr['location']) ? $candidateArr['location'] : '';//'Hyderabad, Telangana';
             $returnArr['qualification'] = !empty($candidateArr['qualification']) ? $candidateArr['qualification'] : '' ;//$qualification;//'B Tech (CSC) From JNTU, Hyderabad';
@@ -317,6 +322,7 @@ class CandidatesGateway {
             $returnArr['resume_name']   = !empty($relation->resume_original_name) ? $relation->resume_original_name : Lang::get('MINTMESH.candidates.awaiting_resume');
             $returnArr['resume_path']   = !empty($relation->resume_path) ? $relation->resume_path : '';
             $returnArr['referred_by']   = $referredByName;
+            $returnArr['referred_at']   = $createdAt;
             #candidate professional details form here
             $returnArr['current_company_name']      = '';//'EnterPi Software Solutions Pvt Ltd';
             $returnArr['current_company_details']   = '';//'May 2015 - Present(2 years 3 months)';
@@ -329,21 +335,20 @@ class CandidatesGateway {
             #check get candidate details not empty
             if($returnArr){
                 $data = $returnArr;
-                $responseCode   = self::SUCCESS_RESPONSE_CODE;
-                $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
             } else {
-                $responseCode   = self::ERROR_RESPONSE_CODE;
-                $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+                $responseCode    = self::ERROR_RESPONSE_CODE;
+                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
             }
         } else {
-            $responseCode   = self::ERROR_RESPONSE_CODE;
-            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
             $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
-        
     }
     
     public function addCandidateSchedule($input) {
