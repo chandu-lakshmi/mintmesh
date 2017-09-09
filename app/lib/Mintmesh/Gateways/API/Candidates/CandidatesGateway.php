@@ -608,9 +608,8 @@ class CandidatesGateway {
             if($activitiesArr){
                 foreach($activitiesArr as $activity){
                     $timelinedate = '';
-                    $createdat    = $activity->created_at;
+                    $createdAt    = $activity->created_at;
                     $timeZone     = !empty($input['time_zone']) ? $input['time_zone'] : 0;
-                    $createdAt    = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($createdat, $timeZone)));
                     $timelinedate = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
                     $returnArr[]  = array(
                             'activity_id'       => $activity->id,
@@ -774,9 +773,8 @@ class CandidatesGateway {
             if($commentsArr){
                 foreach($commentsArr as $activity){
                     $timelinedate  = '';
-                    $createdat     = $activity->created_at;
+                    $createdAt     = $activity->created_at;
                     $timeZone      = !empty($input['time_zone']) ? $input['time_zone'] : 0;
-                    $createdAt     = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($createdat, $timeZone)));
                     $timelinedate  = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
 
                     $returnArr[]  = array(
@@ -833,9 +831,8 @@ class CandidatesGateway {
        if($returnArr){
             foreach($returnArr as $res){
                 $timelinedate = '';
-                $createdat = $res->created_at;
+                $createdAt = $res->created_at;
                 $timeZone   = !empty($input['time_zone']) ? $input['time_zone'] : 0;
-                $createdAt= date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($createdat, $timeZone)));
                 $timelinedate = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
                 $subject = $res->subject;
                 if(!empty($res->custom_subject)){
@@ -932,9 +929,8 @@ class CandidatesGateway {
         if($returnArr){
             foreach($returnArr as $res){
                 $timelinedate = '';
-                $createdat = $res->created_at;
+                $createdAt = $res->created_at;
                 $timeZone   = !empty($input['time_zone']) ? $input['time_zone'] : 0;
-                $createdAt= date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($createdat, $timeZone)));
                 $timelinedate = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
                 $arrayReturn[] = array(
                         'id'                    => $res->id,
