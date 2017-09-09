@@ -377,9 +377,9 @@ class CandidatesGateway {
             $referredBy     = !empty($relation->referred_by) ? $relation->referred_by : '';
             $candidateName  = $this->postGateway->getCandidateFullNameByEmail($candidateEmail, $referredBy, $companyId); 
             $serviceName    = $postDetails->service_name;
-
-            $subject                        = ' Interview with '.$companyName;
-            $dataSet['message']             = 'You are invited to an interview with '.$companyName; 
+            $dataSet = array();
+            $subject                        = ' Interview with ';
+            $dataSet['message']             = 'You are invited to an interview with '; 
             $dataSet['interview_when']      = '';//date('D j M Y', strtotime($input['interview_date'])).' '.$input['interview_from_time'].date('A', strtotime($input['interview_date'])).'-'.$input['interview_to_time'].date('A', strtotime($input['interview_date']));
             $dataSet['interview_timezone']  = $input['interview_time_zone'];
             $dataSet['interview_who']       = $candidateName;
