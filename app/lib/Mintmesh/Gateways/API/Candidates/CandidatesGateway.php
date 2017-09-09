@@ -587,80 +587,54 @@ class CandidatesGateway {
     
     
     public function getCandidateActivities($input) {
-        //echo '<pre>'; print_r($input); die;
-        $returnArr = $data = $arrayReturn = array();
+        
+        $returnArr   = $data = array();
         $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
-        $resultArr  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
+        #get company details here
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+        #get candidate details here
+        $resultArr = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
+        
         if($resultArr){
-            $neoInput       = $refInput = array();
             $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
             $candidateEmail = $candidate->emailid;
             $candidateId    = $candidate->getID();
-            $candidateId = $candidate->getID();
-        }
-        
-        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
-        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
-        
-        $returnArr = $this->candidatesRepository->getCandidateActivities($companyId,$referenceId,$candidateId);
-        if($returnArr){
-            foreach($returnArr as $res){
-                $timelinedate = '';
-                $createdat = $res->created_at;
-                $timeZone   = !empty($input['time_zone']) ? $input['time_zone'] : 0;
-                $createdAt= date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($createdat, $timeZone)));
-                $timelinedate = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
-                $arrayReturn[] = array(
-                        'activity_id'       => $res->id,
-                        'activity_type'     => $res->module_name,
-                        'activity_status'   => $res->activity_text,
-                        'activity_message'  => '',
-                        'activity_by'       => 'by '.$res->created_by,
-                        'activity_on'       => $timelinedate
-                    
-                );
+            #get Candidate Activities here
+            $activitiesArr = $this->candidatesRepository->getCandidateActivities($companyId, $referenceId, $candidateId);
+            if($activitiesArr){
+                foreach($activitiesArr as $activity){
+                    $timelinedate = '';
+                    $createdat    = $activity->created_at;
+                    $timeZone     = !empty($input['time_zone']) ? $input['time_zone'] : 0;
+                    $createdAt    = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($createdat, $timeZone)));
+                    $timelinedate = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
+                    $returnArr[]  = array(
+                            'activity_id'       => $activity->id,
+                            'activity_type'     => $activity->module_name,
+                            'activity_status'   => $activity->activity_text,
+                            'activity_message'  => '',
+                            'activity_by'       => 'by '.$activity->created_by,
+                            'activity_on'       => $timelinedate
+                    );
+                }
             }
-        }
-      /*  
-        $returnArr[0] = array('activity_id'       => '5002',
-                        'activity_type'     => 'CANDIDATE_STATUS',
-                        'activity_status'   => 'pending',
-                        'activity_message'  => 'status changed to',
-                        'activity_by'       => 'ramesh s',
-                        'activity_on'       => '1 hour ago'
-                        );
-        $returnArr[1] = array('activity_id'       => '5012',
-                        'activity_type'     => 'CANDIDATE_EMAILS',
-                        'activity_message'  => 'sent email',
-                        'activity_by'       => 'raju',
-                        'activity_on'       => 'jul 10,2017'
-                        );
-        $returnArr[2] = array('activity_id'       => '5302',
-                        'activity_type'     => 'CANDIDATE_COMMENTS',
-                        'activity_message'  => 'given assignment for machine test',
-                        'activity_by'       => 'karthik j',
-                        'activity_on'       => '2 days ago'
-                        );
-        $returnArr[3] = array('activity_id'       => '4002',
-                        'activity_type'     => 'CANDIDATE_STATUS',
-                        'activity_status'   => 'interview',
-                        'activity_message'  => 'status changed to',
-                        'activity_by'       => 'gopi v',
-                        'activity_on'       => '2 hour ago'
-                        );
-        */
 
-        #check get career settings details not empty
-        if($arrayReturn){
-            $data = $arrayReturn;//return career settings details
-            $responseCode   = self::SUCCESS_RESPONSE_CODE;
-            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+            if($returnArr){
+                $data = $returnArr;
+                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+            } else {
+                $responseCode    = self::ERROR_RESPONSE_CODE;
+                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            }
         } else {
-            $responseCode   = self::ERROR_RESPONSE_CODE;
-            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
             $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);

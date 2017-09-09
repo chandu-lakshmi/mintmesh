@@ -124,19 +124,21 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
             
         }
         
-        public function getCandidateActivities($companyId,$referenceId,$candidateId) {
-          $where = '';  
-          if(!empty($referenceId)){
-              $where = " AND cal.reference_id= '".$referenceId."' AND cal.candidate_id= '".$candidateId."' ";
-          }else{
-              $where = " AND cal.candidate_id= '".$referenceId."' ";
-          } 
-             
-         $sql = "SELECT cal.id,cal.company_id,cal.reference_id,cal.candidate_id,cmt.module_name,cal.activity_text,concat(u.firstname,'',u.lastname) as created_by,cal.created_at
-FROM candidate_activity_logs cal
-INNER JOIN candidate_module_types cmt ON (cmt.id=cal.module_type)
-INNER JOIN users u ON (u.id=cal.created_by) where cal.company_id = '".$companyId."' $where order by id desc ";
-           return  $selectRel = DB::Select($sql);
+        public function getCandidateActivities($companyId = 0, $referenceId = 0, $candidateId = 0) {
+           
+            $result = '';
+            if($companyId) {
+                $sql = "SELECT cal.id, cal.company_id, cal.reference_id, cal.candidate_id, cmt.module_name, cal.activity_text, concat(u.firstname,'',u.lastname) as created_by,cal.created_at
+                        FROM candidate_activity_logs cal
+                        INNER JOIN candidate_module_types cmt ON (cmt.id=cal.module_type)
+                        INNER JOIN users u ON (u.id=cal.created_by) where cal.company_id = '".$companyId."' AND cal.candidate_id = '".$candidateId."' ";
+                if(!empty($referenceId)){
+                  $sql .=" AND cal.reference_id= '".$referenceId."' ";
+                }
+                $sql .=" order by id desc ";
+                $result = DB::Select($sql);
+            }
+           return $result;  
         }
         
         public function getCandidateComments($companyId,$referenceId,$candidateId) {
