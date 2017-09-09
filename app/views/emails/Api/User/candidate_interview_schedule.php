@@ -29,9 +29,9 @@
   <tr>
     <td valign="top" class="textContent" style="padding:20px 20px 10px;line-height:135%;letter-spacing:0.2px;font-size:18px; font-weight:normal; color:#777777;">
         <h3 style="color:#000000;line-height:125%;font-family: 'arial', sans-serif;font-size:20px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;"></h3>
-     <p>When </p>
-     <p>Timezone </p>
-     <p>Who </p>
+     <p>When <?php echo $interview_when; ?></p>
+     <p>Timezone <?php echo $interview_timezone; ?></p>
+     <p>Who <?php echo $interview_who; ?></p>
     </td>
   </tr>
   <tr>
