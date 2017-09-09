@@ -353,108 +353,109 @@ class CandidatesGateway {
         $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
+        
         $input['interview_date'] = date('Y-m-d', strtotime($input['interview_date']));
+        #get company details here
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+        $companyName    = isset($companyDetails[0]) ? $companyDetails[0]->name : 0;
+        $companyLogo    = !empty($companyDetails[0]->logo)?$companyDetails[0]->logo:''; 
+        #get the logged in user details
+        $this->loggedinUser = $this->referralsGateway->getLoggedInUser(); 
+        $userId             = $this->loggedinUser->id;
+        $userName           = $this->loggedinUser->firstname.' '.$this->loggedinUser->lastname;
+        $userEmailId        = $this->loggedinUser->emailid;
+        #get Candidate Details here
         $resultArr  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
         if($resultArr){
+            
             $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
             $relation       = isset($resultArr[1]) ? $resultArr[1] : '';
-            $postDetails       = isset($resultArr[2]) ? $resultArr[2] : '';
-            $service_name = $postDetails->service_name;
-            $company = $postDetails->company;
+            $postDetails    = isset($resultArr[2]) ? $resultArr[2] : '';
             $candidateEmail = $candidate->emailid; 
-            $input['to'] = $candidate->emailid;
-            $candidateId = $candidate->getID();
-            $candidatefirstname = !empty($candidate->firstname) ? $candidate->firstname : '';
-            $candidatelastname = !empty($candidate->lastname) ? $candidate->lastname : '';
-           
-        }
-        if($companyCode){
-         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
-         $company_logo      = !empty($companyDetails[0]->logo)?$companyDetails[0]->logo:''; 
-         $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
-        }
-        
-        $this->loggedinUserDetails = $this->referralsGateway->getLoggedInUser(); //get the logged in user details
-        if($this->loggedinUserDetails){
-            $userId             = $this->loggedinUserDetails->id;
-            $arrayuser['id'] = $this->loggedinUserDetails->id;
-            $arrayuser['firstname'] = $this->loggedinUserDetails->firstname;
-            $arrayuser['lastname'] = $this->loggedinUserDetails->lastname;
-            $arrayuser['middlename'] = $this->loggedinUserDetails->middlename;
-            $arrayuser['emailid'] = $this->loggedinUserDetails->emailid;
-        } 
-        $subject = ' Interview with '.$company;
-        $dataSet['message'] = 'You are invited to an interview with '.$company; 
-        $dataSet['interview_when'] = date('D j M Y', strtotime($input['interview_date'])).' '.$input['interview_from_time'].date('A', strtotime($input['interview_date'])).'-'.$input['interview_to_time'].date('A', strtotime($input['interview_date']));
-        $dataSet['interview_timezone'] = $input['interview_time_zone'];
-        $dataSet['interview_who'] = $candidatefirstname.' '.$candidatelastname;
-        
-        $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.candidate_interview_schedule');
-        $this->userEmailManager->emailId = $candidateEmail;
-        $this->userEmailManager->dataSet = $dataSet;
-        $this->userEmailManager->subject = $subject;
-        
-        $email_sent = $this->userEmailManager->sendMail();
-        //log email status
-        $emailStatus = 0;
-        if (!empty($email_sent)) {
-            $emailStatus = 1;
-            $returnArr = $this->candidatesRepository->addCandidateSchedule($input,$userId,$referenceId,$candidateId,$companyId);
-        }
-        $emailLog = array(
-            'emails_types_id'   => 10,
-            'from_user'         => $arrayuser['id'],
-            'from_email'        => $arrayuser['emailid'],
-            'to_email'          => $this->appEncodeDecode->filterString(strtolower($candidateEmail)),
-            'related_code'      => $companyCode,
-            'sent'              => $emailStatus,
-            'ip_address'        => $_SERVER['REMOTE_ADDR']
-        );
-        $this->userRepository->logEmail($emailLog); 
-        if(!empty($input['attendees'])){
-         $emails = explode(',', $this->config->get('attendees'));
-	 foreach ($emails as $email) {
-            if ($email && preg_match('/^[^\@]+@.*\.[a-z]{2,6}$/i', $email)) {
-                    $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.candidate_interview_schedule');
-        $this->userEmailManager->emailId = $email;
-        $this->userEmailManager->dataSet = $dataSet;
-        $this->userEmailManager->subject = $subject;
-        $email_sent = $this->userEmailManager->sendMail();
-        //log email status
-        $emailStatus = 0;
-        if (!empty($email_sent)) {
-            $emailStatus = 1;
-        }
-        $emailLog = array(
-            'emails_types_id'   => 10,
-            'from_user'         => $arrayuser['id'],
-            'from_email'        => $arrayuser['emailid'],
-            'to_email'          => $this->appEncodeDecode->filterString(strtolower($candidateEmail)),
-            'related_code'      => $companyCode,
-            'sent'              => $emailStatus,
-            'ip_address'        => $_SERVER['REMOTE_ADDR']
-        );
-        $this->userRepository->logEmail($emailLog);
+            $candidateId    = $candidate->getID();
+            $referredBy     = !empty($relation->referred_by) ? $relation->referred_by : '';
+            $candidateName  = $this->postGateway->getCandidateFullNameByEmail($candidateEmail, $referredBy, $companyId); 
+            $serviceName    = $postDetails->service_name;
+
+            $subject                        = ' Interview with '.$companyName;
+            $dataSet['message']             = 'You are invited to an interview with '.$companyName; 
+            $dataSet['interview_when']      = '';//date('D j M Y', strtotime($input['interview_date'])).' '.$input['interview_from_time'].date('A', strtotime($input['interview_date'])).'-'.$input['interview_to_time'].date('A', strtotime($input['interview_date']));
+            $dataSet['interview_timezone']  = $input['interview_time_zone'];
+            $dataSet['interview_who']       = $candidateName;
+            $dataSet['company_logo']        = $companyLogo;
+            $dataSet['name']                = $candidateName;
+
+            $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.candidate_interview_schedule');
+            $this->userEmailManager->emailId = $candidateEmail;
+            $this->userEmailManager->dataSet = $dataSet;
+            $this->userEmailManager->subject = $subject;
+
+            $emailSent = $this->userEmailManager->sendMail();
+            //log email status
+            $emailStatus = self::EMAIL_FAILURE_STATUS;
+            if (!empty($emailSent)) {
+                $emailStatus = self::EMAIL_SUCCESS_STATUS;
+                $returnArr   = $this->candidatesRepository->addCandidateSchedule($input, $userId, $referenceId, $candidateId, $companyId);
             }
-        
-         } 
-        }
-        
-        
-        #check get career settings details not empty
-        if($emailStatus == 1){
+            $emailLog = array(
+                'emails_types_id'   => 10,
+                'from_user'         => $userId,
+                'from_email'        => $userEmailId,
+                'to_email'          => $this->appEncodeDecode->filterString(strtolower($candidateEmail)),
+                'related_code'      => $companyCode,
+                'sent'              => $emailStatus,
+                'ip_address'        => $_SERVER['REMOTE_ADDR']
+            );
+            $this->userRepository->logEmail($emailLog); 
             
-            //$data = $returnArr;//return career settings details
-            $responseCode   = self::SUCCESS_RESPONSE_CODE;
-            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.user.create_success')));
+            if(!empty($input['attendees'])){
+                
+                $emails = explode(',', $input['attendees']);
+                foreach ($emails as $email) {
+                    
+                   if ($email && preg_match('/^[^\@]+@.*\.[a-z]{2,6}$/i', $email)) {
+
+                        $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.candidate_interview_schedule');
+                        $this->userEmailManager->emailId = $email;
+                        $this->userEmailManager->dataSet = $dataSet;
+                        $this->userEmailManager->subject = $subject;
+                        $email_sent = $this->userEmailManager->sendMail();
+                        //log email status
+                        $emailStatus = self::EMAIL_FAILURE_STATUS;
+                        if (!empty($email_sent)) {
+                            $emailStatus = self::EMAIL_SUCCESS_STATUS;
+                        }
+                        $emailLog = array(
+                            'emails_types_id'   => 10,
+                            'from_user'         => $userId,
+                            'from_email'        => $userEmailId,
+                            'to_email'          => $this->appEncodeDecode->filterString(strtolower($candidateEmail)),
+                            'related_code'      => $companyCode,
+                            'sent'              => $emailStatus,
+                            'ip_address'        => $_SERVER['REMOTE_ADDR']
+                        );
+                        $this->userRepository->logEmail($emailLog);
+                   }
+                } 
+            }
+
+            if($emailStatus == self::EMAIL_SUCCESS_STATUS){
+                
+                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.user.create_success')));
+            } else {
+                $responseCode    = self::ERROR_RESPONSE_CODE;
+                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.user.create_failure')));
+            }
         } else {
-            $responseCode   = self::ERROR_RESPONSE_CODE;
-            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
             $responseMessage = array('msg' => array(Lang::get('MINTMESH.user.create_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
-        
     }
     
     
@@ -652,6 +653,7 @@ class CandidatesGateway {
         $pending      = Config::get('constants.REFERRALS.STATUSES.PENDING');
         #get loggedin User Detils here
         $this->loggedinUser = $this->referralsGateway->getLoggedInUser();
+        $userId             = $this->loggedinUser->id;
         $userEmailId        = $this->loggedinUser->emailid;
         #get company details by code
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
@@ -671,6 +673,8 @@ class CandidatesGateway {
             $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
             $candidateEmail = $candidate->emailid;
             $candidateId    = $candidate->getID();
+            $moduleType     = 5;
+            $activityText   = 'Link Job';
             
             $neoInput['referral']               = $candidateEmail;
             $neoInput['referred_by']            = $userEmailId;
@@ -691,6 +695,7 @@ class CandidatesGateway {
                 $refInput['post_id']       = $postId;
                 $neoInput['referred_for']  = !empty($postDetails->created_by) ? $postDetails->created_by : '';
                 $returnArr = $this->neoPostRepository->referCandidate($neoInput, $refInput);
+                $this->candidatesRepository->addCandidateActivityLogs($companyId, $referenceId, $candidateId, $userId, $moduleType, $activityText) ;
             }
             #check Candidate Refer status
             if($returnArr){
@@ -746,16 +751,17 @@ class CandidatesGateway {
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
     
-    
-    
-     public function getCandidateComments($param) {
+    public function getCandidateComments($input) {
         
         $data = $returnArr = $arrayReturn = array();
-        $companyCode  = !empty($param['company_code']) ? $param['company_code'] : '';
-        $referenceId  = !empty($param['reference_id']) ? $param['reference_id'] : '';
-        $candidateId = !empty($param['candidate_id']) ? $param['candidate_id'] : '';
-        
-        $resultArrs  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
+        $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
+        $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
+        $candidateId  = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
+        #get company details here
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+        #get candidate details here
+        $resultArrs     = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
         
         if(!empty($resultArrs)){
             
@@ -763,48 +769,51 @@ class CandidatesGateway {
             $candidate      = isset($resultArrs[0]) ? $resultArrs[0] : '';
             $candidateEmail = $candidate->emailid;
             $candidateId    = $candidate->getID();
-        }    
-        
-        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
-        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
-        $returnArr = $this->candidatesRepository->getCandidateComments($companyId,$referenceId,$candidateId);
-        if($returnArr){
-            foreach($returnArr as $res){
-                $timelinedate = '';
-                $createdat = $res->created_at;
-                $timeZone   = !empty($param['time_zone']) ? $param['time_zone'] : 0;
-                $createdAt= date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($createdat, $timeZone)));
-                $timelinedate = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
-                $arrayReturn[] = array(
-                        'id'       => $res->id,
-                        'comment'     => $res->comment,
-                        'created_by'       => 'by '.$res->created_by,
-                        'created_at'       => $timelinedate
-                );
-            }    
-        }
-        #check get career settings details not empty
-        if($arrayReturn){
-            $data = $arrayReturn;//return career settings details
-            $responseCode   = self::SUCCESS_RESPONSE_CODE;
-            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
-            $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+            #get Candidate Comments here
+            $commentsArr    = $this->candidatesRepository->getCandidateComments($companyId,$referenceId,$candidateId);
+            if($commentsArr){
+                foreach($commentsArr as $activity){
+                    $timelinedate  = '';
+                    $createdat     = $activity->created_at;
+                    $timeZone      = !empty($input['time_zone']) ? $input['time_zone'] : 0;
+                    $createdAt     = date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($createdat, $timeZone)));
+                    $timelinedate  = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
+
+                    $returnArr[]  = array(
+                            'activity_id'       => $activity->id,
+                            'activity_type'     => 'candidate_comments',
+                            'activity_status'   => $activity->comment,
+                            'activity_message'  => '',
+                            'activity_by'       => 'by '.$activity->created_by,
+                            'activity_on'       => $timelinedate
+                    );
+                }    
+            }
+
+            if($returnArr){
+                $data = $returnArr;
+                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+            } else {
+                $responseCode    = self::ERROR_RESPONSE_CODE;
+                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            }
         } else {
-            $responseCode   = self::ERROR_RESPONSE_CODE;
-            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
-        
     }
     
-    
-    public function getCandidateSentEmails($param) {
+    public function getCandidateSentEmails($input) {
         
         $data = $returnArr = $arrayReturn = array();
-        $companyCode  = !empty($param['company_code']) ? $param['company_code'] : '';
-        $referenceId  = !empty($param['reference_id']) ? $param['reference_id'] : '';
-        $candidateId = !empty($param['candidate_id']) ? $param['candidate_id'] : '';
+        $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
+        $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
+        $candidateId  = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
         
         $resultArrs  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
         
@@ -816,17 +825,16 @@ class CandidatesGateway {
             $candidateId    = $candidate->getID();
         }  
         
-        
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
         
-        $returnArr = $this->candidatesRepository->getCandidateSentEmails($referenceId,$candidateId,$companyId);
+        $returnArr = $this->candidatesRepository->getCandidateSentEmails($companyId, $referenceId, $candidateId);
         
        if($returnArr){
             foreach($returnArr as $res){
                 $timelinedate = '';
                 $createdat = $res->created_at;
-                $timeZone   = !empty($param['time_zone']) ? $param['time_zone'] : 0;
+                $timeZone   = !empty($input['time_zone']) ? $input['time_zone'] : 0;
                 $createdAt= date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($createdat, $timeZone)));
                 $timelinedate = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
                 $subject = $res->subject;
@@ -834,19 +842,16 @@ class CandidatesGateway {
                      $subject = $res->custom_subject;
                 }
                 $arrayReturn[] = array(
-                        'id'       => $res->id,
+                        'id'            => $res->id,
                         'to_name'       => $res->to_name,
-                        'from'     => $res->from,
-                        'subject'     => $subject,
-                        'body'     => $res->body,
-                        'created_by'       => 'by '.$res->created_by,
-                        'created_at'       => $timelinedate
-                    
+                        'from'          => $res->from,
+                        'subject'       => $subject,
+                        'body'          => $res->body,
+                        'created_by'    => 'by '.$res->created_by,
+                        'created_at'    => $timelinedate
                 );
             }    
         }
-        
-        
         #check get career settings details not empty
         if($arrayReturn){
             $data = $arrayReturn;//return career settings details
@@ -904,12 +909,12 @@ class CandidatesGateway {
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
        
-    public function getCandidateSchedules($param) {
+    public function getCandidateSchedules($input) {
         
         $data = $returnArr = $arrayReturn = array();
-        $companyCode  = !empty($param['company_code']) ? $param['company_code'] : '';
-        $referenceId  = !empty($param['reference_id']) ? $param['reference_id'] : '';
-        $candidateId = !empty($param['candidate_id']) ? $param['candidate_id'] : '';
+        $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
+        $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
+        $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
         
         $resultArrs  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
         
@@ -923,12 +928,12 @@ class CandidatesGateway {
         
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
-        $returnArr = $this->candidatesRepository->getCandidateSchedules($companyId,$referenceId,$candidateId);
+        $returnArr = $this->candidatesRepository->getCandidateSchedules($companyId, $referenceId, $candidateId);
         if($returnArr){
             foreach($returnArr as $res){
                 $timelinedate = '';
                 $createdat = $res->created_at;
-                $timeZone   = !empty($param['time_zone']) ? $param['time_zone'] : 0;
+                $timeZone   = !empty($input['time_zone']) ? $input['time_zone'] : 0;
                 $createdAt= date("Y-m-d H:i:s", strtotime($this->appEncodeDecode->UserTimezone($createdat, $timeZone)));
                 $timelinedate = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
                 $arrayReturn[] = array(
@@ -946,21 +951,18 @@ class CandidatesGateway {
                 );
             }    
         }
-        
-          
-        #check get career settings details not empty
+
         if($arrayReturn){
-            $data = $arrayReturn;//return career settings details
-            $responseCode   = self::SUCCESS_RESPONSE_CODE;
-            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
-            $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+            $data = $arrayReturn;
+            $responseCode    = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
         } else {
-            $responseCode   = self::ERROR_RESPONSE_CODE;
-            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage= array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
-        
     }
 }
 

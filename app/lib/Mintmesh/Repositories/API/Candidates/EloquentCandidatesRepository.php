@@ -104,24 +104,30 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
             return $return;
         }
         
-        
-        
-         public function addCandidateSchedule($param,$userId,$referenceId,$candidateId,$companyId){
-             $sql = "insert into candidate_schedule (`company_id`,`reference_id`,`candidate_id`,`schedule_for`,`attendees`,`interview_date`,`interview_from_time`,`interview_to_time`,`interview_time_zone`,`interview_location`,`notes`,`created_by`,`created_at`)" ;
-            $sql.=" values('".$companyId."','".$referenceId."','".$candidateId."','".$param['schedule_for']."','".$param['attendees']."','".$param['interview_date']."','".$this->appEncodeDecode->filterString($param['interview_from_time'])."','".$this->appEncodeDecode->filterString($param['interview_to_time'])."','".$this->appEncodeDecode->filterString($param['interview_time_zone'])."','".$this->appEncodeDecode->filterString($param['interview_location'])."','".$this->appEncodeDecode->filterString($param['notes'])."','".$userId."','".gmdate('Y-m-d H:i:s')."')" ;
-            $result = DB::statement($sql);
+        public function addCandidateSchedule($param, $userId, $referenceId, $candidateId, $companyId){
             
-             $sql_log = "insert into candidate_activity_logs (`company_id`,`reference_id`,`candidate_id`,`module_type`,`status`,`activity_text`,`created_by`,`created_at`)" ;
-            $sql_log.=" values('".$companyId."','".$referenceId."','".$candidateId."','1','1','".$param['schedule_for']." Schedule','".$userId."','".gmdate('Y-m-d H:i:s')."')" ;
-            
-            $result = DB::statement($sql_log);
-            
-            
-            return $result;
-            
-            //return  $this->candidateComments->create($arrayComment);
-           
-            
+            if(!empty($companyId) && (!empty($referenceId) || !empty($candidateId))){
+                
+                $createdAt   = gmdate('Y-m-d H:i:s');
+                $attendees   = $param['attendees'];
+                $scheduleFor = $param['schedule_for'];
+                $date        = $param['interview_date'];
+                $notes      = !empty($param['notes']) ? $param['notes'] : '';
+                $notes      = $this->appEncodeDecode->filterString($notes);
+                $fromTime   = $this->appEncodeDecode->filterString($param['interview_from_time']);
+                $toTime     = $this->appEncodeDecode->filterString($param['interview_to_time']);
+                $timeZone   = $this->appEncodeDecode->filterString($param['interview_time_zone']);
+                $location   = $this->appEncodeDecode->filterString($param['interview_location']);
+                
+                $sql = "INSERT INTO candidate_schedule (`company_id`,`reference_id`,`candidate_id`,`schedule_for`,`attendees`,`interview_date`,`interview_from_time`,`interview_to_time`,`interview_time_zone`,`interview_location`,`notes`,`created_by`,`created_at`)" ;
+                $sql.=" VALUES('".$companyId."', '".$referenceId."', '".$candidateId."', '".$scheduleFor."', '".$attendees."', '".$date."', '".$fromTime."', '".$toTime."', '".$timeZone."', '".$location."', '".$notes."', '".$userId."', '".$createdAt."')" ;
+                $return = DB::statement($sql);
+                #add Candidate Activity Logs here
+                $moduleType   = 1;
+                $activityText = $param['schedule_for']." Schedule";
+                $activityLog  = $this->addCandidateActivityLogs($companyId, $referenceId, $candidateId, $userId, $moduleType, $activityText);
+            }
+            return $return;  
         }
         
         public function getCandidateActivities($companyId = 0, $referenceId = 0, $candidateId = 0) {
@@ -141,49 +147,51 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
            return $result;  
         }
         
-        public function getCandidateComments($companyId,$referenceId,$candidateId) {
-           $where = '';  
-          if(!empty($referenceId)){
-              $where = " AND cc.reference_id= '".$referenceId."' AND cc.candidate_id= '".$candidateId."' ";
-          }else{
-              $where = " AND cc.candidate_id= '".$referenceId."' ";
-          } 
-          $sql = "SELECT cc.id,cc.comment,concat(u.firstname,'',u.lastname) as created_by,cc.created_at from candidate_comments cc INNER JOIN users u ON (u.id=cc.created_by) where cc.company_id = '".$companyId."' $where order by id desc ";
-           return  $selectRel = DB::Select($sql);
-           // return $emailTemplates;
+        public function getCandidateComments($companyId = 0, $referenceId = 0, $candidateId = 0) {
             
-        }
-        public function getCandidateSentEmails($referenceId,$candidateId,$companyId) {
-           $where = '';  
-          if(!empty($referenceId)){
-              $where = " AND cse.reference_id= '".$referenceId."' AND cse.candidate_id= '".$candidateId."' ";
-          }else{
-              $where = " AND cse.candidate_id= '".$referenceId."' ";
-          }
-            
-           $sql = "SELECT cse.id,cse.to_name,cse.from,cet.subject,cse.custom_subject,cse.body, CONCAT(u.firstname,'',u.lastname) AS created_by,cse.created_at
-FROM candidate_sent_emails cse
-INNER JOIN candidate_email_templates cet ON (cet.id=cse.subject)
-INNER JOIN users u ON (u.id=cse.created_by) where cse.company_id = '".$companyId."' $where order by id desc ";
-           return  $selectRel = DB::Select($sql);
-           // return $emailTemplates;
-            
+            $result = '';
+            if($companyId) {
+                $sql = "SELECT cc.id, cc.comment, concat(u.firstname,'',u.lastname) as created_by, cc.created_at from candidate_comments cc 
+                        INNER JOIN users u ON (u.id=cc.created_by) where cc.company_id = '".$companyId."' ";
+                if(!empty($referenceId)){
+                  $sql .=" AND cc.reference_id= '".$referenceId."' ";
+                }
+                $sql .=" order by id desc ";
+                $result = DB::Select($sql);
+            }
+            return $result;
         }
         
-        public function getCandidateSchedules($companyId,$referenceId,$candidateId) {
-           $where = '';  
-          if(!empty($referenceId)){
-              $where = " AND cs.reference_id= '".$referenceId."' AND cs.candidate_id= '".$candidateId."' ";
-          }else{
-              $where = " AND cs.candidate_id= '".$referenceId."' ";
-          }
-            
-           $sql = "SELECT cs.id,cs.schedule_for,cs.attendees,cs.interview_date,cs.interview_from_time,cs.interview_to_time,cs.interview_time_zone,cs.interview_location,cs.notes, CONCAT(u.firstname,'',u.lastname) AS created_by,cs.created_at FROM candidate_schedule cs
-INNER JOIN users u ON (u.id=cs.created_by) where cs.company_id = '".$companyId."' $where order by id desc ";
-           return  $selectRel = DB::Select($sql);
-           // return $emailTemplates;
-            
+        public function getCandidateSentEmails($companyId = 0, $referenceId = 0, $candidateId = 0) {
+           
+            $result = '';
+            if($companyId) { 
+                $sql = "SELECT cse.id, cse.to_name, cse.from, cet.subject, cse.custom_subject, cse.body, CONCAT(u.firstname,'',u.lastname) AS created_by,cse.created_at
+                        FROM candidate_sent_emails cse
+                        INNER JOIN candidate_email_templates cet ON (cet.id=cse.subject)
+                        INNER JOIN users u ON (u.id=cse.created_by) where cse.company_id = '".$companyId."' ";
+                if(!empty($referenceId)){
+                    $sql .=" AND cse.reference_id= '".$referenceId."' ";
+                }
+                $sql .=" order by id desc ";
+                $result = DB::Select($sql);
+            }
+            return $result;
         }
         
-        
+        public function getCandidateSchedules($companyId = 0, $referenceId = 0, $candidateId = 0) {
+            
+            $result = '';
+            if($companyId) {
+                $sql = "SELECT cs.id, cs.schedule_for, cs.attendees, cs.interview_date, cs.interview_from_time, cs.interview_to_time, cs.interview_time_zone, cs.interview_location, cs.notes, CONCAT(u.firstname,'',u.lastname) AS created_by,cs.created_at FROM candidate_schedule cs
+                        INNER JOIN users u ON (u.id=cs.created_by) where cs.company_id = '".$companyId."'  ";
+                if(!empty($referenceId)){
+                    $sql .=" AND cs.reference_id= '".$referenceId."' ";
+                }
+                $sql .=" order by id desc ";
+                $result = DB::Select($sql);
+            }
+            return $result;
+        }
+          
 }

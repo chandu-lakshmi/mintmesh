@@ -21,13 +21,12 @@ class CandidatesValidator extends Validator {
             'reference_id'  => 'required_without_all:candidate_id,contact_id',
             'candidate_id'  => 'required_without_all:reference_id,contact_id',
             'schedule_for'  => 'required',
-            'attendees'  => 'required',
-            'interview_date'  => 'required',
-            'interview_from_time'  => 'required',
-            'interview_to_time'  => 'required',
-            'interview_time_zone'  => 'required',
-            'interview_location'  => 'required',
-            'notes'  => 'required'
+            'attendees'     => 'required',
+            'interview_date'        => 'required',
+            'interview_from_time'   => 'required',
+            'interview_to_time'     => 'required',
+            'interview_time_zone'   => 'required',
+            'interview_location'    => 'required'
         ),
         'add_candidate_email' => array(
             'company_code'  => 'required',
