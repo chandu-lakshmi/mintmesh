@@ -1375,8 +1375,7 @@ class CandidatesGateway {
             if (!empty($email_sent)) {
                 $emailStatus = self::EMAIL_SUCCESS_STATUS;
                 $returnArr   = $this->candidatesRepository->addCandidateEmail($dataSet, $userArr, $companyId, $referenceId, $candidateId);
-                $arrayNewEmail = $this->getLastInsertEmail($returnArr);
-                $data = $arrayNewEmail;
+               
             }
             $emailLog = array(
                 'emails_types_id'   => 9,
