@@ -932,8 +932,8 @@ class CandidatesGateway {
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
             }
         } else {
-            $responseCode   = self::ERROR_RESPONSE_CODE;
-            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
             $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
@@ -977,7 +977,7 @@ class CandidatesGateway {
                             'interview_time_zone'   => $res->interview_time_zone,
                             'interview_location'    => $res->interview_location,
                             'notes'                 => $res->notes,
-                            'created_by'            => 'by '.$res->created_by,
+                            'created_by'            => $res->created_by,
                             'created_at'            => $timelinedate
                     );
                 }    
