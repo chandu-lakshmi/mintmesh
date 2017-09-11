@@ -206,14 +206,12 @@ class CandidatesGateway {
                 $resVal->body    = $body_text;
             }
 
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
             if($returnArr){
                 $data = $returnArr;
-                $responseCode    = self::SUCCESS_RESPONSE_CODE;
-                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
             } else {
-                $responseCode    = self::ERROR_RESPONSE_CODE;
-                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
             }
         } else {
@@ -352,14 +350,12 @@ class CandidatesGateway {
             $returnArr['previous_company_location'] = '';//'Bangalore Area, India';
             $returnArr['previous_company_position'] = '';//'Jr. Android Engineer';
             #check get candidate details not empty
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
             if($returnArr){
                 $data = $returnArr;
-                $responseCode    = self::SUCCESS_RESPONSE_CODE;
-                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
             } else {
-                $responseCode    = self::ERROR_RESPONSE_CODE;
-                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
             }
         } else {
@@ -652,14 +648,12 @@ class CandidatesGateway {
                 }
             }
 
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
             if($returnArr){
                 $data = $returnArr;
-                $responseCode    = self::SUCCESS_RESPONSE_CODE;
-                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
             } else {
-                $responseCode    = self::ERROR_RESPONSE_CODE;
-                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
             }
         } else {
@@ -808,24 +802,20 @@ class CandidatesGateway {
                     $timelinedate  = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
 
                     $returnArr[]  = array(
-                            'activity_id'       => $activity->id,
-                            'activity_type'     => 'candidate_comments',
-                            'activity_status'   => $activity->comment,
-                            'activity_message'  => '',
-                            'activity_by'       => $activity->created_by,
-                            'activity_on'       => $timelinedate
+                            'id'                => $activity->id,
+                            'comment'           => $activity->comment,
+                            'created_by'        => $activity->created_by,
+                            'created_at'        => $timelinedate
                     );
                 }    
             }
 
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
             if($returnArr){
                 $data = $returnArr;
-                $responseCode    = self::SUCCESS_RESPONSE_CODE;
-                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
             } else {
-                $responseCode    = self::ERROR_RESPONSE_CODE;
-                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
             }
         } else {
@@ -838,7 +828,7 @@ class CandidatesGateway {
     
     public function getCandidateSentEmails($input) {
         
-        $data = $returnArr = $arrayReturn = array();
+        $data = $returnArr = array();
         $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId  = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
@@ -866,7 +856,7 @@ class CandidatesGateway {
                     if(!empty($email->custom_subject)){
                          $subject = $email->custom_subject;
                     }
-                    $arrayReturn[] = array(
+                    $returnArr[] = array(
                             'id'            => $email->id,
                             'to_name'       => $email->to_name,
                             'to_emailid'    => $email->to,
@@ -880,14 +870,12 @@ class CandidatesGateway {
                 }    
             }
             
-            if($arrayReturn){
-                $data = $arrayReturn;
-                $responseCode    = self::SUCCESS_RESPONSE_CODE;
-                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+            if($returnArr){
+                $data = $returnArr;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
             } else {
-                $responseCode    = self::ERROR_RESPONSE_CODE;
-                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
             }
         } else {
@@ -954,7 +942,7 @@ class CandidatesGateway {
        
     public function getCandidateSchedules($input) {
         
-        $data = $returnArr = $arrayReturn = array();
+        $data = $returnArr = $schedulesArr = array();
         $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId  = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
@@ -972,15 +960,15 @@ class CandidatesGateway {
             $candidateId    = $candidate->getID();
              
             #get Candidate Schedules here
-            $returnArr      = $this->candidatesRepository->getCandidateSchedules($companyId, $referenceId, $candidateId);
-            if($returnArr){
+            $schedulesArr      = $this->candidatesRepository->getCandidateSchedules($companyId, $referenceId, $candidateId);
+            if($schedulesArr){
 
-                foreach($returnArr as $res){
+                foreach($schedulesArr as $res){
 
                     $timelinedate  = '';
                     $createdAt     = $res->created_at;
                     $timelinedate  = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
-                    $arrayReturn[] = array(
+                    $returnArr[]   = array(
                             'id'                    => $res->id,
                             'schedule_for'          => $res->schedule_for,
                             'attendees'             => $res->attendees,
@@ -996,14 +984,12 @@ class CandidatesGateway {
                 }    
             }
 
-            if($arrayReturn){
-                $data = $arrayReturn;
-                $responseCode    = self::SUCCESS_RESPONSE_CODE;
-                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseCode   = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+            if($returnArr){
+                $data = $returnArr;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
             } else {
-                $responseCode    = self::ERROR_RESPONSE_CODE;
-                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
             }
         } else {
