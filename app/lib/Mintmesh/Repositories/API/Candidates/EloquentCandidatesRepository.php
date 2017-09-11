@@ -117,10 +117,11 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                 $scheduleFor = $param['schedule_for'];
                 $date        = $param['interview_date'];
                 $notes      = !empty($param['notes']) ? $param['notes'] : '';
+                $timeZone   = !empty($param['interview_time_zone']) ? $param['interview_time_zone'] : '';
                 $notes      = $this->appEncodeDecode->filterString($notes);
+                $timeZone   = $this->appEncodeDecode->filterString($timeZone);
                 $fromTime   = $this->appEncodeDecode->filterString($param['interview_from_time']);
                 $toTime     = $this->appEncodeDecode->filterString($param['interview_to_time']);
-                $timeZone   = $this->appEncodeDecode->filterString($param['interview_time_zone']);
                 $location   = $this->appEncodeDecode->filterString($param['interview_location']);
                 
                 $sql = "INSERT INTO candidate_schedule (`company_id`,`reference_id`,`candidate_id`,`schedule_for`,`attendees`,`interview_date`,`interview_from_time`,`interview_to_time`,`interview_time_zone`,`interview_location`,`notes`,`created_by`,`created_at`)" ;

@@ -312,6 +312,9 @@ class CandidatesGateway {
             if(!empty($relation->created_at)){
                 $createdAt = date("M d,Y", strtotime($this->appEncodeDecode->UserTimezone($relation->created_at, $timeZone)));
             }
+            $cvName = !empty($candidateArr['cv_original_name']) ? $candidateArr['cv_original_name'] : Lang::get('MINTMESH.candidates.awaiting_resume');
+            $cvPath = !empty($candidateArr['cv_path']) ? $candidateArr['cv_path'] : '';
+            
             $returnArr['candidate_id']  = $candidateId;
             $returnArr['name']          = $candidateName;
             $returnArr['emailid']       = $candidateEmail;//'nitinranganath@gmail.com';
@@ -324,8 +327,8 @@ class CandidatesGateway {
             $returnArr['skills']        = !empty($skills) ? array($skills) : array();//array("Java & XML, C, C++", "Building to Devices", "Cocoa Touch");
             #referral details form here
             $returnArr['document_id']   = !empty($relation->document_id) ? $relation->document_id : 0;
-            $returnArr['resume_name']   = !empty($relation->resume_original_name) ? $relation->resume_original_name : Lang::get('MINTMESH.candidates.awaiting_resume');
-            $returnArr['resume_path']   = !empty($relation->resume_path) ? $relation->resume_path : '';
+            $returnArr['resume_name']   = !empty($relation->resume_original_name) ? $relation->resume_original_name : $cvName;
+            $returnArr['resume_path']   = !empty($relation->resume_path) ? $relation->resume_path : $cvPath;
             $returnArr['referred_by']   = $referredByName;
             $returnArr['referred_at']   = $createdAt;
             $returnArr['referred_job']  = $serviceName;
@@ -392,7 +395,7 @@ class CandidatesGateway {
             $dataSet = array();
             $subject                        = ' Interview with ';
             $dataSet['interview_when']      = '';//date('D j M Y', strtotime($input['interview_date'])).' '.$input['interview_from_time'].date('A', strtotime($input['interview_date'])).'-'.$input['interview_to_time'].date('A', strtotime($input['interview_date']));
-            $dataSet['interview_timezone']  = $input['interview_time_zone'];
+            $dataSet['interview_timezone']  = !empty($input['interview_time_zone']) ? $input['interview_time_zone'] : '';
             $dataSet['interview_who']       = $candidateName;
             $dataSet['company_logo']        = $companyLogo;
             $dataSet['name']                = $candidateName;
