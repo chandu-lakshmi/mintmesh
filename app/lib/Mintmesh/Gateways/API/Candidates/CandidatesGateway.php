@@ -1083,12 +1083,21 @@ class CandidatesGateway {
                     $timelinedate  = '';
                     $createdAt     = $returnArr[0]->created_at;
                     $timelinedate  = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
-                    $arrayNewComment[]  = array(
+                    $arrayNewComment['comment']  = array(
                             'id'       => $returnArr[0]->id,
                             'comment'   => $returnArr[0]->comment,
                             'created_by'       => $returnArr[0]->created_by,
                             'created_at'       => $timelinedate
                     );
+                    $arrayNewSchedules['timeline']  = array(
+                            'activity_id'       => $returnArr['activity_id'],
+                            'activity_type'     => 'candidate_comments',
+                            'activity_status'   => 'Comment Added',
+                            'activity_message'  => '',
+                            'activity_comment'  => '',
+                            'activity_by'       => 'by '.$returnArr[0]->created_by,
+                            'activity_on'       => $timelinedate
+                );
             return $arrayNewComment;        
     }
     
@@ -1100,7 +1109,7 @@ class CandidatesGateway {
             if(!empty($email->custom_subject)){
                 $subject = $returnArr[0]->custom_subject;
             }
-            $arrayNewEmail[] = array(
+            $arrayNewEmail['email'] = array(
                'id'            => $returnArr[0]->id,
                'to_name'       => $returnArr[0]->to_name,
                'from_name'     => $returnArr[0]->from,
@@ -1109,6 +1118,15 @@ class CandidatesGateway {
                'created_by'    => $returnArr[0]->created_by,
                'created_at'    => $timelinedate
             );
+             $arrayNewSchedules['timeline']  = array(
+                            'activity_id'       => $returnArr['activity_id'],
+                            'activity_type'     => 'candidate_emails',
+                            'activity_status'   => 'Email Sent',
+                            'activity_message'  => '',
+                            'activity_comment'  => '',
+                            'activity_by'       => 'by '.$returnArr[0]->created_by,
+                            'activity_on'       => $timelinedate
+                );
             return $arrayNewEmail;
        
    }
@@ -1116,7 +1134,7 @@ class CandidatesGateway {
                 $timelinedate = '';
                 $createdAt = $returnArr[0]->created_at;
                 $timelinedate = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
-                $arrayNewSchedules[] = array(
+                $arrayNewSchedules['schedule'] = array(
                         'id'                    => $returnArr[0]->id,
                         'schedule_for'          => $returnArr[0]->schedule_for,
                         'attendees'             => $returnArr[0]->attendees,
@@ -1128,6 +1146,16 @@ class CandidatesGateway {
                         'notes'                 => $returnArr[0]->notes,
                         'created_by'            => 'by '.$returnArr[0]->created_by,
                         'created_at'            => $timelinedate
+                );
+               
+                $arrayNewSchedules['timeline']  = array(
+                            'activity_id'       => $returnArr['activity_id'],
+                            'activity_type'     => 'candidate_schedules',
+                            'activity_status'   => $returnArr[0]->schedule_for." Schedule",
+                            'activity_message'  => '',
+                            'activity_comment'  => '',
+                            'activity_by'       => 'by '.$returnArr[0]->created_by,
+                            'activity_on'       => $timelinedate
                 );
                 
                 return $arrayNewSchedules;
@@ -1254,6 +1282,139 @@ class CandidatesGateway {
    }
    
    
+   public function testEmail($input) {
+        
+        $data = $returnArr  = $arrayNewEmail = array();
+        #basic input params
+        $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
+        $referenceId = !empty($input['reference_id']) ? $input['reference_id'] : '';
+        $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
+        #email input
+        $emailSubject  = !empty($input['email_subject']) ? $input['email_subject'] : '';
+        $emailSubject  = !empty($input['email_subject_custom']) ? $input['email_subject_custom'] : $emailSubject;
+        $emailBody     = !empty($input['email_body']) ? $input['email_body'] : '';
+        $subjectId     = !empty($input['subject_id']) ? $input['subject_id'] : '';
+        #get company Details by company code
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyLogo    = !empty($companyDetails[0]->logo) ? $companyDetails[0]->logo : ''; 
+        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+        #get the logged in user details
+        $this->loggedinUser = $this->referralsGateway->getLoggedInUser(); 
+        $userId             = $this->loggedinUser->id;
+        $userName           = $this->loggedinUser->firstname.' '.$this->loggedinUser->lastname;
+        $userEmailId        = $this->loggedinUser->emailid;
+        #get candidate details here
+        $resultArr   = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
+        
+        if($resultArr){
+            #form cndidate details here
+            $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
+            $relation       = isset($resultArr[1]) ? $resultArr[1] : '';
+            $candidateEmail = $candidate->emailid; 
+            $candidateId    = $candidate->getID();
+            $referredBy     = !empty($relation->referred_by) ? $relation->referred_by : '';
+            $candidateName  = $this->postGateway->getCandidateFullNameByEmail($candidateEmail, $referredBy, $companyId);    
+            #email input form here
+            $dataSet = $userArr = array();
+            $dataSet['name']          = $candidateName;
+            $dataSet['email']         = $candidateEmail;
+            $dataSet['email_subject'] = $emailSubject;
+            $dataSet['subject_id']    = $subjectId;
+            $dataSet['email_body']    = $emailBody;
+            $dataSet['company_logo']  = $companyLogo;
+            $ical = 'BEGIN:VCALENDAR' . "\r\n" .
+                    'PRODID:-//Microsoft Corporation//Outlook 10.0 MIMEDIR//EN' . "\r\n" .
+                    'VERSION:2.0' . "\r\n" .
+                    'METHOD:REQUEST' . "\r\n" .
+                    'BEGIN:VTIMEZONE' . "\r\n" .
+                    'TZID:Eastern Time' . "\r\n" .
+                    'BEGIN:STANDARD' . "\r\n" .
+                    'DTSTART:20091101T020000' . "\r\n" .
+                    'RRULE:FREQ=YEARLY;INTERVAL=1;BYDAY=1SU;BYMONTH=11' . "\r\n" .
+                    'TZOFFSETFROM:-0400' . "\r\n" .
+                    'TZOFFSETTO:-0500' . "\r\n" .
+                    'TZNAME:EST' . "\r\n" .
+                    'END:STANDARD' . "\r\n" .
+                    'BEGIN:DAYLIGHT' . "\r\n" .
+                    'DTSTART:20090301T020000' . "\r\n" .
+                    'RRULE:FREQ=YEARLY;INTERVAL=1;BYDAY=2SU;BYMONTH=3' . "\r\n" .
+                    'TZOFFSETFROM:-0500' . "\r\n" .
+                    'TZOFFSETTO:-0400' . "\r\n" .
+                    'TZNAME:EDST' . "\r\n" .
+                    'END:DAYLIGHT' . "\r\n" .
+                    'END:VTIMEZONE' . "\r\n" .    
+                   'BEGIN:VEVENT' . "\r\n" .
+                    'ORGANIZER;CN="'.$from_name.'":MAILTO:'.$from_address. "\r\n" .
+                    'ATTENDEE;CN="'.$to_name.'";ROLE=REQ-PARTICIPANT;RSVP=TRUE:MAILTO:'.$to_address. "\r\n" .
+                    'LAST-MODIFIED:' . date("Ymd\TGis") . "\r\n" .
+                    'UID:'.date("Ymd\TGis", strtotime($startTime)).rand()."@".$domain."\r\n" .
+                    'DTSTAMP:'.date("Ymd\TGis"). "\r\n" .
+                    'DTSTART;TZID="Eastern Time":'.date("Ymd\THis", strtotime($startTime)). "\r\n" .
+                    'DTEND;TZID="Eastern Time":'.date("Ymd\THis", strtotime($endTime)). "\r\n" .
+                    'TRANSP:OPAQUE'. "\r\n" .
+                    'SEQUENCE:1'. "\r\n" .
+                    'SUMMARY:' . $subject . "\r\n" .
+                    'LOCATION:' . $location . "\r\n" .
+                    'CLASS:PUBLIC'. "\r\n" .
+                    'PRIORITY:5'. "\r\n" .
+                    'BEGIN:VALARM' . "\r\n" .
+                    'TRIGGER:-PT15M' . "\r\n" .
+                    'ACTION:DISPLAY' . "\r\n" .
+                    'DESCRIPTION:Reminder' . "\r\n" .
+                    'END:VALARM' . "\r\n" .
+                    'END:VEVENT'. "\r\n" .
+                    'END:VCALENDAR'. "\r\n";
+
+            $dataSet['calendar_event'] = $ical;
+            
+            
+            #send email here
+            $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.candidate_invitation');
+            $this->userEmailManager->emailId = $candidateEmail;
+            $this->userEmailManager->dataSet = $dataSet;
+            $this->userEmailManager->subject = $emailSubject;
+            $this->userEmailManager->name    = $candidateName;
+            $email_sent = $this->userEmailManager->sendMail();
+            #logged in user here
+            $userArr['user_id']      =  $userId;
+            $userArr['user_name']    =  $userName;
+            $userArr['user_emailid'] =  $userEmailId;
+            //log email status
+            $emailStatus = self::EMAIL_FAILURE_STATUS;
+            if (!empty($email_sent)) {
+                $emailStatus = self::EMAIL_SUCCESS_STATUS;
+                $returnArr   = $this->candidatesRepository->addCandidateEmail($dataSet, $userArr, $companyId, $referenceId, $candidateId);
+                $arrayNewEmail = $this->getLastInsertEmail($returnArr);
+                $data = $arrayNewEmail;
+            }
+            $emailLog = array(
+                'emails_types_id'   => 9,
+                'from_user'         => $userId,
+                'from_email'        => $userEmailId,
+                'to_email'          => $this->appEncodeDecode->filterString(strtolower($candidateEmail)),
+                'related_code'      => $companyCode,
+                'sent'              => $emailStatus,
+                'ip_address'        => $_SERVER['REMOTE_ADDR']
+            );
+            //$this->userRepository->logEmail($emailLog);
+
+            if($emailStatus == self::EMAIL_SUCCESS_STATUS){
+                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.resendActivationLink.success')));
+            } else {
+                $responseCode    = self::ERROR_RESPONSE_CODE;
+                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.resendActivationLink.failure')));
+            }
+            
+        } else {
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.resendActivationLink.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+    }
    
 
 }

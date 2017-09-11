@@ -148,9 +148,9 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                 DB::statement($sql);
                 
                 $lastInsertId = DB::table('candidate_schedule')
-                     ->where('company_id', $companyId)   
+                    ->where('company_id', $companyId)   
                     ->orderBy('id', 'desc')
-                     ->take(1)   
+                    ->take(1)   
                     ->get();
                 $lId = $lastInsertId[0]->id;
                 
@@ -159,6 +159,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                 $activityText = $param['schedule_for']." Schedule";
                 $activityLog  = $this->addCandidateActivityLogs($companyId, $referenceId, $candidateId, $userId, $moduleType, $activityText);
                 $return = $this->getlastInsertSchedules($lId);
+                $return['activity_id'] = $lId;
             }
             return $return;  
         }
@@ -229,7 +230,8 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         
         public function getLastInsertComment($lId){
              $sql = "SELECT cc.id, cc.comment, concat(u.firstname,'',u.lastname) as created_by, cc.created_at from candidate_comments cc INNER JOIN users u ON (u.id=cc.created_by) where cc.id ='".$lId."' ";
-            return $return = DB::Select($sql); 
+                     $return = DB::Select($sql); 
+             return $return['activity_id'] = $lId;
         }
         
         public function getlastInsertEmail($lId) {
@@ -237,7 +239,8 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                         FROM candidate_sent_emails cse
                         INNER JOIN candidate_email_templates cet ON (cet.id=cse.subject)
                         INNER JOIN users u ON (u.id=cse.created_by) where cse.id = '".$lId."' ";
-            return $return = DB::Select($sqlE); 
+                    $return = DB::Select($sqlE); 
+            return $return['activity_id'] = $sqlE; 
             
         }
         
