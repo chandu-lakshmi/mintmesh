@@ -360,6 +360,88 @@ class CandidatesController extends \BaseController {
         }
     return $return;
     }
+    
+    /**
+     * Get Posts
+     * 
+     * POST/get_Candidate_Tags
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code 
+     * @param integer $reference_id 
+     * @param string $referral_status
+     * @return Response
+     */
+    public function getCandidatesTags() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validategetCandidatesTagsInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->getCandidatesTags($inputUserData));
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    }
+    
+    /**
+     * Get Posts
+     * 
+     * POST/add_Candidate_Tags
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code 
+     * @param integer $reference_id 
+     * @param string $referral_status
+     * @return Response
+     */
+    public function addCandidateTags() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validateaddCandidatesTagsInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->addCandidateTags($inputUserData));
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    }
+    
+    /**
+     * Get Posts
+     * 
+     * POST/get_Candidate_Tags
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code 
+     * @param integer $reference_id 
+     * @param string $referral_status
+     * @return Response
+     */
+    public function getCandidateTags() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validategetCandidateTagsInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->getCandidateTags($inputUserData));
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    }
+    
 }
 
 ?>

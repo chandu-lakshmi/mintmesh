@@ -422,6 +422,9 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       Route::post("enterprise/get_candidate_referral_list", "API\Candidates\CandidatesController@getCandidateReferralList");
       Route::post("enterprise/get_candidate_schedules", "API\Candidates\CandidatesController@getCandidateSchedules");
       Route::post("enterprise/edit_candidate_referral_status", "API\Candidates\CandidatesController@editCandidateReferralStatus");
+      Route::post("enterprise/get_candidates_tags", "API\Candidates\CandidatesController@getCandidatesTags");
+      Route::post("enterprise/add_candidate_tags", "API\Candidates\CandidatesController@addCandidateTags");
+      Route::post("enterprise/get_candidate_tags", "API\Candidates\CandidatesController@getCandidateTags");
       
 });
 
