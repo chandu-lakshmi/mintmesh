@@ -2100,8 +2100,11 @@ class PostGateway {
                 
                 if(!empty($user->emailid) && isset($user->emailid)){
                     $record['referred_by_phone']= 0;
-                    $record['from_user'] = $result[1]->emailid;
-                   
+                    $record['from_user'] = $candidateEmail = $result[1]->emailid;
+                    #get the user details neo4j node here
+                    $neoUserDetails = $this->neoUserRepository->getNodeByEmailId($candidateEmail);
+                    #form the user details array here
+                    $returnArr      = $this->userGateway->formUserDetailsArray($neoUserDetails);
                 }else{
                     $record['referred_by_phone']= 1;
                     $record['from_user'] = $user->phone;
@@ -2119,10 +2122,13 @@ class PostGateway {
                 }else{
                     $record['service_name']   = 'Not Tagged';  
                 }
+                $cvName = !empty($returnArr['cv_original_name']) ? $returnArr['cv_original_name'] : Lang::get('MINTMESH.candidates.awaiting_resume');
+                $cvPath = !empty($returnArr['cv_path']) ? $returnArr['cv_path'] : '';
+                
                 $record['document_id']      = !empty($relation->document_id) ? $relation->document_id : 0;
                 $record['one_way_status']   = $relation->one_way_status;
-                $record['resume_path']      = $relation->resume_path;
-                $record['resume_name']      = !empty($relation->resume_original_name) ? $relation->resume_original_name : Lang::get('MINTMESH.candidates.awaiting_resume');
+                $record['resume_path']      = !empty($relation->resume_path) ? $relation->resume_path : $cvPath;
+                $record['resume_name']      = !empty($relation->resume_original_name) ? $relation->resume_original_name : $cvName;
                 $record['created_at']       = date('M d, Y',strtotime($this->appEncodeDecode->UserTimezone($relation->created_at,$input['time_zone'])));
                 $record['awt_status']       = $relation->awaiting_action_status;
                 #get the user details here
