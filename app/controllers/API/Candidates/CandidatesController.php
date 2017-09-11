@@ -442,6 +442,12 @@ class CandidatesController extends \BaseController {
     return $return;
     }
     
+    public function testEmail() {
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        return \Response::json($this->candidatesGateway->testEmail($inputUserData));;
+    }
+    
 }
 
 ?>

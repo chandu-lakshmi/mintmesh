@@ -108,8 +108,8 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
             if(!empty($companyId) && (!empty($referenceId) || !empty($candidateId))){
                 #insert Candidate Email details here
 
-                $sql = "INSERT INTO candidate_sent_emails (`company_id`, `reference_id`, `candidate_id`, `to`, `to_name`, `from`, `subject`, `custom_subject`, `body`, `attachment_id`, `created_by`, `created_at`)" ;
-                $sql.=" VALUES('".$companyId."', '".$referenceId."', '".$candidateId."', '".$candidateEmail."', '".$candidateName."', '".$userName."', '".$subjectId."', '".$emailSubject."', '".$emailBody."', '', '".$userId."', '".$createdAt."')" ;
+                $sql = "INSERT INTO candidate_sent_emails (`company_id`, `reference_id`, `candidate_id`, `to`, `to_name`, `from`, `from_name`, `subject`, `custom_subject`, `body`, `attachment_id`, `created_by`, `created_at`)" ;
+                $sql.=" VALUES('".$companyId."', '".$referenceId."', '".$candidateId."', '".$candidateEmail."', '".$candidateName."', '".$userEmail."','".$userName."', '".$subjectId."', '".$emailSubject."', '".$emailBody."', '', '".$userId."', '".$createdAt."')" ;
                 DB::statement($sql);
                 
                 $lastInsertId = DB::table('candidate_sent_emails')
