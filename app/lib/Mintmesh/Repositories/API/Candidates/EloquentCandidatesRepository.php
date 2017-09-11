@@ -75,16 +75,20 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
             return $return;
         }
         
-        public function addCandidateActivityLogs($companyId = '', $referenceId = '', $candidateId = '', $userId = '', $moduleType = '', $activityText = '') {
+        public function addCandidateActivityLogs($companyId = '', $referenceId = '', $candidateId = '', $userId = '', $moduleType = '', $activityText = '', $activityComment = '') {
             
             $return     = FALSE;
             $createdAt  = gmdate('Y-m-d H:i:s');
             $status     = self::DEFAULT_CANDIDATE_ACTIVITY_STATUS;
             if($companyId){
                 #insert Candidate Activity Logs here
-                $sql = "INSERT INTO candidate_activity_logs (`company_id`, `reference_id`, `candidate_id`, `module_type`, `status`, `activity_text`, `created_by`, `created_at`)" ;
-                $sql.=" VALUES(".$companyId.", ".$referenceId.", ".$candidateId.", ".$moduleType.", ".$status.", '".$activityText."', ".$userId.", '".$createdAt."')" ;
-                $return = DB::statement($sql);
+                $sql = "INSERT INTO candidate_activity_logs (`company_id`, `reference_id`, `candidate_id`, `module_type`, `status`, `activity_text`, `comment`, `created_by`, `created_at`)" ;
+                $sql.=" VALUES(".$companyId.", ".$referenceId.", ".$candidateId.", ".$moduleType.", ".$status.", '".$activityText."', '".$activityComment."',".$userId.", '".$createdAt."')" ;
+                $result     = DB::statement($sql);
+                $lastInsert = DB::Select("SELECT LAST_INSERT_ID() as last_id");
+                if(isset($lastInsert[0]) && !empty($lastInsert[0])){
+                    $return = $lastInsert[0]->last_id;
+                }
             }
             return $return;
         }
@@ -103,6 +107,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
             
             if(!empty($companyId) && (!empty($referenceId) || !empty($candidateId))){
                 #insert Candidate Email details here
+
                 $sql = "INSERT INTO candidate_sent_emails (`company_id`, `reference_id`, `candidate_id`, `to`, `to_name`, `from`, `subject`, `custom_subject`, `body`, `attachment_id`, `created_by`, `created_at`)" ;
                 $sql.=" VALUES('".$companyId."', '".$referenceId."', '".$candidateId."', '".$candidateEmail."', '".$candidateName."', '".$userName."', '".$subjectId."', '".$emailSubject."', '".$emailBody."', '', '".$userId."', '".$createdAt."')" ;
                 DB::statement($sql);
@@ -113,8 +118,6 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                      ->take(1)   
                     ->get();
                 $lId = $lastInsertId[0]->id;
-                
-                
                 #add Candidate Activity Logs here
                 $moduleType   = 2;
                 $activityText = 'Email Sent';
@@ -133,10 +136,11 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                 $scheduleFor = $param['schedule_for'];
                 $date        = $param['interview_date'];
                 $notes      = !empty($param['notes']) ? $param['notes'] : '';
+                $timeZone   = !empty($param['interview_time_zone']) ? $param['interview_time_zone'] : '';
                 $notes      = $this->appEncodeDecode->filterString($notes);
+                $timeZone   = $this->appEncodeDecode->filterString($timeZone);
                 $fromTime   = $this->appEncodeDecode->filterString($param['interview_from_time']);
                 $toTime     = $this->appEncodeDecode->filterString($param['interview_to_time']);
-                $timeZone   = $this->appEncodeDecode->filterString($param['interview_time_zone']);
                 $location   = $this->appEncodeDecode->filterString($param['interview_location']);
                 
                 $sql = "INSERT INTO candidate_schedule (`company_id`,`reference_id`,`candidate_id`,`schedule_for`,`attendees`,`interview_date`,`interview_from_time`,`interview_to_time`,`interview_time_zone`,`interview_location`,`notes`,`created_by`,`created_at`)" ;
@@ -163,7 +167,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
            
             $result = '';
             if($companyId) {
-                $sql = "SELECT cal.id, cal.company_id, cal.reference_id, cal.candidate_id, cmt.module_name, cal.activity_text, concat(u.firstname,'',u.lastname) as created_by,cal.created_at
+                $sql = "SELECT cal.id, cal.company_id, cal.reference_id, cal.candidate_id, cmt.module_name, cal.activity_text, cal.comment, concat(u.firstname,'',u.lastname) as created_by,cal.created_at
                         FROM candidate_activity_logs cal
                         INNER JOIN candidate_module_types cmt ON (cmt.id=cal.module_type)
                         INNER JOIN users u ON (u.id=cal.created_by) where cal.company_id = '".$companyId."' AND cal.candidate_id = '".$candidateId."' ";
@@ -195,7 +199,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
            
             $result = '';
             if($companyId) { 
-                $sql = "SELECT cse.id, cse.to_name, cse.from, cet.subject, cse.custom_subject, cse.body, CONCAT(u.firstname,'',u.lastname) AS created_by,cse.created_at
+                $sql = "SELECT cse.id, cse.to, cse.to_name, cse.from, cse.from_name, cet.subject, cse.custom_subject, cse.body, CONCAT(u.firstname,'',u.lastname) AS created_by,cse.created_at
                         FROM candidate_sent_emails cse
                         INNER JOIN candidate_email_templates cet ON (cet.id=cse.subject)
                         INNER JOIN users u ON (u.id=cse.created_by) where cse.company_id = '".$companyId."' ";

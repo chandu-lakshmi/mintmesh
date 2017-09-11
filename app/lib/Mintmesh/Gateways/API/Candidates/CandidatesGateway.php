@@ -301,8 +301,10 @@ class CandidatesGateway {
             $qualification  = $candidateName = $referredByName = $skills = $createdAt = '';
             $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
             $relation       = isset($resultArr[1]) ? $resultArr[1] : '';
+            $postDetails    = isset($resultArr[2]) ? $resultArr[2] : '';
             $candidateEmail = $candidate->emailid;
             $candidateId    = $candidate->getID();
+            $serviceName    = !empty($postDetails->service_name) ? $postDetails->service_name : '';
             $candidateArr   = $this->getCandidateFullDetails($candidateEmail);
             #get skills form here
             if(!empty($candidateArr['skills'])){
@@ -319,6 +321,9 @@ class CandidatesGateway {
             if(!empty($relation->created_at)){
                 $createdAt = date("M d,Y", strtotime($this->appEncodeDecode->UserTimezone($relation->created_at, $timeZone)));
             }
+            $cvName = !empty($candidateArr['cv_original_name']) ? $candidateArr['cv_original_name'] : Lang::get('MINTMESH.candidates.awaiting_resume');
+            $cvPath = !empty($candidateArr['cv_path']) ? $candidateArr['cv_path'] : '';
+            
             $returnArr['candidate_id']  = $candidateId;
             $returnArr['name']          = $candidateName;
             $returnArr['emailid']       = $candidateEmail;//'nitinranganath@gmail.com';
@@ -331,10 +336,11 @@ class CandidatesGateway {
             $returnArr['skills']        = !empty($skills) ? array($skills) : array();//array("Java & XML, C, C++", "Building to Devices", "Cocoa Touch");
             #referral details form here
             $returnArr['document_id']   = !empty($relation->document_id) ? $relation->document_id : 0;
-            $returnArr['resume_name']   = !empty($relation->resume_original_name) ? $relation->resume_original_name : Lang::get('MINTMESH.candidates.awaiting_resume');
-            $returnArr['resume_path']   = !empty($relation->resume_path) ? $relation->resume_path : '';
+            $returnArr['resume_name']   = !empty($relation->resume_original_name) ? $relation->resume_original_name : $cvName;
+            $returnArr['resume_path']   = !empty($relation->resume_path) ? $relation->resume_path : $cvPath;
             $returnArr['referred_by']   = $referredByName;
             $returnArr['referred_at']   = $createdAt;
+            $returnArr['referred_job']  = $serviceName;
             $returnArr['referral_status']   = !empty($relation->referral_status) ? $relation->referral_status : '';
             #candidate professional details form here
             $returnArr['current_company_name']      = '';//'EnterPi Software Solutions Pvt Ltd';
@@ -398,7 +404,7 @@ class CandidatesGateway {
             $dataSet = array();
             $subject                        = ' Interview with ';
             $dataSet['interview_when']      = '';//date('D j M Y', strtotime($input['interview_date'])).' '.$input['interview_from_time'].date('A', strtotime($input['interview_date'])).'-'.$input['interview_to_time'].date('A', strtotime($input['interview_date']));
-            $dataSet['interview_timezone']  = $input['interview_time_zone'];
+            $dataSet['interview_timezone']  = !empty($input['interview_time_zone']) ? $input['interview_time_zone'] : '';
             $dataSet['interview_who']       = $candidateName;
             $dataSet['company_logo']        = $companyLogo;
             $dataSet['name']                = $candidateName;
@@ -639,6 +645,7 @@ class CandidatesGateway {
                             'activity_type'     => $activity->module_name,
                             'activity_status'   => $activity->activity_text,
                             'activity_message'  => '',
+                            'activity_comment'  => $activity->comment,
                             'activity_by'       => 'by '.$activity->created_by,
                             'activity_on'       => $timelinedate
                     );
@@ -722,17 +729,17 @@ class CandidatesGateway {
             #check Candidate Refer status
             if($returnArr){
                 $data = $returnArr;
-                $responseCode   = self::SUCCESS_RESPONSE_CODE;
-                $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.apply_job.ref_success')));
             } else {
-                $responseCode   = self::ERROR_RESPONSE_CODE;
-                $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+                $responseCode    = self::ERROR_RESPONSE_CODE;
+                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.apply_job.failure')));
             }
         } else {
-            $responseCode   = self::ERROR_RESPONSE_CODE;
-            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
             $responseMessage = array('msg' => array(Lang::get('MINTMESH.apply_job.referrer_invalid')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
@@ -766,8 +773,8 @@ class CandidatesGateway {
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
             }
         } else {
-            $responseCode   = self::ERROR_RESPONSE_CODE;
-            $responseMsg    = self::ERROR_RESPONSE_MESSAGE;
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
             $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
@@ -862,7 +869,9 @@ class CandidatesGateway {
                     $arrayReturn[] = array(
                             'id'            => $email->id,
                             'to_name'       => $email->to_name,
-                            'from_name'     => $email->from,
+                            'to_emailid'    => $email->to,
+                            'from_emailid'  => $email->from,
+                            'from_name'     => $email->from_name,
                             'subject'       => $subject,
                             'body'          => $email->body,
                             'created_by'    => $email->created_by,
@@ -896,6 +905,9 @@ class CandidatesGateway {
         $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId  = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
         $search       = !empty($input['search']) ? $input['search'] : '';
+        #get company details here
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
         #get Candidate Details
         $resultArr  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
         
@@ -908,11 +920,20 @@ class CandidatesGateway {
         
             foreach ($referralArr as $val) {
                 
-                $record   = array();
-                $postVal  = isset($val[0]) ? $val[0] : '';
-                $refVal   = isset($val[1]) ? $val[1] : '';
+                $timeline   = '';
+                $record     = array();
+                $postVal    = isset($val[0]) ? $val[0] : '';
+                $refVal     = isset($val[1]) ? $val[1] : '';
+                $createdAt  = isset ($refVal->created_at) ? $refVal->created_at : '';
+                $referredBy = isset ($refVal->referred_by) ? $refVal->referred_by : '';
+                
+                $referredByName = $this->postGateway->getReferredbyUserFullName($referredBy, $companyId);
+                $timeline       = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
+                #form return result here 
                 $record['reference_id']   = $refVal->getID();
                 $record['post_name']      = isset ($postVal->service_name) ? $postVal->service_name : '';
+                $record['referred_by']    = $referredByName;
+                $record['referred_on']    = $timeline;
                 $returnArr[] = $record;
             }
             $responseCode   = self::SUCCESS_RESPONSE_CODE;
@@ -936,8 +957,11 @@ class CandidatesGateway {
         $data = $returnArr = $arrayReturn = array();
         $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
-        $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
-        
+        $candidateId  = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
+        #get company details here
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+        #get candidate details here
         $resultArrs  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
         
         if(!empty($resultArrs)){
@@ -946,38 +970,42 @@ class CandidatesGateway {
             $candidate      = isset($resultArrs[0]) ? $resultArrs[0] : '';
             $candidateEmail = $candidate->emailid;
             $candidateId    = $candidate->getID();
-        }    
-        
-        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
-        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
-        $returnArr = $this->candidatesRepository->getCandidateSchedules($companyId, $referenceId, $candidateId);
-        if($returnArr){
-            foreach($returnArr as $res){
-                $timelinedate = '';
-                $createdAt = $res->created_at;
-                $timeZone   = !empty($input['time_zone']) ? $input['time_zone'] : 0;
-                $timelinedate = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
-                $arrayReturn[] = array(
-                        'id'                    => $res->id,
-                        'schedule_for'          => $res->schedule_for,
-                        'attendees'             => $res->attendees,
-                        'interview_date'        => date('D j M Y', strtotime($res->interview_date)),
-                        'interview_from_time'   => $res->interview_from_time.date('A', strtotime($res->interview_from_time)),
-                        'interview_to_time'     => $res->interview_to_time.date('A', strtotime($res->interview_to_time)),
-                        'interview_time_zone'   => $res->interview_time_zone,
-                        'interview_location'    => $res->interview_location,
-                        'notes'                 => $res->notes,
-                        'created_by'            => 'by '.$res->created_by,
-                        'created_at'            => $timelinedate
-                );
-            }    
-        }
+             
+            #get Candidate Schedules here
+            $returnArr      = $this->candidatesRepository->getCandidateSchedules($companyId, $referenceId, $candidateId);
+            if($returnArr){
 
-        if($arrayReturn){
-            $data = $arrayReturn;
-            $responseCode    = self::SUCCESS_RESPONSE_CODE;
-            $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+                foreach($returnArr as $res){
+
+                    $timelinedate  = '';
+                    $createdAt     = $res->created_at;
+                    $timelinedate  = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
+                    $arrayReturn[] = array(
+                            'id'                    => $res->id,
+                            'schedule_for'          => $res->schedule_for,
+                            'attendees'             => $res->attendees,
+                            'interview_date'        => date('D j M Y', strtotime($res->interview_date)),
+                            'interview_from_time'   => $res->interview_from_time.date('A', strtotime($res->interview_from_time)),
+                            'interview_to_time'     => $res->interview_to_time.date('A', strtotime($res->interview_to_time)),
+                            'interview_time_zone'   => $res->interview_time_zone,
+                            'interview_location'    => $res->interview_location,
+                            'notes'                 => $res->notes,
+                            'created_by'            => 'by '.$res->created_by,
+                            'created_at'            => $timelinedate
+                    );
+                }    
+            }
+
+            if($arrayReturn){
+                $data = $arrayReturn;
+                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+            } else {
+                $responseCode    = self::ERROR_RESPONSE_CODE;
+                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            }
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
@@ -988,15 +1016,18 @@ class CandidatesGateway {
     
     public function editCandidateReferralStatus($input) {
         
+        $timelineDate = '';
         $data = $returnArr = $resultArr =  array();
         $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId  = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
-        $refStatus    = !empty($input['referral_status']) ? strtoupper($input['referral_status']) : '';
+        $refStatus    = !empty($input['referral_status']) ? $input['referral_status'] : '';
+        $refComment   = !empty($input['referral_comment']) ? $input['referral_comment'] : '';
         #get loggedin User Detils here
         $this->loggedinUser = $this->referralsGateway->getLoggedInUser();
         $userId             = $this->loggedinUser->id;
         $userEmailId        = $this->loggedinUser->emailid;
+        $userFirstname      = $this->loggedinUser->firstname;
         #get company details by code
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
@@ -1013,8 +1044,20 @@ class CandidatesGateway {
             $activityText   = $refStatus;
              
             if($referenceId){
-                $returnArr    = $this->neoCandidatesRepository->editCandidateReferralStatus($referenceId, $refStatus, $userEmailId);
-                $activityLogs = $this->candidatesRepository->addCandidateActivityLogs($companyId, $referenceId, $candidateId, $userId, $moduleType, $activityText) ;
+                $refStatus    = $this->neoCandidatesRepository->editCandidateReferralStatus($referenceId, $refStatus, $userEmailId);
+                $activityId   = $this->candidatesRepository->addCandidateActivityLogs($companyId, $referenceId, $candidateId, $userId, $moduleType, $activityText, $refComment) ;
+                #return response form here
+                $createdAt    = gmdate('Y-m-d H:i:s');;
+                $timelineDate = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
+                $returnArr['timeline']  = array(
+                            'activity_id'       => $activityId,
+                            'activity_type'     => 'candidate_status',
+                            'activity_status'   => $activityText,
+                            'activity_message'  => '',
+                            'activity_comment'  => $refComment,
+                            'activity_by'       => 'by '.$userFirstname,
+                            'activity_on'       => $timelineDate
+                );
             }
             #check Candidate Refer status
             if($returnArr){
@@ -1035,6 +1078,7 @@ class CandidatesGateway {
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
     
+
     public function getLastInsertComment($returnArr){
                     $timelinedate  = '';
                     $createdAt     = $returnArr[0]->created_at;
@@ -1211,6 +1255,7 @@ class CandidatesGateway {
    
    
    
+
 }
 
 ?>

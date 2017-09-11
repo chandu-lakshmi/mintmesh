@@ -25,7 +25,6 @@ class CandidatesValidator extends Validator {
             'interview_date'        => 'required',
             'interview_from_time'   => 'required',
             'interview_to_time'     => 'required',
-            'interview_time_zone'   => 'required',
             'interview_location'    => 'required'
         ),
         'add_candidate_email' => array(
