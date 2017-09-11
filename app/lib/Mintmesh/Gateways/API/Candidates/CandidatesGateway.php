@@ -853,7 +853,9 @@ class CandidatesGateway {
                     $arrayReturn[] = array(
                             'id'            => $email->id,
                             'to_name'       => $email->to_name,
-                            'from_name'     => $email->from,
+                            'to_emailid'    => $email->to,
+                            'from_emailid'  => $email->from,
+                            'from_name'     => $email->from_name,
                             'subject'       => $subject,
                             'body'          => $email->body,
                             'created_by'    => $email->created_by,
@@ -887,6 +889,9 @@ class CandidatesGateway {
         $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId  = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
         $search       = !empty($input['search']) ? $input['search'] : '';
+        #get company details here
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
         #get Candidate Details
         $resultArr  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
         
@@ -899,11 +904,20 @@ class CandidatesGateway {
         
             foreach ($referralArr as $val) {
                 
-                $record   = array();
-                $postVal  = isset($val[0]) ? $val[0] : '';
-                $refVal   = isset($val[1]) ? $val[1] : '';
+                $timeline   = '';
+                $record     = array();
+                $postVal    = isset($val[0]) ? $val[0] : '';
+                $refVal     = isset($val[1]) ? $val[1] : '';
+                $createdAt  = isset ($refVal->created_at) ? $refVal->created_at : '';
+                $referredBy = isset ($refVal->referred_by) ? $refVal->referred_by : '';
+                
+                $referredByName = $this->postGateway->getReferredbyUserFullName($referredBy, $companyId);
+                $timeline       = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
+                #form return result here 
                 $record['reference_id']   = $refVal->getID();
                 $record['post_name']      = isset ($postVal->service_name) ? $postVal->service_name : '';
+                $record['referred_by']    = $referredByName;
+                $record['referred_on']    = $timeline;
                 $returnArr[] = $record;
             }
             $responseCode   = self::SUCCESS_RESPONSE_CODE;

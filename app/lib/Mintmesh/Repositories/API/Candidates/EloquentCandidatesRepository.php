@@ -97,8 +97,8 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
             
             if(!empty($companyId) && (!empty($referenceId) || !empty($candidateId))){
                 #insert Candidate Email details here
-                $sql = "INSERT INTO candidate_sent_emails (`company_id`, `reference_id`, `candidate_id`, `to`, `to_name`, `from`, `subject`, `custom_subject`, `body`, `attachment_id`, `created_by`, `created_at`)" ;
-                $sql.=" VALUES('".$companyId."', '".$referenceId."', '".$candidateId."', '".$candidateEmail."', '".$candidateName."', '".$userName."', '".$subjectId."', '".$emailSubject."', '".$emailBody."', '', '".$userId."', '".$createdAt."')" ;
+                $sql = "INSERT INTO candidate_sent_emails (`company_id`, `reference_id`, `candidate_id`, `to`, `to_name`, `from`, `from_name`, `subject`, `custom_subject`, `body`, `attachment_id`, `created_by`, `created_at`)" ;
+                $sql.=" VALUES('".$companyId."', '".$referenceId."', '".$candidateId."', '".$candidateEmail."', '".$candidateName."', '".$userEmail."', '".$userName."', '".$subjectId."', '".$emailSubject."', '".$emailBody."', '', '".$userId."', '".$createdAt."')" ;
                 $return = DB::statement($sql);
                 #add Candidate Activity Logs here
                 $moduleType   = 2;
@@ -138,7 +138,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
            
             $result = '';
             if($companyId) {
-                $sql = "SELECT cal.id, cal.company_id, cal.reference_id, cal.candidate_id, cmt.module_name, cal.activity_text, concat(u.firstname,'',u.lastname) as created_by,cal.created_at
+                $sql = "SELECT cal.id, cal.company_id, cal.reference_id, cal.candidate_id, cmt.module_name, cal.activity_text, cal.comment, concat(u.firstname,'',u.lastname) as created_by,cal.created_at
                         FROM candidate_activity_logs cal
                         INNER JOIN candidate_module_types cmt ON (cmt.id=cal.module_type)
                         INNER JOIN users u ON (u.id=cal.created_by) where cal.company_id = '".$companyId."' AND cal.candidate_id = '".$candidateId."' ";
@@ -170,7 +170,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
            
             $result = '';
             if($companyId) { 
-                $sql = "SELECT cse.id, cse.to_name, cse.from, cet.subject, cse.custom_subject, cse.body, CONCAT(u.firstname,'',u.lastname) AS created_by,cse.created_at
+                $sql = "SELECT cse.id, cse.to, cse.to_name, cse.from, cse.from_name, cet.subject, cse.custom_subject, cse.body, CONCAT(u.firstname,'',u.lastname) AS created_by,cse.created_at
                         FROM candidate_sent_emails cse
                         INNER JOIN candidate_email_templates cet ON (cet.id=cse.subject)
                         INNER JOIN users u ON (u.id=cse.created_by) where cse.company_id = '".$companyId."' ";
