@@ -1309,6 +1309,10 @@ class CandidatesGateway {
             $dataSet['subject_id']    = $subjectId;
             $dataSet['email_body']    = $emailBody;
             $dataSet['company_logo']  = $companyLogo;
+            $from_address = $to_name =$to_address = $subject = $location ='hyd';
+            $startTime = gmdate('Y-m-d H:i:s');
+            $endTime = date('Y-m-d H:i:s');
+            $domain = 'www.google.com';
             $ical = 'BEGIN:VCALENDAR' . "\r\n" .
                     'PRODID:-//Microsoft Corporation//Outlook 10.0 MIMEDIR//EN' . "\r\n" .
                     'VERSION:2.0' . "\r\n" .
@@ -1331,7 +1335,7 @@ class CandidatesGateway {
                     'END:DAYLIGHT' . "\r\n" .
                     'END:VTIMEZONE' . "\r\n" .    
                    'BEGIN:VEVENT' . "\r\n" .
-                    'ORGANIZER;CN="'.$from_name.'":MAILTO:'.$from_address. "\r\n" .
+                    'ORGANIZER;CN="karthik":MAILTO:'.$from_address. "\r\n" .
                     'ATTENDEE;CN="'.$to_name.'";ROLE=REQ-PARTICIPANT;RSVP=TRUE:MAILTO:'.$to_address. "\r\n" .
                     'LAST-MODIFIED:' . date("Ymd\TGis") . "\r\n" .
                     'UID:'.date("Ymd\TGis", strtotime($startTime)).rand()."@".$domain."\r\n" .
