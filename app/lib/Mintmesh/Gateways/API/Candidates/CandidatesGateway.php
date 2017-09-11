@@ -1080,6 +1080,7 @@ class CandidatesGateway {
     
 
     public function getLastInsertComment($returnArr){
+        
                     $timelinedate  = '';
                     $createdAt     = $returnArr[0]->created_at;
                     $timelinedate  = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
@@ -1089,8 +1090,8 @@ class CandidatesGateway {
                             'created_by'       => $returnArr[0]->created_by,
                             'created_at'       => $timelinedate
                     );
-                    $arrayNewSchedules['timeline']  = array(
-                            'activity_id'       => $returnArr['activity_id'],
+                    $arrayNewComment['timeline']  = array(
+                            'activity_id'       => 0,
                             'activity_type'     => 'candidate_comments',
                             'activity_status'   => 'Comment Added',
                             'activity_message'  => '',
@@ -1118,8 +1119,8 @@ class CandidatesGateway {
                'created_by'    => $returnArr[0]->created_by,
                'created_at'    => $timelinedate
             );
-             $arrayNewSchedules['timeline']  = array(
-                            'activity_id'       => $returnArr['activity_id'],
+             $arrayNewEmail['timeline']  = array(
+                            'activity_id'       => 0,
                             'activity_type'     => 'candidate_emails',
                             'activity_status'   => 'Email Sent',
                             'activity_message'  => '',
@@ -1149,7 +1150,7 @@ class CandidatesGateway {
                 );
                
                 $arrayNewSchedules['timeline']  = array(
-                            'activity_id'       => $returnArr['activity_id'],
+                            'activity_id'       => 0,
                             'activity_type'     => 'candidate_schedules',
                             'activity_status'   => $returnArr[0]->schedule_for." Schedule",
                             'activity_message'  => '',
