@@ -86,6 +86,22 @@ class CandidatesValidator extends Validator {
             'reference_id'  => 'required_without_all:candidate_id',
             'candidate_id'  => 'required_without_all:reference_id',
             'referral_status'  => 'required'
+        ),
+        'get_candidates_tags' => array(
+            'company_code'  => 'required',
+            'reference_id'  => 'required_without_all:candidate_id',
+            'candidate_id'  => 'required_without_all:reference_id',
+            'tag_name'  => 'required'
+        ),
+        'add_candidate_tags' => array(
+            'company_code'  => 'required',
+            'reference_id'  => 'required_without_all:candidate_id',
+            'candidate_id'  => 'required_without_all:reference_id'
+        ),
+        'get_candidate_tags' => array(
+            'company_code'  => 'required',
+            'reference_id'  => 'required_without_all:candidate_id',
+            'candidate_id'  => 'required_without_all:reference_id'
         )
               
     );
