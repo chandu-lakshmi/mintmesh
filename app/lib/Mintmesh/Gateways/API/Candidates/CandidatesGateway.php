@@ -292,8 +292,10 @@ class CandidatesGateway {
             $qualification  = $candidateName = $referredByName = $skills = $createdAt = '';
             $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
             $relation       = isset($resultArr[1]) ? $resultArr[1] : '';
+            $postDetails    = isset($resultArr[2]) ? $resultArr[2] : '';
             $candidateEmail = $candidate->emailid;
             $candidateId    = $candidate->getID();
+            $serviceName    = !empty($postDetails->service_name) ? $postDetails->service_name : '';
             $candidateArr   = $this->getCandidateFullDetails($candidateEmail);
             #get skills form here
             if(!empty($candidateArr['skills'])){
@@ -326,6 +328,7 @@ class CandidatesGateway {
             $returnArr['resume_path']   = !empty($relation->resume_path) ? $relation->resume_path : '';
             $returnArr['referred_by']   = $referredByName;
             $returnArr['referred_at']   = $createdAt;
+            $returnArr['referred_job']  = $serviceName;
             $returnArr['referral_status']   = !empty($relation->referral_status) ? $relation->referral_status : '';
             #candidate professional details form here
             $returnArr['current_company_name']      = '';//'EnterPi Software Solutions Pvt Ltd';
@@ -626,6 +629,7 @@ class CandidatesGateway {
                             'activity_type'     => $activity->module_name,
                             'activity_status'   => $activity->activity_text,
                             'activity_message'  => '',
+                            'activity_comment'  => $activity->comment,
                             'activity_by'       => 'by '.$activity->created_by,
                             'activity_on'       => $timelinedate
                     );
@@ -975,15 +979,18 @@ class CandidatesGateway {
     
     public function editCandidateReferralStatus($input) {
         
+        $timelineDate = '';
         $data = $returnArr = $resultArr =  array();
         $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId  = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
-        $refStatus    = !empty($input['referral_status']) ? strtoupper($input['referral_status']) : '';
+        $refStatus    = !empty($input['referral_status']) ? $input['referral_status'] : '';
+        $refComment   = !empty($input['referral_comment']) ? $input['referral_comment'] : '';
         #get loggedin User Detils here
         $this->loggedinUser = $this->referralsGateway->getLoggedInUser();
         $userId             = $this->loggedinUser->id;
         $userEmailId        = $this->loggedinUser->emailid;
+        $userFirstname      = $this->loggedinUser->firstname;
         #get company details by code
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
@@ -1000,8 +1007,20 @@ class CandidatesGateway {
             $activityText   = $refStatus;
              
             if($referenceId){
-                $returnArr    = $this->neoCandidatesRepository->editCandidateReferralStatus($referenceId, $refStatus, $userEmailId);
-                $activityLogs = $this->candidatesRepository->addCandidateActivityLogs($companyId, $referenceId, $candidateId, $userId, $moduleType, $activityText) ;
+                $refStatus    = $this->neoCandidatesRepository->editCandidateReferralStatus($referenceId, $refStatus, $userEmailId);
+                $activityId   = $this->candidatesRepository->addCandidateActivityLogs($companyId, $referenceId, $candidateId, $userId, $moduleType, $activityText, $refComment) ;
+                #return response form here
+                $createdAt    = gmdate('Y-m-d H:i:s');;
+                $timelineDate = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
+                $returnArr['timeline']  = array(
+                            'activity_id'       => $activityId,
+                            'activity_type'     => 'candidate_status',
+                            'activity_status'   => $activityText,
+                            'activity_message'  => '',
+                            'activity_comment'  => $refComment,
+                            'activity_by'       => 'by '.$userFirstname,
+                            'activity_on'       => $timelineDate
+                );
             }
             #check Candidate Refer status
             if($returnArr){
@@ -1021,6 +1040,7 @@ class CandidatesGateway {
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
+    
 }
 
 ?>

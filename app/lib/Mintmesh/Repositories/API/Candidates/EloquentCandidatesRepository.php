@@ -65,16 +65,20 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
             return $return;
         }
         
-        public function addCandidateActivityLogs($companyId = '', $referenceId = '', $candidateId = '', $userId = '', $moduleType = '', $activityText = '') {
+        public function addCandidateActivityLogs($companyId = '', $referenceId = '', $candidateId = '', $userId = '', $moduleType = '', $activityText = '', $activityComment = '') {
             
             $return     = FALSE;
             $createdAt  = gmdate('Y-m-d H:i:s');
             $status     = self::DEFAULT_CANDIDATE_ACTIVITY_STATUS;
             if($companyId){
                 #insert Candidate Activity Logs here
-                $sql = "INSERT INTO candidate_activity_logs (`company_id`, `reference_id`, `candidate_id`, `module_type`, `status`, `activity_text`, `created_by`, `created_at`)" ;
-                $sql.=" VALUES(".$companyId.", ".$referenceId.", ".$candidateId.", ".$moduleType.", ".$status.", '".$activityText."', ".$userId.", '".$createdAt."')" ;
-                $return = DB::statement($sql);
+                $sql = "INSERT INTO candidate_activity_logs (`company_id`, `reference_id`, `candidate_id`, `module_type`, `status`, `activity_text`, `comment`, `created_by`, `created_at`)" ;
+                $sql.=" VALUES(".$companyId.", ".$referenceId.", ".$candidateId.", ".$moduleType.", ".$status.", '".$activityText."', '".$activityComment."',".$userId.", '".$createdAt."')" ;
+                $result     = DB::statement($sql);
+                $lastInsert = DB::Select("SELECT LAST_INSERT_ID() as last_id");
+                if(isset($lastInsert[0]) && !empty($lastInsert[0])){
+                    $return = $lastInsert[0]->last_id;
+                }
             }
             return $return;
         }
