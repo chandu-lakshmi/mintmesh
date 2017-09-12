@@ -1242,6 +1242,7 @@ class CandidatesGateway {
             if($lastInsert){
                // $arrayNewComment = $this->getLastInsertComment($returnArr);
                 $arrayNewComment['id'] = $lastInsert;
+                $arrayNewComment['tag_id'] = $tag_id;
                 $arrayNewComment['tag_name'] = $tag_name;
                 $data = $arrayNewComment;//return career settings details
                 $responseCode    = self::SUCCESS_RESPONSE_CODE;
