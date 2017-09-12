@@ -24,7 +24,7 @@ interface CandidatesRepository {
      
      public function getCandidateSchedules($companyId,$referenceId,$candidateId);
      
-     public function getCandidatesTags($companyId,$referenceId,$candidateId,$tag_name);
+     public function getCandidatesTags($tag_name);
      
      
      public function addCandidateTags($companyId,$referenceId,$candidateId,$tag_id);
