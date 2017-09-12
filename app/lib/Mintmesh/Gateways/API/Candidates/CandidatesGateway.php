@@ -382,7 +382,7 @@ class CandidatesGateway {
             $returnArr['referred_at']   = $createdAt;
             $returnArr['referred_job']  = $serviceName;
             $returnArr['candidate_tags']    = $candidateTags;
-            $returnArr['candidate_status']  = array($personalStatus);
+            $returnArr['candidate_status']  = $personalStatus;
             $returnArr['referral_status']   = !empty($relation->referral_status) ? $relation->referral_status : 'New';
             #candidate professional details form here
             $returnArr['current_company_name']      = !empty($candidateArr['current_company_name']) ? $candidateArr['current_company_name'] : '' ;//'EnterPi Software Solutions Pvt Ltd';
