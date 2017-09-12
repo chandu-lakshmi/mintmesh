@@ -550,5 +550,17 @@ return array(
         "success" => "Successfully listed",
         "failure" => "No records found",
         "auth_key_failure" => "Invalid authentication key"
+    ),
+    "add_candidate_tag_jobs" => array(
+        "success" => "Successfully Assigned",
+        "failure" => "No records found",
+    ),
+    "add_candidate_email" => array(
+        "success" => "Successfully Sent",
+        "failure" => "No records found",
+    ),
+    "add_candidate_comment" => array(
+        "success" => "Successfully Added",
+        "failure" => "No records found"
     )
 );

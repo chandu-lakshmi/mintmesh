@@ -65,7 +65,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                 $lId = $lastInsertId[0]->id;
                 #add Candidate Activity Logs here
                 $moduleType   = 3;
-                $activityText = 'Comment Added';
+                $activityText = $comment;//'Comment Added';
                 $activityLog  = $this->addCandidateActivityLogs($companyId, $referenceId, $candidateId, $userId, $moduleType, $activityText);
                 
                 $return = $this->getLastInsertComment($lId);
