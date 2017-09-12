@@ -1139,7 +1139,9 @@ class CandidatesGateway {
             $arrayNewEmail['email'] = array(
                'id'            => $returnArr[0]->id,
                'to_name'       => $returnArr[0]->to_name,
-               'from_name'     => $returnArr[0]->from,
+               'to_emailid'    => $returnArr[0]->to,
+               'from_emailid'  => $returnArr[0]->from,
+               'from_name'     => $returnArr[0]->from_name,
                'subject'       => $subject,
                'body'          => $returnArr[0]->body,
                'created_by'    => $returnArr[0]->created_by,
