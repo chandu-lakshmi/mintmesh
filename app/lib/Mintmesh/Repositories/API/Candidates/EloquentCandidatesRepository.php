@@ -277,17 +277,14 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
          public function getCandidateTags($companyId = 0, $referenceId = 0, $candidateId = 0){
             $result = '';
             if($companyId) {
-                $sql = "SELECT ct.id, ctl.tag_name, ct.created_at from candidate_tags ct INNER JOIN candidates_tags_list ctl ON (ctl.id=ct.tag_id) where ct.company_id = '".$companyId."'  ";
+                $sql = "SELECT ct.id, ctl.id as tag_id, ctl.tag_name, ct.created_at from candidate_tags ct INNER JOIN candidates_tags_list ctl ON (ctl.id=ct.tag_id) where ct.company_id = '".$companyId."'  ";
                 if(!empty($candidateId)){
                     $sql .=" AND ct.candidate_id= '".$candidateId."' ";
                 }
                 $sql .=" order by id desc ";
                 $result = DB::Select($sql);
             }
-            return $result;
-            
-            
-            
+            return $result;  
         }
         
         
@@ -327,8 +324,8 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
          $return = FALSE;
           if(!empty($companyId) && (!empty($referenceId) || !empty($candidateId))){ 
                 $status_sql = "SELECT id,status_name from candidate_personal_info_status where  company_id = '".$companyId."'  ";
-                if(!empty($referenceId)){
-                    $status_sql .=" AND reference_id= '".$referenceId."' ";
+                if(!empty($candidateId)){
+                    $status_sql .=" AND candidate_id= '".$candidateId."' ";
                 }
                 $return = DB::Select($status_sql);
           }    
