@@ -233,7 +233,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         }
         
         public function getlastInsertEmail($lId) {
-            $sqlE = "SELECT cse.id, cse.to_name, cse.from, cet.subject, cse.custom_subject, cse.body, CONCAT(u.firstname,'',u.lastname) AS created_by,cse.created_at
+            $sqlE = "SELECT cse.id, cse.to, cse.to_name, cse.from_name, cse.from, cet.subject, cse.custom_subject, cse.body, CONCAT(u.firstname,'',u.lastname) AS created_by,cse.created_at
                         FROM candidate_sent_emails cse
                         INNER JOIN candidate_email_templates cet ON (cet.id=cse.subject)
                         INNER JOIN users u ON (u.id=cse.created_by) where cse.id = '".$lId."' ";
