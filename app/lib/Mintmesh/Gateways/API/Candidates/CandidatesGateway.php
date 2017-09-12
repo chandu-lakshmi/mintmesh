@@ -375,7 +375,7 @@ class CandidatesGateway {
         $referenceId = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
         
-        $input['interview_date'] = date('Y-m-d', strtotime($input['interview_date']));
+        $input['interview_date'] = $intDate = date('Y-m-d', strtotime($input['interview_date']));
         #get company details here
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
