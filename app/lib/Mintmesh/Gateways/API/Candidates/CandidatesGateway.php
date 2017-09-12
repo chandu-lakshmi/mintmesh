@@ -248,6 +248,19 @@ class CandidatesGateway {
             {
                 $extraDetails = $this->userGateway->formUserMoreDetailsArray($moreDetails);
             }
+            #get user Experience details here
+            $returnArr['total_experience']  = !empty($extraDetails['total_experience']) ? $extraDetails['total_experience'] : '';
+            $returnArr['Experience']        = !empty($extraDetails['Experience']) ? $extraDetails['Experience'] : '';
+            #current company details here
+            if(isset($extraDetails['Experience']) && !empty($extraDetails['Experience'][0])){
+                $expArr    = $extraDetails['Experience'][0];
+                $startDate = $expArr['start_date'];
+                $endDate   = $expArr['end_date'];
+                $returnArr['current_company_name']     =  $expArr['company_name'];
+                $returnArr['current_company_location'] =  $expArr['location'];
+                $returnArr['current_company_position'] =  $expArr['job_title'];
+                $returnArr['current_company_details']  =  $startDate." - ".$endDate;
+            }
             #get user skills here
             $skills = $this->neoUserRepository->getUserSkills($candidateEmail);
             if (!empty($skills))
@@ -314,6 +327,7 @@ class CandidatesGateway {
             $candidateId    = $candidate->getID();
             $serviceName    = !empty($postDetails->service_name) ? $postDetails->service_name : '';
             $candidateArr   = $this->getCandidateFullDetails($candidateEmail);
+           
             #get skills form here
             if(!empty($candidateArr['skills'])){
                 foreach ($candidateArr['skills'] as $val){
@@ -362,10 +376,10 @@ class CandidatesGateway {
             $returnArr['candidate_tags']  = $candidateTags;
             $returnArr['referral_status']   = !empty($relation->referral_status) ? $relation->referral_status : 'New';
             #candidate professional details form here
-            $returnArr['current_company_name']      = '';//'EnterPi Software Solutions Pvt Ltd';
-            $returnArr['current_company_details']   = '';//'May 2015 - Present(2 years 3 months)';
-            $returnArr['current_company_location']  = '';//'Hyderabad Area, India';
-            $returnArr['current_company_position']  = '';//'Sr Android Engineer';
+            $returnArr['current_company_name']      = !empty($candidateArr['current_company_name']) ? $candidateArr['current_company_name'] : '' ;//'EnterPi Software Solutions Pvt Ltd';
+            $returnArr['current_company_details']   = !empty($candidateArr['current_company_details']) ? $candidateArr['current_company_details'] : '' ;//'May 2015 - Present(2 years 3 months)';
+            $returnArr['current_company_location']  = !empty($candidateArr['current_company_location']) ? $candidateArr['current_company_location'] : '' ;//'Hyderabad Area, India';
+            $returnArr['current_company_position']  = !empty($candidateArr['current_company_position']) ? $candidateArr['current_company_position'] : '' ;//'Sr Android Engineer';
             $returnArr['previous_company_name']     = '';//'HTC Global Services (India) Private Ltd';
             $returnArr['previous_company_details']  = '';//'May 2013 - May 2015 Present(2 years)';
             $returnArr['previous_company_location'] = '';//'Bangalore Area, India';
