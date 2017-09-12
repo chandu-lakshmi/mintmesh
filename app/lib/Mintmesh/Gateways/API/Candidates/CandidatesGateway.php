@@ -1162,7 +1162,7 @@ class CandidatesGateway {
                             'activity_type'     => 'candidate_comments',
                             'activity_status'   => 'Comment Added',
                             'activity_message'  => $message,
-                            'activity_comment'  => '',
+                            'activity_comment'  => $message,
                             'activity_by'       => 'by '.$returnArr[0]->created_by,
                             'activity_on'       => $timelinedate
                 );

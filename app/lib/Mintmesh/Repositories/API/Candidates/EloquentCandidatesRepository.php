@@ -278,8 +278,8 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
             $result = '';
             if($companyId) {
                 $sql = "SELECT ct.id, ctl.tag_name, ct.created_at from candidate_tags ct INNER JOIN candidates_tags_list ctl ON (ctl.id=ct.tag_id) where ct.company_id = '".$companyId."'  ";
-                if(!empty($referenceId)){
-                    $sql .=" AND ct.reference_id= '".$referenceId."' ";
+                if(!empty($candidateId)){
+                    $sql .=" AND ct.candidate_id= '".$candidateId."' ";
                 }
                 $sql .=" order by id desc ";
                 $result = DB::Select($sql);
