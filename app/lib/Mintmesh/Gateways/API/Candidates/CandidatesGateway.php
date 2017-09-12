@@ -404,15 +404,35 @@ class CandidatesGateway {
             $dataSet['interview_who']       = $candidateName;
             $dataSet['company_logo']        = $companyLogo;
             $dataSet['name']                = $candidateName;
+            
+            
+            $notes       = !empty($input['notes']) ? $input['notes'] : '';
+            $fromTime    = !empty($input['interview_from_time']) ? $input['interview_from_time'] : '';
+            $toTime      = !empty($input['interview_to_time']) ? $input['interview_to_time'] : '';
+            $location    = !empty($input['interview_location']) ? $input['interview_location'] : '';
+            
+            $emailData = array();
+            $emailData['from_name']     = $userName;//"Company Epi 1";        
+            $emailData['from_address']  = $userEmailId;//"webmaster@example.com";        
+            $emailData['to_name']       = $candidateName;//"karthik enterpi";        
+            $emailData['to_address']    = $candidateEmail;//"j.karthik@enterpi.com";        
+            $emailData['start_time']    = $fromTime;//"09-03-2017 16:00";        
+            $emailData['end_time']      = $toTime;//"09-03-2017 17:00";        
+            $emailData['subject']       = $subject;//"Interview with Epi";        
+            $emailData['description']   = $notes;//"My Awesome Description";        
+            $emailData['location']      = $location;//"Hyderabad, Telangana, India";
+            $emailData['domain']        = $companyName;//'exchangecore.com';
+               
+            $emailStatus = self::EMAIL_FAILURE_STATUS;
+            $emailSent = $this->sendEvent($emailData);   
 
             $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.candidate_interview_schedule');
             $this->userEmailManager->emailId = $candidateEmail;
             $this->userEmailManager->dataSet = $dataSet;
             $this->userEmailManager->subject = $subject;
             $this->userEmailManager->name    = $candidateName;
-            $emailSent = $this->userEmailManager->sendMail();
+            //$emailSent = $this->userEmailManager->sendMail();
             //log email status
-            $emailStatus = self::EMAIL_FAILURE_STATUS;
             if (!empty($emailSent)) {
                 $emailStatus = self::EMAIL_SUCCESS_STATUS;
                 $returnArr   = $this->candidatesRepository->addCandidateSchedule($input, $userId, $referenceId, $candidateId, $companyId);
@@ -436,13 +456,30 @@ class CandidatesGateway {
                 foreach ($emails as $email) {
                     
                    if ($email && preg_match('/^[^\@]+@.*\.[a-z]{2,6}$/i', $email)) {
+                       
+                       $referredBy     = '';
+                       $emailName      = $this->postGateway->getCandidateFullNameByEmail($email, $referredBy, $companyId); 
+                       
+                        $emailData = array();
+                        $emailData['from_name']     = $companyName;//"Company Epi 1";        
+                        $emailData['from_address']  = $userEmailId;//"webmaster@example.com";        
+                        $emailData['to_name']       = $emailName;//"karthik enterpi";        
+                        $emailData['to_address']    = $email;//"j.karthik@enterpi.com";        
+                        $emailData['start_time']    = $fromTime;//"09-03-2017 16:00";        
+                        $emailData['end_time']      = $toTime;//"09-03-2017 17:00";        
+                        $emailData['subject']       = $subject;//"Interview with Epi";        
+                        $emailData['description']   = $notes;//"My Awesome Description";        
+                        $emailData['location']      = $location;//"Hyderabad, Telangana, India";
+                        $emailData['domain']        = $companyName;//'exchangecore.com';
+
+                        $email_sent = $this->sendEvent($emailData); 
 
                         $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.candidate_interview_schedule');
                         $this->userEmailManager->emailId = $email;
                         $this->userEmailManager->dataSet = $dataSet;
                         $this->userEmailManager->subject = $subject;
                         $this->userEmailManager->name    = $companyName;
-                        $email_sent = $this->userEmailManager->sendMail();
+                        //$email_sent = $this->userEmailManager->sendMail();
                         //log email status
                         $emailStatus = self::EMAIL_FAILURE_STATUS;
                         if (!empty($email_sent)) {
@@ -1266,54 +1303,46 @@ class CandidatesGateway {
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
        
-   }
+    }
    
    
-   public function testEmail($input) {
-        
-        $data = $returnArr  = $arrayNewEmail = array();
-        #basic input params
-        $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
-        $referenceId = !empty($input['reference_id']) ? $input['reference_id'] : '';
-        $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
-        #email input
-        $emailSubject  = !empty($input['email_subject']) ? $input['email_subject'] : '';
-        $emailSubject  = !empty($input['email_subject_custom']) ? $input['email_subject_custom'] : $emailSubject;
-        $emailBody     = !empty($input['email_body']) ? $input['email_body'] : '';
-        $subjectId     = !empty($input['subject_id']) ? $input['subject_id'] : '';
-        #get company Details by company code
-        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
-        $companyLogo    = !empty($companyDetails[0]->logo) ? $companyDetails[0]->logo : ''; 
-        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
-        #get the logged in user details
-        $this->loggedinUser = $this->referralsGateway->getLoggedInUser(); 
-        $userId             = $this->loggedinUser->id;
-        $userName           = $this->loggedinUser->firstname.' '.$this->loggedinUser->lastname;
-        $userEmailId        = $this->loggedinUser->emailid;
-        #get candidate details here
-        $resultArr   = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
-        
-        if($resultArr){
-            #form cndidate details here
-            $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
-            $relation       = isset($resultArr[1]) ? $resultArr[1] : '';
-            $candidateEmail = $candidate->emailid; 
-            $candidateId    = $candidate->getID();
-            $referredBy     = !empty($relation->referred_by) ? $relation->referred_by : '';
-            $candidateName  = $this->postGateway->getCandidateFullNameByEmail($candidateEmail, $referredBy, $companyId);    
-            #email input form here
-            $dataSet = $userArr = array();
-            $dataSet['name']          = $candidateName;
-            $dataSet['email']         = $candidateEmail;
-            $dataSet['email_subject'] = $emailSubject;
-            $dataSet['subject_id']    = $subjectId;
-            $dataSet['email_body']    = $emailBody;
-            $dataSet['company_logo']  = $companyLogo;
-            $from_address = $to_name =$to_address = $subject = $location ='hyd';
-            $startTime = gmdate('Y-m-d H:i:s');
-            $endTime = date('Y-m-d H:i:s');
-            $domain = 'www.google.com';
-            $ical = 'BEGIN:VCALENDAR' . "\r\n" .
+   
+    public function sendEvent($emailData = array()) {
+            
+        $return = TRUE;
+               $from_name    = $emailData['from_name'];//"Company Epi 1";        
+               $from_address = $emailData['from_address'];//"webmaster@example.com";        
+               $to_name      = $emailData['to_name'];//"karthik enterpi";        
+               $to_address   = $emailData['to_address'];//"j.karthik@enterpi.com";        
+               $startTime    = $emailData['start_time'];//"09-03-2017 16:00";        
+               $endTime      = $emailData['end_time'];//"09-03-2017 17:00";        
+               $subject      = $emailData['subject'];//"Interview with Epi";        
+               $description  = $emailData['description'];//"My Awesome Description";        
+               $location     = $emailData['location'];//"Hyderabad, Telangana, India";
+               $domain       = $emailData['domain'];//'exchangecore.com';
+
+               try{
+                    //Create Email Headers
+                     $mime_boundary = "----Meeting Booking----".MD5(TIME());
+                     $headers = "From: ".$from_name." <".$from_address.">\n";
+                     $headers .= "Reply-To: ".$from_name." <".$from_address.">\n";
+                     $headers .= "MIME-Version: 1.0\n";
+                     $headers .= "Content-Type: multipart/alternative; boundary=\"$mime_boundary\"\n";
+                     $headers .= "Content-class: urn:content-classes:calendarmessage\n";
+
+                    //Create Email Body (HTML)
+                     $message = "--$mime_boundary\r\n";
+                     $message .= "Content-Type: text/html; charset=UTF-8\n";
+                     $message .= "Content-Transfer-Encoding: 8bit\n\n";
+                     /*$message .= "<html>\n";
+                     $message .= "<body>\n";
+                     $message .= '<p>Dear '.$to_name.',</p>';
+                     $message .= '<p>'.$description.'</p>';
+                     $message .= "</body>\n";
+                     $message .= "</html>\n";*/
+                     $message .= "--$mime_boundary\r\n";
+
+                    $ical = 'BEGIN:VCALENDAR' . "\r\n" .
                     'PRODID:-//Microsoft Corporation//Outlook 10.0 MIMEDIR//EN' . "\r\n" .
                     'VERSION:2.0' . "\r\n" .
                     'METHOD:REQUEST' . "\r\n" .
@@ -1334,8 +1363,8 @@ class CandidatesGateway {
                     'TZNAME:EDST' . "\r\n" .
                     'END:DAYLIGHT' . "\r\n" .
                     'END:VTIMEZONE' . "\r\n" .    
-                   'BEGIN:VEVENT' . "\r\n" .
-                    'ORGANIZER;CN="karthik":MAILTO:'.$from_address. "\r\n" .
+                    'BEGIN:VEVENT' . "\r\n" .
+                    'ORGANIZER;CN="'.$from_name.'":MAILTO:'.$from_address. "\r\n" .
                     'ATTENDEE;CN="'.$to_name.'";ROLE=REQ-PARTICIPANT;RSVP=TRUE:MAILTO:'.$to_address. "\r\n" .
                     'LAST-MODIFIED:' . date("Ymd\TGis") . "\r\n" .
                     'UID:'.date("Ymd\TGis", strtotime($startTime)).rand()."@".$domain."\r\n" .
@@ -1355,58 +1384,26 @@ class CandidatesGateway {
                     'END:VALARM' . "\r\n" .
                     'END:VEVENT'. "\r\n" .
                     'END:VCALENDAR'. "\r\n";
+                    $message .= 'Content-Type: text/calendar;name="meeting.ics";method=REQUEST'."\n";
+                    $message .= "Content-Transfer-Encoding: 8bit\n\n";
+                    $message .= $ical;
 
-            $dataSet['calendar_event'] = $ical;
-            
-            
-            #send email here
-            $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.candidate_invitation');
-            $this->userEmailManager->emailId = $candidateEmail;
-            $this->userEmailManager->dataSet = $dataSet;
-            $this->userEmailManager->subject = $emailSubject;
-            $this->userEmailManager->name    = $candidateName;
-            $email_sent = $this->userEmailManager->sendMail();
-            #logged in user here
-            $userArr['user_id']      =  $userId;
-            $userArr['user_name']    =  $userName;
-            $userArr['user_emailid'] =  $userEmailId;
-            //log email status
-            $emailStatus = self::EMAIL_FAILURE_STATUS;
-            if (!empty($email_sent)) {
-                $emailStatus = self::EMAIL_SUCCESS_STATUS;
-                $returnArr   = $this->candidatesRepository->addCandidateEmail($dataSet, $userArr, $companyId, $referenceId, $candidateId);
-               
-            }
-            $emailLog = array(
-                'emails_types_id'   => 9,
-                'from_user'         => $userId,
-                'from_email'        => $userEmailId,
-                'to_email'          => $this->appEncodeDecode->filterString(strtolower($candidateEmail)),
-                'related_code'      => $companyCode,
-                'sent'              => $emailStatus,
-                'ip_address'        => $_SERVER['REMOTE_ADDR']
-            );
-            //$this->userRepository->logEmail($emailLog);
+                    $mailsent = mail($to_address, $subject, $message, $headers);
 
-            if($emailStatus == self::EMAIL_SUCCESS_STATUS){
-                $responseCode    = self::SUCCESS_RESPONSE_CODE;
-                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
-                $responseMessage = array('msg' => array(Lang::get('MINTMESH.resendActivationLink.success')));
-            } else {
-                $responseCode    = self::ERROR_RESPONSE_CODE;
-                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-                $responseMessage = array('msg' => array(Lang::get('MINTMESH.resendActivationLink.failure')));
-            }
-            
-        } else {
-            $responseCode    = self::ERROR_RESPONSE_CODE;
-            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.resendActivationLink.failure')));
-        }
-        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
-    }
+                       if( count(Mail::failures()) > 0 ) {
+                          $return = false ;
+                       } else {
+                           $return = true ;
+                       }
+                }
+                 catch(\RuntimeException $e)
+                {
+                    $return = false ;
+                }
+                
+            return $return;    
+       }
    
-
 }
 
 ?>
