@@ -66,7 +66,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                 #add Candidate Activity Logs here
                 $moduleType   = 3;
                 $activityText = $comment;//'Comment Added';
-                $activityLog  = $this->addCandidateActivityLogs($companyId, $referenceId, $candidateId, $userId, $moduleType, $activityText);
+                $activityLog  = $this->addCandidateActivityLogs($companyId, $referenceId, $candidateId, $userId, $moduleType, $activityText, $comment);
                 
                 $return = $this->getLastInsertComment($lId);
                  
@@ -121,7 +121,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                 #add Candidate Activity Logs here
                 $moduleType   = 2;
                 $activityText = 'Email Sent';
-                $activityLog  = $this->addCandidateActivityLogs($companyId, $referenceId, $candidateId, $userId, $moduleType, $activityText);
+                $activityLog  = $this->addCandidateActivityLogs($companyId, $referenceId, $candidateId, $userId, $moduleType, $activityText, $emailSubject);
                $return = $this->getlastInsertEmail($lId);
             }
             return $return;
