@@ -1221,6 +1221,7 @@ class CandidatesGateway {
         $referenceId = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
         $tag_id     = !empty($input['tag_id']) ? $input['tag_id'] : '';
+        $tag_name     = !empty($input['tag_name']) ? $input['tag_name'] : '';
         #get company details here
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
@@ -1241,6 +1242,7 @@ class CandidatesGateway {
             if($lastInsert){
                // $arrayNewComment = $this->getLastInsertComment($returnArr);
                 $arrayNewComment['id'] = $lastInsert;
+                $arrayNewComment['tag_name'] = $tag_name;
                 $data = $arrayNewComment;//return career settings details
                 $responseCode    = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
@@ -1424,7 +1426,8 @@ class CandidatesGateway {
             $returnArr    = $this->candidatesRepository->deleteCandidateTag($companyId, $id, $referenceId, $candidateId, $userId);
            
             if($returnArr){
-                //$data = $returnArr;
+                $arrayNewComment['id'] = $id;
+                $data = $arrayNewComment;//return career settings details
                 $responseCode    = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.deleteContact.success')));
