@@ -300,5 +300,40 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
             return true;
         }
         
+     public function addCandidatePersonalStatus($companyId = 0,$referenceId = 0, $candidateId = 0, $userId = 0,$status_name){
+            $return = array('status' => FALSE);
+            if(!empty($companyId) && (!empty($referenceId) || !empty($candidateId))){ 
+                $status_sql = "SELECT * from candidate_personal_info_status where  company_id = '".$companyId."'  ";
+                if(!empty($referenceId)){
+                    $status_sql .=" AND reference_id= '".$referenceId."' ";
+                }
+                $queryresult = DB::Select($status_sql);
+                if($queryresult){
+                   $sql = "UPDATE candidate_personal_info_status SET status_name='".$status_name."',updated_at='".gmdate('Y-m-d H:i:s')."' where id='".$queryresult[0]->id."'" ;
+                DB::statement($sql);
+                $return = array('status' => true,'msg' => 'Successfully Updated');
+                }else{
+                     $sql = "INSERT INTO candidate_personal_info_status (`company_id`, `reference_id`, `candidate_id`, `status_name`, `created_by`, `created_at`)" ;
+                $sql.=" VALUES(".$companyId.", ".$referenceId.", ".$candidateId.", '".$status_name."', ".$userId.", '".gmdate('Y-m-d H:i:s')."')" ;
+                DB::statement($sql);
+                $return = array('status' => true,'msg' => 'Successfully Created');
+                }
+               
+            }
+            return $return;
+        }    
+        
+     public function getCandidatePersonalStatus($companyId = 0,$referenceId = 0, $candidateId = 0){
+         $return = FALSE;
+          if(!empty($companyId) && (!empty($referenceId) || !empty($candidateId))){ 
+                $status_sql = "SELECT id,status_name from candidate_personal_info_status where  company_id = '".$companyId."'  ";
+                if(!empty($referenceId)){
+                    $status_sql .=" AND reference_id= '".$referenceId."' ";
+                }
+                $return = DB::Select($status_sql);
+          }    
+          return $return;
+     }
+        
         
 }

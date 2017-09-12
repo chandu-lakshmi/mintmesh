@@ -34,6 +34,12 @@ interface CandidatesRepository {
      
      
      public function deleteCandidateTag($companyId, $id, $referenceId, $candidateId, $userId);
+     
+     
+     public function addCandidatePersonalStatus($companyId,$referenceId, $candidateId, $userId,$status_name);
+     
+     
+     public function getCandidatePersonalStatus($companyId,$referenceId, $candidateId);
    
      
 }

@@ -474,6 +474,60 @@ class CandidatesController extends \BaseController {
     return $return;
     }
     
+    /**
+     * Get Posts
+     * 
+     * POST/addCandidatePersonalStatus
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code 
+     * @param integer $reference_id 
+     * @param string $referral_status
+     * @return Response
+     */
+    public function addCandidatePersonalStatus() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validateaddCandidatePersonalStatusInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->addCandidatePersonalStatus($inputUserData));
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    }
+    
+    /**
+     * Get Posts
+     * 
+     * POST/getCandidatePersonalStatus
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code 
+     * @param integer $reference_id 
+     * @param string $referral_status
+     * @return Response
+     */
+    public function getCandidatePersonalStatus() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validategetCandidatePersonalStatusInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->getCandidatePersonalStatus($inputUserData));
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    }
+    
     
 }
 

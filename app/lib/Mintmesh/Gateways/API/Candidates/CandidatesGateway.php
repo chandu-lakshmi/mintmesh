@@ -177,6 +177,12 @@ class CandidatesGateway {
     public function validatedeleteCandidateTagInput($input) {
         return $this->doValidation('delete_candidate_tag', 'MINTMESH.user.valid');
     }
+    public function validateaddCandidatePersonalStatusInput($input) {
+        return $this->doValidation('add_candidate_personal_status', 'MINTMESH.user.valid');
+    }
+    public function validategetCandidatePersonalStatusInput($input) {
+        return $this->doValidation('get_candidate_personal_status', 'MINTMESH.user.valid');
+    }
     
     public function getCandidateEmailTemplates($input) {
         
@@ -1445,7 +1451,89 @@ class CandidatesGateway {
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
        
     }
+    
+    
+    public function addCandidatePersonalStatus($input) {
+        $data = $returnArr = $arrayNewComment = array();
+        $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
+        $referenceId = !empty($input['reference_id']) ? $input['reference_id'] : '';
+        $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
+        $status_name     = !empty($input['status_name']) ? $input['status_name'] : '';
+        
+        #get company details here
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+        #get Logged In User details here
+        $this->loggedinUser = $this->referralsGateway->getLoggedInUser(); 
+        $userId   = $this->loggedinUser->id;
+        #get candidate details here
+        $resultArr  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
+        if($resultArr){
+            $neoInput       = $refInput = array();
+            $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
+            $candidateEmail = $candidate->emailid;
+            $candidateId    = $candidate->getID();
+        
+            $returnArr = $this->candidatesRepository->addCandidatePersonalStatus($companyId,$referenceId, $candidateId, $userId,$status_name);
+          
+            #check get career settings details not empty
+            if($returnArr['status']==true){
+                //$data = $arrayNewComment;//return career settings details
+                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => $returnArr['msg'] );
+            } else {
+                $responseCode    = self::ERROR_RESPONSE_CODE;
+                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.user.create_failure')));
+            }
+        } else {
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.user.create_failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+    }
    
+    public function getCandidatePersonalStatus($input) {
+       
+       $data = $returnArr = $arrayReturn = array();
+        $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
+        $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
+        $candidateId  = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
+        #get company details here
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+        #get candidate details here
+       $resultArrs     = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
+       if(!empty($resultArrs)){
+            
+            $neoInput       = $refInput = array();
+            $candidate      = isset($resultArrs[0]) ? $resultArrs[0] : '';
+            $candidateEmail = $candidate->emailid;
+            $candidateId    = $candidate->getID();
+            #get Candidate Comments here
+            $returnArr    = $this->candidatesRepository->getCandidatePersonalStatus($companyId,$referenceId,$candidateId);
+            if($returnArr){
+                $data = $returnArr;
+                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+            } else {
+                $responseCode    = self::ERROR_RESPONSE_CODE;
+                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            }
+        } else {
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+       
+    }
+    
+    
 }
 
 ?>
