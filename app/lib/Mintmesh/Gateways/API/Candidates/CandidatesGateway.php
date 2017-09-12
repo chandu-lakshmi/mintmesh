@@ -280,7 +280,7 @@ class CandidatesGateway {
     
     public function getCandidateDetails($input) {
         
-        $data   = $returnArr = $resultArr = $contactArr = array();
+        $data   = $returnArr = $resultArr = $contactArr = $candidateTags = array();
         $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId  = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
@@ -326,6 +326,16 @@ class CandidatesGateway {
             $cvName = !empty($candidateArr['cv_original_name']) ? $candidateArr['cv_original_name'] : Lang::get('MINTMESH.candidates.awaiting_resume');
             $cvPath = !empty($candidateArr['cv_path']) ? $candidateArr['cv_path'] : '';
             
+            $candidateTagsArr    = $this->candidatesRepository->getCandidateTags($companyId, $referenceId, $candidateId);
+            if(!empty($candidateTagsArr[0])){
+                foreach ($candidateTagsArr as $value) {
+                    $record = array();
+                    $record['id']       = $value->id;
+                    $record['tag_name'] = $value->tag_name;
+                    $candidateTags[] = $record;
+                }
+            }
+            
             $returnArr['candidate_id']  = $candidateId;
             $returnArr['name']          = $candidateName;
             $returnArr['emailid']       = $candidateEmail;//'nitinranganath@gmail.com';
@@ -343,6 +353,7 @@ class CandidatesGateway {
             $returnArr['referred_by']   = $referredByName;
             $returnArr['referred_at']   = $createdAt;
             $returnArr['referred_job']  = $serviceName;
+            $returnArr['candidate_tags']  = $candidateTags;
             $returnArr['referral_status']   = !empty($relation->referral_status) ? $relation->referral_status : 'New';
             #candidate professional details form here
             $returnArr['current_company_name']      = '';//'EnterPi Software Solutions Pvt Ltd';
