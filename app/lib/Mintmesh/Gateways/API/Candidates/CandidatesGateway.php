@@ -1145,11 +1145,12 @@ class CandidatesGateway {
                             'created_by'       => $returnArr[0]->created_by,
                             'created_at'       => $timelinedate
                     );
+                    $message = $returnArr[0]->comment;
                     $arrayNewComment['timeline']  = array(
                             'activity_id'       => 0,
                             'activity_type'     => 'candidate_comments',
                             'activity_status'   => 'Comment Added',
-                            'activity_message'  => '',
+                            'activity_message'  => $message,
                             'activity_comment'  => '',
                             'activity_by'       => 'by '.$returnArr[0]->created_by,
                             'activity_on'       => $timelinedate
@@ -1205,12 +1206,12 @@ class CandidatesGateway {
                         'created_by'            => 'by '.$returnArr[0]->created_by,
                         'created_at'            => $timelinedate
                 );
-               
+                $message =  "Scheduled ".$returnArr[0]->schedule_for." Interview by";
                 $arrayNewSchedules['timeline']  = array(
                             'activity_id'       => 0,
                             'activity_type'     => 'candidate_schedules',
-                            'activity_status'   => $returnArr[0]->schedule_for." Schedule",
-                            'activity_message'  => '',
+                            'activity_status'   => $returnArr[0]->schedule_for,
+                            'activity_message'  => $message,
                             'activity_comment'  => '',
                             'activity_by'       => 'by '.$returnArr[0]->created_by,
                             'activity_on'       => $timelinedate
@@ -1441,7 +1442,7 @@ class CandidatesGateway {
                             $message =  "Profile <b>Shortlisted</b> by";
                             break;
                         case 'SCHEDULED FOR INTERVIEW':
-                            $message =  "Scheduled For <b>Interview</b> by";
+                            $message =  "<b>Scheduled Interview</b> by";
                             break;
                         case 'NOT SUITABLE':
                             $message =  "Profile is <b>Not Suitable</b> by";
