@@ -411,18 +411,20 @@ class CandidatesGateway {
             $fromTime    = !empty($input['interview_from_time']) ? $input['interview_from_time'] : '';
             $toTime      = !empty($input['interview_to_time']) ? $input['interview_to_time'] : '';
             $location    = !empty($input['interview_location']) ? $input['interview_location'] : '';
+            $scheduleFor = !empty($input['schedule_for']) ? $input['schedule_for'] : $subject;
             
             $emailData = array();
+            $emailData = array();
             $emailData['from_name']     = $userName;//"Company Epi 1";        
-            $emailData['from_address']  = $userEmailId;//"webmaster@example.com";        
+            $emailData['from_address']  = "'support@mintmesh.com";        
             $emailData['to_name']       = $candidateName;//"karthik enterpi";        
             $emailData['to_address']    = $candidateEmail;//"j.karthik@enterpi.com";        
-            $emailData['start_time']    = $fromTime;//"09-03-2017 16:00";        
-            $emailData['end_time']      = $toTime;//"09-03-2017 17:00";        
-            $emailData['subject']       = $subject;//"Interview with Epi";        
+            $emailData['start_time']    = $intDate." ".$fromTime;//"09-03-2017 16:00";        
+            $emailData['end_time']      = $intDate." ".$toTime;//"09-03-2017 17:00";        
+            $emailData['subject']       = $scheduleFor;//"Interview with Epi";        
             $emailData['description']   = $notes;//"My Awesome Description";        
             $emailData['location']      = $location;//"Hyderabad, Telangana, India";
-            $emailData['domain']        = $companyName;//'exchangecore.com';
+            $emailData['domain']        = 'mintmesh.com';
                
             $emailStatus = self::EMAIL_FAILURE_STATUS;
             $emailSent = $this->sendEvent($emailData);   
@@ -462,16 +464,16 @@ class CandidatesGateway {
                        $emailName      = $this->postGateway->getCandidateFullNameByEmail($email, $referredBy, $companyId); 
                        
                         $emailData = array();
-                        $emailData['from_name']     = $companyName;//"Company Epi 1";        
-                        $emailData['from_address']  = $userEmailId;//"webmaster@example.com";        
+                        $emailData['from_name']     = $userName;//"Company Epi 1";        
+                        $emailData['from_address']  = "'support@mintmesh.com";        
                         $emailData['to_name']       = $emailName;//"karthik enterpi";        
                         $emailData['to_address']    = $email;//"j.karthik@enterpi.com";        
-                        $emailData['start_time']    = $fromTime;//"09-03-2017 16:00";        
-                        $emailData['end_time']      = $toTime;//"09-03-2017 17:00";        
-                        $emailData['subject']       = $subject;//"Interview with Epi";        
+                        $emailData['start_time']    = $intDate." ".$fromTime;//"09-03-2017 16:00";        
+                        $emailData['end_time']      = $intDate." ".$toTime;//"09-03-2017 17:00";        
+                        $emailData['subject']       = $scheduleFor;//"Interview with Epi";        
                         $emailData['description']   = $notes;//"My Awesome Description";        
                         $emailData['location']      = $location;//"Hyderabad, Telangana, India";
-                        $emailData['domain']        = $companyName;//'exchangecore.com';
+                        $emailData['domain']        = 'mintmesh.com';
 
                         $email_sent = $this->sendEvent($emailData); 
 
@@ -1402,7 +1404,7 @@ class CandidatesGateway {
                     $return = false ;
                 }
                 
-            return $return;    
+            return true;    
        }
    
 }
