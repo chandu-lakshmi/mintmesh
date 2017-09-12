@@ -227,7 +227,7 @@ class CandidatesGateway {
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -286,7 +286,7 @@ class CandidatesGateway {
     
     public function getCandidateDetails($input) {
         
-        $data   = $returnArr = $resultArr = $contactArr = array();
+        $data   = $returnArr = $resultArr = $contactArr = $candidateTags = array();
         $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId  = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
@@ -332,6 +332,16 @@ class CandidatesGateway {
             $cvName = !empty($candidateArr['cv_original_name']) ? $candidateArr['cv_original_name'] : Lang::get('MINTMESH.candidates.awaiting_resume');
             $cvPath = !empty($candidateArr['cv_path']) ? $candidateArr['cv_path'] : '';
             
+            $candidateTagsArr    = $this->candidatesRepository->getCandidateTags($companyId, $referenceId, $candidateId);
+            if(!empty($candidateTagsArr[0])){
+                foreach ($candidateTagsArr as $value) {
+                    $record = array();
+                    $record['id']       = $value->id;
+                    $record['tag_name'] = $value->tag_name;
+                    $candidateTags[] = $record;
+                }
+            }
+            
             $returnArr['candidate_id']  = $candidateId;
             $returnArr['name']          = $candidateName;
             $returnArr['emailid']       = $candidateEmail;//'nitinranganath@gmail.com';
@@ -349,6 +359,7 @@ class CandidatesGateway {
             $returnArr['referred_by']   = $referredByName;
             $returnArr['referred_at']   = $createdAt;
             $returnArr['referred_job']  = $serviceName;
+            $returnArr['candidate_tags']  = $candidateTags;
             $returnArr['referral_status']   = !empty($relation->referral_status) ? $relation->referral_status : 'New';
             #candidate professional details form here
             $returnArr['current_company_name']      = '';//'EnterPi Software Solutions Pvt Ltd';
@@ -371,7 +382,7 @@ class CandidatesGateway {
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -524,7 +535,7 @@ class CandidatesGateway {
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.user.create_failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -603,17 +614,17 @@ class CandidatesGateway {
             if($emailStatus == self::EMAIL_SUCCESS_STATUS){
                 $responseCode    = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
-                $responseMessage = array('msg' => array(Lang::get('MINTMESH.resendActivationLink.success')));
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_email.success')));
             } else {
                 $responseCode    = self::ERROR_RESPONSE_CODE;
                 $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-                $responseMessage = array('msg' => array(Lang::get('MINTMESH.resendActivationLink.failure')));
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_email.failure')));
             }
             
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.resendActivationLink.failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -646,16 +657,16 @@ class CandidatesGateway {
                 $data = $arrayNewComment;//return career settings details
                 $responseCode    = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
-                $responseMessage = array('msg' => array(Lang::get('MINTMESH.user.create_success')));
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_comment.success')));
             } else {
                 $responseCode    = self::ERROR_RESPONSE_CODE;
                 $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-                $responseMessage = array('msg' => array(Lang::get('MINTMESH.user.create_failure')));
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_comment.failure')));
             }
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.user.create_failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -683,15 +694,38 @@ class CandidatesGateway {
                 foreach($activitiesArr as $activity){
                     $timelinedate = '';
                     $createdAt    = $activity->created_at;
-                    $timeZone     = !empty($input['time_zone']) ? $input['time_zone'] : 0;
                     $timelinedate = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
+                    $activityText = $activity->activity_text;
+                    $moduleType   = $activity->module_name;
+                    $comment      = $activity->comment;
+                    
+                    switch ($moduleType) {
+                        case 'candidate_schedules':
+                            $message =  "Scheduled ".$activityText." Interview by";
+                            break;
+                        case 'candidate_status':
+                            $message = $this->getCandidateStatusMessage($activityText);
+                            break;
+                        case 'candidate_link_job':
+                            $message = "Linked to ".$comment." by";
+                            break;
+                        case 'candidate_comments':
+                            $message = $comment;
+                            break;
+                        case 'candidate_emails':
+                            $message = '';
+                            break;
+                        default :
+                            $message = '';    
+                    }       
+                    
                     $returnArr[]  = array(
                             'activity_id'       => $activity->id,
                             'activity_type'     => $activity->module_name,
-                            'activity_status'   => $activity->activity_text,
-                            'activity_message'  => '',
-                            'activity_comment'  => $activity->comment,
-                            'activity_by'       => 'by '.$activity->created_by,
+                            'activity_status'   => $activityText,
+                            'activity_message'  => $message,
+                            'activity_comment'  => $comment,
+                            'activity_by'       => trim($activity->created_by),
                             'activity_on'       => $timelinedate
                     );
                 }
@@ -708,7 +742,7 @@ class CandidatesGateway {
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
         
@@ -774,16 +808,16 @@ class CandidatesGateway {
                 $data = $returnArr;
                 $responseCode    = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
-                $responseMessage = array('msg' => array(Lang::get('MINTMESH.apply_job.ref_success')));
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.success')));
             } else {
                 $responseCode    = self::ERROR_RESPONSE_CODE;
                 $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-                $responseMessage = array('msg' => array(Lang::get('MINTMESH.apply_job.failure')));
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.failure')));
             }
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.apply_job.referrer_invalid')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -818,7 +852,7 @@ class CandidatesGateway {
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -870,7 +904,7 @@ class CandidatesGateway {
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -930,7 +964,7 @@ class CandidatesGateway {
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -941,6 +975,7 @@ class CandidatesGateway {
         $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId  = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
+        $timeZone     = !empty($input['time_zone']) ? $input['time_zone'] : 0;
         $search       = !empty($input['search']) ? $input['search'] : '';
         #get company details here
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
@@ -965,12 +1000,14 @@ class CandidatesGateway {
                 $referredBy = isset ($refVal->referred_by) ? $refVal->referred_by : '';
                 
                 $referredByName = $this->postGateway->getReferredbyUserFullName($referredBy, $companyId);
+                $createdDate    = date("M d,Y", strtotime($this->appEncodeDecode->UserTimezone($createdAt, $timeZone)));
                 $timeline       = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
                 #form return result here 
                 $record['reference_id']   = $refVal->getID();
                 $record['post_name']      = isset ($postVal->service_name) ? $postVal->service_name : '';
                 $record['referred_by']    = $referredByName;
                 $record['referred_on']    = $timeline;
+                $record['referred_date']  = $createdDate;
                 $returnArr[] = $record;
             }
             $responseCode   = self::SUCCESS_RESPONSE_CODE;
@@ -984,7 +1021,7 @@ class CandidatesGateway {
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -1044,7 +1081,7 @@ class CandidatesGateway {
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -1108,7 +1145,7 @@ class CandidatesGateway {
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.apply_job.referrer_invalid')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -1125,12 +1162,13 @@ class CandidatesGateway {
                             'created_by'       => $returnArr[0]->created_by,
                             'created_at'       => $timelinedate
                     );
+                    $message = $returnArr[0]->comment;
                     $arrayNewComment['timeline']  = array(
                             'activity_id'       => 0,
                             'activity_type'     => 'candidate_comments',
                             'activity_status'   => 'Comment Added',
-                            'activity_message'  => '',
-                            'activity_comment'  => '',
+                            'activity_message'  => $message,
+                            'activity_comment'  => $message,
                             'activity_by'       => 'by '.$returnArr[0]->created_by,
                             'activity_on'       => $timelinedate
                 );
@@ -1185,12 +1223,12 @@ class CandidatesGateway {
                         'created_by'            => 'by '.$returnArr[0]->created_by,
                         'created_at'            => $timelinedate
                 );
-               
+                $message =  "Scheduled ".$returnArr[0]->schedule_for." Interview by";
                 $arrayNewSchedules['timeline']  = array(
                             'activity_id'       => 0,
                             'activity_type'     => 'candidate_schedules',
-                            'activity_status'   => $returnArr[0]->schedule_for." Schedule",
-                            'activity_message'  => '',
+                            'activity_status'   => $returnArr[0]->schedule_for,
+                            'activity_message'  => $message,
                             'activity_comment'  => '',
                             'activity_by'       => 'by '.$returnArr[0]->created_by,
                             'activity_on'       => $timelinedate
@@ -1262,7 +1300,7 @@ class CandidatesGateway {
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.user.create_failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -1300,7 +1338,7 @@ class CandidatesGateway {
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
        
@@ -1404,6 +1442,61 @@ class CandidatesGateway {
                 
             return true;    
        }
+       
+       public function getCandidateStatusMessage($status = '') {
+           
+            $message = '';
+            if($status){
+                $status = strtoupper(trim($status));
+                switch ($status) {
+                        case 'NEW':
+                            $message =  "";
+                            break;
+                        case 'REVIEWED':
+                            $message =  "Profile <b>Reviewed</b> by";
+                            break;
+                        case 'SHORTLISTED':
+                            $message =  "Profile <b>Shortlisted</b> by";
+                            break;
+                        case 'SCHEDULED FOR INTERVIEW':
+                            $message =  "<b>Scheduled Interview</b> by";
+                            break;
+                        case 'NOT SUITABLE':
+                            $message =  "Profile is <b>Not Suitable</b> by";
+                            break;
+                        case 'SELECTED':
+                            $message =  "Status changed to <b>Selected</b> by";
+                            break;
+                        case 'OFFERED':
+                            $message =  "Status changed to <b>Offered</b> by";
+                            break;
+                        case 'OFFER ACCEPTED':
+                            $message =  "Status changed to <b>Offer Accepted</b> by";
+                            break;
+                        case 'ON HOLD':
+                            $message =  "Status changed to <b>On Hold</b> by";
+                            break;
+                        case 'OFFER REJECTED':
+                            $message =  "Status changed to <b>Offer Rejected</b> by";
+                            break;
+                        case 'CONFIRMED TO JOIN':
+                            $message =  "Status changed to <b>Confirmed to Join</b> by";
+                            break;
+                        case 'HIRED':
+                            $message =  "Status changed to <b>Hired</b> by";
+                            break;
+                        case 'NOT JOINED':
+                            $message =  "Status changed to <b>Not Joined</b> by";
+                            break;
+                        case 'JOINED':
+                            $message =  "Status changed to <b>Joined</b> by";
+                            break;
+                        default :$message = "";
+                            break;
+                    }  
+            }
+            return $message;  
+       }   
        
        
        public function deleteCandidateTag($input) {
