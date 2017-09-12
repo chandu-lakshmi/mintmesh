@@ -447,6 +447,33 @@ class CandidatesController extends \BaseController {
         $inputUserData = \Input::all();
         return \Response::json($this->candidatesGateway->testEmail($inputUserData));;
     }
+    /**
+     * Get Posts
+     * 
+     * POST/delete_Candidate_Tag
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code 
+     * @param integer $reference_id 
+     * @param string $referral_status
+     * @return Response
+     */
+    public function deleteCandidateTag() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validatedeleteCandidateTagInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->deleteCandidateTag($inputUserData));
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    }
+    
     
 }
 

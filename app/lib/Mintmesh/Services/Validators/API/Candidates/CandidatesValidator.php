@@ -99,6 +99,11 @@ class CandidatesValidator extends Validator {
             'company_code'  => 'required',
             'reference_id'  => 'required_without_all:candidate_id',
             'candidate_id'  => 'required_without_all:reference_id'
+        ),
+        'delete_candidate_tag' => array(
+            'company_code'  => 'required',
+            'reference_id'  => 'required_without_all:candidate_id',
+            'candidate_id'  => 'required_without_all:reference_id'
         )
               
     );

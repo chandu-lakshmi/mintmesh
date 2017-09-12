@@ -426,6 +426,7 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       Route::post("enterprise/add_candidate_tags", "API\Candidates\CandidatesController@addCandidateTags");
       Route::post("enterprise/get_candidate_tags", "API\Candidates\CandidatesController@getCandidateTags");
       Route::post("enterprise/test_email", "API\Candidates\CandidatesController@testEmail");
+      Route::post("enterprise/delete_candidate_tag", "API\Candidates\CandidatesController@deleteCandidateTag");
       
 });
 

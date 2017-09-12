@@ -27,10 +27,13 @@ interface CandidatesRepository {
      public function getCandidatesTags($tag_name);
      
      
-     public function addCandidateTags($companyId,$referenceId,$candidateId,$tag_id);
+     public function addCandidateTags($companyId, $id, $referenceId, $candidateId, $userId);
      
      
      public function getCandidateTags($companyId,$referenceId,$candidateId);
+     
+     
+     public function deleteCandidateTag($companyId, $id, $referenceId, $candidateId, $userId);
    
      
 }

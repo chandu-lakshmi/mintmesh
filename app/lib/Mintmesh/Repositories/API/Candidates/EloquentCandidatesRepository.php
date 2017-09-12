@@ -265,6 +265,10 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                 $sql = "INSERT INTO candidate_tags (`company_id`, `reference_id`, `candidate_id`, `tag_id`, `created_by`, `created_at`)" ;
                 $sql.=" VALUES(".$companyId.", ".$referenceId.", ".$candidateId.", '".$tag_id."', ".$userId.", '".gmdate('Y-m-d H:i:s')."')" ;
                 $return = DB::statement($sql); 
+                $lastInsert = DB::Select("SELECT LAST_INSERT_ID() as last_id");
+                if(isset($lastInsert[0]) && !empty($lastInsert[0])){
+                    $return = $lastInsert[0]->last_id;
+                }
                 
             }
             return $return;
@@ -284,6 +288,16 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
             
             
             
+        }
+        
+        
+     public function deleteCandidateTag($companyId = 0, $id = '', $referenceId = 0, $candidateId = 0, $userId = 0) {
+            $result = '';
+            //if($companyId) {
+                $sql = "delete from candidate_tags where id ='".$id."' ";
+                $result = DB::Select($sql);
+            //}
+            return true;
         }
         
         
