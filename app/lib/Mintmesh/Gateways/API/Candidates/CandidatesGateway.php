@@ -33,6 +33,7 @@ use Config;
 use OAuth;
 use URL,
     Queue;
+use Mail;
 use Cache;
 use lib\Parser\MyEncrypt;
 
