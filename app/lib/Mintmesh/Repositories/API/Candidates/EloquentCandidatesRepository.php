@@ -251,7 +251,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         public function getCandidatesTags($tag_name) {
             $result = '';
             //if($companyId) {
-                $sql = "SELECT id,tag_name from candidates_tags_list where tag_name LIKE '%".$tag_name."%'  ";
+                $sql = "SELECT id as tag_id,tag_name from candidates_tags_list where tag_name LIKE '%".$tag_name."%'  ";
                 $result = DB::Select($sql);
             //}
             return $result;
