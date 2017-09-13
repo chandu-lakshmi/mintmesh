@@ -254,12 +254,14 @@ class CandidatesGateway {
             #current company details here
             if(isset($extraDetails['Experience']) && !empty($extraDetails['Experience'][0])){
                 $expArr    = $extraDetails['Experience'][0];
-                $startDate = $expArr['start_date'];
-                $endDate   = $expArr['end_date'];
-                $returnArr['current_company_name']     =  $expArr['company_name'];
-                $returnArr['current_company_location'] =  $expArr['location'];
-                $returnArr['current_company_position'] =  $expArr['job_title'];
-                $returnArr['current_company_details']  =  $startDate." - ".$endDate;
+                $startDate = !empty($expArr['start_date']) ? $expArr['start_date'] : '';
+                $endDate   = !empty($expArr['end_date']) ? $expArr['end_date'] : '';
+                $returnArr['current_company_name']     =  !empty($expArr['company_name']) ? $expArr['company_name'] : '';
+                $returnArr['current_company_location'] =  !empty($expArr['location']) ? $expArr['location'] : '';
+                $returnArr['current_company_position'] =  !empty($expArr['job_title']) ? $expArr['job_title'] : '';
+                if(!empty($startDate) || !empty($endDate)){
+                  $returnArr['current_company_details']  =  $startDate." - ".$endDate;
+                }
             }
             #get user skills here
             $skills = $this->neoUserRepository->getUserSkills($candidateEmail);
