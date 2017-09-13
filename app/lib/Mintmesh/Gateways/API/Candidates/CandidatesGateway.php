@@ -248,6 +248,19 @@ class CandidatesGateway {
             {
                 $extraDetails = $this->userGateway->formUserMoreDetailsArray($moreDetails);
             }
+            #get user Experience details here
+            $returnArr['total_experience']  = !empty($extraDetails['total_experience']) ? $extraDetails['total_experience'] : '';
+            $returnArr['Experience']        = !empty($extraDetails['Experience']) ? $extraDetails['Experience'] : '';
+            #current company details here
+            if(isset($extraDetails['Experience']) && !empty($extraDetails['Experience'][0])){
+                $expArr    = $extraDetails['Experience'][0];
+                $startDate = $expArr['start_date'];
+                $endDate   = $expArr['end_date'];
+                $returnArr['current_company_name']     =  $expArr['company_name'];
+                $returnArr['current_company_location'] =  $expArr['location'];
+                $returnArr['current_company_position'] =  $expArr['job_title'];
+                $returnArr['current_company_details']  =  $startDate." - ".$endDate;
+            }
             #get user skills here
             $skills = $this->neoUserRepository->getUserSkills($candidateEmail);
             if (!empty($skills))
@@ -286,7 +299,7 @@ class CandidatesGateway {
     
     public function getCandidateDetails($input) {
         
-        $data   = $returnArr = $resultArr = $contactArr = $candidateTags = array();
+        $data   = $returnArr = $resultArr = $contactArr = $candidateTags = $personalStatus = array();
         $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId  = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
@@ -314,6 +327,7 @@ class CandidatesGateway {
             $candidateId    = $candidate->getID();
             $serviceName    = !empty($postDetails->service_name) ? $postDetails->service_name : '';
             $candidateArr   = $this->getCandidateFullDetails($candidateEmail);
+           
             #get skills form here
             if(!empty($candidateArr['skills'])){
                 foreach ($candidateArr['skills'] as $val){
@@ -331,15 +345,23 @@ class CandidatesGateway {
             }
             $cvName = !empty($candidateArr['cv_original_name']) ? $candidateArr['cv_original_name'] : Lang::get('MINTMESH.candidates.awaiting_resume');
             $cvPath = !empty($candidateArr['cv_path']) ? $candidateArr['cv_path'] : '';
-            
+            #get Candidate Tags details here
             $candidateTagsArr    = $this->candidatesRepository->getCandidateTags($companyId, $referenceId, $candidateId);
             if(!empty($candidateTagsArr[0])){
                 foreach ($candidateTagsArr as $value) {
                     $record = array();
                     $record['id']       = $value->id;
+                    $record['tag_id']   = $value->tag_id;
                     $record['tag_name'] = $value->tag_name;
                     $candidateTags[] = $record;
                 }
+            }
+            #get Candidate Personal Status details here
+            $personalStatusArr    = $this->candidatesRepository->getCandidatePersonalStatus($companyId, $referenceId, $candidateId);
+            if(!empty($personalStatusArr[0])){
+                $value = $personalStatusArr[0];
+                $personalStatus['status_id']   = $value->id;
+                $personalStatus['status_name'] = $value->status_name;
             }
             
             $returnArr['candidate_id']  = $candidateId;
@@ -359,13 +381,14 @@ class CandidatesGateway {
             $returnArr['referred_by']   = $referredByName;
             $returnArr['referred_at']   = $createdAt;
             $returnArr['referred_job']  = $serviceName;
-            $returnArr['candidate_tags']  = $candidateTags;
+            $returnArr['candidate_tags']    = $candidateTags;
+            $returnArr['candidate_status']  = $personalStatus;
             $returnArr['referral_status']   = !empty($relation->referral_status) ? $relation->referral_status : 'New';
             #candidate professional details form here
-            $returnArr['current_company_name']      = '';//'EnterPi Software Solutions Pvt Ltd';
-            $returnArr['current_company_details']   = '';//'May 2015 - Present(2 years 3 months)';
-            $returnArr['current_company_location']  = '';//'Hyderabad Area, India';
-            $returnArr['current_company_position']  = '';//'Sr Android Engineer';
+            $returnArr['current_company_name']      = !empty($candidateArr['current_company_name']) ? $candidateArr['current_company_name'] : '' ;//'EnterPi Software Solutions Pvt Ltd';
+            $returnArr['current_company_details']   = !empty($candidateArr['current_company_details']) ? $candidateArr['current_company_details'] : '' ;//'May 2015 - Present(2 years 3 months)';
+            $returnArr['current_company_location']  = !empty($candidateArr['current_company_location']) ? $candidateArr['current_company_location'] : '' ;//'Hyderabad Area, India';
+            $returnArr['current_company_position']  = !empty($candidateArr['current_company_position']) ? $candidateArr['current_company_position'] : '' ;//'Sr Android Engineer';
             $returnArr['previous_company_name']     = '';//'HTC Global Services (India) Private Ltd';
             $returnArr['previous_company_details']  = '';//'May 2013 - May 2015 Present(2 years)';
             $returnArr['previous_company_location'] = '';//'Bangalore Area, India';
@@ -690,6 +713,7 @@ class CandidatesGateway {
             $candidateId    = $candidate->getID();
             #get Candidate Activities here
             $activitiesArr = $this->candidatesRepository->getCandidateActivities($companyId, $referenceId, $candidateId);
+            
             if($activitiesArr){
                 foreach($activitiesArr as $activity){
                     $timelinedate = '';
@@ -707,25 +731,25 @@ class CandidatesGateway {
                             $message = $this->getCandidateStatusMessage($activityText);
                             break;
                         case 'candidate_link_job':
-                            $message = "Linked to ".$comment." by";
+                            $message = "Linked to ".$comment;
                             break;
                         case 'candidate_comments':
                             $message = $comment;
                             break;
                         case 'candidate_emails':
-                            $message = '';
+                            $message = $comment;
                             break;
                         default :
                             $message = '';    
                     }       
-                    
+                    $createdBy    = trim($activity->created_by);
                     $returnArr[]  = array(
                             'activity_id'       => $activity->id,
                             'activity_type'     => $activity->module_name,
                             'activity_status'   => $activityText,
                             'activity_message'  => $message,
                             'activity_comment'  => $comment,
-                            'activity_by'       => trim($activity->created_by),
+                            'activity_by'       => "by ".$createdBy,
                             'activity_on'       => $timelinedate
                     );
                 }
@@ -761,6 +785,7 @@ class CandidatesGateway {
         $this->loggedinUser = $this->referralsGateway->getLoggedInUser();
         $userId             = $this->loggedinUser->id;
         $userEmailId        = $this->loggedinUser->emailid;
+        $userFirstname      = $this->loggedinUser->firstname;
         #get company details by code
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
@@ -777,6 +802,7 @@ class CandidatesGateway {
             
             $neoInput       = $refInput = array();
             $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
+            $relation       = isset($resultArr[1]) ? $resultArr[1] : '';
             $candidateEmail = $candidate->emailid;
             $candidateId    = $candidate->getID();
             $moduleType     = 5;
@@ -791,7 +817,9 @@ class CandidatesGateway {
             $neoInput['awaiting_action_by']     = $userEmailId;
             $neoInput['relation_count']         = '1';
             $neoInput['uploaded_by_p2']         = '1';
-            $neoInput['resume_original_name']   = '';
+            $neoInput['document_id']            = !empty($relation->document_id) ? $relation->document_id : '';
+            $neoInput['resume_original_name']   = !empty($relation->resume_original_name) ? $relation->resume_original_name : '';
+            $neoInput['resume_path']            = !empty($relation->resume_path) ? $relation->resume_path : '';
             $neoInput['created_at']             = gmdate('Y-m-d H:i:s'); 
                 
             foreach ($post_ids as $postId) {
@@ -800,8 +828,30 @@ class CandidatesGateway {
                 $postDetails    = $this->neoPostRepository->getPosts($postId);
                 $refInput['post_id']       = $postId;
                 $neoInput['referred_for']  = !empty($postDetails->created_by) ? $postDetails->created_by : '';
-                $returnArr = $this->neoPostRepository->referCandidate($neoInput, $refInput);
-                $this->candidatesRepository->addCandidateActivityLogs($companyId, $referenceId, $candidateId, $userId, $moduleType, $activityText) ;
+                $referCandidateArr = $this->neoPostRepository->referCandidate($neoInput, $refInput);
+                #add Candidate Activity Logs here
+                $serviceName  = !empty($postDetails->service_name) ? $postDetails->service_name : '';
+                $comment      = "Linked to ".$serviceName;
+                $activityId   = $this->candidatesRepository->addCandidateActivityLogs($companyId, $referenceId, $candidateId, $userId, $moduleType, $activityText, $comment) ;
+                #return response form here
+                $createdAt    = gmdate('Y-m-d H:i:s');;
+                $timelineDate = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
+                
+                $returnArr['link_job']  = array(
+                            'reference_id'  => $referenceId,
+                            'post_name'     => $serviceName,
+                            'referred_by'   => 'by '.$userFirstname,
+                            'referred_on'   => $timelineDate
+                );
+                $returnArr['timeline']  = array(
+                            'activity_id'       => $activityId,
+                            'activity_type'     => 'candidate_link_job',
+                            'activity_status'   => $activityText,
+                            'activity_message'  => $comment,
+                            'activity_comment'  => $comment,
+                            'activity_by'       => 'by '.$userFirstname,
+                            'activity_on'       => $timelineDate
+                );
             }
             #check Candidate Refer status
             if($returnArr){
@@ -1094,7 +1144,7 @@ class CandidatesGateway {
         $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId  = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
         $refStatus    = !empty($input['referral_status']) ? $input['referral_status'] : '';
-        $refComment   = !empty($input['referral_comment']) ? $input['referral_comment'] : '';
+        $refComment   = !empty($input['referral_msg']) ? $input['referral_msg'] : '';
         #get loggedin User Detils here
         $this->loggedinUser = $this->referralsGateway->getLoggedInUser();
         $userId             = $this->loggedinUser->id;
@@ -1180,7 +1230,7 @@ class CandidatesGateway {
             $createdAt      = $returnArr[0]->created_at;
             $timelinedate   = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
             $subject        = $returnArr[0]->subject;
-            if(!empty($email->custom_subject)){
+            if(!empty($returnArr[0]->custom_subject)){
                 $subject = $returnArr[0]->custom_subject;
             }
             $arrayNewEmail['email'] = array(
@@ -1198,8 +1248,8 @@ class CandidatesGateway {
                             'activity_id'       => 0,
                             'activity_type'     => 'candidate_emails',
                             'activity_status'   => 'Email Sent',
-                            'activity_message'  => '',
-                            'activity_comment'  => '',
+                            'activity_message'  => $subject,
+                            'activity_comment'  => $subject,
                             'activity_by'       => 'by '.$returnArr[0]->created_by,
                             'activity_on'       => $timelinedate
                 );
@@ -1223,7 +1273,7 @@ class CandidatesGateway {
                         'created_by'            => 'by '.$returnArr[0]->created_by,
                         'created_at'            => $timelinedate
                 );
-                $message =  "Scheduled ".$returnArr[0]->schedule_for." Interview by";
+                $message =  "Scheduled ".$returnArr[0]->schedule_for." Interview";
                 $arrayNewSchedules['timeline']  = array(
                             'activity_id'       => 0,
                             'activity_type'     => 'candidate_schedules',

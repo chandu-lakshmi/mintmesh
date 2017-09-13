@@ -31,9 +31,7 @@ class CandidatesValidator extends Validator {
             'company_code'  => 'required',
             'reference_id'  => 'required_without_all:candidate_id,contact_id',
             'candidate_id'  => 'required_without_all:reference_id,contact_id',
-            'subject_id'    => 'required',
-            'email_subject' => 'required',
-            'email_body'    => 'required'
+            'subject_id'    => 'required'
         ),
         'add_candidate_comment' => array(
             'company_code'  => 'required',
