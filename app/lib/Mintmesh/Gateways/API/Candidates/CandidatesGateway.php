@@ -725,13 +725,14 @@ class CandidatesGateway {
                     
                     switch ($moduleType) {
                         case 'candidate_schedules':
-                            $message =  "Scheduled ".$activityText." Interview by";
+                            $message =  "Scheduled ".$activityText." Interview";
                             break;
                         case 'candidate_status':
                             $message = $this->getCandidateStatusMessage($activityText);
+                            $message = $message.' '.$comment;
                             break;
                         case 'candidate_link_job':
-                            $message = "Linked to ".$comment;
+                            $message = $comment;
                             break;
                         case 'candidate_comments':
                             $message = $comment;
@@ -1164,6 +1165,7 @@ class CandidatesGateway {
             $candidateId    = $candidate->getID();
             $moduleType     = 4;
             $activityText   = $refStatus;
+            $activityMsg    = $this->getCandidateStatusMessage($refStatus);
              
             if($referenceId){
                 $refStatus    = $this->neoCandidatesRepository->editCandidateReferralStatus($referenceId, $refStatus, $userEmailId);
@@ -1175,7 +1177,7 @@ class CandidatesGateway {
                             'activity_id'       => $activityId,
                             'activity_type'     => 'candidate_status',
                             'activity_status'   => $activityText,
-                            'activity_message'  => '',
+                            'activity_message'  => $activityMsg.' '.$refComment,
                             'activity_comment'  => $refComment,
                             'activity_by'       => 'by '.$userFirstname,
                             'activity_on'       => $timelineDate
@@ -1503,43 +1505,43 @@ class CandidatesGateway {
                             $message =  "";
                             break;
                         case 'REVIEWED':
-                            $message =  "Profile <b>Reviewed</b> by";
+                            $message =  "Profile <b>Reviewed</b>";
                             break;
                         case 'SHORTLISTED':
-                            $message =  "Profile <b>Shortlisted</b> by";
+                            $message =  "Profile <b>Shortlisted</b>";
                             break;
                         case 'SCHEDULED FOR INTERVIEW':
-                            $message =  "<b>Scheduled Interview</b> by";
+                            $message =  "<b>Scheduled Interview</b>";
                             break;
                         case 'NOT SUITABLE':
-                            $message =  "Profile is <b>Not Suitable</b> by";
+                            $message =  "Profile is <b>Not Suitable</b>";
                             break;
                         case 'SELECTED':
-                            $message =  "Status changed to <b>Selected</b> by";
+                            $message =  "Status changed to <b>Selected</b>";
                             break;
                         case 'OFFERED':
-                            $message =  "Status changed to <b>Offered</b> by";
+                            $message =  "Status changed to <b>Offered</b>";
                             break;
                         case 'OFFER ACCEPTED':
-                            $message =  "Status changed to <b>Offer Accepted</b> by";
+                            $message =  "Status changed to <b>Offer Accepted</b>";
                             break;
                         case 'ON HOLD':
-                            $message =  "Status changed to <b>On Hold</b> by";
+                            $message =  "Status changed to <b>On Hold</b>";
                             break;
                         case 'OFFER REJECTED':
-                            $message =  "Status changed to <b>Offer Rejected</b> by";
+                            $message =  "Status changed to <b>Offer Rejected</b> ";
                             break;
                         case 'CONFIRMED TO JOIN':
-                            $message =  "Status changed to <b>Confirmed to Join</b> by";
+                            $message =  "Status changed to <b>Confirmed to Join</b>";
                             break;
                         case 'HIRED':
-                            $message =  "Status changed to <b>Hired</b> by";
+                            $message =  "Status changed to <b>Hired</b> ";
                             break;
                         case 'NOT JOINED':
-                            $message =  "Status changed to <b>Not Joined</b> by";
+                            $message =  "Status changed to <b>Not Joined</b>";
                             break;
                         case 'JOINED':
-                            $message =  "Status changed to <b>Joined</b> by";
+                            $message =  "Status changed to <b>Joined</b>";
                             break;
                         default :$message = "";
                             break;

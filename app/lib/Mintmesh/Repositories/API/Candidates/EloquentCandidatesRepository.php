@@ -156,7 +156,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                 
                 #add Candidate Activity Logs here
                 $moduleType   = 1;
-                $activityText = $param['schedule_for']." Schedule";
+                $activityText = $param['schedule_for'];
                 $activityLog  = $this->addCandidateActivityLogs($companyId, $referenceId, $candidateId, $userId, $moduleType, $activityText);
                 $return = $this->getlastInsertSchedules($lId);
             }
@@ -324,8 +324,8 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
          $return = FALSE;
           if(!empty($companyId) && (!empty($referenceId) || !empty($candidateId))){ 
                 $status_sql = "SELECT id,status_name from candidate_personal_info_status where  company_id = '".$companyId."'  ";
-                if(!empty($candidateId)){
-                    $status_sql .=" AND candidate_id= '".$candidateId."' ";
+                if(!empty($referenceId)){
+                    $status_sql .=" AND reference_id= '".$referenceId."' ";
                 }
                 $return = DB::Select($status_sql);
           }    
