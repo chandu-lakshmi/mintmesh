@@ -729,7 +729,6 @@ class CandidatesGateway {
                             break;
                         case 'candidate_status':
                             $message = $this->getCandidateStatusMessage($activityText);
-                            $message = $message.' '.$comment;
                             break;
                         case 'candidate_link_job':
                             $message = $comment;
@@ -1177,7 +1176,7 @@ class CandidatesGateway {
                             'activity_id'       => $activityId,
                             'activity_type'     => 'candidate_status',
                             'activity_status'   => $activityText,
-                            'activity_message'  => $activityMsg.' '.$refComment,
+                            'activity_message'  => $activityMsg,
                             'activity_comment'  => $refComment,
                             'activity_by'       => 'by '.$userFirstname,
                             'activity_on'       => $timelineDate
