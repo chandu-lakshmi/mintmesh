@@ -106,6 +106,19 @@ class NeoeloquentCandidatesRepository extends BaseRepository implements NeoCandi
         return $return;
     }
     
+    public function getCandidateGotReferredJobsList($companyCode = '', $candidateId = '') {
+        
+        $return = FALSE;  
+        if (!empty($companyCode) && !empty($candidateId)) {
+            
+            $queryString = "MATCH (c:Company{companyCode:'".$companyCode."'})-[:POSTED_FOR]-(p:Post)-[r:GOT_REFERRED]-(u:User) ";        
+            $queryString .= " where ID(u)=".$candidateId." return ID(p)";
+            $query  = new CypherQuery($this->client, $queryString);
+            $return = $query->getResultSet();
+        } 
+        return $return;
+    }
+    
 }
 
 ?>

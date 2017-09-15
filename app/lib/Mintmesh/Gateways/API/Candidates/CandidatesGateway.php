@@ -731,6 +731,7 @@ class CandidatesGateway {
                             break;
                         case 'candidate_status':
                             $message = $this->getCandidateStatusMessage($activityText);
+                            $message.= " - ".$comment;
                             break;
                         case 'candidate_link_job':
                             $message = $comment;
@@ -876,22 +877,40 @@ class CandidatesGateway {
     
     public function getCandidateTagJobsList($input) {
         
-        $data = $returnArr = $resultArr =  array();
+        $data = $returnArr = $resultArr =  $jobsList = array();
         $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId  = !empty($input['reference_id']) ? $input['reference_id'] : '';
-        $candidate_id = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
+        $candidateId  = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
         $search       = !empty($input['search']) ? $input['search'] : '';
-        #get Tag Jobs List here
-        $resultArr = $this->neoCandidatesRepository->getCandidateTagJobsList($companyCode, $search);
-        
+        #get candidate details
+        $resultArr  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
         if(!empty($resultArr)){
+            $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
+            $candidateId    = $candidate->getID();
+            #get Candidate Got Referred Jobs List here
+            $gotReferredJobsArr = $this->neoCandidatesRepository->getCandidateGotReferredJobsList($companyCode, $candidateId);
+            if(!empty($gotReferredJobsArr)){
+                foreach ($gotReferredJobsArr as $value) {
+                    $jobsList[] = isset($value[0]) ? $value[0] : '';
+                }
+            }
+        } 
+        #get suggested Tag Jobs List here
+        $jobsListArr = $this->neoCandidatesRepository->getCandidateTagJobsList($companyCode, $search);
+        
+        if(!empty($jobsListArr)){
             
-            foreach ($resultArr as $val) {
-                $post = array();
-                $val  = isset($val[0]) ? $val[0] : '';
-                $post['post_id']   = $val->getID();
-                $post['post_name'] = isset ($val->service_name) ? $val->service_name : '';
-                $returnArr[] = $post;
+            foreach ($jobsListArr as $val) {
+                $post   = array();
+                $val    = isset($val[0]) ? $val[0] : '';
+                $postId = $val->getID();
+                #check already got referred job or not
+                if(!in_array($postId, $jobsList)){
+                    
+                    $post['post_id']   = $postId;
+                    $post['post_name'] = isset ($val->service_name) ? $val->service_name : '';
+                    $returnArr[] = $post;
+                }
             }
             $responseCode   = self::SUCCESS_RESPONSE_CODE;
             $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
@@ -1172,7 +1191,10 @@ class CandidatesGateway {
                 $refStatus    = $this->neoCandidatesRepository->editCandidateReferralStatus($referenceId, $refStatus, $userEmailId);
                 $activityId   = $this->candidatesRepository->addCandidateActivityLogs($companyId, $referenceId, $candidateId, $userId, $moduleType, $activityText, $refComment) ;
                 #return response form here
-                $createdAt    = gmdate('Y-m-d H:i:s');;
+                if($refComment){
+                    $activityMsg.= " - ".$refComment;
+                }
+                $createdAt    = gmdate('Y-m-d H:i:s');
                 $timelineDate = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
                 $returnArr['timeline']  = array(
                             'activity_id'       => $activityId,
