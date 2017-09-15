@@ -731,7 +731,9 @@ class CandidatesGateway {
                             break;
                         case 'candidate_status':
                             $message = $this->getCandidateStatusMessage($activityText);
-                            $message.= " - ".$comment;
+                            if($comment){
+                                $message.= " - <br>".$comment."<br>";
+                            }
                             break;
                         case 'candidate_link_job':
                             $message = $comment;
@@ -1192,7 +1194,7 @@ class CandidatesGateway {
                 $activityId   = $this->candidatesRepository->addCandidateActivityLogs($companyId, $referenceId, $candidateId, $userId, $moduleType, $activityText, $refComment) ;
                 #return response form here
                 if($refComment){
-                    $activityMsg.= " - ".$refComment;
+                    $activityMsg.= " - <b>".$refComment."</b>";
                 }
                 $createdAt    = gmdate('Y-m-d H:i:s');
                 $timelineDate = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
