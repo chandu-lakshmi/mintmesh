@@ -80,6 +80,8 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
             $return     = FALSE;
             $createdAt  = gmdate('Y-m-d H:i:s');
             $status     = self::DEFAULT_CANDIDATE_ACTIVITY_STATUS;
+            $activityText    =  $this->appEncodeDecode->filterString($activityText);
+            $activityComment =  $this->appEncodeDecode->filterString($activityComment);
             if($companyId){
                 #insert Candidate Activity Logs here
                 $sql = "INSERT INTO candidate_activity_logs (`company_id`, `reference_id`, `candidate_id`, `module_type`, `status`, `activity_text`, `comment`, `created_by`, `created_at`)" ;
