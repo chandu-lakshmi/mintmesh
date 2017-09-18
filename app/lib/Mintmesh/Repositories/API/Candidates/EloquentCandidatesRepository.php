@@ -18,9 +18,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
     protected $user, $companyProfile, $CompanyContact,$groups;
     protected $email, $level, $appEncodeDecode, $companyResumes, $candidateEmailTemplates;
         
-    const COMPANY_RESUME_STATUS = 0;
-    const COMPANY_RESUME_S3_MOVED_STATUS = 1;
-    const COMPANY_RESUME_AI_PARSED_STATUS = 2;
+    const STATUS_ACTIVE = 1;
     const DEFAULT_CANDIDATE_ACTIVITY_STATUS = 1;
 
 
@@ -327,12 +325,21 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
           if(!empty($companyId) && (!empty($referenceId) || !empty($candidateId))){ 
                 $status_sql = "SELECT id,status_name from candidate_personal_info_status where  company_id = '".$companyId."'  ";
                 if(!empty($referenceId)){
-                    $status_sql .=" AND reference_id= '".$referenceId."' ";
+                    $status_sql .=" AND reference_id = '".$referenceId."' ";
                 }
                 $return = DB::Select($status_sql);
           }    
           return $return;
      }
+     
+    public function getQuestionTypes($companyCode = '') {
+
+        $result =  DB::table('question_type')
+                    ->select('idquestion_type', 'name', 'description')
+                    ->where('status', self::STATUS_ACTIVE)
+                    ->get();
+        return  $result;
+    } 
         
         
 }

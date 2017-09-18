@@ -528,6 +528,30 @@ class CandidatesController extends \BaseController {
     return $return;
     }
     
+    /**
+     * Get Question Types
+     * 
+     * POST/get_question_types
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code 
+     * @return Response
+     */
+    public function getQuestionTypes() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validateGetQuestionTypesInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->getQuestionTypes($inputUserData));
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    }
     
 }
 

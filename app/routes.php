@@ -429,6 +429,8 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       Route::post("enterprise/delete_candidate_tag", "API\Candidates\CandidatesController@deleteCandidateTag");
       Route::post("enterprise/add_candidate_personal_status", "API\Candidates\CandidatesController@addCandidatePersonalStatus");
       Route::post("enterprise/get_candidate_personal_status", "API\Candidates\CandidatesController@getCandidatePersonalStatus");
+      //questionnaire API's here
+      Route::post("enterprise/get_question_types", "API\Candidates\CandidatesController@getQuestionTypes");
       
 });
 

@@ -183,6 +183,9 @@ class CandidatesGateway {
     public function validategetCandidatePersonalStatusInput($input) {
         return $this->doValidation('get_candidate_personal_status', 'MINTMESH.user.valid');
     }
+    public function validateGetQuestionTypesInput($input) {
+        return $this->doValidation('get_candidate_email_templates', 'MINTMESH.user.valid');
+    }
     
     public function getCandidateEmailTemplates($input) {
         
@@ -1703,6 +1706,37 @@ class CandidatesGateway {
        
     }
     
+    public function getQuestionTypes($input) {
+        
+       $returnArr    = $resultArr = $data = array();
+       $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
+       #get Question Types List here
+       $resultArr    = $this->candidatesRepository->getQuestionTypes($companyCode);
+       
+       if(!empty($resultArr)){
+            
+            foreach ($resultArr as $value) {
+                $record = array();
+                $record['id']           = $value->idquestion_type;
+                $record['name']         = $value->name;
+                $record['description']  = $value->description;
+                $returnArr[] = $record;
+            }
+                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+            if($returnArr){
+                $data = $returnArr;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+            } else {
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            }
+        } else {
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+    }
     
 }
 
