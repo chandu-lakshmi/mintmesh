@@ -54,6 +54,8 @@ class CandidatesGateway {
     const CAREER_HEROSHOT_IMAGE_HEIGHT = 336;
     const EMAIL_FAILURE_STATUS = 0;
     const EMAIL_SUCCESS_STATUS = 1;
+    const STATUS_ACTIVE = 1;
+    const STATUS_INACTIVE = 0;
 
     protected $enterpriseRepository, $commonFormatter, $authorizer, $appEncodeDecode,$neoEnterpriseRepository,$userFileUploader, $neoUserRepository,$userRepository;
     protected $createdNeoUser, $candidatesValidator, $referralsRepository, $enterpriseGateway, $userEmailManager, $candidatesRepository, $neoCandidatesRepository;
@@ -185,6 +187,15 @@ class CandidatesGateway {
     }
     public function validateGetQuestionTypesInput($input) {
         return $this->doValidation('get_candidate_email_templates', 'MINTMESH.user.valid');
+    }
+    public function validateGetQuestionLibrariesInput($input) {
+        return $this->doValidation('get_candidate_email_templates', 'MINTMESH.user.valid');
+    }
+    public function validateAddQuestionInput($input) {
+        return $this->doValidation('add_question', 'MINTMESH.user.valid');
+    }
+    public function validateEditQuestionInput($input) {
+        return $this->doValidation('edit_question', 'MINTMESH.user.valid');
     }
     
     public function getCandidateEmailTemplates($input) {
@@ -1734,6 +1745,167 @@ class CandidatesGateway {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
             $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+    }
+    
+    public function getQuestionLibraries($input) {
+        
+       $returnArr    = $resultArr = $data = array();
+       $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
+       #get Question Types List here
+       $resultArr    = $this->candidatesRepository->getQuestionLibraries($companyCode);
+       
+       if(!empty($resultArr)){
+            
+            foreach ($resultArr as $value) {
+                $record = array();
+                $record['id']           = $value->idquestion_library;
+                $record['name']         = $value->name;
+                $returnArr[] = $record;
+            }
+                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+            if($returnArr){
+                $data = $returnArr;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+            } else {
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            }
+        } else {
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+    }
+    
+    
+    public function addQuestion($input) {
+        
+        $returnArr      = $resultArr = $data = $qstInput = array();
+        $optionsResArr  = $librariesResArr = array();
+        $companyCode    = !empty($input['company_code']) ? $input['company_code'] : '';
+        $optionsArr     = !empty($input['options']) ? $input['options'] : array();
+        $librariesArr   = !empty($input['libraries']) ? $input['libraries'] : array();
+        #get company details here
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+        #form Question input params here
+        $qstInput['question']      = !empty($input['question']) ? $input['question'] : '';
+        $qstInput['qst_type']      = !empty($input['question_type']) ? $input['question_type'] : '';;
+        $qstInput['qst_notes']     = !empty($input['question_notes']) ? $input['question_notes'] : '';
+        $qstInput['is_ans_req']    = !empty($input['is_answer_required']) ? $input['is_answer_required'] : 0;
+        $qstInput['has_multi_ans'] = !empty($input['has_multiple_answers']) ? $input['has_multiple_answers'] : 0;
+        #Add Question here
+        $resultArr  = $this->candidatesRepository->addQuestion($qstInput, $companyId);
+        $questionId = !empty($resultArr['id']) ? $resultArr['id'] : 0;
+        
+        if($questionId) {
+            #add Question Options
+            if(!empty($optionsArr)) {
+                foreach ($optionsArr as $value) {
+                    #form Question Option input
+                    $optionInput = array();
+                    $optionInput['option']         = isset($value['option']) ? $value['option'] : '';
+                    $optionInput['is_correct_ans'] = isset($value['is_correct_answer']) ? $value['is_correct_answer'] : 0;
+                    #add Question Option here
+                    $optionsResArr[] = $this->candidatesRepository->addQuestionOption($optionInput, $questionId);
+                }
+            }
+            #add to Question Bank 
+            if(!empty($librariesArr)) {
+                foreach ($librariesArr as $library) {
+                    #form Question Bank input
+                    $libraryInput = array();
+                    $libraryInput['library_id']  = isset($library['library_id']) ? $library['library_id'] : 0;
+                    $libraryInput['question_id'] = $questionId;
+                    #add to Question Bank here
+                    $librariesResArr[] = $this->candidatesRepository->addQuestionBank($libraryInput, $companyId);
+                }
+            }
+        }
+        #check result success status   
+        if(!empty($resultArr)){
+            $data = $resultArr;
+            $responseCode    = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_comment.success')));
+        } else {
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_edit_question.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+    }
+    
+    public function editQuestion($input) {
+        
+        $returnArr      = $resultArr = $data = $qstInput = array();
+        $companyCode    = !empty($input['company_code']) ? $input['company_code'] : '';
+        $questionId     = !empty($input['question_id']) ? $input['question_id'] : 0;
+        $optionsArr     = !empty($input['options']) ? $input['options'] : array();
+        $librariesArr   = !empty($input['libraries']) ? $input['libraries'] : array();
+        #form Question input params here
+        $qstInput['question']      = !empty($input['question']) ? $input['question'] : '';
+        $qstInput['qst_type']      = !empty($input['question_type']) ? $input['question_type'] : '';
+        $qstInput['qst_notes']     = !empty($input['question_notes']) ? $input['question_notes'] : '';
+        $qstInput['is_ans_req']    = !empty($input['is_answer_required']) ? $input['is_answer_required'] : 0;
+        $qstInput['has_multi_ans'] = !empty($input['has_multiple_answers']) ? $input['has_multiple_answers'] : 0;
+        #check if Question insert or update
+        if(!empty($questionId)){
+            #edit Question here
+            $resultArr  = $this->candidatesRepository->editQuestion($qstInput, $questionId);
+            #edit Question Options
+            if(!empty($optionsArr)) {
+                #insert multiple answers rows
+                foreach ($optionsArr as $value) {
+                    $optionInput = array();
+                    $optionId    = !empty($value['option_id']) ? $value['option_id'] : 0;
+                    $optionInput['option']         = $value['option'];
+                    $optionInput['is_correct_ans'] = isset($value['is_correct_answer']) ? $value['is_correct_answer'] : 0;
+                    #check option id
+                    if($optionId){
+                        $optionInput['status'] = self::STATUS_ACTIVE;
+                        if(!empty($value['remove'])){
+                            $optionInput['status'] = self::STATUS_INACTIVE;
+                        }
+                        $this->candidatesRepository->editQuestionOption($optionInput, $optionId);
+                    } else {
+                        $this->candidatesRepository->addQuestionOption($optionInput, $questionId);
+                    }
+                }
+            }
+            #edit Question Bank Details
+            if(!empty($librariesArr)) {
+                #insert multiple answers rows
+                foreach ($librariesArr as $value) {
+                    #form Question Bank input
+                    $libraryInput = array();
+                    $qstBankId    = !empty($value['qst_bank_id']) ? $value['qst_bank_id'] : 0;
+                    $libraryInput['library_id']  = isset($value['library_id']) ? $value['library_id'] : 0;
+                    #check option id
+                    if($qstBankId){
+                        $libraryInput['status'] = self::STATUS_ACTIVE;
+                        if(!empty($value['remove'])){
+                            $libraryInput['status'] = self::STATUS_INACTIVE;
+                        }
+                        $this->candidatesRepository->editQuestionBank($libraryInput, $qstBankId);
+                    } else {
+                        $this->candidatesRepository->addQuestionBank($libraryInput, $companyId);
+                    }
+                }
+            }
+        }  
+        #check result success status
+        if(!empty($resultArr)){
+            $responseCode    = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.edit_configuration.success')));
+        } else {
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_edit_question.failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }

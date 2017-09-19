@@ -431,6 +431,9 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       Route::post("enterprise/get_candidate_personal_status", "API\Candidates\CandidatesController@getCandidatePersonalStatus");
       //questionnaire API's here
       Route::post("enterprise/get_question_types", "API\Candidates\CandidatesController@getQuestionTypes");
+      Route::post("enterprise/get_question_libraries", "API\Candidates\CandidatesController@getQuestionLibraries");
+      Route::post("enterprise/add_question", "API\Candidates\CandidatesController@addQuestion");
+      Route::post("enterprise/edit_question", "API\Candidates\CandidatesController@editQuestion");
       
 });
 

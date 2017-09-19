@@ -553,6 +553,85 @@ class CandidatesController extends \BaseController {
     return $return;
     }
     
+    /**
+     * Get Question Libraries
+     * 
+     * POST/get_question_libraries
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code 
+     * @return Response
+     */
+    public function getQuestionLibraries() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validateGetQuestionLibrariesInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->getQuestionLibraries($inputUserData));
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    }
+    
+    /**
+     * Add Question
+     * 
+     * POST/add_question
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code 
+     * @param string $question  
+     * @param integer $question_type  
+     * @return Response
+     */
+    public function addQuestion() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validateAddQuestionInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->addQuestion($inputUserData));
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    }
+    
+    /**
+     * Edit Question
+     * 
+     * POST/edit_question
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code 
+     * @param string $question  
+     * @param integer $question_type  
+     * @return Response
+     */
+    public function editQuestion() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validateEditQuestionInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->editQuestion($inputUserData));
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    }
+    
 }
 
 ?>

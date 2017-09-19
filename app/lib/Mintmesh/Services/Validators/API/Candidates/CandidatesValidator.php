@@ -112,6 +112,17 @@ class CandidatesValidator extends Validator {
             'company_code'  => 'required',
             'reference_id'  => 'required_without_all:candidate_id',
             'candidate_id'  => 'required_without_all:reference_id'
+        ),
+        'add_question' => array(
+            'company_code'  => 'required',
+            'question'      => 'required',
+            'question_type' => 'required',
+        ),
+        'edit_question' => array(
+            'company_code'  => 'required',
+            'question_id'   => 'required',
+            'question'      => 'required',
+            'question_type' => 'required',
         )
               
     );

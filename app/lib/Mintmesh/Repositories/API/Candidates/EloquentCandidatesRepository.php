@@ -1,41 +1,32 @@
 <?php namespace Mintmesh\Repositories\API\Candidates;
 
-use User;
-use Company_Profile,Company_Resumes;
-use Groups;
-use Company_Contacts;
-use Emails_Logs;
-use Levels_Logs;
-use Notifications_Logs, Candidate_Email_Templates;
-use Config ;
-use Mail ;
-use DB;
+use Config, Question, Exam, Question_Option;
+use Mail, DB, Candidate_Email_Templates, Question_Bank;
 use Mintmesh\Repositories\BaseRepository;
 use Illuminate\Support\Facades\Hash;
 use Mintmesh\Services\APPEncode\APPEncode ;
+
 class EloquentCandidatesRepository extends BaseRepository implements CandidatesRepository {
 
-    protected $user, $companyProfile, $CompanyContact,$groups;
-    protected $email, $level, $appEncodeDecode, $companyResumes, $candidateEmailTemplates;
+    protected $exam, $question, $candidateEmailTemplates, $questionOption;
         
     const STATUS_ACTIVE = 1;
     const DEFAULT_CANDIDATE_ACTIVITY_STATUS = 1;
 
 
-    public function __construct(User $user,
-                                    Company_Profile $companyProfile,
-                                    Company_Resumes $companyResumes,
-                                    Groups $groups,
-                                    Company_Contacts $CompanyContact,
-                                    Emails_Logs $email,
-                                    Candidate_Email_Templates $candidateEmailTemplates,
-                                    APPEncode $appEncodeDecode){ 
-                $this->user = $user;    
-                $this->companyProfile = $companyProfile; 
-                $this->companyResumes = $companyResumes; 
-                $this->candidateEmailTemplates = $candidateEmailTemplates; 
-                $this->groups = $groups; 
-                $this->companyContact = $CompanyContact;    
+    public function __construct(
+                                Question $question,
+                                Exam $exam,
+                                Question_Option $questionOption,
+                                Question_Bank $questionBank,
+                                Candidate_Email_Templates $candidateEmailTemplates,
+                                APPEncode $appEncodeDecode
+                                ){      
+                $this->candidateEmailTemplates = $candidateEmailTemplates;    
+                $this->exam = $exam;    
+                $this->question = $question;    
+                $this->questionOption  = $questionOption;    
+                $this->questionBank    = $questionBank;    
                 $this->appEncodeDecode = $appEncodeDecode ;       
         }
         
@@ -339,7 +330,106 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                     ->where('status', self::STATUS_ACTIVE)
                     ->get();
         return  $result;
-    } 
+    }
+    
+    public function getQuestionLibraries($companyCode = '') {
+
+        $result =  DB::table('question_library')
+                    ->select('idquestion_library', 'name')
+                    ->where('status', self::STATUS_ACTIVE)
+                    ->get();
+        return  $result;
+    }
+    
+    public function addQuestion($qstInput = array(), $companyId = 0)
+    {   
+        $createdAt   = gmdate('Y-m-d H:i:s');
+        $addQuestion = array(
+                    "company_id"        => $companyId,
+                    "idquestion_type"   => $qstInput['qst_type'],
+                    "question"          => $this->appEncodeDecode->filterString($qstInput['question']),
+                    "question_notes"    => $this->appEncodeDecode->filterString($qstInput['qst_notes']),
+                    "is_answer_required"    => $qstInput['is_ans_req'],
+                    "has_multiple_answers"  => $qstInput['has_multi_ans'],
+                    "status"        => self::STATUS_ACTIVE,
+                    "created_at"    => $createdAt
+                );
+        return $this->question->create($addQuestion);
+    }
+    
+    public function addQuestionBank($qstInput = array(), $companyId = 0)
+    {   
+        $createdAt   = gmdate('Y-m-d H:i:s');
+        $addQuestionBank = array(
+                    "company_id"    => $companyId,
+                    "idquestion_library"   => $qstInput['library_id'],
+                    "idquestion"    => $qstInput['question_id'],
+                    "status"        => self::STATUS_ACTIVE,
+                    "created_at"    => $createdAt
+                );
+        return $this->questionBank->create($addQuestionBank);
+    }
+    
+    public function editQuestionBank($qstInput = array(), $qstBankId = 0)
+    {   
+        $createdAt   = gmdate('Y-m-d H:i:s');
+        $editQuestionBank = array(
+                    "idquestion_library"   => $qstInput['library_id'],
+                    "status"        => $qstInput['status'],
+                    "updated_at"    => $createdAt
+                );
+        if(!empty($qstBankId)){
+               $return = Question_Bank::where ('idquestion_bank', $qstBankId)->update($editQuestionBank); 
+            }
+        return $return;
+    }
+    
+    public function addQuestionOption($qstInput = array(), $questionId = 0)
+    {   
+        $createdAt   = gmdate('Y-m-d H:i:s');
+        $addQuestionOption = array(
+                        "idquestion"   => $questionId,
+                        "option"            => $this->appEncodeDecode->filterString($qstInput['option']),
+                        "is_correct_answer" => $qstInput['is_correct_ans'],
+                        "status"        => self::STATUS_ACTIVE,
+                        "created_at"    => $createdAt
+                    );
+        return $this->questionOption->create($addQuestionOption);
+    }
+    
+    public function editQuestion($qstInput = array(), $questionId = 0)
+    {   
+        $return = FALSE;
+        $createdAt   = gmdate('Y-m-d H:i:s');
+        $editQuestion = array(
+                    "idquestion_type"   => $qstInput['qst_type'],
+                    "question"          => $this->appEncodeDecode->filterString($qstInput['question']),
+                    "question_notes"    => $this->appEncodeDecode->filterString($qstInput['qst_notes']),
+                    "is_answer_required"    => $qstInput['is_ans_req'],
+                    "has_multiple_answers"  => $qstInput['has_multi_ans'],
+                    "updated_at"        => $createdAt
+        );
+        if(!empty($questionId)){
+               $return = Question::where ('idquestion', $questionId)->update($editQuestion); 
+            }
+        return $return;
+    }
+    
+    public function editQuestionOption($qstInput = array(), $optionId = 0)
+    {   
+        $return = FALSE;
+        $createdAt   = gmdate('Y-m-d H:i:s');
+        $editQuestionOption = array(
+                        "option"            => $this->appEncodeDecode->filterString($qstInput['option']),
+                        "is_correct_answer" => $qstInput['is_correct_ans'],
+                        "status"        => $qstInput['status'],
+                        "updated_at"    => $createdAt
+                    );
+        if(!empty($optionId)){
+               $return = Question_Option::where ('idquestion_option', $optionId)->update($editQuestionOption); 
+            }
+        return $return;
+    }
         
         
 }

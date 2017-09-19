@@ -562,5 +562,8 @@ return array(
     "add_candidate_comment" => array(
         "success" => "Successfully Added",
         "failure" => "No records found"
+    ),
+    "add_edit_question" => array(
+        "failure" => "Failed to update question details"
     )
 );
