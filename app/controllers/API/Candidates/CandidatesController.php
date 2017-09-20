@@ -632,6 +632,7 @@ class CandidatesController extends \BaseController {
     return $return;
     }
     
+    
     /**
      *View Question
      * 
@@ -651,6 +652,106 @@ class CandidatesController extends \BaseController {
         $validation = $this->candidatesGateway->validateViewQuestionInput($inputUserData);
         if ($validation['status'] == 'success') {
             $return = \Response::json($this->candidatesGateway->viewQuestion($inputUserData));
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    }
+    
+    /**
+     *Add_Edit_Exam
+     * 
+     * POST/add_edit_exam
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code  
+     * @return Response
+     */
+    public function addEditExam() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validateAddEditExamInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->addEditExam($inputUserData));
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    }
+    
+    /**
+     *Edit_Exam
+     * 
+     * POST/edit_exam
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code  
+     * @return Response
+     */
+    public function viewExam() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validateEditExamInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->viewExam($inputUserData));
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    }
+    
+    /**
+     *Edit_Exam_Settings
+     * 
+     * POST/edit_exam_settings
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code  
+     * @return Response
+     */
+    public function editExamSettings() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validateEditExamSettingsInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->editExamSettings($inputUserData));
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    }
+    
+    /**
+     *get questions list
+     * 
+     * POST/get_questions_list
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code  
+     * @return Response
+     */
+    public function getQuestionsList() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validateGetQuestionsListInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->getQuestionsList($inputUserData));
         } else {
             // returning validation failure
             $return = \Response::json($validation);

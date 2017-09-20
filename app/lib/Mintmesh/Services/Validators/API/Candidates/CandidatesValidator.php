@@ -127,6 +127,19 @@ class CandidatesValidator extends Validator {
         'view_question' => array(
             'company_code'  => 'required',
             'question_id'   => 'required'
+        ),
+        'add_edit_exam' => array(
+            'company_code'  => 'required',
+            'exam_name'     => 'required',
+            'exam_type'     => 'required',
+            'work_experience'  => 'required',
+            'exam_duration'    => 'required'
+        ),
+        'edit_exam_settings' => array(
+            'company_code'  => 'required'
+        ),
+        'only_company_code' => array(
+            'company_code'  => 'required'
         )
               
     );

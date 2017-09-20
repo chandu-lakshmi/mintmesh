@@ -2,6 +2,7 @@
 
 use Config, Question, Exam, Question_Option;
 use Mail, DB, Candidate_Email_Templates, Question_Bank;
+use Exam_Question;
 use Mintmesh\Repositories\BaseRepository;
 use Illuminate\Support\Facades\Hash;
 use Mintmesh\Services\APPEncode\APPEncode ;
@@ -17,6 +18,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
     public function __construct(
                                 Question $question,
                                 Exam $exam,
+                                Exam_Question $examQuestion,
                                 Question_Option $questionOption,
                                 Question_Bank $questionBank,
                                 Candidate_Email_Templates $candidateEmailTemplates,
@@ -24,6 +26,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                                 ){      
                 $this->candidateEmailTemplates = $candidateEmailTemplates;    
                 $this->exam = $exam;    
+                $this->examQuestion = $examQuestion;    
                 $this->question = $question;    
                 $this->questionOption  = $questionOption;    
                 $this->questionBank    = $questionBank;    
@@ -460,6 +463,91 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                     ->join('question_library', 'question_bank.idquestion_library', '=', 'question_library.idquestion_library')
                     ->where('question_bank.idquestion', $questionId)
                     ->where('question_bank.status', self::STATUS_ACTIVE)
+                    ->get();   
+        return $result;
+    }
+    
+    public function addExam($examInput = array(), $companyId = 0, $createdBy = 0)
+    {   
+        $createdAt   = gmdate('Y-m-d H:i:s');
+        $addExamArr  = array(
+                        "company_id"   => $companyId,
+                        "name"         => $this->appEncodeDecode->filterString($examInput['exam_name']),
+                        "description_url"  => $this->appEncodeDecode->filterString($examInput['desc_url']),
+                        "max_duration"     => $examInput['exam_dura'],
+                        "idexam_type"      => $examInput['exam_type'],
+                        "work_experience"  => $examInput['work_exp'],
+                        "created_by"   => $createdBy,
+                        "created_at"   => $createdAt
+                    );
+        return $this->exam->create($addExamArr);
+    }
+    
+    public function editExam($examInput = array(), $examId = 0, $updatedBy = 0)
+    {   
+        $return = FALSE;
+        $createdAt    = gmdate('Y-m-d H:i:s');
+        $editExamArr  = array(
+                        "name"         => $this->appEncodeDecode->filterString($examInput['exam_name']),
+                        "description_url"  => $this->appEncodeDecode->filterString($examInput['desc_url']),
+                        "max_duration"     => $examInput['exam_dura'],
+                        "idexam_type"      => $examInput['exam_type'],
+                        "work_experience"  => $examInput['work_exp'],
+                        "updated_by"   => $updatedBy,
+                        "updated_at"   => $createdAt
+                    );
+        if(!empty($examId)){
+               $return = Exam::where ('idexam', $examId)->update($editExamArr); 
+        }
+        return $return;
+    }
+    
+    public function addExamQuestion($examQstArr = array())
+    {   
+        $createdAt   = gmdate('Y-m-d H:i:s');
+        $addExamDetailsArr  = array(
+                        "idexam"   => $examQstArr['exam_id'],
+                        "idquestion"     => $examQstArr['question_id'],
+                        "question_value" => $examQstArr['question_value'],
+                        "created_by"   => $examQstArr['created_by'],
+                        "created_at"   => $createdAt
+                    );
+        return $this->examQuestion->create($addExamDetailsArr);
+    }
+    
+    public function editExamSettings($examInput = array(), $examId = 0, $updatedBy = 0)
+    {   
+        $return = FALSE;
+        $createdAt    = gmdate('Y-m-d H:i:s');
+        $editExamArr  = array(
+                        "max_duration"  => $examInput['exam_dura'],
+                        "is_active"     => $examInput['is_active'],
+                        "exam_url"      => $this->appEncodeDecode->filterString($examInput['exam_url']),
+                        "min_marks"     => $examInput['min_marks'],
+                        "start_date_time"     => $examInput['str_date'],
+                        "end_date_time"       => $examInput['end_date'],
+                        "is_auto_screening"   => $examInput['auto_scr'],
+                        "enable_full_screen"  => $examInput['full_scr'],
+                        "shuffle_questions"   => $examInput['shuffle'],
+                        "reminder_emails"     => $examInput['reminder'],
+                        "confirmation_email"  => $examInput['confirm'],
+                        "password_protected"  => $examInput['pass_protect'],
+                        "password"     => $this->appEncodeDecode->filterString($examInput['password']),
+                        "updated_by"   => $updatedBy,
+                        "updated_at"   => $createdAt
+                    );
+        if(!empty($examId)){
+               $return = Exam::where ('idexam', $examId)->update($editExamArr); 
+        }
+        return $return;
+    }
+    
+    public function getQuestionsList($companyId = 0){
+        
+        $result =  DB::table('question')
+                    ->select('question.idquestion','question.question', 'question.question_value', 'question_type.name')
+                    ->join('question_type', 'question.idquestion_type', '=', 'question_type.idquestion_type')
+                    ->where('question.company_id', $companyId)
                     ->get();   
         return $result;
     }
