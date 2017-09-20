@@ -197,6 +197,9 @@ class CandidatesGateway {
     public function validateEditQuestionInput($input) {
         return $this->doValidation('edit_question', 'MINTMESH.user.valid');
     }
+    public function validateViewQuestionInput($input) {
+        return $this->doValidation('view_question', 'MINTMESH.user.valid');
+    }
     
     public function getCandidateEmailTemplates($input) {
         
@@ -1754,7 +1757,7 @@ class CandidatesGateway {
        $returnArr    = $resultArr = $data = array();
        $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
        #get Question Types List here
-       $resultArr    = $this->candidatesRepository->getQuestionLibraries($companyCode);
+       $resultArr    = $this->candidatesRepository->getQuestionLibrariesList($companyCode);
        
        if(!empty($resultArr)){
             
@@ -1792,11 +1795,12 @@ class CandidatesGateway {
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
         #form Question input params here
-        $qstInput['question']      = !empty($input['question']) ? $input['question'] : '';
-        $qstInput['qst_type']      = !empty($input['question_type']) ? $input['question_type'] : '';;
-        $qstInput['qst_notes']     = !empty($input['question_notes']) ? $input['question_notes'] : '';
-        $qstInput['is_ans_req']    = !empty($input['is_answer_required']) ? $input['is_answer_required'] : 0;
-        $qstInput['has_multi_ans'] = !empty($input['has_multiple_answers']) ? $input['has_multiple_answers'] : 0;
+        $qstInput['question']       = !empty($input['question']) ? $input['question'] : '';
+        $qstInput['qst_type']       = !empty($input['question_type']) ? $input['question_type'] : '';;
+        $qstInput['qst_value']      = !empty($input['question_value']) ? $input['question_value'] : '';
+        $qstInput['qst_notes']      = !empty($input['question_notes']) ? $input['question_notes'] : '';
+        $qstInput['is_ans_req']     = !empty($input['is_answer_required']) ? $input['is_answer_required'] : 0;
+        $qstInput['has_multi_ans']  = !empty($input['has_multiple_answers']) ? $input['has_multiple_answers'] : 0;
         #Add Question here
         $resultArr  = $this->candidatesRepository->addQuestion($qstInput, $companyId);
         $questionId = !empty($resultArr['id']) ? $resultArr['id'] : 0;
@@ -1850,6 +1854,7 @@ class CandidatesGateway {
         $qstInput['question']      = !empty($input['question']) ? $input['question'] : '';
         $qstInput['qst_type']      = !empty($input['question_type']) ? $input['question_type'] : '';
         $qstInput['qst_notes']     = !empty($input['question_notes']) ? $input['question_notes'] : '';
+        $qstInput['qst_value']     = !empty($input['question_value']) ? $input['question_value'] : '';
         $qstInput['is_ans_req']    = !empty($input['is_answer_required']) ? $input['is_answer_required'] : 0;
         $qstInput['has_multi_ans'] = !empty($input['has_multiple_answers']) ? $input['has_multiple_answers'] : 0;
         #check if Question insert or update
@@ -1902,6 +1907,54 @@ class CandidatesGateway {
             $responseCode    = self::SUCCESS_RESPONSE_CODE;
             $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
             $responseMessage = array('msg' => array(Lang::get('MINTMESH.edit_configuration.success')));
+        } else {
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_edit_question.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+    }
+    
+    public function viewQuestion($input) {
+        
+        $resultArr   = $data = $qstInput = $optionsArr = $librariesArr = array();
+        $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
+        $questionId  = !empty($input['question_id']) ? $input['question_id'] : 0;
+        #get Question Details here
+        $questionResArr  = $this->candidatesRepository->getQuestion($questionId);
+        #check if Question result
+        if(!empty($questionResArr[0])){
+            
+            $qstObj  = $questionResArr[0];
+            $resultArr['question_id']        = $questionId;
+            $resultArr['question']           = !empty($qstObj->question) ? $qstObj->question : '';
+            $resultArr['question_notes']     = !empty($qstObj->question_notes) ? $qstObj->question_notes : '';
+            $resultArr['question_value']     = !empty($qstObj->question_value) ? $qstObj->question_value : 0;
+            $resultArr['question_type']      = !empty($qstObj->question_type) ? $qstObj->question_type : 0;
+            $resultArr['question_type_name'] = !empty($qstObj->name) ? $qstObj->name : '';
+            #get Question Options here
+            $optionsResArr   = $this->candidatesRepository->getQuestionOptions($questionId);
+            foreach ($optionsResArr as $value) {
+                $optionsArr[] = (array) $value;
+            }
+            #get Question Libraries here
+            $librariesResArr = $this->candidatesRepository->getQuestionLibraries($questionId);
+            foreach ($librariesResArr as $value) {
+                $librariesArr[] = (array) $value;
+            }
+            $resultArr['options']   = $optionsArr;
+            $resultArr['libraries'] = $librariesArr;  
+            #check result success status
+            if(!empty($resultArr)){
+                $data = $resultArr;
+                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.edit_configuration.success')));
+            } else {
+                $responseCode    = self::ERROR_RESPONSE_CODE;
+                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_edit_question.failure')));
+            }
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;

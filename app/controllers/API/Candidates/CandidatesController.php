@@ -632,6 +632,32 @@ class CandidatesController extends \BaseController {
     return $return;
     }
     
+    /**
+     *View Question
+     * 
+     * POST/view_question
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code 
+     * @param integer $question_id  
+     * @return Response
+     */
+    public function viewQuestion() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validateViewQuestionInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->viewQuestion($inputUserData));
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    }
+    
 }
 
 ?>

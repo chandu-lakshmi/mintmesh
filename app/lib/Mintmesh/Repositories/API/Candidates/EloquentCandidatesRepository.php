@@ -332,7 +332,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         return  $result;
     }
     
-    public function getQuestionLibraries($companyCode = '') {
+    public function getQuestionLibrariesList($companyCode = '') {
 
         $result =  DB::table('question_library')
                     ->select('idquestion_library', 'name')
@@ -349,6 +349,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                     "idquestion_type"   => $qstInput['qst_type'],
                     "question"          => $this->appEncodeDecode->filterString($qstInput['question']),
                     "question_notes"    => $this->appEncodeDecode->filterString($qstInput['qst_notes']),
+                    "question_value"    => $qstInput['qst_value'],
                     "is_answer_required"    => $qstInput['is_ans_req'],
                     "has_multiple_answers"  => $qstInput['has_multi_ans'],
                     "status"        => self::STATUS_ACTIVE,
@@ -405,6 +406,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                     "idquestion_type"   => $qstInput['qst_type'],
                     "question"          => $this->appEncodeDecode->filterString($qstInput['question']),
                     "question_notes"    => $this->appEncodeDecode->filterString($qstInput['qst_notes']),
+                    "question_value"    => $qstInput['qst_value'],
                     "is_answer_required"    => $qstInput['is_ans_req'],
                     "has_multiple_answers"  => $qstInput['has_multi_ans'],
                     "updated_at"        => $createdAt
@@ -429,6 +431,37 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                $return = Question_Option::where ('idquestion_option', $optionId)->update($editQuestionOption); 
             }
         return $return;
+    }
+    
+    public function getQuestion($questionId = 0){
+        
+        $result =  DB::table('question')
+                    ->select('question.question', 'question.question_value', 'question.question_notes', 'question.idquestion_type as question_type', 'question_type.name')
+                    ->join('question_type', 'question.idquestion_type', '=', 'question_type.idquestion_type')
+                    ->where('question.idquestion', $questionId)
+                    ->get();   
+        return $result;
+    }
+    
+    public function getQuestionOptions($questionId = 0){
+        
+        $result =  DB::table('question_option')
+                        ->select('idquestion_option as option_id', 'option', 'is_correct_answer')
+                        ->where('idquestion', $questionId)
+                        ->where('status', self::STATUS_ACTIVE)
+                        ->get();
+        return $result;
+    }
+    
+    public function getQuestionLibraries($questionId = 0){
+        
+        $result =  DB::table('question_bank')
+                    ->select('question_bank.idquestion_bank as qst_bank_id', 'question_bank.idquestion_library as library_id', 'question_library.name as library_name')
+                    ->join('question_library', 'question_bank.idquestion_library', '=', 'question_library.idquestion_library')
+                    ->where('question_bank.idquestion', $questionId)
+                    ->where('question_bank.status', self::STATUS_ACTIVE)
+                    ->get();   
+        return $result;
     }
         
         

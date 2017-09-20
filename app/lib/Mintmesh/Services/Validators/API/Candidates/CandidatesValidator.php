@@ -123,6 +123,10 @@ class CandidatesValidator extends Validator {
             'question_id'   => 'required',
             'question'      => 'required',
             'question_type' => 'required',
+        ),
+        'view_question' => array(
+            'company_code'  => 'required',
+            'question_id'   => 'required'
         )
               
     );
