@@ -209,6 +209,9 @@ class CandidatesGateway {
     public function validateGetQuestionsListInput($input) {
         return $this->doValidation('only_company_code', 'MINTMESH.user.valid');
     }
+    public function validategetCompanyAssessmentsListInput($input) {
+        return $this->doValidation('get_company_assessments_list', 'MINTMESH.user.valid');
+    }
     
     public function getCandidateEmailTemplates($input) {
         
@@ -2080,6 +2083,43 @@ class CandidatesGateway {
             }
             $responseCode    = self::SUCCESS_RESPONSE_CODE;
             $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+            if($returnArr){
+                $data = $returnArr;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+            } else {
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            }
+        } else {
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+    }
+    
+    
+    
+    public function getCompanyAssessmentsList($input) {
+        
+       $returnArr    = $data = array();
+       $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
+       $name  = !empty($input['name']) ? $input['name'] : '';
+       #get company details here
+       $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+       $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+       #get Question Types List here
+       $resultArr    = $this->candidatesRepository->getCompanyAssessmentsList($companyId,$name);
+        #check if Question result
+        if(!empty($resultArr)){
+            
+            foreach ($resultArr as $value) {
+                $record = array();
+                $record['id']           = $value->idexam;
+                $record['name']         = $value->name;
+                $returnArr[] = $record;
+            }
+                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
             if($returnArr){
                 $data = $returnArr;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));

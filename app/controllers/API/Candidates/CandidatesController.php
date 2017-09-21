@@ -759,6 +759,35 @@ class CandidatesController extends \BaseController {
     return $return;
     }
     
+    
+    /**
+     *get questions list
+     * 
+     * POST/get_company_assessments_list
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code  
+     * @return Response
+     */
+    public function getCompanyAssessmentsList() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validategetCompanyAssessmentsListInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->getCompanyAssessmentsList($inputUserData));
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    }
+    
+    
+    
+    
 }
 
 ?>

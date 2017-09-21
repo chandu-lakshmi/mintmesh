@@ -551,6 +551,20 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                     ->get();   
         return $result;
     }
+    
+    
+    public function getCompanyAssessmentsList($companyId = 0,$name=''){
+        $result = '';
+        if(!empty($name) && !empty($companyId)){
+        $result =  DB::table('exam')
+                    ->select('exam.idexam','exam.name')
+                    ->where('exam.company_id', $companyId)
+                    ->where('exam.is_active',1)
+                    ->where('exam.name', 'LIKE', '' . $name . '%')
+                    ->get();
+        }
+       return $result;
+    }
         
         
 }
