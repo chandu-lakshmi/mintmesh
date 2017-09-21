@@ -1772,7 +1772,7 @@ class CandidatesGateway {
             
             foreach ($resultArr as $value) {
                 $record = array();
-                $record['id']           = $value->idquestion_library;
+                $record['library_id']   = $value->idquestion_library;
                 $record['name']         = $value->name;
                 $returnArr[] = $record;
             }
