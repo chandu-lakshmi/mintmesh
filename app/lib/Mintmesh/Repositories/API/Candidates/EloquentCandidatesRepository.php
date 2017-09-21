@@ -350,7 +350,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         $createdAt   = gmdate('Y-m-d H:i:s');
         $addQuestion = array(
                     "company_id"        => $companyId,
-                    "idquestion_type"   => $qstInput['qst_type'],
+                    "question_type"     => $this->appEncodeDecode->filterString($qstInput['qst_type']),
                     "question"          => $this->appEncodeDecode->filterString($qstInput['question']),
                     "question_notes"    => $this->appEncodeDecode->filterString($qstInput['qst_notes']),
                     "question_value"    => $qstInput['qst_value'],
@@ -407,7 +407,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         $return = FALSE;
         $createdAt   = gmdate('Y-m-d H:i:s');
         $editQuestion = array(
-                    "idquestion_type"   => $qstInput['qst_type'],
+                    "question_type"   => $this->appEncodeDecode->filterString($qstInput['qst_type']),
                     "question"          => $this->appEncodeDecode->filterString($qstInput['question']),
                     "question_notes"    => $this->appEncodeDecode->filterString($qstInput['qst_notes']),
                     "question_value"    => $qstInput['qst_value'],
@@ -440,8 +440,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
     public function getQuestion($questionId = 0){
         
         $result =  DB::table('question')
-                    ->select('question.question', 'question.question_value', 'question.question_notes', 'question.idquestion_type as question_type', 'question_type.name')
-                    ->join('question_type', 'question.idquestion_type', '=', 'question_type.idquestion_type')
+                    ->select('question.question', 'question.question_value', 'question.question_notes', 'question.question_type')
                     ->where('question.idquestion', $questionId)
                     ->get();   
         return $result;
@@ -565,9 +564,8 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
             $start = $end*10 ;
         }
         $result =  DB::table('question')
-                    ->select('question.idquestion','question.question', 'question.question_value', 'question_type.name')
-                    ->join('question_type', 'question.idquestion_type', '=', 'question_type.idquestion_type')
-                    ->where('question.company_id', $companyId)
+                    ->select('idquestion','question', 'question_value', 'question_type')
+                    ->where('company_id', $companyId)
                     ->limit(10)->skip($start)
                     ->get();
         return $result;
@@ -632,9 +630,8 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
     public function getExamQuestionList($examId = 0){
         
         $result =  DB::table('exam_question as e')
-                    ->select('e.idexam_question as exam_question_id','q.idquestion as question_id','q.question', 't.name as question_type_name', 'e.question_value')
+                    ->select('e.idexam_question as exam_question_id','q.idquestion as question_id','q.question', 'q.question_type as question_type_name', 'e.question_value')
                     ->join('question as q', 'e.idquestion', '=', 'q.idquestion')
-                    ->join('question_type as t', 'q.idquestion_type', '=', 't.idquestion_type')
                     ->where('e.idexam', $examId)
                     ->get();
        return $result;

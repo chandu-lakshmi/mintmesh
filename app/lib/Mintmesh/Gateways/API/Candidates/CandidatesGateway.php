@@ -1958,7 +1958,6 @@ class CandidatesGateway {
             $resultArr['question_notes']     = !empty($qstObj->question_notes) ? $qstObj->question_notes : '';
             $resultArr['question_value']     = !empty($qstObj->question_value) ? $qstObj->question_value : 0;
             $resultArr['question_type']      = !empty($qstObj->question_type) ? $qstObj->question_type : 0;
-            $resultArr['question_type_name'] = !empty($qstObj->name) ? $qstObj->name : '';
             #get Question Options here
             $optionsResArr   = $this->candidatesRepository->getQuestionOptions($questionId);
             foreach ($optionsResArr as $value) {
@@ -2095,7 +2094,7 @@ class CandidatesGateway {
                 $resultArr['question_id']        = !empty($qstObj->idquestion) ? $qstObj->idquestion : 0;
                 $resultArr['question']           = !empty($qstObj->question) ? $qstObj->question : '';
                 $resultArr['question_value']     = !empty($qstObj->question_value) ? $qstObj->question_value : 0;
-                $resultArr['question_type_name'] = !empty($qstObj->name) ? $qstObj->name : '';
+                $resultArr['question_type']      = !empty($qstObj->question_type) ? $qstObj->question_type : '';
                 $returnArr[] = $resultArr;
             }
             $responseCode    = self::SUCCESS_RESPONSE_CODE;
@@ -2220,7 +2219,7 @@ class CandidatesGateway {
                     $record['question_id']      = !empty($value->question_id) ? $value->question_id : 0;
                     $record['question']         = !empty($value->question) ? $value->question : '';
                     $record['question_value']   = !empty($value->question_value) ? $value->question_value : 0;
-                    $record['question_type_name']  = !empty($value->question_type_name) ? $value->question_type_name : '';
+                    $record['question_type']  = !empty($value->question_type) ? $value->question_type : '';
                     $examQstArr[]  = $record;
                 }
             }
