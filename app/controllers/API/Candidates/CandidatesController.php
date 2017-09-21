@@ -764,14 +764,17 @@ class CandidatesController extends \BaseController {
      *get questions list
      * 
      * POST/get_company_assessments_list
+    /**
+     *add edit exam question
+     * 
+     * POST/add_edit_exam_question
      * 
      * @param string $access_token The Access token of a user
      * @param string $company_code  
      * @return Response
      */
     public function getCompanyAssessmentsList() {
-        
-        $return = '';
+         $return = '';
         // Receiving user input data
         $inputUserData = \Input::all();
         // Validating user input data
@@ -783,11 +786,67 @@ class CandidatesController extends \BaseController {
             $return = \Response::json($validation);
         }
     return $return;
+   
+    }
+    
+    /**
+     *get questions list
+     * 
+     * POST/get_company_assessments_list
+    /**
+     *add edit exam question
+     * 
+     * POST/add_edit_exam_question
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code  
+     * @return Response
+     */
+    public function addEditExamQuestion() {
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validategetCompanyAssessmentsListInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->getCompanyAssessmentsList($inputUserData));
+        $validation = $this->candidatesGateway->validateAddEditExamQuestionInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->addEditExamQuestion($inputUserData));
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
     }
     
     
-    
-    
+
+    /**
+     *view exam question
+     * 
+     * POST/view_exam_question
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code  
+     * @return Response
+     */
+    public function viewExamQuestion() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validateViewExamQuestionInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->viewExamQuestion($inputUserData));
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    }    
+
 }
 
 ?>

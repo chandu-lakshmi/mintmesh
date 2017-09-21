@@ -209,8 +209,15 @@ class CandidatesGateway {
     public function validateGetQuestionsListInput($input) {
         return $this->doValidation('only_company_code', 'MINTMESH.user.valid');
     }
+
     public function validategetCompanyAssessmentsListInput($input) {
         return $this->doValidation('get_company_assessments_list', 'MINTMESH.user.valid');
+    }
+    public function validateAddEditExamQuestionInput($input) {
+        return $this->doValidation('add_edit_exam_question', 'MINTMESH.user.valid');
+    }
+    public function validateViewExamQuestionInput($input) {
+        return $this->doValidation('view_exam_question', 'MINTMESH.user.valid');
     }
     
     public function getCandidateEmailTemplates($input) {
@@ -1775,7 +1782,7 @@ class CandidatesGateway {
             
             foreach ($resultArr as $value) {
                 $record = array();
-                $record['id']           = $value->idquestion_library;
+                $record['library_id']   = $value->idquestion_library;
                 $record['name']         = $value->name;
                 $returnArr[] = $record;
             }
@@ -2065,11 +2072,12 @@ class CandidatesGateway {
         
        $returnArr    = $data = array();
        $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
+       $pageNo       = !empty($input['page_no']) ? $input['page_no'] : 0;
        #get company details here
        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
        #get Question Types List here
-       $questionResArr    = $this->candidatesRepository->getQuestionsList($companyId);
+       $questionResArr    = $this->candidatesRepository->getQuestionsList($companyId, $pageNo);
         #check if Question result
         if(!empty($questionResArr)){
             
@@ -2097,6 +2105,7 @@ class CandidatesGateway {
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
     
+
     
     
     public function getCompanyAssessmentsList($input) {
@@ -2124,6 +2133,79 @@ class CandidatesGateway {
                 $data = $returnArr;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
             } else {
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+    }
+    }
+    public function addEditExamQuestion($input) {
+        
+        $returnArr      = $data = array();
+        $companyCode    = !empty($input['company_code']) ? $input['company_code'] : '';
+        $examId         = !empty($input['exam_id']) ? $input['exam_id'] : 0;
+        $questionId     = !empty($input['question_id']) ? $input['question_id'] : 0;
+        $questionValue  = !empty($input['question_value']) ? $input['question_value'] : 0;
+        $examQuestionId = !empty($input['exam_question_id']) ? $input['exam_question_id'] : 0;
+        #get Logged In User details here
+        $this->loggedinUser = $this->referralsGateway->getLoggedInUser(); 
+        $userId   = $this->loggedinUser->id;
+       
+        if((!empty($examId) && !empty($questionId)) || !empty($examQuestionId)){
+  
+            if($examQuestionId){
+                #remove Exam Question here
+                $questionResArr   = $this->candidatesRepository->removeExamQuestion($examQuestionId, $userId);
+                $responseMessage  = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+            } else {
+                #add Exam Question here
+                $questionResArr    = $this->candidatesRepository->addExamQuestion($examId, $questionId, $userId, $questionValue);
+                $responseMessage   = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+                $data = $questionResArr;
+            }
+
+            if($questionResArr){
+                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+            } else {
+                $responseCode    = self::ERROR_RESPONSE_CODE;
+                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            }
+        } else {
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+    }
+    
+    public function viewExamQuestion($input) {
+        
+        $returnArr      = $data = $resultArr = array();
+        $companyCode    = !empty($input['company_code']) ? $input['company_code'] : '';
+        $examId         = !empty($input['exam_id']) ? $input['exam_id'] : 0;
+        #get Logged In User details here
+        $this->loggedinUser = $this->referralsGateway->getLoggedInUser(); 
+        $userId   = $this->loggedinUser->id;
+       
+        $questionResArr   = $this->candidatesRepository->getExamDetails($examId);
+        
+        if(!empty($questionResArr[0])){
+            
+            $qstObj  = $questionResArr[0];
+            $resultArr['exam_id']        = !empty($qstObj->idexam) ? $qstObj->idexam : '';
+            $resultArr['exam_name']      = !empty($qstObj->exam_name) ? $qstObj->exam_name : '';
+        
+            if($resultArr){
+                $data = $resultArr;
+                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+            } else {
+                $responseCode    = self::ERROR_RESPONSE_CODE;
+                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
             }
         } else {
