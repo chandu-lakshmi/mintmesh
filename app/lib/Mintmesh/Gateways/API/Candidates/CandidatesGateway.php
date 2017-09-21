@@ -1887,6 +1887,7 @@ class CandidatesGateway {
             $resultArr  = $this->candidatesRepository->editQuestion($qstInput, $questionId);
             #edit Question Options
             if(!empty($optionsArr)) {
+                
                 #insert multiple answers rows
                 $this->candidatesRepository->editQuestionOptionInactiveAll($questionId);
                 foreach ($optionsArr as $value) {
@@ -2203,8 +2204,11 @@ class CandidatesGateway {
         if(!empty($questionResArr[0])){
             
             $qstObj  = $questionResArr[0];
-            $resultArr['exam_id']        = !empty($qstObj->idexam) ? $qstObj->idexam : '';
-            $resultArr['exam_name']      = !empty($qstObj->exam_name) ? $qstObj->exam_name : '';
+            $resultArr['exam_id']         = !empty($qstObj->idexam) ? $qstObj->idexam : '';
+            $resultArr['exam_name']       = !empty($qstObj->exam_name) ? $qstObj->exam_name : '';
+            $resultArr['exam_type']       = !empty($qstObj->exam_type_name) ? $qstObj->exam_type_name : '';
+            $resultArr['max_duration']    = !empty($qstObj->max_duration) ? $qstObj->max_duration : '';
+            $resultArr['experience_name'] = !empty($qstObj->experience_name) ? $qstObj->experience_name : '';
         
             if($resultArr){
                 $data = $resultArr;
