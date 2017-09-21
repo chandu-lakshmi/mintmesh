@@ -1885,6 +1885,7 @@ class CandidatesGateway {
             #edit Question Options
             if(!empty($optionsArr)) {
                 #insert multiple answers rows
+                $this->candidatesRepository->editQuestionOptionInactiveAll($questionId);
                 foreach ($optionsArr as $value) {
                     $optionInput = array();
                     $optionId    = !empty($value['option_id']) ? $value['option_id'] : 0;
@@ -1893,9 +1894,9 @@ class CandidatesGateway {
                     #check option id
                     if($optionId){
                         $optionInput['status'] = self::STATUS_ACTIVE;
-                        if(!empty($value['remove'])){
+                        /*if(!empty($value['remove'])){
                             $optionInput['status'] = self::STATUS_INACTIVE;
-                        }
+                        }*/
                         $this->candidatesRepository->editQuestionOption($optionInput, $optionId);
                     } else {
                         $this->candidatesRepository->addQuestionOption($optionInput, $questionId);

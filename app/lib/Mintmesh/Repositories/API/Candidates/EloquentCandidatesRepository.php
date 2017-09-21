@@ -599,6 +599,17 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         }
        return $result;
     }
+    
+    
+    public function editQuestionOptionInactiveAll($questionId = 0)
+    {   
+        $return = FALSE;
+        $editQuestionOption = array("status" => 0);
+        if(!empty($optionId)){
+               $return = Question_Option::where ('idquestion', $questionId)->update($editQuestionOption); 
+            }
+        return $return;
+    }
         
         
 }

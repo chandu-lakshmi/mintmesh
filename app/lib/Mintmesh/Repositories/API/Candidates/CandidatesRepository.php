@@ -45,6 +45,9 @@ interface CandidatesRepository {
      
      
      public function getExamDetails($exam_id);
+     
+     
+      public function editQuestionOptionInactiveAll($questionId);
    
      
 }
