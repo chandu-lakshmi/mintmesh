@@ -807,9 +807,6 @@ class CandidatesController extends \BaseController {
         // Receiving user input data
         $inputUserData = \Input::all();
         // Validating user input data
-        $validation = $this->candidatesGateway->validategetCompanyAssessmentsListInput($inputUserData);
-        if ($validation['status'] == 'success') {
-            $return = \Response::json($this->candidatesGateway->getCompanyAssessmentsList($inputUserData));
         $validation = $this->candidatesGateway->validateAddEditExamQuestionInput($inputUserData);
         if ($validation['status'] == 'success') {
             $return = \Response::json($this->candidatesGateway->addEditExamQuestion($inputUserData));
@@ -817,6 +814,7 @@ class CandidatesController extends \BaseController {
             // returning validation failure
             $return = \Response::json($validation);
         }
+        
     return $return;
     }
     
