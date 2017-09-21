@@ -12,6 +12,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
     protected $exam, $question, $candidateEmailTemplates, $questionOption;
         
     const STATUS_ACTIVE = 1;
+    const STATUS_INACTIVE = 0;
     const DEFAULT_CANDIDATE_ACTIVITY_STATUS = 1;
 
 
@@ -502,17 +503,31 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         return $return;
     }
     
-    public function addExamQuestion($examQstArr = array())
+    public function addExamQuestion($examId = 0, $questionId = 0, $createdBy = 0, $questionValue = 0)
     {   
         $createdAt   = gmdate('Y-m-d H:i:s');
         $addExamDetailsArr  = array(
-                        "idexam"   => $examQstArr['exam_id'],
-                        "idquestion"     => $examQstArr['question_id'],
-                        "question_value" => $examQstArr['question_value'],
-                        "created_by"   => $examQstArr['created_by'],
+                        "idexam"         => $examId,
+                        "idquestion"     => $questionId,
+                        "question_value" => $questionValue,
+                        "created_by"   => $createdBy,
                         "created_at"   => $createdAt
                     );
         return $this->examQuestion->create($addExamDetailsArr);
+    }
+    
+    public function removeExamQuestion($examQuestionId = 0, $createdBy = 0)
+    {   
+        $createdAt   = gmdate('Y-m-d H:i:s');
+        $removeExamDetailsArr  = array(
+                        "status" => self::STATUS_INACTIVE,
+                        "updated_by"   => $createdBy,
+                        "updated_at"   => $createdAt
+                    );
+        if(!empty($examQuestionId)){
+               $return = Exam_Question::where ('idexam_question', $examQuestionId)->update($removeExamDetailsArr); 
+        }
+        return $return;
     }
     
     public function editExamSettings($examInput = array(), $examId = 0, $updatedBy = 0)
@@ -542,13 +557,19 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         return $return;
     }
     
-    public function getQuestionsList($companyId = 0){
+    public function getQuestionsList($companyId = 0, $page = 0){
         
+        $start = $end = 0;
+        if (!empty($page)){
+            $end = $page-1 ;
+            $start = $end*10 ;
+        }
         $result =  DB::table('question')
                     ->select('question.idquestion','question.question', 'question.question_value', 'question_type.name')
                     ->join('question_type', 'question.idquestion_type', '=', 'question_type.idquestion_type')
                     ->where('question.company_id', $companyId)
-                    ->get();   
+                    ->limit(10)->skip($start)
+                    ->get();
         return $result;
     }
         

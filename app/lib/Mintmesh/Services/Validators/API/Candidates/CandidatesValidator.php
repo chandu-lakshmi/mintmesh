@@ -140,6 +140,12 @@ class CandidatesValidator extends Validator {
         ),
         'only_company_code' => array(
             'company_code'  => 'required'
+        ),
+        'add_edit_exam_question' => array(
+            'company_code'  => 'required',
+            'exam_id'       => 'required_without_all:exam_question_id',
+            'question_id'   => 'required_without_all:exam_question_id',
+            'exam_question_id'   => 'required_without_all:exam_id,question_id'
         )
               
     );
