@@ -628,6 +628,16 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
             }
         return $return;
     }
+    
+    public function getExamQuestionList($examId = 0){
         
+        $result =  DB::table('exam_question as e')
+                    ->select('e.idexam_question as exam_question_id','q.idquestion as question_id','q.question', 't.name as question_type_name', 'e.question_value')
+                    ->join('question as q', 'e.idquestion', '=', 'q.idquestion')
+                    ->join('question_type as t', 'q.idquestion_type', '=', 't.idquestion_type')
+                    ->where('e.idexam', $examId)
+                    ->get();
+       return $result;
+    }    
         
 }
