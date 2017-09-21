@@ -219,6 +219,9 @@ class CandidatesGateway {
     public function validateViewExamQuestionInput($input) {
         return $this->doValidation('view_exam_question', 'MINTMESH.user.valid');
     }
+    public function validategetExamDetailsInput($input) {
+        return $this->doValidation('get_exam_details', 'MINTMESH.user.valid');
+    }
     
     public function getCandidateEmailTemplates($input) {
         
@@ -2197,6 +2200,56 @@ class CandidatesGateway {
             $qstObj  = $questionResArr[0];
             $resultArr['exam_id']        = !empty($qstObj->idexam) ? $qstObj->idexam : '';
             $resultArr['exam_name']      = !empty($qstObj->exam_name) ? $qstObj->exam_name : '';
+        
+            if($resultArr){
+                $data = $resultArr;
+                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+            } else {
+                $responseCode    = self::ERROR_RESPONSE_CODE;
+                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            }
+        } else {
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+    }
+    
+    public function getExamDetails($input) {
+        
+        $returnArr      = $data = $resultArr = array();
+        $companyCode    = !empty($input['company_code']) ? $input['company_code'] : '';
+        $examId         = !empty($input['exam_id']) ? $input['exam_id'] : 0;
+        #get Logged In User details here
+        $this->loggedinUser = $this->referralsGateway->getLoggedInUser(); 
+        $userId   = $this->loggedinUser->id;
+       
+        $questionResArr   = $this->candidatesRepository->getExamDetails($examId);
+        
+        if(!empty($questionResArr[0])){
+            
+            $qstObj  = $questionResArr[0];
+            $resultArr['exam_id']        = !empty($qstObj->idexam) ? $qstObj->idexam : '';
+            $resultArr['exam_name']      = !empty($qstObj->exam_name) ? $qstObj->exam_name : '';
+            $resultArr['exam_url']      = !empty($qstObj->exam_url) ? $qstObj->exam_url : '';
+            $resultArr['description_url']      = !empty($qstObj->description_url) ? $qstObj->description_url : '';
+            $resultArr['work_experience']      = !empty($qstObj->work_experience) ? $qstObj->work_experience : '';
+            $resultArr['start_date_time']      = !empty($qstObj->start_date_time) ? $qstObj->start_date_time : '';
+            $resultArr['end_date_time']      = !empty($qstObj->end_date_time) ? $qstObj->end_date_time : '';
+            $resultArr['is_active']      = !empty($qstObj->is_active) ? $qstObj->is_active : '';
+            $resultArr['is_auto_screening']      = !empty($qstObj->is_auto_screening) ? $qstObj->is_auto_screening : '';
+            $resultArr['password_protected']      = !empty($qstObj->password_protected) ? $qstObj->password_protected : '';
+            $resultArr['password']      = !empty($qstObj->password) ? $qstObj->password : '';
+            $resultArr['min_marks']      = !empty($qstObj->min_marks) ? $qstObj->min_marks : '';
+            $resultArr['enable_full_screen']      = !empty($qstObj->enable_full_screen) ? $qstObj->enable_full_screen : '';
+            $resultArr['shuffle_questions']      = !empty($qstObj->shuffle_questions) ? $qstObj->shuffle_questions : '';
+            $resultArr['reminder_emails']      = !empty($qstObj->reminder_emails) ? $qstObj->reminder_emails : '';
+            $resultArr['exam_type_name']      = !empty($qstObj->exam_type_name) ? $qstObj->exam_type_name : '';
+            $resultArr['experience_name']      = !empty($qstObj->experience_name) ? $qstObj->experience_name : '';
         
             if($resultArr){
                 $data = $resultArr;

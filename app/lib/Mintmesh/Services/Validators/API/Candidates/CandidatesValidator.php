@@ -153,6 +153,10 @@ class CandidatesValidator extends Validator {
         'view_exam_question' => array(
             'company_code'  => 'required',
             'exam_id'       => 'required'
+        ),
+        'get_exam_details' => array(
+            'company_code'  => 'required',
+            'exam_id'       => 'required'
         )
               
     );

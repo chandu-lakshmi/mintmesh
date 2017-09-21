@@ -42,6 +42,9 @@ interface CandidatesRepository {
      public function getCandidatePersonalStatus($companyId,$referenceId, $candidateId);
      
      public function getCompanyAssessmentsList($companyId,$list_name);
+     
+     
+     public function getExamDetails($exam_id);
    
      
 }
