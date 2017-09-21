@@ -1906,6 +1906,7 @@ class CandidatesGateway {
             #edit Question Bank Details
             if(!empty($librariesArr)) {
                 #insert multiple answers rows
+                $this->candidatesRepository->editQuestionBankInactiveAll($questionId);
                 foreach ($librariesArr as $value) {
                     #form Question Bank input
                     $libraryInput = array();
@@ -1914,9 +1915,9 @@ class CandidatesGateway {
                     #check option id
                     if($qstBankId){
                         $libraryInput['status'] = self::STATUS_ACTIVE;
-                        if(!empty($value['remove'])){
+                        /*if(!empty($value['remove'])){
                             $libraryInput['status'] = self::STATUS_INACTIVE;
-                        }
+                        }*/
                         $this->candidatesRepository->editQuestionBank($libraryInput, $qstBankId);
                     } else {
                         $this->candidatesRepository->addQuestionBank($libraryInput, $companyId);
