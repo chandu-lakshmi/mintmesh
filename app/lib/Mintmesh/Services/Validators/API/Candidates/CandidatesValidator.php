@@ -146,6 +146,10 @@ class CandidatesValidator extends Validator {
             'exam_id'       => 'required_without_all:exam_question_id',
             'question_id'   => 'required_without_all:exam_question_id',
             'exam_question_id'   => 'required_without_all:exam_id,question_id'
+        ),
+        'view_exam_question' => array(
+            'company_code'  => 'required',
+            'exam_id'       => 'required'
         )
               
     );

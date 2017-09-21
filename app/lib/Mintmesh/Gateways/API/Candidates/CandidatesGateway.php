@@ -212,6 +212,9 @@ class CandidatesGateway {
     public function validateAddEditExamQuestionInput($input) {
         return $this->doValidation('add_edit_exam_question', 'MINTMESH.user.valid');
     }
+    public function validateViewExamQuestionInput($input) {
+        return $this->doValidation('view_exam_question', 'MINTMESH.user.valid');
+    }
     
     public function getCandidateEmailTemplates($input) {
         
@@ -2126,6 +2129,41 @@ class CandidatesGateway {
             if($questionResArr){
                 $responseCode    = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+            } else {
+                $responseCode    = self::ERROR_RESPONSE_CODE;
+                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            }
+        } else {
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+    }
+    
+    public function viewExamQuestion($input) {
+        
+        $returnArr      = $data = $resultArr = array();
+        $companyCode    = !empty($input['company_code']) ? $input['company_code'] : '';
+        $examId         = !empty($input['exam_id']) ? $input['exam_id'] : 0;
+        #get Logged In User details here
+        $this->loggedinUser = $this->referralsGateway->getLoggedInUser(); 
+        $userId   = $this->loggedinUser->id;
+       
+        $questionResArr   = $this->candidatesRepository->getExamDetails($examId);
+        
+        if(!empty($questionResArr[0])){
+            
+            $qstObj  = $questionResArr[0];
+            $resultArr['exam_id']        = !empty($qstObj->idexam) ? $qstObj->idexam : '';
+            $resultArr['exam_name']      = !empty($qstObj->exam_name) ? $qstObj->exam_name : '';
+        
+            if($resultArr){
+                $data = $resultArr;
+                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
             } else {
                 $responseCode    = self::ERROR_RESPONSE_CODE;
                 $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
