@@ -619,6 +619,15 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
             }
         return $return;
     }
+    
+    public function deleteQuestion($questionId = 0){   
+        $return = FALSE;
+        $delQuestion = array("status" => self::STATUS_INACTIVE);
+        if(!empty($questionId)){
+               $return = Question::where ('idquestion', $questionId)->update($delQuestion); 
+            }
+        return $return;
+    }
         
         
 }

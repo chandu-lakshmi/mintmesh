@@ -870,7 +870,34 @@ class CandidatesController extends \BaseController {
             $return = \Response::json($validation);
         }
     return $return;
-    }    
+    }   
+    
+    
+    
+     /**
+     *delete question
+     * 
+     * POST/delete_question
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code  
+     * @return Response
+     */
+    public function deleteQuestion() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validatedeleteQuestionInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->deleteQuestion($inputUserData));
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    }   
 
 }
 

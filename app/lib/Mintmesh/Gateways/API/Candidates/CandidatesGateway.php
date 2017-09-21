@@ -222,6 +222,9 @@ class CandidatesGateway {
     public function validategetExamDetailsInput($input) {
         return $this->doValidation('get_exam_details', 'MINTMESH.user.valid');
     }
+    public function validatedeleteQuestionInput($input) {
+        return $this->doValidation('delete_question', 'MINTMESH.user.valid');
+    }
     
     public function getCandidateEmailTemplates($input) {
         
@@ -2267,6 +2270,27 @@ class CandidatesGateway {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
             $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+    }
+    
+    
+    
+    public function deleteQuestion($input) {
+        $returnArr      = $resultArr = $data = $qstInput = array();
+        $companyCode    = !empty($input['company_code']) ? $input['company_code'] : '';
+        $questionId     = !empty($input['question_id']) ? $input['question_id'] : 0;
+        if(!empty($questionId)){
+            $resultArr  = $this->candidatesRepository->deleteQuestion($questionId);
+        }  
+        if(!empty($resultArr)){
+            $responseCode    = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.edit_configuration.success')));
+        } else {
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_edit_question.failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
