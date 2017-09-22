@@ -644,9 +644,31 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                     ->select('e.idexam_question as exam_question_id','q.idquestion as question_id','q.question', 'q.question_type as question_type_name', 'e.question_value')
                     ->join('question as q', 'e.idquestion', '=', 'q.idquestion')
                     ->where('e.idexam', $examId)
+                    ->where('e.status', self::STATUS_ACTIVE)
                     ->where('q.status', self::STATUS_ACTIVE)
                     ->get();
        return $result;
+    }
+    
+    public function checkExamQuestionExist($examId = 0, $questionId = 0){
+        
+        $result =  DB::table('exam_question')
+                        ->select('idexam_question as exam_question_id')
+                        ->where('idexam', $examId)
+                        ->where('idquestion', $questionId)
+                        ->limit(1)
+                        ->get();
+        return $result;
+    }
+    
+    public function updateExamQuestionStatus($examQuestionId = 0)
+    {   
+        $return = FALSE;
+        $editQuestionOption = array("status" => self::STATUS_ACTIVE);
+        if(!empty($examQuestionId)){
+               $return = Exam_Question::where ('idexam_question', $examQuestionId)->update($editQuestionOption); 
+            }
+        return $return;
     }
         
 }

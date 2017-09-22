@@ -2179,10 +2179,19 @@ class CandidatesGateway {
                 $questionResArr   = $this->candidatesRepository->removeExamQuestion($examQuestionId, $userId);
                 $responseMessage  = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
             } else {
-                #add Exam Question here
-                $questionResArr    = $this->candidatesRepository->addExamQuestion($examId, $questionId, $userId, $questionValue);
+                #check Exam Question Exist
+                $checkExmQstResArr    = $this->candidatesRepository->checkExamQuestionExist($examId, $questionId);
+                if(!empty($checkExmQstResArr[0])){
+                    $exmQst = $checkExmQstResArr[0];
+                    $examQuestionId = !empty($exmQst->exam_question_id) ? $exmQst->exam_question_id : 0;
+                    #update Exam Question status here
+                    $questionResArr  = $this->candidatesRepository->updateExamQuestionStatus($examQuestionId);
+                } else {
+                    #add Exam Question here
+                    $questionResArr  = $this->candidatesRepository->addExamQuestion($examId, $questionId, $userId, $questionValue);
+                    $data = $questionResArr;
+                }
                 $responseMessage   = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
-                $data = $questionResArr;
             }
 
             if($questionResArr){
@@ -2387,8 +2396,6 @@ class CandidatesGateway {
         $userId   = $this->loggedinUser->id;
         #get Exam Details here                
         $questionResArr   = $this->candidatesRepository->getExamDetails($examId);
-        //print_r($questionResArr).exit;
-
         
         $pageFlow = array("nextPage" => true,"label" => "mwForm.pageFlow.goToNextPage");
         if(!empty($questionResArr[0])){
@@ -2424,17 +2431,13 @@ class CandidatesGateway {
                     $elements['exam_question_id'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
                     $elements['orderNo'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
                     $elements['type']  = 'question';
-                    
-
                    
                     $question['id'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;        
                     $question['text'] = !empty($value->question) ? $value->question : '';        
                     $question['type'] = !empty($value->question_type) ? $value->question_type : '';        
                     $question['required'] = 'true';        
                     $qstOptionsResArr = $this->candidatesRepository->getQuestionOptions($questionId);
-                   // print_r($qstOptionsResArr).exit;
                    
-                    
                     if(!empty($qstOptionsResArr)){
                         foreach ($qstOptionsResArr as $optValue) {
                             $optrecord = array();
