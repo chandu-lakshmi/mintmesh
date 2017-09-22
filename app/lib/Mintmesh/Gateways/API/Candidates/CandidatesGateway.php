@@ -2091,12 +2091,13 @@ class CandidatesGateway {
         
        $returnArr    = $data = array();
        $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
+       $examId       = !empty($input['exam_id']) ? $input['exam_id'] : '';
        $pageNo       = !empty($input['page_no']) ? $input['page_no'] : 0;
        #get company details here
        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
        #get Question Types List here
-       $questionResArr    = $this->candidatesRepository->getQuestionsList($companyId, $pageNo);
+       $questionResArr    = $this->candidatesRepository->getQuestionsList($companyId, $pageNo, $examId);
         #check if Question result
         if(!empty($questionResArr)){
             

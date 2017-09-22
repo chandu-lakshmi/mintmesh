@@ -556,7 +556,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         return $return;
     }
     
-    public function getQuestionsList($companyId = 0, $page = 0){
+    public function getQuestionsList($companyId = 0, $page = 0, $examId = 0){
         
         $start = $end = 0;
         if (!empty($page)){
@@ -566,10 +566,11 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         $result =  DB::table('question as q')
                     ->select('q.idquestion','q.question', 'q.question_value', 't.name as question_type')
                     ->join('question_type as t', 'q.question_type', '=', 't.idquestion_type')
+                    ->whereRaw("q.idquestion NOT IN (SELECT eq.idquestion FROM exam_question eq  where eq.idquestion=q.idquestion and eq.idexam = '".$examId."')")
                     ->where('company_id', $companyId)
                     ->limit(10)->skip($start)
                     ->get();
-        return $result;
+        return $result; 
     }
     
     public function getExamDetails($examId = 0){
