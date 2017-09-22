@@ -2209,7 +2209,7 @@ class CandidatesGateway {
             $qstObj  = $questionResArr[0];
             $resultArr['exam_id']         = !empty($qstObj->idexam) ? $qstObj->idexam : '';
             $resultArr['exam_name']       = !empty($qstObj->exam_name) ? $qstObj->exam_name : '';
-            $resultArr['exam_type']       = !empty($qstObj->exam_type) ? $qstObj->exam_type : '';
+            $resultArr['exam_type']       = !empty($qstObj->idexam_type) ? $qstObj->idexam_type : '';
             $resultArr['max_duration']    = !empty($qstObj->max_duration) ? $qstObj->max_duration : '';
             $resultArr['experience_name'] = !empty($qstObj->experience_name) ? $qstObj->experience_name : '';
             #get Exam Question List here
