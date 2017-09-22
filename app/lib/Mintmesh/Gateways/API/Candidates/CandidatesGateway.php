@@ -225,6 +225,9 @@ class CandidatesGateway {
     public function validatedeleteQuestionInput($input) {
         return $this->doValidation('delete_question', 'MINTMESH.user.valid');
     }
+    public function validategetCompanyAssessmentsAllInput($input) {
+        return $this->doValidation('get_company_assessments_all', 'MINTMESH.user.valid');
+    }
     
     public function getCandidateEmailTemplates($input) {
         
@@ -2297,6 +2300,46 @@ class CandidatesGateway {
             $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_edit_question.failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+    }
+    
+    
+    
+    public function getCompanyAssessmentsAll($input) {
+        
+       $returnArr    = $data = array();
+       $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
+       #get company details here
+       $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+       $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+       #get Question Types List here
+       $resultArr    = $this->candidatesRepository->getCompanyAssessmentsAll($companyId);
+       //print_r($resultArr); die;
+        #check if Question result
+        if(!empty($resultArr)){
+            foreach($resultArr as $res){
+                    $returnArr[]  = array(
+                            'idexam'                => $res->idexam,
+                            'max_duration'           => $res->max_duration,
+                            'name'           => $res->name,
+                            'idexam_type'           => $res->idexam_type,
+                            'is_active'           => $res->is_active,
+                            'qcount'           => $res->qcount,
+                            'created_by'        => $res->firstname,
+                            'created_at'        => date('M j Y', strtotime($res->created_at))
+                    );
+                }    
+                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+            if($returnArr){
+                $data = $returnArr;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+            } else {
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+    }
     }
     
 }

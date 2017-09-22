@@ -446,7 +446,7 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       
       Route::post("enterprise/get_company_assessments_list", "API\Candidates\CandidatesController@getCompanyAssessmentsList");
       Route::post("enterprise/get_exam_details", "API\Candidates\CandidatesController@getExamDetails");
-      
+      Route::post("enterprise/get_company_assessments_all", "API\Candidates\CandidatesController@getCompanyAssessmentsAll");
 });
 
 

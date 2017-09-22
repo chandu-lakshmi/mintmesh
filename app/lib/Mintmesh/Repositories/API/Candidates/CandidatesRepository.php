@@ -50,6 +50,9 @@ interface CandidatesRepository {
      public function editQuestionOptionInactiveAll($questionId);
      
      public function editQuestionBankInactiveAll($questionId);
+     
+     
+     public function getCompanyAssessmentsAll($companyId);
    
      
 }

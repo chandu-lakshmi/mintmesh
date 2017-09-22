@@ -161,7 +161,10 @@ class CandidatesValidator extends Validator {
         'delete_question' => array(
             'company_code'  => 'required',
             'question_id'       => 'required'
-        )
+        ),
+        'get_company_assessments_all' => array(
+            'company_code'  => 'required'
+         ), 
               
     );
 

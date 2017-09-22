@@ -628,6 +628,18 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
             }
         return $return;
     }
+    
+    
+    public function getCompanyAssessmentsAll($companyId = 0){
+        $result = '';
+        if(!empty($companyId)){
+          $status_sql = "SELECT e.idexam,`e`.`max_duration`, `r`.`name`, `e`.`name`, `e`.`idexam_type`, `e`.`is_active`, `u`.`firstname`, `e`.`created_at`,(select count(*) from exam_question as eq where eq.idexam = e.idexam and eq.`status`=1)  as qcount FROM `exam` AS `e` INNER JOIN `experience_ranges` AS `r` ON `e`.`work_experience` = `r`.`id` INNER JOIN `users` AS `u` ON `e`.`created_by` = `u`.`id` WHERE `e`.`company_id` = '".$companyId."'";
+           $result = DB::Select($status_sql);  
+            
+            
+        }
+       return $result; 
+    }
         
         
 }
