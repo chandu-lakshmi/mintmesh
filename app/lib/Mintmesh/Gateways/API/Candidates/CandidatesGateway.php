@@ -1907,9 +1907,6 @@ class CandidatesGateway {
                     #check option id
                     if($optionId){
                         $optionInput['status'] = self::STATUS_ACTIVE;
-                        /*if(!empty($value['remove'])){
-                            $optionInput['status'] = self::STATUS_INACTIVE;
-                        }*/
                         $this->candidatesRepository->editQuestionOption($optionInput, $optionId);
                     } else {
                         $this->candidatesRepository->addQuestionOption($optionInput, $questionId);
@@ -1924,13 +1921,11 @@ class CandidatesGateway {
                     #form Question Bank input
                     $libraryInput = array();
                     $qstBankId    = !empty($value['qst_bank_id']) ? $value['qst_bank_id'] : 0;
-                    $libraryInput['library_id']  = isset($value['library_id']) ? $value['library_id'] : 0;
+                    $libraryInput['library_id']   = isset($value['library_id']) ? $value['library_id'] : 0;
+                    $libraryInput['question_id']  = $questionId;
                     #check option id
                     if($qstBankId){
                         $libraryInput['status'] = self::STATUS_ACTIVE;
-                        /*if(!empty($value['remove'])){
-                            $libraryInput['status'] = self::STATUS_INACTIVE;
-                        }*/
                         $this->candidatesRepository->editQuestionBank($libraryInput, $qstBankId);
                     } else {
                         $this->candidatesRepository->addQuestionBank($libraryInput, $companyId);
