@@ -1961,7 +1961,6 @@ class CandidatesGateway {
             $resultArr['question_notes']     = !empty($qstObj->question_notes) ? $qstObj->question_notes : '';
             $resultArr['question_value']     = !empty($qstObj->question_value) ? $qstObj->question_value : 0;
             $resultArr['question_type']      = !empty($qstObj->question_type) ? $qstObj->question_type : 0;
-            $resultArr['question_type_name'] = !empty($qstObj->name) ? $qstObj->name : '';
             #get Question Options here
             $optionsResArr   = $this->candidatesRepository->getQuestionOptions($questionId);
             foreach ($optionsResArr as $value) {
@@ -2098,7 +2097,7 @@ class CandidatesGateway {
                 $resultArr['question_id']        = !empty($qstObj->idquestion) ? $qstObj->idquestion : 0;
                 $resultArr['question']           = !empty($qstObj->question) ? $qstObj->question : '';
                 $resultArr['question_value']     = !empty($qstObj->question_value) ? $qstObj->question_value : 0;
-                $resultArr['question_type_name'] = !empty($qstObj->name) ? $qstObj->name : '';
+                $resultArr['question_type']      = !empty($qstObj->question_type) ? $qstObj->question_type : '';
                 $returnArr[] = $resultArr;
             }
             $responseCode    = self::SUCCESS_RESPONSE_CODE;
@@ -2195,13 +2194,13 @@ class CandidatesGateway {
     
     public function viewExamQuestion($input) {
         
-        $returnArr      = $data = $resultArr = array();
+        $resultArr      = $data = $examQstArr = $questionResArr = array();
         $companyCode    = !empty($input['company_code']) ? $input['company_code'] : '';
         $examId         = !empty($input['exam_id']) ? $input['exam_id'] : 0;
         #get Logged In User details here
         $this->loggedinUser = $this->referralsGateway->getLoggedInUser(); 
         $userId   = $this->loggedinUser->id;
-       
+        #get Exam Details here                
         $questionResArr   = $this->candidatesRepository->getExamDetails($examId);
         
         if(!empty($questionResArr[0])){
@@ -2212,8 +2211,25 @@ class CandidatesGateway {
             $resultArr['exam_type']       = !empty($qstObj->exam_type_name) ? $qstObj->exam_type_name : '';
             $resultArr['max_duration']    = !empty($qstObj->max_duration) ? $qstObj->max_duration : '';
             $resultArr['experience_name'] = !empty($qstObj->experience_name) ? $qstObj->experience_name : '';
+            #get Exam Question List here
+            $examQstResArr   = $this->candidatesRepository->getExamQuestionList($examId);
+        
+            if(!empty($examQstResArr)){
+                
+                foreach ($examQstResArr as $value) {
+                    $record = array();
+                    $record['exam_question_id'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
+                    $record['question_id']      = !empty($value->question_id) ? $value->question_id : 0;
+                    $record['question']         = !empty($value->question) ? $value->question : '';
+                    $record['question_value']   = !empty($value->question_value) ? $value->question_value : 0;
+                    $record['question_type']  = !empty($value->question_type) ? $value->question_type : '';
+                    $examQstArr[]  = $record;
+                }
+            }
         
             if($resultArr){
+                
+                $resultArr['exam_question_list'] = $examQstArr;
                 $data = $resultArr;
                 $responseCode    = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
@@ -2280,8 +2296,6 @@ class CandidatesGateway {
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
-    
-    
     
     public function deleteQuestion($input) {
         $returnArr      = $resultArr = $data = $qstInput = array();
