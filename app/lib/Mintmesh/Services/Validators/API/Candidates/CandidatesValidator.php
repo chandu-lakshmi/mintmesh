@@ -165,7 +165,10 @@ class CandidatesValidator extends Validator {
         'get_company_assessments_all' => array(
             'company_code'  => 'required'
          ), 
-              
+        'get_assessment' => array(
+            'company_code'  => 'required',
+            'assessment_id' => 'required'
+        )     
     );
 
 }

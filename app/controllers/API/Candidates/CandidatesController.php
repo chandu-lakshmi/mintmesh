@@ -818,8 +818,6 @@ class CandidatesController extends \BaseController {
     return $return;
     }
     
-    
-
     /**
      *view exam question
      * 
@@ -844,8 +842,6 @@ class CandidatesController extends \BaseController {
         }
     return $return;
     }    
-    
-    
     
      /**
      *view exam question
@@ -872,8 +868,6 @@ class CandidatesController extends \BaseController {
     return $return;
     }   
     
-    
-    
      /**
      *delete question
      * 
@@ -897,17 +891,13 @@ class CandidatesController extends \BaseController {
             $return = \Response::json($validation);
         }
     return $return;
+
     }  
-    
     
     /**
      *get_company_assessments_all
      * 
      * POST/get_company_assessments_all
-    /**
-     *add edit exam question
-     * 
-     * POST/add_edit_exam_question
      * 
      * @param string $access_token The Access token of a user
      * @param string $company_code  
@@ -921,13 +911,40 @@ class CandidatesController extends \BaseController {
         $validation = $this->candidatesGateway->validategetCompanyAssessmentsAllInput($inputUserData);
         if ($validation['status'] == 'success') {
             $return = \Response::json($this->candidatesGateway->getCompanyAssessmentsAll($inputUserData));
+    
         } else {
             // returning validation failure
             $return = \Response::json($validation);
         }
     return $return;
-   
     }
+    
+     /**
+     *Get Assessment
+     * 
+     * POST/get_assessment
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code  
+     * @param string $assessment_id
+     * @return Response
+     */
+    public function getAssessment() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validateGetAssessmentInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->getAssessment($inputUserData));
+
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    } 
 
 }
 

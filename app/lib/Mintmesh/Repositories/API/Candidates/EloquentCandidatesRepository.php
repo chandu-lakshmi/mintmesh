@@ -644,6 +644,20 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                     ->where('e.idexam', $examId)
                     ->get();
        return $result;
+    }
+    
+    public function getExamDetails1($questionId = 0){
+        
+        $result =  DB::table('exam as e')
+                    ->select('e.max_duration','r.name', 'e.name','q.question_type','e.is_active', 'u.firstname','e.created_at')
+                    ->join('exam_question as eq', 'e.idexam', '=', 'eq.idexam')
+                    ->join('question as q', 'eq.idquestion', '=', 'q.idquestion')
+                    ->join('experience_ranges as r', 'e.work_experience', '=', 'r.id')
+                    ->join('users as u', 'e.created_by', '=', 'u.id')
+                    ->where('e.company_id', 229)
+                    ->get();
+        
+       return $result;
     }    
         
 }
