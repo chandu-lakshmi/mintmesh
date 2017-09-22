@@ -1564,7 +1564,8 @@ class PostGateway {
         $campaign['campaign_name']      = !empty($input['campaign_name']) ? $input['campaign_name'] : '';
         $campaign['campaign_type']      = !empty($input['campaign_type']) ? $input['campaign_type'] :'';//mass recruitment | military veterans | campus hires
         $campaign['location_type']      = !empty($input['location_type']) ? $input['location_type'] :'';//online | onsite 
-        $campaign['bucket_id']          = !empty($input['selectedBuckets']) ? $input['selectedBuckets'] : ''; 
+        $campaign['bucket_id']          = !empty($input['selectedBuckets']) ? $input['selectedBuckets'] : '';
+        $campaign['assessment_id']      = !empty($input['assessment_id']) ? $input['assessment_id'] : 0; 
         
         if(strtolower($campaign['location_type']) == 'onsite'){
             $campaign['address']        = !empty($input['address']) ? $input['address'] : '';

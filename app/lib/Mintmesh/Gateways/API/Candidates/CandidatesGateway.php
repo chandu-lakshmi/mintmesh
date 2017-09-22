@@ -2330,15 +2330,18 @@ class CandidatesGateway {
         #check if Question result
         if(!empty($resultArr)){
             foreach($resultArr as $res){
+                
+                    $status = !empty($res->is_active) ? "Active" : "Inactive";
                     $returnArr[]  = array(
-                            'idexam'                => $res->idexam,
-                            'max_duration'           => $res->max_duration,
+                            'idexam'         => $res->idexam,
+                            'max_duration'   => $res->max_duration,
                             'name'           => $res->name,
-                            'idexam_type'           => $res->idexam_type,
-                            'is_active'           => $res->is_active,
-                            'qcount'           => $res->qcount,
-                            'created_by'        => $res->firstname,
-                            'created_at'        => date('M j Y', strtotime($res->created_at))
+                            'idexam_type'    => $res->idexam_type,
+                            'experience'     => $res->exp_name,
+                            'is_active'      => $status,
+                            'qcount'         => $res->qcount,
+                            'created_by'     => $res->firstname,
+                            'created_at'     => date('M j Y', strtotime($res->created_at))
                     );
                 }    
                 $responseCode    = self::SUCCESS_RESPONSE_CODE;
