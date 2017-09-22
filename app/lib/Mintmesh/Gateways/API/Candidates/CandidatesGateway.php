@@ -1795,7 +1795,7 @@ class CandidatesGateway {
             foreach ($resultArr as $value) {
                 $record = array();
                 $record['library_id']   = $value->idquestion_library;
-                $record['name']         = $value->name;
+                $record['library_name'] = $value->name;
                 $returnArr[] = $record;
             }
                 $responseCode    = self::SUCCESS_RESPONSE_CODE;
@@ -1880,6 +1880,9 @@ class CandidatesGateway {
         $questionId     = !empty($input['question_id']) ? $input['question_id'] : 0;
         $optionsArr     = !empty($input['options']) ? $input['options'] : array();
         $librariesArr   = !empty($input['libraries']) ? $input['libraries'] : array();
+        #get company details here
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
         #form Question input params here
         $qstInput['question']      = !empty($input['question']) ? $input['question'] : '';
         $qstInput['qst_type']      = !empty($input['question_type']) ? $input['question_type'] : '';
@@ -1904,9 +1907,6 @@ class CandidatesGateway {
                     #check option id
                     if($optionId){
                         $optionInput['status'] = self::STATUS_ACTIVE;
-                        /*if(!empty($value['remove'])){
-                            $optionInput['status'] = self::STATUS_INACTIVE;
-                        }*/
                         $this->candidatesRepository->editQuestionOption($optionInput, $optionId);
                     } else {
                         $this->candidatesRepository->addQuestionOption($optionInput, $questionId);
@@ -1921,13 +1921,11 @@ class CandidatesGateway {
                     #form Question Bank input
                     $libraryInput = array();
                     $qstBankId    = !empty($value['qst_bank_id']) ? $value['qst_bank_id'] : 0;
-                    $libraryInput['library_id']  = isset($value['library_id']) ? $value['library_id'] : 0;
+                    $libraryInput['library_id']   = isset($value['library_id']) ? $value['library_id'] : 0;
+                    $libraryInput['question_id']  = $questionId;
                     #check option id
                     if($qstBankId){
                         $libraryInput['status'] = self::STATUS_ACTIVE;
-                        /*if(!empty($value['remove'])){
-                            $libraryInput['status'] = self::STATUS_INACTIVE;
-                        }*/
                         $this->candidatesRepository->editQuestionBank($libraryInput, $qstBankId);
                     } else {
                         $this->candidatesRepository->addQuestionBank($libraryInput, $companyId);
@@ -2211,7 +2209,7 @@ class CandidatesGateway {
             $qstObj  = $questionResArr[0];
             $resultArr['exam_id']         = !empty($qstObj->idexam) ? $qstObj->idexam : '';
             $resultArr['exam_name']       = !empty($qstObj->exam_name) ? $qstObj->exam_name : '';
-            $resultArr['exam_type']       = !empty($qstObj->exam_type_name) ? $qstObj->exam_type_name : '';
+            $resultArr['exam_type']       = !empty($qstObj->exam_type) ? $qstObj->exam_type : '';
             $resultArr['max_duration']    = !empty($qstObj->max_duration) ? $qstObj->max_duration : '';
             $resultArr['experience_name'] = !empty($qstObj->experience_name) ? $qstObj->experience_name : '';
             #get Exam Question List here
@@ -2266,20 +2264,20 @@ class CandidatesGateway {
             $qstObj  = $questionResArr[0];
             $resultArr['exam_id']        = !empty($qstObj->idexam) ? $qstObj->idexam : '';
             $resultArr['exam_name']      = !empty($qstObj->exam_name) ? $qstObj->exam_name : '';
-            $resultArr['exam_url']      = !empty($qstObj->exam_url) ? $qstObj->exam_url : '';
+            $resultArr['exam_url']       = !empty($qstObj->exam_url) ? $qstObj->exam_url : '';
             $resultArr['description_url']      = !empty($qstObj->description_url) ? $qstObj->description_url : '';
             $resultArr['work_experience']      = !empty($qstObj->work_experience) ? $qstObj->work_experience : '';
             $resultArr['start_date_time']      = !empty($qstObj->start_date_time) ? $qstObj->start_date_time : '';
-            $resultArr['end_date_time']      = !empty($qstObj->end_date_time) ? $qstObj->end_date_time : '';
-            $resultArr['is_active']      = !empty($qstObj->is_active) ? $qstObj->is_active : '';
-            $resultArr['is_auto_screening']      = !empty($qstObj->is_auto_screening) ? $qstObj->is_auto_screening : '';
-            $resultArr['password_protected']      = !empty($qstObj->password_protected) ? $qstObj->password_protected : '';
-            $resultArr['password']      = !empty($qstObj->password) ? $qstObj->password : '';
-            $resultArr['min_marks']      = !empty($qstObj->min_marks) ? $qstObj->min_marks : '';
-            $resultArr['enable_full_screen']      = !empty($qstObj->enable_full_screen) ? $qstObj->enable_full_screen : '';
-            $resultArr['shuffle_questions']      = !empty($qstObj->shuffle_questions) ? $qstObj->shuffle_questions : '';
+            $resultArr['end_date_time']        = !empty($qstObj->end_date_time) ? $qstObj->end_date_time : '';
+            $resultArr['is_active']            = !empty($qstObj->is_active) ? $qstObj->is_active : '';
+            $resultArr['is_auto_screening']    = !empty($qstObj->is_auto_screening) ? $qstObj->is_auto_screening : '';
+            $resultArr['password_protected']   = !empty($qstObj->password_protected) ? $qstObj->password_protected : '';
+            $resultArr['password']             = !empty($qstObj->password) ? $qstObj->password : '';
+            $resultArr['min_marks']            = !empty($qstObj->min_marks) ? $qstObj->min_marks : '';
+            $resultArr['enable_full_screen']   = !empty($qstObj->enable_full_screen) ? $qstObj->enable_full_screen : '';
+            $resultArr['shuffle_questions']    = !empty($qstObj->shuffle_questions) ? $qstObj->shuffle_questions : '';
             $resultArr['reminder_emails']      = !empty($qstObj->reminder_emails) ? $qstObj->reminder_emails : '';
-            $resultArr['exam_type_name']      = !empty($qstObj->exam_type_name) ? $qstObj->exam_type_name : '';
+            $resultArr['exam_type_name']       = !empty($qstObj->exam_type) ? $qstObj->exam_type : '';
             $resultArr['experience_name']      = !empty($qstObj->experience_name) ? $qstObj->experience_name : '';
         
             if($resultArr){
@@ -2371,6 +2369,7 @@ class CandidatesGateway {
         #get Exam Details here                
         $questionResArr   = $this->candidatesRepository->getExamDetails($examId);
        // print_r($questionResArr).exit;
+
         
         $pageFlow = array("nextPage" => true,"label" => "mwForm.pageFlow.goToNextPage");
         if(!empty($questionResArr[0])){
@@ -2378,7 +2377,7 @@ class CandidatesGateway {
             $qstObj  = $questionResArr[0];
             $resultArr['exam_id']         = !empty($qstObj->idexam) ? $qstObj->idexam : '';
             $resultArr['exam_name']       = !empty($qstObj->exam_name) ? $qstObj->exam_name : '';
-            $resultArr['exam_type']       = !empty($qstObj->exam_type_name) ? $qstObj->exam_type_name : '';
+            $resultArr['exam_type']       = !empty($qstObj->exam_type) ? $qstObj->exam_type : '';
             $resultArr['max_duration']    = !empty($qstObj->max_duration) ? $qstObj->max_duration : '';
             $resultArr['experience_name'] = !empty($qstObj->experience_name) ? $qstObj->experience_name : '';
             $resultArr['max_duration'] = !empty($qstObj->max_duration) ? $qstObj->max_duration : '';
@@ -2406,11 +2405,14 @@ class CandidatesGateway {
                     $elements['orderNo'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
                     $elements['type']  = !empty($value->question_type) ? $value->question_type : '';
                     
+
                    
                     $question['id'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;        
                     $question['text'] = !empty($value->question) ? $value->question : '';        
                     $question['type'] = !empty($value->question_type) ? $value->question_type : '';        
                     $question['required'] = 'true';        
+                    $qstOptionsResArr = $this->candidatesRepository->getQuestionOptions($questionId);
+                   // print_r($qstOptionsResArr).exit;
                     
                     $qstOptionsResArr = $this->candidatesRepository->getQuestionOptions($questionId);
                     
@@ -2428,7 +2430,7 @@ class CandidatesGateway {
                    
                     $question['offeredAnswers'] = $qstOptArray;
                     $elements['question'] = $question;
-                    $record['elements'] = $elements;
+                    $record['elements'] = array($elements);
                     $examQstArr[]  = $record;
                     }
                 }
