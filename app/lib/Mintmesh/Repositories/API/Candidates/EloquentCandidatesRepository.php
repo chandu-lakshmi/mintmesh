@@ -556,7 +556,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         return $return;
     }
     
-    public function getQuestionsList($companyId = 0, $page = 0){
+    public function getQuestionsList($companyId = 0, $page = 0, $examId = 0){
         
         $start = $end = 0;
         if (!empty($page)){
@@ -566,16 +566,17 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         $result =  DB::table('question as q')
                     ->select('q.idquestion','q.question', 'q.question_value', 't.name as question_type')
                     ->join('question_type as t', 'q.question_type', '=', 't.idquestion_type')
+                    ->whereRaw("q.idquestion NOT IN (SELECT eq.idquestion FROM exam_question eq  where eq.idquestion=q.idquestion and eq.idexam = '".$examId."')")
                     ->where('company_id', $companyId)
                     ->limit(10)->skip($start)
                     ->get();
-        return $result;
+        return $result; 
     }
     
     public function getExamDetails($examId = 0){
         
         $result =  DB::table('exam as e')
-                    ->select('e.idexam','e.idexam_type','e.name as exam_name','e.exam_url','e.description_url','e.work_experience','e.start_date_time','e.end_date_time',
+                    ->select('e.idexam','e.idexam_type','e.name as exam_name','e.exam_url','e.description_url','e.work_experience','e.start_date_time','e.end_date_time','e.max_duration',
                             'e.is_active','e.is_auto_screening','e.password_protected','e.password','e.min_marks','e.enable_full_screen','e.shuffle_questions',
                             'e.reminder_emails','e.created_at','e.updated_at','e.created_by','e.updated_by','r.name as experience_name','e.max_duration','e.description')
                     //->join('exam_type as t', 'e.idexam_type', '=', 't.idexam_type')
