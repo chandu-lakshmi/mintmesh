@@ -2052,14 +2052,21 @@ class CandidatesGateway {
             $examInput['password']   = !empty($input['password']) ? $input['password'] : '';
             $examInput['min_marks']  = !empty($input['min_marks']) ? $input['min_marks'] : 0;
             $examInput['exam_dura']  = !empty($input['exam_duration']) ? $input['exam_duration'] : 0;
-            $examInput['str_date']   = !empty($input['start_date']) ? $input['start_date'] : '';
-            $examInput['end_date']   = !empty($input['end_date']) ? $input['end_date'] : '';
             $examInput['auto_scr']   = !empty($input['is_auto_screening']) ? $input['is_auto_screening'] : 0;
             $examInput['full_scr']   = !empty($input['enable_full_screen']) ? $input['enable_full_screen'] : 0;
             $examInput['shuffle']    = !empty($input['shuffle_questions']) ? $input['shuffle_questions'] : 0;
             $examInput['reminder']   = !empty($input['reminder_emails']) ? $input['reminder_emails'] : 0;
             $examInput['confirm']    = !empty($input['confirmation_email']) ? $input['confirmation_email'] : 0;
             $examInput['pass_protect']   = !empty($input['password_protected']) ? $input['password_protected'] : 0;
+            #date format
+            $startDate = !empty($input['start_date']) ? $input['start_date'] : '';
+            $startTime = !empty($input['start_time']) ? $input['start_time'] : '';
+            $endDate   = !empty($input['end_date']) ? $input['end_date'] : '';
+            $endTime   = !empty($input['end_time']) ? $input['end_time'] : '';
+            $strDateTime   = gmdate('Y-m-d H:i:s', strtotime($startDate.$startTime));
+            $endDateTime   = gmdate('Y-m-d H:i:s', strtotime($endDate.$endTime));
+            $examInput['str_date']   = $strDateTime;
+            $examInput['end_date']   = $endDateTime;
             
             $resultArr  = $this->candidatesRepository->editExamSettings($examInput, $examId, $userId);
             #check result success status   
@@ -2252,6 +2259,7 @@ class CandidatesGateway {
         
         $returnArr      = $data = $resultArr = array();
         $companyCode    = !empty($input['company_code']) ? $input['company_code'] : '';
+        $timeZone       = !empty($input['time_zone']) ? $input['time_zone'] : 0;
         $examId         = !empty($input['exam_id']) ? $input['exam_id'] : 0;
         #get Logged In User details here
         $this->loggedinUser = $this->referralsGateway->getLoggedInUser(); 
@@ -2267,8 +2275,7 @@ class CandidatesGateway {
             $resultArr['exam_url']       = !empty($qstObj->exam_url) ? $qstObj->exam_url : '';
             $resultArr['description_url']      = !empty($qstObj->description_url) ? $qstObj->description_url : '';
             $resultArr['work_experience']      = !empty($qstObj->work_experience) ? $qstObj->work_experience : '';
-            $resultArr['start_date_time']      = !empty($qstObj->start_date_time) ? $qstObj->start_date_time : '';
-            $resultArr['end_date_time']        = !empty($qstObj->end_date_time) ? $qstObj->end_date_time : '';
+            $resultArr['max_duration']         = !empty($qstObj->max_duration) ? $qstObj->max_duration : '';
             $resultArr['is_active']            = !empty($qstObj->is_active) ? $qstObj->is_active : '';
             $resultArr['is_auto_screening']    = !empty($qstObj->is_auto_screening) ? $qstObj->is_auto_screening : '';
             $resultArr['password_protected']   = !empty($qstObj->password_protected) ? $qstObj->password_protected : '';
@@ -2279,6 +2286,14 @@ class CandidatesGateway {
             $resultArr['reminder_emails']      = !empty($qstObj->reminder_emails) ? $qstObj->reminder_emails : '';
             $resultArr['exam_type_name']       = !empty($qstObj->exam_type) ? $qstObj->exam_type : '';
             $resultArr['experience_name']      = !empty($qstObj->experience_name) ? $qstObj->experience_name : '';
+            
+            $startDateTime = !empty($qstObj->start_date_time) ? $this->appEncodeDecode->UserTimezone($qstObj->start_date_time, $timeZone) : '';
+            $endDateTime   = !empty($qstObj->end_date_time) ? $this->appEncodeDecode->UserTimezone($qstObj->end_date_time, $timeZone) : '';
+            
+            $resultArr['start_date'] = date('l M j Y', strtotime($startDateTime)); 
+            $resultArr['start_time'] = date('h:i A', strtotime($startDateTime));
+            $resultArr['end_date']   = date('l M j Y', strtotime($endDateTime));
+            $resultArr['end_time']   = date('h:i A', strtotime($endDateTime));
         
             if($resultArr){
                 $data = $resultArr;
