@@ -2362,16 +2362,17 @@ class CandidatesGateway {
        
     public function getAssessment($input) {
         
-        $resultArr      = $data = $examQstArr = $questionResArr = array();
+        $resultArr      = $data = $examQstArr = $questionResArr = $elements = array();
         $companyCode    = !empty($input['company_code']) ? $input['company_code'] : '';
         $examId         = !empty($input['assessment_id']) ? $input['assessment_id'] : 0;
         #get Logged In User details here
         $this->loggedinUser = $this->referralsGateway->getLoggedInUser(); 
         $userId   = $this->loggedinUser->id;
         #get Exam Details here                
-        $questionResArr   = $this->candidatesRepository->getExamDetails1($examId);
-        print_r($questionResArr).exit;
+        $questionResArr   = $this->candidatesRepository->getExamDetails($examId);
+       // print_r($questionResArr).exit;
         
+        $pageFlow = array("nextPage" => true,"label" => "mwForm.pageFlow.goToNextPage");
         if(!empty($questionResArr[0])){
             
             $qstObj  = $questionResArr[0];
@@ -2380,6 +2381,8 @@ class CandidatesGateway {
             $resultArr['exam_type']       = !empty($qstObj->exam_type_name) ? $qstObj->exam_type_name : '';
             $resultArr['max_duration']    = !empty($qstObj->max_duration) ? $qstObj->max_duration : '';
             $resultArr['experience_name'] = !empty($qstObj->experience_name) ? $qstObj->experience_name : '';
+            $resultArr['max_duration'] = !empty($qstObj->max_duration) ? $qstObj->max_duration : '';
+            //$resultArr['pageFlow'] = $pageFlow;
             #get Exam Question List here
             $examQstResArr   = $this->candidatesRepository->getExamQuestionList($examId);
         
@@ -2387,23 +2390,53 @@ class CandidatesGateway {
                 
                 foreach ($examQstResArr as $value) {
                     $record = array();
+                    $record['id'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
+                    $record['number'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
                     $record['exam_question_id'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
                     $record['question_id']      = $questionId = !empty($value->question_id) ? $value->question_id : 0;
                     $record['question']         = !empty($value->question) ? $value->question : '';
                     $record['question_value']   = !empty($value->question_value) ? $value->question_value : 0;
                     $record['question_type']  = !empty($value->question_type) ? $value->question_type : '';
+                    $record['name'] = '';
+                    $record['description'] = '';
+                    $record['pageFlow'] = $pageFlow;
                     
-                    $qstOptionsResArr = $this->candidatesRepository->getExamQuestionOptions($questionId);
-                    print_r($qstOptionsResArr).exit;
+                    $elements['id'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
+                    $elements['exam_question_id'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
+                    $elements['orderNo'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
+                    $elements['type']  = !empty($value->question_type) ? $value->question_type : '';
                     
+                   
+                    $question['id'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;        
+                    $question['text'] = !empty($value->question) ? $value->question : '';        
+                    $question['type'] = !empty($value->question_type) ? $value->question_type : '';        
+                    $question['required'] = 'true';        
                     
+                    $qstOptionsResArr = $this->candidatesRepository->getQuestionOptions($questionId);
+                    
+                    if(!empty($qstOptionsResArr)){
+                        foreach ($qstOptionsResArr as $optValue) {
+                            $optrecord = array();
+                            $optrecord['id'] = !empty($optValue->option_id) ? $optValue->option_id : 0;
+                            $optrecord['orderNo'] = !empty($optValue->option_id) ? $optValue->option_id : 0;
+                            $optrecord['value'] = !empty($optValue->option) ? $optValue->option : 0;
+                            $optrecord['option_id'] = !empty($optValue->option_id) ? $optValue->option_id : 0;
+                            //$optrecord['option'] = !empty($optValue->option) ? $optValue->option : 0;
+                            $optrecord['pageFlow'] = $pageFlow;
+                            $qstOptArray[]  = $optrecord;
+                        }
+                   
+                    $question['offeredAnswers'] = $qstOptArray;
+                    $elements['question'] = $question;
+                    $record['elements'] = $elements;
                     $examQstArr[]  = $record;
+                    }
                 }
             }
         
             if($resultArr){
                 
-                $resultArr['exam_question_list'] = $examQstArr;
+                $resultArr['pages'] = $examQstArr;
                 $data = $resultArr;
                 $responseCode    = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;

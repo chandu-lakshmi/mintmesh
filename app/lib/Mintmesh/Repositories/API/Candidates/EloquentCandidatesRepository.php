@@ -576,7 +576,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         $result =  DB::table('exam as e')
                     ->select('e.idexam','e.idexam_type','e.name as exam_name','e.exam_url','e.description_url','e.work_experience','e.start_date_time','e.end_date_time',
                             'e.is_active','e.is_auto_screening','e.password_protected','e.password','e.min_marks','e.enable_full_screen','e.shuffle_questions',
-                            'e.reminder_emails','e.created_at','e.updated_at','e.created_by','e.updated_by','t.name as exam_type_name','r.name as experience_name')
+                            'e.reminder_emails','e.created_at','e.updated_at','e.created_by','e.updated_by','t.name as exam_type_name','r.name as experience_name','e.max_duration')
                     ->join('exam_type as t', 'e.idexam_type', '=', 't.idexam_type')
                     ->join('experience_ranges as r', 'e.work_experience', '=', 'r.id')
                     ->where('e.idexam', $examId)
