@@ -2371,7 +2371,7 @@ class CandidatesGateway {
         $userId   = $this->loggedinUser->id;
         #get Exam Details here                
         $questionResArr   = $this->candidatesRepository->getExamDetails($examId);
-       // print_r($questionResArr).exit;
+        //print_r($questionResArr).exit;
 
         
         $pageFlow = array("nextPage" => true,"label" => "mwForm.pageFlow.goToNextPage");
@@ -2383,7 +2383,8 @@ class CandidatesGateway {
             $resultArr['exam_type']       = !empty($qstObj->exam_type) ? $qstObj->exam_type : '';
             $resultArr['max_duration']    = !empty($qstObj->max_duration) ? $qstObj->max_duration : '';
             $resultArr['experience_name'] = !empty($qstObj->experience_name) ? $qstObj->experience_name : '';
-            $resultArr['max_duration'] = !empty($qstObj->max_duration) ? $qstObj->max_duration : '';
+            $resultArr['max_duration']    = !empty($qstObj->max_duration) ? $qstObj->max_duration : '';
+            $resultArr['description']     = !empty($qstObj->description) ? $qstObj->description : '';
             //$resultArr['pageFlow'] = $pageFlow;
             #get Exam Question List here
             $examQstResArr   = $this->candidatesRepository->getExamQuestionList($examId);
@@ -2406,7 +2407,7 @@ class CandidatesGateway {
                     $elements['id'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
                     $elements['exam_question_id'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
                     $elements['orderNo'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
-                    $elements['type']  = !empty($value->question_type) ? $value->question_type : '';
+                    $elements['type']  = 'question';
                     
 
                    
