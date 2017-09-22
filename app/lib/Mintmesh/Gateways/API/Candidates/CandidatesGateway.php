@@ -2413,8 +2413,7 @@ class CandidatesGateway {
                     $question['required'] = 'true';        
                     $qstOptionsResArr = $this->candidatesRepository->getQuestionOptions($questionId);
                    // print_r($qstOptionsResArr).exit;
-                    
-                    $qstOptionsResArr = $this->candidatesRepository->getQuestionOptions($questionId);
+                   
                     
                     if(!empty($qstOptionsResArr)){
                         foreach ($qstOptionsResArr as $optValue) {
