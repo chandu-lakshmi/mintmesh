@@ -1880,6 +1880,9 @@ class CandidatesGateway {
         $questionId     = !empty($input['question_id']) ? $input['question_id'] : 0;
         $optionsArr     = !empty($input['options']) ? $input['options'] : array();
         $librariesArr   = !empty($input['libraries']) ? $input['libraries'] : array();
+        #get company details here
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
         #form Question input params here
         $qstInput['question']      = !empty($input['question']) ? $input['question'] : '';
         $qstInput['qst_type']      = !empty($input['question_type']) ? $input['question_type'] : '';
