@@ -350,7 +350,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         $createdAt   = gmdate('Y-m-d H:i:s');
         $addQuestion = array(
                     "company_id"        => $companyId,
-                    "question_type"     => $this->appEncodeDecode->filterString($qstInput['qst_type']),
+                    "question_type"     => $qstInput['qst_type'],
                     "question"          => $this->appEncodeDecode->filterString($qstInput['question']),
                     "question_notes"    => $this->appEncodeDecode->filterString($qstInput['qst_notes']),
                     "question_value"    => $qstInput['qst_value'],
@@ -407,7 +407,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         $return = FALSE;
         $createdAt   = gmdate('Y-m-d H:i:s');
         $editQuestion = array(
-                    "question_type"   => $this->appEncodeDecode->filterString($qstInput['qst_type']),
+                    "question_type"   => $qstInput['qst_type'],
                     "question"          => $this->appEncodeDecode->filterString($qstInput['question']),
                     "question_notes"    => $this->appEncodeDecode->filterString($qstInput['qst_notes']),
                     "question_value"    => $qstInput['qst_value'],
@@ -475,7 +475,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                         "name"         => $this->appEncodeDecode->filterString($examInput['exam_name']),
                         "description_url"  => $this->appEncodeDecode->filterString($examInput['desc_url']),
                         "max_duration"     => $examInput['exam_dura'],
-                        "idexam_type"      => $examInput['exam_type'],
+                        "idexam_type"      => $this->appEncodeDecode->filterString($examInput['exam_type']),
                         "work_experience"  => $examInput['work_exp'],
                         "created_by"   => $createdBy,
                         "created_at"   => $createdAt
@@ -491,7 +491,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                         "name"         => $this->appEncodeDecode->filterString($examInput['exam_name']),
                         "description_url"  => $this->appEncodeDecode->filterString($examInput['desc_url']),
                         "max_duration"     => $examInput['exam_dura'],
-                        "idexam_type"      => $examInput['exam_type'],
+                        "idexam_type"      => $this->appEncodeDecode->filterString($examInput['exam_type']),
                         "work_experience"  => $examInput['work_exp'],
                         "updated_by"   => $updatedBy,
                         "updated_at"   => $createdAt
@@ -563,8 +563,9 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
             $end = $page-1 ;
             $start = $end*10 ;
         }
-        $result =  DB::table('question')
-                    ->select('idquestion','question', 'question_value', 'question_type')
+        $result =  DB::table('question as q')
+                    ->select('q.idquestion','q.question', 'q.question_value', 't.name as question_type')
+                    ->join('question_type as t', 'q.question_type', '=', 't.idquestion_type')
                     ->where('company_id', $companyId)
                     ->limit(10)->skip($start)
                     ->get();
@@ -576,8 +577,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         $result =  DB::table('exam as e')
                     ->select('e.idexam','e.idexam_type','e.name as exam_name','e.exam_url','e.description_url','e.work_experience','e.start_date_time','e.end_date_time',
                             'e.is_active','e.is_auto_screening','e.password_protected','e.password','e.min_marks','e.enable_full_screen','e.shuffle_questions',
-                            'e.reminder_emails','e.created_at','e.updated_at','e.created_by','e.updated_by','t.name as exam_type_name','r.name as experience_name')
-                    ->join('exam_type as t', 'e.idexam_type', '=', 't.idexam_type')
+                            'e.reminder_emails','e.created_at','e.updated_at','e.created_by','e.updated_by','r.name as experience_name')
                     ->join('experience_ranges as r', 'e.work_experience', '=', 'r.id')
                     ->where('e.idexam', $examId)
                     ->get();
