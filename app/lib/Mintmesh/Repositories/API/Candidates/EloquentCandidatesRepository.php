@@ -584,7 +584,6 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         return $result;
     }
     
-    
     public function getCompanyAssessmentsList($companyId = 0,$name=''){
         $result = '';
         if(!empty($name) && !empty($companyId)){
@@ -597,7 +596,6 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         }
        return $result;
     }
-    
     
     public function editQuestionOptionInactiveAll($questionId = 0)
     {   
@@ -627,8 +625,6 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         return $return;
     }
     
-
-    
     public function getCompanyAssessmentsAll($companyId = 0){
         $result = '';
         if(!empty($companyId)){
@@ -637,27 +633,15 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         }
        return $result; 
     }
+    
     public function getExamQuestionList($examId = 0){
         $result =  DB::table('exam_question as e')
                     ->select('e.idexam_question as exam_question_id','q.idquestion as question_id','q.question', 'q.question_type as question_type_name', 'e.question_value')
                     ->join('question as q', 'e.idquestion', '=', 'q.idquestion')
                     ->where('e.idexam', $examId)
+                    ->where('q.status', self::STATUS_ACTIVE)
                     ->get();
        return $result;
     }
-    
-    public function getExamDetails1($questionId = 0){
-        
-        $result =  DB::table('exam as e')
-                    ->select('e.max_duration','r.name', 'e.name','q.question_type','e.is_active', 'u.firstname','e.created_at')
-                    ->join('exam_question as eq', 'e.idexam', '=', 'eq.idexam')
-                    ->join('question as q', 'eq.idquestion', '=', 'q.idquestion')
-                    ->join('experience_ranges as r', 'e.work_experience', '=', 'r.id')
-                    ->join('users as u', 'e.created_by', '=', 'u.id')
-                    ->where('e.company_id', 229)
-                    ->get();
-        
-       return $result;
-    }    
         
 }
