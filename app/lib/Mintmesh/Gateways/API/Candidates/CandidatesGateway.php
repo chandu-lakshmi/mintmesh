@@ -2423,22 +2423,22 @@ class CandidatesGateway {
             if(!empty($examQstResArr)){
                 
                 foreach ($examQstResArr as $value) {
-                    $record = array();
+                    $record = $qstOptArray = array();
                     $record['id']               = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
                     $record['number']           = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
                     $record['exam_question_id'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
                     $record['question_id']      = $questionId = !empty($value->question_id) ? $value->question_id : 0;
                     $record['question']         = !empty($value->question) ? $value->question : '';
                     $record['question_value']   = !empty($value->question_value) ? $value->question_value : 0;
+                    $record['question_type']    = $questionType = !empty($value->question_type) ? $value->question_type : '';;
                     $record['name']         = '';
                     $record['description']  = '';
                     $record['pageFlow']     = $pageFlow;
                     
-                    $questionType = !empty($value->question_type) ? $value->question_type : '';
                     if($questionType == 1){
-                       $record['question_type'] = 'radio';
+                       $questionTypeName = 'radio';
                     } else {
-                        $record['question_type'] = 'text';
+                        $questionTypeName = 'text';
                     }
                     
                     $elements['id']         = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
@@ -2448,26 +2448,37 @@ class CandidatesGateway {
                    
                     $question['id']     = !empty($value->exam_question_id) ? $value->exam_question_id : 0;        
                     $question['text']   = !empty($value->question) ? $value->question : '';        
-                    $question['type']   = !empty($value->question_type) ? $value->question_type : '';        
-                    $question['required'] = 'true';        
-                    $qstOptionsResArr   = $this->candidatesRepository->getQuestionOptions($questionId);
-                   
-                    if(!empty($qstOptionsResArr)){
-                        foreach ($qstOptionsResArr as $optValue) {
-                            $optrecord = array();
-                            $optrecord['id']        = !empty($optValue->option_id) ? $optValue->option_id : 0;
-                            $optrecord['orderNo']   = !empty($optValue->option_id) ? $optValue->option_id : 0;
-                            $optrecord['value']     = !empty($optValue->option) ? $optValue->option : 0;
-                            $optrecord['option_id'] = !empty($optValue->option_id) ? $optValue->option_id : 0;
-                            //$optrecord['option'] = !empty($optValue->option) ? $optValue->option : 0;
-                            $optrecord['pageFlow'] = $pageFlow;
-                            $qstOptArray[]  = $optrecord;
+                    $question['type']   = $questionTypeName;        
+                    $question['required'] = 'true'; 
+                    if($questionType == 1){
+                        $qstOptionsResArr   = $this->candidatesRepository->getQuestionOptions($questionId);
+                        if(!empty($qstOptionsResArr)){
+                            foreach ($qstOptionsResArr as $optValue) {
+                                $optrecord = array();
+                                $optrecord['id']        = !empty($optValue->option_id) ? $optValue->option_id : 0;
+                                $optrecord['orderNo']   = !empty($optValue->option_id) ? $optValue->option_id : 0;
+                                $optrecord['value']     = !empty($optValue->option) ? $optValue->option : 0;
+                                $optrecord['option_id'] = !empty($optValue->option_id) ? $optValue->option_id : 0;
+                                //$optrecord['option'] = !empty($optValue->option) ? $optValue->option : 0;
+                                $optrecord['pageFlow'] = $pageFlow;
+                                $qstOptArray[]  = $optrecord;
+                            }
+                            $question['offeredAnswers'] = $qstOptArray;
+                            $elements['question']   = $question;
+                            $record['elements']     = array($elements);
+                            $examQstArr[]  = $record;
                         }
-                   
-                    $question['offeredAnswers'] = $qstOptArray;
-                    $elements['question']   = $question;
-                    $record['elements']     = array($elements);
-                    $examQstArr[]  = $record;
+                    } else {
+                        $optrecord = array();
+                        $optrecord['id']        = 0;
+                        $optrecord['orderNo']   = 0;
+                        $optrecord['value']     = 0;
+                        $optrecord['option_id'] = 0;
+                        $qstOptArray[]  = $optrecord;
+                        $question['offeredAnswers'] = $qstOptArray;
+                        $elements['question']   = $question;
+                        $record['elements']     = array($elements);
+                        $examQstArr[]  = $record;
                     }
                 }
             }
