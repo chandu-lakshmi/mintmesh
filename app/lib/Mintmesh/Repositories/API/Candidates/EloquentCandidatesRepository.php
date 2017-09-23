@@ -576,6 +576,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                     ->join('question_type as t', 'q.question_type', '=', 't.idquestion_type')
                     ->whereRaw("q.idquestion NOT IN (SELECT eq.idquestion FROM exam_question eq  where eq.idquestion=q.idquestion and eq.idexam = '".$examId."')")
                     ->where('company_id', $companyId)
+                    ->where('q.status', self::STATUS_ACTIVE)
                     ->limit(10)->skip($start)
                     ->get();
         return $result; 
