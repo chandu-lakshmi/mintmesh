@@ -2430,10 +2430,16 @@ class CandidatesGateway {
                     $record['question_id']      = $questionId = !empty($value->question_id) ? $value->question_id : 0;
                     $record['question']         = !empty($value->question) ? $value->question : '';
                     $record['question_value']   = !empty($value->question_value) ? $value->question_value : 0;
-                    $record['question_type']    = !empty($value->question_type) ? $value->question_type : '';
                     $record['name']         = '';
                     $record['description']  = '';
                     $record['pageFlow']     = $pageFlow;
+                    
+                    $questionType = !empty($value->question_type) ? $value->question_type : '';
+                    if($questionType == 1){
+                       $record['question_type'] = 'radio';
+                    } else {
+                        $record['question_type'] = 'text';
+                    }
                     
                     $elements['id']         = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
                     $elements['exam_question_id'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;

@@ -649,7 +649,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
     
     public function getExamQuestionList($examId = 0){
         $result =  DB::table('exam_question as e')
-                    ->select('e.idexam_question as exam_question_id','q.idquestion as question_id','q.question', 'q.question_type as question_type_name', 'e.question_value')
+                    ->select('e.idexam_question as exam_question_id','q.idquestion as question_id','q.question', 'q.question_type', 'e.question_value')
                     ->join('question as q', 'e.idquestion', '=', 'q.idquestion')
                     ->where('e.idexam', $examId)
                     ->where('e.status', self::STATUS_ACTIVE)
