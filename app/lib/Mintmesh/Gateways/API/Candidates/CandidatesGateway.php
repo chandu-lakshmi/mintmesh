@@ -2424,10 +2424,10 @@ class CandidatesGateway {
                 
                 foreach ($examQstResArr as $value) {
                     $record = $qstOptArray = array();
-                    $record['id']               = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
+                    $record['id']               = $questionId = !empty($value->question_id) ? $value->question_id : 0;
                     $record['number']           = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
                     $record['exam_question_id'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
-                    $record['question_id']      = $questionId = !empty($value->question_id) ? $value->question_id : 0;
+                    $record['question_id']      = $questionId;
                     $record['question']         = !empty($value->question) ? $value->question : '';
                     $record['question_value']   = !empty($value->question_value) ? $value->question_value : 0;
                     $record['question_type']    = $questionType = !empty($value->question_type) ? $value->question_type : '';;
@@ -2441,12 +2441,12 @@ class CandidatesGateway {
                         $questionTypeName = 'text';
                     }
                     
-                    $elements['id']         = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
+                    $elements['id']         = $questionId;
                     $elements['exam_question_id'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
                     $elements['orderNo']    = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
                     $elements['type']       = 'question';
                    
-                    $question['id']     = !empty($value->exam_question_id) ? $value->exam_question_id : 0;        
+                    $question['id']     = $questionId;        
                     $question['text']   = !empty($value->question) ? $value->question : '';        
                     $question['type']   = $questionTypeName;        
                     $question['required'] = 'true'; 
