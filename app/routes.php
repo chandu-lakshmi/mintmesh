@@ -155,6 +155,7 @@ Route::group(array('prefix' => 'v1'), function() {
       Route::post("enterprise/get_talentcommunity_buckets", "API\Enterprise\EnterpriseController@getTalentCommunityBuckets");
       Route::post("enterprise/add_to_talentcommunity", "API\Enterprise\EnterpriseController@addToTalentCommunity");
       
+      Route::post("enterprise/submit_assessment", "API\Candidates\CandidatesController@submitAssessment");
       
       Route::post("enterprise/test_lic", "API\Enterprise\EnterpriseController@testLic");
       //unsolicited node for old companies

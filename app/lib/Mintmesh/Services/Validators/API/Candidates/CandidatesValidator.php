@@ -168,6 +168,10 @@ class CandidatesValidator extends Validator {
         'get_assessment' => array(
             'company_code'  => 'required',
             'assessment_id' => 'required'
+        ),     
+        'submit_assessment' => array(
+            'candidate_emailid' => 'required',
+            'exam_id' => 'required'
         )     
     );
 

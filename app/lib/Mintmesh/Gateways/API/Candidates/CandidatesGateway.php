@@ -231,6 +231,9 @@ class CandidatesGateway {
     public function validateGetAssessmentInput($input) {
         return $this->doValidation('get_assessment', 'MINTMESH.user.valid');
     }
+    public function validateSubmitAssessmentInput($input) {
+        return $this->doValidation('submit_assessment', 'MINTMESH.user.valid');
+    }
     
     public function getCandidateEmailTemplates($input) {
         
@@ -2007,7 +2010,7 @@ class CandidatesGateway {
         $examId   = !empty($input['exam_id']) ? $input['exam_id'] : 0;
         $examInput['exam_name']  = !empty($input['exam_name']) ? $input['exam_name'] : '';
         $examInput['exam_type']  = !empty($input['exam_type']) ? $input['exam_type'] : '';
-        $examInput['exam_dura']  = !empty($input['exam_duration']) ? $input['exam_duration'] : '';
+        $examInput['exam_dura']  = !empty($input['max_duration']) ? $input['max_duration'] : '';
         $examInput['desc_url']   = !empty($input['description_url']) ? $input['description_url'] : '';
         $examInput['work_exp']   = !empty($input['work_experience']) ? $input['work_experience'] : '';
         
@@ -2051,7 +2054,7 @@ class CandidatesGateway {
             $examInput['exam_url']   = !empty($input['exam_url']) ? $input['exam_url'] : '';
             $examInput['password']   = !empty($input['password']) ? $input['password'] : '';
             $examInput['min_marks']  = !empty($input['min_marks']) ? $input['min_marks'] : 0;
-            $examInput['exam_dura']  = !empty($input['exam_duration']) ? $input['exam_duration'] : 0;
+            $examInput['exam_dura']  = !empty($input['max_duration']) ? $input['max_duration'] : 0;
             $examInput['auto_scr']   = !empty($input['is_auto_screening']) ? $input['is_auto_screening'] : 0;
             $examInput['full_scr']   = !empty($input['enable_full_screen']) ? $input['enable_full_screen'] : 0;
             $examInput['shuffle']    = !empty($input['shuffle_questions']) ? $input['shuffle_questions'] : 0;
@@ -2124,9 +2127,6 @@ class CandidatesGateway {
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
-    
-
-    
     
     public function getCompanyAssessmentsList($input) {
         
@@ -2282,6 +2282,7 @@ class CandidatesGateway {
             $qstObj  = $questionResArr[0];
             $resultArr['exam_id']        = !empty($qstObj->idexam) ? $qstObj->idexam : '';
             $resultArr['exam_name']      = !empty($qstObj->exam_name) ? $qstObj->exam_name : '';
+            $resultArr['exam_type']      = !empty($qstObj->idexam_type) ? $qstObj->idexam_type : '';
             $resultArr['exam_url']       = !empty($qstObj->exam_url) ? $qstObj->exam_url : '';
             $resultArr['description_url']      = !empty($qstObj->description_url) ? $qstObj->description_url : '';
             $resultArr['work_experience']      = !empty($qstObj->work_experience) ? $qstObj->work_experience : '';
@@ -2294,7 +2295,6 @@ class CandidatesGateway {
             $resultArr['enable_full_screen']   = !empty($qstObj->enable_full_screen) ? $qstObj->enable_full_screen : '';
             $resultArr['shuffle_questions']    = !empty($qstObj->shuffle_questions) ? $qstObj->shuffle_questions : '';
             $resultArr['reminder_emails']      = !empty($qstObj->reminder_emails) ? $qstObj->reminder_emails : '';
-            $resultArr['exam_type_name']       = !empty($qstObj->exam_type) ? $qstObj->exam_type : '';
             $resultArr['experience_name']      = !empty($qstObj->experience_name) ? $qstObj->experience_name : '';
             
             $startDateTime = !empty($qstObj->start_date_time) ? $this->appEncodeDecode->UserTimezone($qstObj->start_date_time, $timeZone) : '';
@@ -2416,34 +2416,34 @@ class CandidatesGateway {
                 
                 foreach ($examQstResArr as $value) {
                     $record = array();
-                    $record['id'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
-                    $record['number'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
+                    $record['id']               = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
+                    $record['number']           = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
                     $record['exam_question_id'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
                     $record['question_id']      = $questionId = !empty($value->question_id) ? $value->question_id : 0;
                     $record['question']         = !empty($value->question) ? $value->question : '';
                     $record['question_value']   = !empty($value->question_value) ? $value->question_value : 0;
-                    $record['question_type']  = !empty($value->question_type) ? $value->question_type : '';
-                    $record['name'] = '';
-                    $record['description'] = '';
-                    $record['pageFlow'] = $pageFlow;
+                    $record['question_type']    = !empty($value->question_type) ? $value->question_type : '';
+                    $record['name']         = '';
+                    $record['description']  = '';
+                    $record['pageFlow']     = $pageFlow;
                     
-                    $elements['id'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
+                    $elements['id']         = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
                     $elements['exam_question_id'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
-                    $elements['orderNo'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
-                    $elements['type']  = 'question';
+                    $elements['orderNo']    = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
+                    $elements['type']       = 'question';
                    
-                    $question['id'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;        
-                    $question['text'] = !empty($value->question) ? $value->question : '';        
-                    $question['type'] = !empty($value->question_type) ? $value->question_type : '';        
+                    $question['id']     = !empty($value->exam_question_id) ? $value->exam_question_id : 0;        
+                    $question['text']   = !empty($value->question) ? $value->question : '';        
+                    $question['type']   = !empty($value->question_type) ? $value->question_type : '';        
                     $question['required'] = 'true';        
-                    $qstOptionsResArr = $this->candidatesRepository->getQuestionOptions($questionId);
+                    $qstOptionsResArr   = $this->candidatesRepository->getQuestionOptions($questionId);
                    
                     if(!empty($qstOptionsResArr)){
                         foreach ($qstOptionsResArr as $optValue) {
                             $optrecord = array();
-                            $optrecord['id'] = !empty($optValue->option_id) ? $optValue->option_id : 0;
-                            $optrecord['orderNo'] = !empty($optValue->option_id) ? $optValue->option_id : 0;
-                            $optrecord['value'] = !empty($optValue->option) ? $optValue->option : 0;
+                            $optrecord['id']        = !empty($optValue->option_id) ? $optValue->option_id : 0;
+                            $optrecord['orderNo']   = !empty($optValue->option_id) ? $optValue->option_id : 0;
+                            $optrecord['value']     = !empty($optValue->option) ? $optValue->option : 0;
                             $optrecord['option_id'] = !empty($optValue->option_id) ? $optValue->option_id : 0;
                             //$optrecord['option'] = !empty($optValue->option) ? $optValue->option : 0;
                             $optrecord['pageFlow'] = $pageFlow;
@@ -2451,8 +2451,8 @@ class CandidatesGateway {
                         }
                    
                     $question['offeredAnswers'] = $qstOptArray;
-                    $elements['question'] = $question;
-                    $record['elements'] = array($elements);
+                    $elements['question']   = $question;
+                    $record['elements']     = array($elements);
                     $examQstArr[]  = $record;
                     }
                 }
@@ -2478,6 +2478,48 @@ class CandidatesGateway {
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
     
+    public function submitAssessment($input) {
+        
+        $returnArr      = $resultArr = $data = $qstInput = $instanceArr = array();
+        $companyCode    = !empty($input['company_code']) ? $input['company_code'] : '';
+        $candidateEmail = !empty($input['candidate_emailid']) ? $input['candidate_emailid'] : 0;
+        $examId         = !empty($input['exam_id']) ? $input['exam_id'] : 0;
+        $examQstList    = !empty($input['exam_question_list']) ? $input['exam_question_list'] : array();
+        
+        $instanceArr['exam_id']           = $examId;
+        $instanceArr['candidate_id']      = $candidateId;
+        $instanceArr['relationship_id']   = $gotReferredId;
+        
+        $examInsArr = $this->candidatesRepository->createCandidateExamInstance($instanceArr);
+        
+        foreach ($examQstList as $value) {
+            $optrecord = array();
+            $optrecord['exam_id']           = $examId;
+            $optrecord['exam_question_id']  = $value['exam_question_id'];
+            $optrecord['question_id']       = $value['question_id'];
+            $questionType                   = $value['question_type'];
+            if($questionType == 1){
+                $optrecord['question_option_id'] = $value['question_ans'];
+            } else {
+                $optrecord['answer_text'] = $value['question_ans'];
+            }
+            $examAnsArr = $this->candidatesRepository->createCandidateExamAnswer($optrecord, $examInstanceId);
+        }
+        
+        if(!empty($questionId)){
+            $resultArr  = $this->candidatesRepository->deleteQuestion($questionId);
+        }  
+        if(!empty($resultArr)){
+            $responseCode    = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.edit_configuration.success')));
+        } else {
+            $responseCode    = self::ERROR_RESPONSE_CODE;
+            $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_edit_question.failure')));
+        }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
+    }
 }
 
 ?>
