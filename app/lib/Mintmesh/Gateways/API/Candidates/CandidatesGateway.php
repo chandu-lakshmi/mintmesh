@@ -2298,14 +2298,19 @@ class CandidatesGateway {
             $resultArr['reminder_emails']      = !empty($qstObj->reminder_emails) ? $qstObj->reminder_emails : '';
             $resultArr['experience_name']      = !empty($qstObj->experience_name) ? $qstObj->experience_name : '';
             
-            $startDateTime = !empty($qstObj->start_date_time) ? $this->appEncodeDecode->UserTimezone($qstObj->start_date_time, $timeZone) : '';
-            $endDateTime   = !empty($qstObj->end_date_time) ? $this->appEncodeDecode->UserTimezone($qstObj->end_date_time, $timeZone) : '';
+            $startDateTime = !empty($qstObj->start_date_time) ? $qstObj->start_date_time : '';
+            $endDateTime   = !empty($qstObj->end_date_time) ? $qstObj->end_date_time : '';
+            if($startDateTime != "0000-00-00 00:00:00"){
+                $startDateTime = $this->appEncodeDecode->UserTimezone($startDateTime, $timeZone);
+                $resultArr['start_date'] = date('l M j Y', strtotime($startDateTime)); 
+                $resultArr['start_time'] = date('h:i A', strtotime($startDateTime));
+            }
+            if($endDateTime != "0000-00-00 00:00:00"){
+                $endDateTime   = $this->appEncodeDecode->UserTimezone($endDateTime, $timeZone);
+                $resultArr['end_date']   = date('l M j Y', strtotime($endDateTime));
+                $resultArr['end_time']   = date('h:i A', strtotime($endDateTime));
+            }
             
-            $resultArr['start_date'] = date('l M j Y', strtotime($startDateTime)); 
-            $resultArr['start_time'] = date('h:i A', strtotime($startDateTime));
-            $resultArr['end_date']   = date('l M j Y', strtotime($endDateTime));
-            $resultArr['end_time']   = date('h:i A', strtotime($endDateTime));
-        
             if($resultArr){
                 $data = $resultArr;
                 $responseCode    = self::SUCCESS_RESPONSE_CODE;
