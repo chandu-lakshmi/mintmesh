@@ -2017,6 +2017,7 @@ class CandidatesGateway {
         if(!empty($examId)){
             #edit Exam here
             $resultArr  = $this->candidatesRepository->editExam($examInput, $examId, $userId);
+            $data['id'] = $examId;
         } else {
             #add Exam here
             $resultArr = $this->candidatesRepository->addExam($examInput, $companyId, $userId);
