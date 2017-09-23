@@ -1,8 +1,9 @@
 <?php namespace Mintmesh\Repositories\API\Candidates;
 
-use Config, Question, Exam, Question_Option;
-use Mail, DB, Candidate_Email_Templates, Question_Bank;
-use Exam_Question;
+use Config, Mail, DB;
+use Exam, Question, Question_Option, Candidate_Email_Templates;
+use Exam_Question, Candidate_Exam_Instance, Candidate_Exam_Answer;
+use Candidate_Exam_Result, Question_Bank;
 use Mintmesh\Repositories\BaseRepository;
 use Illuminate\Support\Facades\Hash;
 use Mintmesh\Services\APPEncode\APPEncode ;
@@ -10,6 +11,7 @@ use Mintmesh\Services\APPEncode\APPEncode ;
 class EloquentCandidatesRepository extends BaseRepository implements CandidatesRepository {
 
     protected $exam, $question, $candidateEmailTemplates, $questionOption;
+    protected $candidateExamInstance, $candidateExamAnswer, $candidateExamResult;
         
     const STATUS_ACTIVE = 1;
     const STATUS_INACTIVE = 0;
@@ -23,13 +25,19 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                                 Question_Option $questionOption,
                                 Question_Bank $questionBank,
                                 Candidate_Email_Templates $candidateEmailTemplates,
+                                Candidate_Exam_Instance $candidateExamInstance,
+                                Candidate_Exam_Answer $candidateExamAnswer,
+                                Candidate_Exam_Result $candidateExamResult,
                                 APPEncode $appEncodeDecode
                                 ){      
                 $this->candidateEmailTemplates = $candidateEmailTemplates;    
-                $this->exam = $exam;    
-                $this->examQuestion = $examQuestion;    
-                $this->question = $question;    
-                $this->questionOption  = $questionOption;    
+                $this->exam     = $exam;    
+                $this->examQuestion     = $examQuestion;    
+                $this->question         = $question;    
+                $this->questionOption   = $questionOption;    
+                $this->candidateExamInstance = $candidateExamInstance;    
+                $this->candidateExamAnswer   = $candidateExamAnswer;    
+                $this->candidateExamResult   = $candidateExamResult;    
                 $this->questionBank    = $questionBank;    
                 $this->appEncodeDecode = $appEncodeDecode ;       
         }
@@ -668,6 +676,53 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                $return = Exam_Question::where ('idexam_question', $examQuestionId)->update($editQuestionOption); 
             }
         return $return;
+    }
+    
+    public function createCandidateExamInstance($instanceArr = array())
+    {   
+        $createdAt   = gmdate('Y-m-d H:i:s');
+        $addInstanceArr  = array(
+                        "idexam"         => $instanceArr['exam_id'],
+                        "candidateid"    => $instanceArr['candidate_id'],
+                        "relationshipid" => $instanceArr['relationship_id'],
+                        "created_at"     => $createdAt
+                    );
+        return $this->candidateExamInstance->create($addInstanceArr);
+    }
+    
+    public function createCandidateExamAnswer($examAnswerArr = array(), $examInstanceId = 0)
+    {   
+        $createdAt   = gmdate('Y-m-d H:i:s');
+        $answerText  = !empty($examAnswerArr['answer_text']) ? $this->appEncodeDecode->filterString($examAnswerArr['answer_text']) : '';
+        $optAnsId    = !empty($examAnswerArr['question_option_id']) ? $examAnswerArr['question_option_id'] : '';
+        $score       = !empty($examAnswerArr['score']) ? $examAnswerArr['score'] : 0;
+        
+        $addExamAnswerArr  = array(
+                        "idexam_instance"   => $examInstanceId,
+                        "idexam_question"   => $examAnswerArr['exam_question_id'],
+                        "idquestion"        => $examAnswerArr['question_id'],
+                        "idquestion_option" => $optAnsId,
+                        "answer_text"       => $answerText,
+                        "score"             => $score,
+                        "created_at"        => $createdAt
+                    );
+        return $this->candidateExamAnswer->create($addExamAnswerArr);
+    }
+    
+    public function checkIsRightQuestionOptionId($optionId = 0){
+        
+        $result =  DB::table('question_option as o')
+                        ->select('o.is_correct_answer')
+                        ->where('o.is_correct_answer', self::STATUS_ACTIVE)
+                        ->where('o.idquestion_option', $optionId)
+                        ->limit(1)
+                        ->get();
+        return $result;
+    }
+    
+    public function getExamQuestionScore($examQuestionId = 0){
+        
+        return  DB::table('exam_question')->select('question_value')->where('idexam_question', $examQuestionId)->get();        
     }
         
 }

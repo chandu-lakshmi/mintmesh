@@ -2485,37 +2485,49 @@ class CandidatesGateway {
     }
     
     public function submitAssessment($input) {
-        
-        $returnArr      = $resultArr = $data = $qstInput = $instanceArr = array();
+       
+        $returnArr      = $resultArr = $data = $qstInput = $instanceArr = $examAnsArr = array();
         $companyCode    = !empty($input['company_code']) ? $input['company_code'] : '';
         $candidateEmail = !empty($input['candidate_emailid']) ? $input['candidate_emailid'] : 0;
         $examId         = !empty($input['exam_id']) ? $input['exam_id'] : 0;
         $examQstList    = !empty($input['exam_question_list']) ? $input['exam_question_list'] : array();
         
+        
+        $candidateId    = $this->neoPostRepository->getUserNodeIdByEmailId($candidateEmail);
+        $gotReferredId  = '789012';
+        
         $instanceArr['exam_id']           = $examId;
         $instanceArr['candidate_id']      = $candidateId;
         $instanceArr['relationship_id']   = $gotReferredId;
         
-        $examInsArr = $this->candidatesRepository->createCandidateExamInstance($instanceArr);
+        $examInsArr     = $this->candidatesRepository->createCandidateExamInstance($instanceArr);
+        $examInstanceId = !empty($examInsArr['id']) ? $examInsArr['id'] : 0; 
         
         foreach ($examQstList as $value) {
             $optrecord = array();
-            $optrecord['exam_id']           = $examId;
-            $optrecord['exam_question_id']  = $value['exam_question_id'];
-            $optrecord['question_id']       = $value['question_id'];
-            $questionType                   = $value['question_type'];
+            $optrecord['exam_question_id']  = !empty($value['exam_question_id']) ? $value['exam_question_id'] : 0;
+            $optrecord['question_id']       = !empty($value['question_id']) ? $value['question_id'] : 0;
+            $questionType                   = !empty($value['question_type']) ? $value['question_type'] : 0;
+            $questionAns                    = !empty($value['question_ans']) ? $value['question_ans'] : 0;
             if($questionType == 1){
-                $optrecord['question_option_id'] = $value['question_ans'];
+                
+                $optrecord['question_option_id'] = $questionAns;
+                $isRightOption = $this->candidatesRepository->checkIsRightQuestionOptionId($questionAns);
+                if(!empty($isRightOption[0])){
+                    $examQstScoreRes = $this->candidatesRepository->getExamQuestionScore($examQuestionId);
+                    if(!empty($examQstScoreRes[0])){
+                        
+                        $optrecord['score'] = !empty($examQstScoreRes[0]->question_value) ? $examQstScoreRes[0]->question_value : 0;
+                    }    
+                }
+                
             } else {
-                $optrecord['answer_text'] = $value['question_ans'];
+                $optrecord['answer_text'] = $questionAns;
             }
-            $examAnsArr = $this->candidatesRepository->createCandidateExamAnswer($optrecord, $examInstanceId);
+            $examAnsArr[] = $this->candidatesRepository->createCandidateExamAnswer($optrecord, $examInstanceId);
         }
-        
-        if(!empty($questionId)){
-            $resultArr  = $this->candidatesRepository->deleteQuestion($questionId);
-        }  
-        if(!empty($resultArr)){
+          
+        if(!empty($examAnsArr)){
             $responseCode    = self::SUCCESS_RESPONSE_CODE;
             $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
             $responseMessage = array('msg' => array(Lang::get('MINTMESH.edit_configuration.success')));
