@@ -2179,6 +2179,7 @@ class CandidatesGateway {
                 #remove Exam Question here
                 $questionResArr   = $this->candidatesRepository->removeExamQuestion($examQuestionId, $userId);
                 $responseMessage  = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+                $data['id'] = $examQuestionId;
             } else {
                 #check Exam Question Exist
                 $checkExmQstResArr    = $this->candidatesRepository->checkExamQuestionExist($examId, $questionId);
@@ -2187,6 +2188,7 @@ class CandidatesGateway {
                     $examQuestionId = !empty($exmQst->exam_question_id) ? $exmQst->exam_question_id : 0;
                     #update Exam Question status here
                     $questionResArr  = $this->candidatesRepository->updateExamQuestionStatus($examQuestionId);
+                    $data['id'] = $examQuestionId;
                 } else {
                     #add Exam Question here
                     $questionResArr  = $this->candidatesRepository->addExamQuestion($examId, $questionId, $userId, $questionValue);
