@@ -579,6 +579,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                     ->where('q.status', self::STATUS_ACTIVE)
                     ->limit(10)->skip($start)
                     ->get();
+        //$result['total_records'] = DB::select("select FOUND_ROWS() as total_count");
         return $result; 
     }
     
@@ -594,15 +595,15 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         return $result;
     }
     
-    public function getCompanyAssessmentsList($companyId = 0,$name=''){
+    public function getCompanyAssessmentsList($companyId = 0, $name = ''){
         $result = '';
-        if(!empty($name) && !empty($companyId)){
-        $result =  DB::table('exam')
-                    ->select('exam.idexam','exam.name')
-                    ->where('exam.company_id', $companyId)
-                    ->where('exam.is_active',1)
-                    ->where('exam.name', 'LIKE', '' . $name . '%')
-                    ->get();
+        if(!empty($companyId)){
+            $result =  DB::table('exam')
+                        ->select('exam.idexam','exam.name')
+                        ->where('exam.company_id', $companyId)
+                        ->where('exam.is_active',1)
+                        ->where('exam.name', 'LIKE', '' . $name . '%')
+                        ->get();
         }
        return $result;
     }
@@ -724,6 +725,15 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
     public function getExamQuestionScore($examQuestionId = 0){
         
         return  DB::table('exam_question')->select('question_value')->where('idexam_question', $examQuestionId)->get();        
+    }
+    
+     public function getAssessmentsNameById($examId = 0){
+        
+        $result =  DB::table('exam')
+                    ->select('idexam','name')
+                    ->where('idexam', $examId)
+                    ->get();
+       return $result;
     }
         
 }

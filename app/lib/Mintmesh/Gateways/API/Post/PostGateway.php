@@ -12,6 +12,7 @@ namespace Mintmesh\Gateways\API\Post;
 use Mintmesh\Repositories\API\Referrals\ReferralsRepository;
 use Mintmesh\Repositories\API\Enterprise\EnterpriseRepository;
 use Mintmesh\Repositories\API\SocialContacts\ContactsRepository;
+use Mintmesh\Repositories\API\Candidates\CandidatesRepository;
 use Mintmesh\Repositories\API\User\UserRepository;
 use Mintmesh\Repositories\API\Enterprise\NeoEnterpriseRepository;
 use Mintmesh\Repositories\API\Payment\PaymentRepository;
@@ -61,7 +62,7 @@ class PostGateway {
     const DEFAULT_CAREER_TALENT_NETWORK = 'enable';
     const CAREER_HEROSHOT_IMAGE_HEIGHT = 336;
 
-    protected $enterpriseRepository, $commonFormatter, $authorizer, $appEncodeDecode,$neoEnterpriseRepository,$userFileUploader,$job2,$paymentRepository;
+    protected $enterpriseRepository, $commonFormatter, $authorizer, $appEncodeDecode,$neoEnterpriseRepository,$userFileUploader,$job2,$paymentRepository, $candidatesRepository;
     protected $createdNeoUser, $postValidator, $referralsRepository, $enterpriseGateway, $userGateway, $contactsRepository, $userEmailManager,$paymentGateway;
 
     public function __construct(NeoPostRepository $neoPostRepository, 
@@ -83,6 +84,7 @@ class PostGateway {
                                 EnterpriseRepository $enterpriseRepository,
                                 UserFileUploader $userFileUploader,
                                 UserEmailManager $userEmailManager,
+                                CandidatesRepository $candidatesRepository,
                                 job2 $job2
                                 
     ) {
@@ -105,6 +107,7 @@ class PostGateway {
         $this->enterpriseRepository = $enterpriseRepository;
         $this->userFileUploader = $userFileUploader;
         $this->userEmailManager = $userEmailManager;
+        $this->candidatesRepository = $candidatesRepository;
         $this->job2 = $job2 ;
             
     }
@@ -1960,7 +1963,17 @@ class PostGateway {
             $returnData['career_heroshot_image']    = !empty($campRes->career_heroshot_image) ? $campRes->career_heroshot_image : $careerHeroshotImage;
             $returnData['career_talent_network']    = !empty($campRes->career_talent_network) ? $campRes->career_talent_network : $careerTalentNetwork;
             $returnData['career_links']             = !empty($campRes->career_links) ? json_decode($campRes->career_links) : $careerLinksArr;
+            $returnData['assessment_id']            = $assessmentId = !empty($campRes->assessment_id) ? $campRes->assessment_id : '';
             
+            $assessmentName = '';
+            $assessmentId   = !empty($campRes->assessment_id) ? $campRes->assessment_id : 0;
+            $examNameArr    = $this->candidatesRepository->getAssessmentsNameById($assessmentId);
+            if(!empty($examNameArr[0])){
+                $assessmentName = !empty($examNameArr[0]->name) ? $examNameArr[0]->name : '';
+            }
+            $returnData['assessment_id']   = $assessmentId;
+            $returnData['assessment_name'] = $assessmentName;
+                    
             $returnData['camp_ref']         = $refCode;
             if($campRes->location_type == 'ACTIVE'){
                $returnData['status'] = 'OPEN'; 

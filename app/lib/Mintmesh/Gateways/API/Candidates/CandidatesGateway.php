@@ -2144,8 +2144,8 @@ class CandidatesGateway {
             
             foreach ($resultArr as $value) {
                 $record = array();
-                $record['id']           = $value->idexam;
-                $record['name']         = $value->name;
+                $record['assessment_id']   = $value->idexam;
+                $record['assessment_name'] = $value->name;
                 $returnArr[] = $record;
             }
                 $responseCode    = self::SUCCESS_RESPONSE_CODE;
