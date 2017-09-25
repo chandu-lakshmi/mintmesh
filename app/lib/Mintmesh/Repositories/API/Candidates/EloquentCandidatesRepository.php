@@ -603,7 +603,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                         ->select('exam.idexam','exam.name')
                         ->where('exam.company_id', $companyId)
                         ->where('exam.is_active',1)
-                        ->where('exam.name', 'LIKE', '' . $name . '%')
+                        ->where('exam.name', 'LIKE', '%' . $name . '%')
                         ->get();
         }
        return $result;
