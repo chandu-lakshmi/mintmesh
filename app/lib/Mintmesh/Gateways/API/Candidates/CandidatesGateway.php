@@ -2147,23 +2147,25 @@ class CandidatesGateway {
             
             foreach ($resultArr as $value) {
                 $record = array();
-                $record['assessment_id']   = $value->idexam;
-                $record['assessment_name'] = $value->name;
+                $record['assessment_id']   = !empty($value->idexam) ? $value->idexam : 0;
+                $record['assessment_name'] = !empty($value->name) ? $value->name : '';
                 $returnArr[] = $record;
             }
-                $responseCode    = self::SUCCESS_RESPONSE_CODE;
-                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+                
             if($returnArr){
                 $data = $returnArr;
-                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
-            } else {
+            }
+            $responseCode    = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+        } else{
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
             $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
-    }
+    
     public function addEditExamQuestion($input) {
         
         $returnArr      = $data = array();
