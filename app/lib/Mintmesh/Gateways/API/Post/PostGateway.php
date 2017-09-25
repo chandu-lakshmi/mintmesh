@@ -1971,7 +1971,7 @@ class PostGateway {
             if(!empty($examNameArr[0])){
                 $assessmentName = !empty($examNameArr[0]->name) ? $examNameArr[0]->name : '';
             }
-            $returnData['assessment']   = array("assessment_id" => $assessmentId, "assessment_name" => $assessmentName);
+            $returnData['assessment']   = array(array("assessment_id" => $assessmentId, "assessment_name" => $assessmentName));
                     
             $returnData['camp_ref']     = $refCode;
             if($campRes->location_type == 'ACTIVE'){
