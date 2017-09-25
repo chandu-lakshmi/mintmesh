@@ -2302,7 +2302,8 @@ class PostGateway {
                                         $this->enterpriseRepository->updateCompanyResumesWithGotReferredId($documentId, $gotReferredId);
                                     }
                                     # send email to candidate(p3)
-                                    if(empty($renamedFileName)){
+                                    $posts       = $this->neoPostRepository->getPosts($postId);
+                                    if(empty($renamedFileName) || $posts->post_type == 'campaign'){
 
                                         $referral               = $neoInput['referral'];
                                         $neoReferredByDetails   = $this->neoUserRepository->getNodeByEmailId($referredBy);
@@ -2332,6 +2333,7 @@ class PostGateway {
                                         $emailData['from_emailid']      = $referredBy;
                                         $emailData['from_firstname']    = $neoReferredByName;
                                         $emailData['email_template']    = ($isSelfReferral) ? 0 : 1 ;
+                                        $emailData['attachment_status'] = !empty($renamedFileName) ? 1 : 0;
                                         $emailData['ip_address']        = $_SERVER['REMOTE_ADDR'];
                                         $emailData['ref_code']          = $refCode;
                                         $emailData['ref_rel_code']      = $refRelCode;

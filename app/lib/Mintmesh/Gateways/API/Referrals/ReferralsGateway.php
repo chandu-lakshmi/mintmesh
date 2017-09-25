@@ -2004,9 +2004,10 @@ class ReferralsGateway {
                     $notificationType = ($isSelfReferral) ? 23 : 10;
                     #send notification to the person who created post
                     $this->userGateway->sendNotification($this->loggedinUserDetails, $this->neoLoggedInUserDetails, $input['refer_to'], $notificationType, array('extra_info' => $input['post_id']), array('other_user' => $input['referring'], 'p3_non_mintmesh' => 1));
-
-                    if(empty($referResumePath)){
-                        
+                    
+                    #send email to p3
+                    $posts  = $this->neoPostRepository->getPosts($postId);
+                    if(empty($referResumePath) || $posts->post_type == 'campaign'){
                         
                         $referring = $input['referring'];
                         $companyLogoWidth = $companyLogoHeight = '';
@@ -2040,6 +2041,7 @@ class ReferralsGateway {
                         $emailData['from_emailid']          = $userEmail;
                         $emailData['from_firstname']        = $neoUserName;
                         $emailData['email_template']        = ($isSelfReferral) ? 0 : 1 ;
+                        $emailData['attachment_status']     = !empty($referResumePath) ? 1 : 0;
                         $emailData['ip_address']            = $_SERVER['REMOTE_ADDR'];
                         $emailData['ref_code']              = $refCode;
                         $emailData['ref_rel_code']          = $refRelCode;
@@ -2560,7 +2562,12 @@ class ReferralsGateway {
                 $campaignId = $this->neoPostRepository->getPostCampaignId($postId);
                 $refId      = $this->neoPostRepository->getUserNodeIdByEmailId($emailData['from_emailid']);
                 $refCmpCode = MyEncrypt::encrypt_blowfish($campaignId.'_'.$refId,Config::get('constants.MINTMESH_ENCCODE'));
-                $dataSet['apply_link']          = $entUrl . "/email/campaign/candidate-details/share?ref=" . $refCode."&refrel=" . $refRelCode."&flag=0&jc=1";
+                #check resume attachment status
+                if(!empty($emailData['attachment_status'])) {
+                    $dataSet['apply_link']  = $entUrl . "/email/campaign/candidate-assessment/share?ref=" . $refCode."&refrel=" . $refRelCode."&flag=0&jc=1";
+                } else{
+                    $dataSet['apply_link']  = $entUrl . "/email/campaign/candidate-details/share?ref=" . $refCode."&refrel=" . $refRelCode."&flag=0&jc=1";
+                }
                 $dataSet['view_jobs_link']      = $entUrl . "/email/all-campaigns/share?ref=" . $refCmpCode;
             } else {
                 $dataSet['apply_link']          = $entUrl . "/email/candidate-details/share?ref=" . $refCode."&refrel=" . $refRelCode."&flag=0&jc=0";
