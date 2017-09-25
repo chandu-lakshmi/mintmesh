@@ -2402,8 +2402,8 @@ class CandidatesGateway {
         $companyCode    = !empty($input['company_code']) ? $input['company_code'] : '';
         $examId         = !empty($input['assessment_id']) ? $input['assessment_id'] : 0;
         #get Logged In User details here
-        $this->loggedinUser = $this->referralsGateway->getLoggedInUser(); 
-        $userId   = $this->loggedinUser->id;
+        //$this->loggedinUser = $this->referralsGateway->getLoggedInUser(); 
+        //$userId   = $this->loggedinUser->id;
         #get Exam Details here                
         $questionResArr   = $this->candidatesRepository->getExamDetails($examId);
         
@@ -2510,10 +2510,15 @@ class CandidatesGateway {
         $returnArr      = $resultArr = $data = $qstInput = $instanceArr = $examAnsArr = array();
         $companyCode    = !empty($input['company_code']) ? $input['company_code'] : '';
         $candidateEmail = !empty($input['candidate_emailid']) ? $input['candidate_emailid'] : 0;
-        $examId         = !empty($input['exam_id']) ? $input['exam_id'] : 0;
+        $examId         = !empty($input['assessment_id']) ? $input['assessment_id'] : 0;
         $examQstList    = !empty($input['exam_question_list']) ? $input['exam_question_list'] : array();
+         
+        $examResponseArr = !empty($input['exam_response']) ? $input['exam_response'] : array();
         
-        
+        $candidateEmail  = $examResponseArr['candidate_emailid'];
+        $questionListArr = $examResponseArr['exam_question_list'];
+        $examQstList     = array_values($questionListArr);
+       
         $candidateId    = $this->neoPostRepository->getUserNodeIdByEmailId($candidateEmail);
         $gotReferredId  = '789012';
         
@@ -2525,8 +2530,9 @@ class CandidatesGateway {
         $examInstanceId = !empty($examInsArr['id']) ? $examInsArr['id'] : 0; 
         
         foreach ($examQstList as $value) {
+            
             $optrecord = array();
-            $optrecord['exam_question_id']  = !empty($value['exam_question_id']) ? $value['exam_question_id'] : 0;
+            $optrecord['exam_question_id']  = $examQuestionId = !empty($value['exam_question_id']) ? $value['exam_question_id'] : 0;
             $optrecord['question_id']       = !empty($value['question_id']) ? $value['question_id'] : 0;
             $questionType                   = !empty($value['question_type']) ? $value['question_type'] : 0;
             $questionAns                    = !empty($value['question_ans']) ? $value['question_ans'] : 0;
@@ -2541,10 +2547,10 @@ class CandidatesGateway {
                         $optrecord['score'] = !empty($examQstScoreRes[0]->question_value) ? $examQstScoreRes[0]->question_value : 0;
                     }    
                 }
-                
             } else {
-                $optrecord['answer_text'] = $questionAns;
+                $optrecord['answer_text'] = !empty($value['answer']) ? $value['answer'] : 0;
             }
+            
             $examAnsArr[] = $this->candidatesRepository->createCandidateExamAnswer($optrecord, $examInstanceId);
         }
           

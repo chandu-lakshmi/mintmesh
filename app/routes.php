@@ -155,6 +155,7 @@ Route::group(array('prefix' => 'v1'), function() {
       Route::post("enterprise/get_talentcommunity_buckets", "API\Enterprise\EnterpriseController@getTalentCommunityBuckets");
       Route::post("enterprise/add_to_talentcommunity", "API\Enterprise\EnterpriseController@addToTalentCommunity");
       
+      Route::post("enterprise/get_assessment", "API\Candidates\CandidatesController@getAssessment");
       Route::post("enterprise/submit_assessment", "API\Candidates\CandidatesController@submitAssessment");
       
       Route::post("enterprise/test_lic", "API\Enterprise\EnterpriseController@testLic");
@@ -448,7 +449,7 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       Route::post("enterprise/get_company_assessments_list", "API\Candidates\CandidatesController@getCompanyAssessmentsList");
       Route::post("enterprise/get_exam_details", "API\Candidates\CandidatesController@getExamDetails");
       Route::post("enterprise/get_company_assessments_all", "API\Candidates\CandidatesController@getCompanyAssessmentsAll");
-      Route::post("enterprise/get_assessment", "API\Candidates\CandidatesController@getAssessment");
+      
 });
 
 
