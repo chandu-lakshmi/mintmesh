@@ -234,6 +234,9 @@ class CandidatesGateway {
     public function validateSubmitAssessmentInput($input) {
         return $this->doValidation('submit_assessment', 'MINTMESH.user.valid');
     }
+    public function validategetScreenedCandidatesInput($input) {
+        return $this->doValidation('get_screened_candidates', 'MINTMESH.user.valid');
+    }
     
     public function getCandidateEmailTemplates($input) {
         
@@ -2557,6 +2560,37 @@ class CandidatesGateway {
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
+    
+    
+    public function getScreenedCandidates($input) {
+        
+       $returnArr    = $data = array();
+       $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
+       #get company details here
+       $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+       $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+       #get Question Types List here
+       $resultArr    = $this->candidatesRepository->getScreenedCandidates($companyId);
+       //print_r($resultArr); die;
+        #check if Question result
+        if(!empty($resultArr)){
+                $responseCode    = self::SUCCESS_RESPONSE_CODE;
+                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
+                if($returnArr){
+                    $data = $returnArr;
+                    $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+                } else {
+                    $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+                }
+            } else {
+                $responseCode    = self::ERROR_RESPONSE_CODE;
+                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            }
+        return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data); 
+            
+       }
+    
 }
 
 ?>

@@ -172,6 +172,9 @@ class CandidatesValidator extends Validator {
         'submit_assessment' => array(
             'candidate_emailid' => 'required',
             'exam_id' => 'required'
+        ),     
+        'get_screened_candidates' => array(
+            'company_code'  => 'required'
         )     
     );
 

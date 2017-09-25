@@ -971,6 +971,31 @@ class CandidatesController extends \BaseController {
         }
     return $return;
     } 
+     /**
+     *get Screened Candidates
+     * 
+     * POST/get_screened_candidates
+     * 
+     * @param string $access_token The Access token of a user
+     * @param string $company_code  
+     * @return Response
+     */
+    public function getScreenedCandidates() {
+        
+        $return = '';
+        // Receiving user input data
+        $inputUserData = \Input::all();
+        // Validating user input data
+        $validation = $this->candidatesGateway->validategetScreenedCandidatesInput($inputUserData);
+        if ($validation['status'] == 'success') {
+            $return = \Response::json($this->candidatesGateway->getScreenedCandidates($inputUserData));
+
+        } else {
+            // returning validation failure
+            $return = \Response::json($validation);
+        }
+    return $return;
+    } 
 
 }
 

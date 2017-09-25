@@ -53,6 +53,8 @@ interface CandidatesRepository {
      
      
      public function getCompanyAssessmentsAll($companyId);
+    
+     public function getScreenedCandidates($companyId);
    
      
 }
