@@ -736,5 +736,18 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                     ->get();
        return $result;
     }
+    public function getScreenedCandidates($companyId = 0){
+        
+        $result =  DB::table('candidate_exam_result as cer')
+                    ->select('cer.idexam_instance','cei.candidateid')
+                    ->join('candidate_exam_instance as cei', 'cei.idexam_instance', '=', 'cer.idexam_instance')
+                    ->join('exam as e', 'e.idexam', '=', 'cei.idexam')
+                    ->where('company_id', $companyId)
+                    ->where('e.min_marks','>=', 'cer.result')
+                    ->where('e.is_auto_screening',1)
+                    ->get();
+                    //->toSql();
+       return $result;
+    }
         
 }
