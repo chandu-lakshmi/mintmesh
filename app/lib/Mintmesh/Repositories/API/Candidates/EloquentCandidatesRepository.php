@@ -743,11 +743,11 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                     ->join('candidate_exam_instance as cei', 'cei.idexam_instance', '=', 'cer.idexam_instance')
                     ->join('exam as e', 'e.idexam', '=', 'cei.idexam')
                     ->where('company_id', $companyId)
-                    ->where('company_id', $companyId)
+                    ->where('e.min_marks','>=', 'cer.result')
                     ->where('e.is_auto_screening',1)
-                    //->get();
-                    ->toSql();
-       echo $result; die;
+                    ->get();
+                    //->toSql();
+       return $result;
     }
         
 }
