@@ -597,6 +597,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
     
     public function getCompanyAssessmentsList($companyId = 0, $name = ''){
         $result = '';
+        $name   = $this->appEncodeDecode->filterString($name);
         if(!empty($companyId)){
             $result =  DB::table('exam')
                         ->select('exam.idexam','exam.name')
