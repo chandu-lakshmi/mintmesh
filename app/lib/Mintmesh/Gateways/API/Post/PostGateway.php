@@ -1929,6 +1929,7 @@ class PostGateway {
     public function viewCampaign($input) {
         
         $data = $campSchedule = $scheduleRes = $postAry = $bucketAry  = $crSettings = array();
+        $assessmentName = '';
         $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
         $loggedInUser   = $this->referralsGateway->getLoggedInUser();
         $this->neoLoggedInUserDetails   = $this->neoUserRepository->getNodeByEmailId($loggedInUser->emailid);
@@ -1963,18 +1964,16 @@ class PostGateway {
             $returnData['career_heroshot_image']    = !empty($campRes->career_heroshot_image) ? $campRes->career_heroshot_image : $careerHeroshotImage;
             $returnData['career_talent_network']    = !empty($campRes->career_talent_network) ? $campRes->career_talent_network : $careerTalentNetwork;
             $returnData['career_links']             = !empty($campRes->career_links) ? json_decode($campRes->career_links) : $careerLinksArr;
-            $returnData['assessment_id']            = $assessmentId = !empty($campRes->assessment_id) ? $campRes->assessment_id : '';
             
-            $assessmentName = '';
+            #get campaign assessment details here
             $assessmentId   = !empty($campRes->assessment_id) ? $campRes->assessment_id : 0;
             $examNameArr    = $this->candidatesRepository->getAssessmentsNameById($assessmentId);
             if(!empty($examNameArr[0])){
                 $assessmentName = !empty($examNameArr[0]->name) ? $examNameArr[0]->name : '';
             }
-            $returnData['assessment_id']   = $assessmentId;
-            $returnData['assessment_name'] = $assessmentName;
+            $returnData['assessment']   = array("assessment_id" => $assessmentId, "assessment_name" => $assessmentName);
                     
-            $returnData['camp_ref']         = $refCode;
+            $returnData['camp_ref']     = $refCode;
             if($campRes->location_type == 'ACTIVE'){
                $returnData['status'] = 'OPEN'; 
             }else{

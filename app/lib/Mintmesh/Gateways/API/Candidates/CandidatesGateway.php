@@ -2551,7 +2551,7 @@ class CandidatesGateway {
                     }    
                 }
             } else {
-                $optrecord['answer_text'] = !empty($value['answer']) ? $value['answer'] : 0;
+                $optrecord['answer_text'] = !empty($value['answer']) ? $value['answer'] : '';
             }
             
             $examAnsArr[] = $this->candidatesRepository->createCandidateExamAnswer($optrecord, $examInstanceId);
