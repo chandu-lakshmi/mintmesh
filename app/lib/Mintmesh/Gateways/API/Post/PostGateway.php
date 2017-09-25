@@ -1929,7 +1929,7 @@ class PostGateway {
     public function viewCampaign($input) {
         
         $data = $campSchedule = $scheduleRes = $postAry = $bucketAry  = $crSettings = array();
-        $assessmentName = '';
+        $assessmentArr  = array();
         $enterpriseUrl  = Config::get('constants.MM_ENTERPRISE_URL');
         $loggedInUser   = $this->referralsGateway->getLoggedInUser();
         $this->neoLoggedInUserDetails   = $this->neoUserRepository->getNodeByEmailId($loggedInUser->emailid);
@@ -1970,9 +1970,9 @@ class PostGateway {
             $examNameArr    = $this->candidatesRepository->getAssessmentsNameById($assessmentId);
             if(!empty($examNameArr[0])){
                 $assessmentName = !empty($examNameArr[0]->name) ? $examNameArr[0]->name : '';
+                $assessmentArr  = array(array("assessment_id" => $assessmentId, "assessment_name" => $assessmentName));
             }
-            $returnData['assessment']   = array(array("assessment_id" => $assessmentId, "assessment_name" => $assessmentName));
-                    
+            $returnData['assessment']   = $assessmentArr;        
             $returnData['camp_ref']     = $refCode;
             if($campRes->location_type == 'ACTIVE'){
                $returnData['status'] = 'OPEN'; 
