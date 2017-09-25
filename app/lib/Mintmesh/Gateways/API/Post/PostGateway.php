@@ -3445,6 +3445,7 @@ class PostGateway {
             $gotReferredId      = isset($decryptedAry[1]) ? $decryptedAry[1] : 0 ;
         
             if(!empty($post_id) && !empty($gotReferredId)){
+                $assessmentId       = 0;
                 $companyDetails     = $this->neoPostRepository->getPostCompany($post_id);
                 $companyLogo        = !empty($companyDetails->logo) ? $companyDetails->logo : '';
                 $companyCode        = !empty($companyDetails->companyCode) ? $companyDetails->companyCode : '';
@@ -3463,6 +3464,14 @@ class PostGateway {
                 $location        = !empty($postDetails['service_location']) ? $postDetails['service_location'] : ''; 
                 $jobDescription  = !empty($postDetails['job_description']) ? $postDetails['job_description'] : ''; 
                 $jobType         = !empty($postDetails['post_type']) ? $postDetails['post_type'] : ''; 
+                 if(($postDetails['post_type']) == 'campaign'){
+                   $campaignArr = $this->neoPostRepository->getPostCampaign($post_id);
+                   if(isset($campaignArr[0]) && isset($campaignArr[0][0])){
+                        $campArr = $campaignArr[0][0];
+                        $assessmentId = !empty($campArr->assessment_id) ? $campArr->assessment_id : 0;
+                   }
+                }
+                
                 $bittly = $url = '';
                 #get get career settings here
                 $crSettings = $this->getCareerSettings($companyCode);
@@ -3489,6 +3498,7 @@ class PostGateway {
                     "experience"        => $experience,
                     "location"          => $location,
                     "description"       => $jobDescription,
+                    "assessment_id"     => $assessmentId,
                     "url"               => $url,
                     "bittly_url"        => $bittly, 
                     "got_referred_id"   => $gotReferredId,
