@@ -612,7 +612,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
     {   
         $return = FALSE;
         $editQuestionOption = array("status" => self::STATUS_INACTIVE);
-        if(!empty($optionId)){
+        if(!empty($questionId)){
                $return = Question_Option::where ('idquestion', $questionId)->update($editQuestionOption); 
             }
         return $return;
@@ -621,7 +621,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
     public function editQuestionBankInactiveAll($questionId = 0){   
         $return = FALSE;
         $editQuestionBank = array("status" => self::STATUS_INACTIVE);
-        if(!empty($optionId)){
+        if(!empty($questionId)){
                $return = Question_Bank::where ('idquestion', $questionId)->update($editQuestionBank); 
             }
         return $return;
