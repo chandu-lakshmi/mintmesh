@@ -2097,6 +2097,7 @@ class CandidatesGateway {
     public function getQuestionsList($input) {
         
        $returnArr    = $data = array();
+       $totalRecords = 0;
        $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
        $examId       = !empty($input['exam_id']) ? $input['exam_id'] : '';
        $pageNo       = !empty($input['page_no']) ? $input['page_no'] : 0;
@@ -2106,9 +2107,9 @@ class CandidatesGateway {
        #get Question Types List here
        $questionResArr    = $this->candidatesRepository->getQuestionsList($companyId, $pageNo, $examId);
         #check if Question result
-        if(!empty($questionResArr)){
+        if(!empty($questionResArr['questions_list'])){
             
-            foreach ($questionResArr as $qstObj) {
+            foreach ($questionResArr['questions_list'] as $qstObj) {
                 $resultArr = array();
                 $resultArr['question_id']        = !empty($qstObj->idquestion) ? $qstObj->idquestion : 0;
                 $resultArr['question']           = !empty($qstObj->question) ? $qstObj->question : '';
@@ -2119,7 +2120,13 @@ class CandidatesGateway {
             $responseCode    = self::SUCCESS_RESPONSE_CODE;
             $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
             if($returnArr){
-                $data = $returnArr;
+                
+                if(!empty($questionResArr['total_records']) && !empty($questionResArr['total_records'][0])){
+                    $objTotal = $questionResArr['total_records'][0];
+                    $totalRecords = !empty($objTotal->total_count) ? $objTotal->total_count : 0;
+                }
+                $data['total_records']  = $totalRecords;
+                $data['questions_list'] = $returnArr;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
             } else {
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
