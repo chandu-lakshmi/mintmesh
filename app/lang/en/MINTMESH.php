@@ -565,5 +565,8 @@ return array(
     ),
     "add_edit_question" => array(
         "failure" => "Failed to update question details"
+    ),
+    "submit_assessment" => array(
+        "success" => "Successfully Done.",
     )
 );

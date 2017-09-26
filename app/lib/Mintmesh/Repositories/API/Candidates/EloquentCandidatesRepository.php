@@ -637,14 +637,21 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         return $return;
     }
     
-    public function getCompanyAssessmentsAll($companyId = 0){
+    public function getCompanyAssessmentsAll($companyId = 0, $page = 0){
         $result = '';
         if(!empty($companyId)){
-          $status_sql = "SELECT e.idexam,`e`.`max_duration`, `r`.name as exp_name, `e`.`name`, `e`.`idexam_type`, `e`.`is_active`, `u`.`firstname`, `e`.`created_at`,(select count(*) from exam_question as eq where eq.idexam = e.idexam and eq.`status`=1)  as qcount FROM `exam` AS `e` 
+          $sql = "SELECT SQL_CALC_FOUND_ROWS e.idexam,`e`.`max_duration`, `r`.name as exp_name, `e`.`name`, `e`.`idexam_type`, `e`.`is_active`, `u`.`firstname`, `e`.`created_at`,(select count(*) from exam_question as eq where eq.idexam = e.idexam and eq.`status`=1)  as qcount FROM `exam` AS `e` 
                   INNER JOIN `experience_ranges` AS `r` ON `e`.`work_experience` = `r`.`id` 
                   INNER JOIN `users` AS `u` ON `e`.`created_by` = `u`.`id` 
                   WHERE `e`.`company_id` = '".$companyId."'";
-           $result = DB::Select($status_sql);  
+            # based on page no
+            if (!empty($page)){
+                $page   = $page-1 ;
+                $offset = $page*10 ;
+                $sql.=  " limit ".$offset.",10 ";
+            }
+           $result['assessments_list']  = DB::Select($sql);
+           $result['total_records']     = DB::select("select FOUND_ROWS() as total_count");
         }
        return $result; 
     }

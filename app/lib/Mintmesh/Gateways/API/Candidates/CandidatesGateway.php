@@ -2357,17 +2357,19 @@ class CandidatesGateway {
     
     public function getCompanyAssessmentsAll($input) {
         
-       $returnArr    = $data = array();
-       $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
-       #get company details here
-       $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
-       $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
-       #get Question Types List here
-       $resultArr    = $this->candidatesRepository->getCompanyAssessmentsAll($companyId);
-       //print_r($resultArr); die;
+        $returnArr    = $data = array();
+        $totalRecords = 0;
+        $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
+        $pageNo       = !empty($input['page_no']) ? $input['page_no'] : 0;
+        #get company details here
+        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+        #get Question Types List here
+        $resultArr    = $this->candidatesRepository->getCompanyAssessmentsAll($companyId, $pageNo);
         #check if Question result
-        if(!empty($resultArr)){
-            foreach($resultArr as $res){
+        if(!empty($resultArr['assessments_list'])){
+            
+            foreach($resultArr['assessments_list'] as $res){
                 
                     $status = !empty($res->is_active) ? "Active" : "Inactive";
                     $returnArr[]  = array(
@@ -2381,11 +2383,18 @@ class CandidatesGateway {
                             'created_by'     => $res->firstname,
                             'created_at'     => date('M j Y', strtotime($res->created_at))
                     );
-                }    
+                }
+                
                 $responseCode    = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
                 if($returnArr){
-                    $data = $returnArr;
+                    
+                    if(!empty($resultArr['total_records']) && !empty($resultArr['total_records'][0])){
+                        $objTotal = $resultArr['total_records'][0];
+                        $totalRecords = !empty($objTotal->total_count) ? $objTotal->total_count : 0;
+                    }
+                    $data['total_records']    = $totalRecords;
+                    $data['assessments_list'] = $returnArr;
                     $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
                 } else {
                     $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
@@ -2396,17 +2405,13 @@ class CandidatesGateway {
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
             }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data); 
-            
-       }
+    }
        
     public function getAssessment($input) {
         
         $resultArr      = $data = $examQstArr = $questionResArr = $elements = array();
         $companyCode    = !empty($input['company_code']) ? $input['company_code'] : '';
         $examId         = !empty($input['assessment_id']) ? $input['assessment_id'] : 0;
-        #get Logged In User details here
-        //$this->loggedinUser = $this->referralsGateway->getLoggedInUser(); 
-        //$userId   = $this->loggedinUser->id;
         #get Exam Details here                
         $questionResArr   = $this->candidatesRepository->getExamDetails($examId);
         
@@ -2421,7 +2426,6 @@ class CandidatesGateway {
             $resultArr['experience_name'] = !empty($qstObj->experience_name) ? $qstObj->experience_name : '';
             $resultArr['max_duration']    = !empty($qstObj->max_duration) ? $qstObj->max_duration : '';
             $resultArr['description']     = !empty($qstObj->description) ? $qstObj->description : '';
-            //$resultArr['pageFlow'] = $pageFlow;
             #get Exam Question List here
             $examQstResArr   = $this->candidatesRepository->getExamQuestionList($examId);
         
@@ -2435,7 +2439,7 @@ class CandidatesGateway {
                     $record['question_id']      = $questionId;
                     $record['question']         = !empty($value->question) ? $value->question : '';
                     $record['question_value']   = !empty($value->question_value) ? $value->question_value : 0;
-                    $record['question_type']    = $questionType = !empty($value->question_type) ? $value->question_type : '';;
+                    $record['question_type']    = $questionType = !empty($value->question_type) ? $value->question_type : '';
                     $record['name']         = '';
                     $record['description']  = '';
                     $record['pageFlow']     = $pageFlow;
@@ -2464,8 +2468,7 @@ class CandidatesGateway {
                                 $optrecord['orderNo']   = !empty($optValue->option_id) ? $optValue->option_id : 0;
                                 $optrecord['value']     = !empty($optValue->option) ? $optValue->option : 0;
                                 $optrecord['option_id'] = !empty($optValue->option_id) ? $optValue->option_id : 0;
-                                //$optrecord['option'] = !empty($optValue->option) ? $optValue->option : 0;
-                                $optrecord['pageFlow'] = $pageFlow;
+                                $optrecord['pageFlow']  = $pageFlow;
                                 $qstOptArray[]  = $optrecord;
                             }
                             $question['offeredAnswers'] = $qstOptArray;
@@ -2558,7 +2561,7 @@ class CandidatesGateway {
 
                 $responseCode    = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
-                $responseMessage = array('msg' => array(Lang::get('MINTMESH.edit_configuration.success')));
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.submit_assessment.success')));
             } else {
                 $responseCode    = self::ERROR_RESPONSE_CODE;
                 $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
@@ -2651,6 +2654,59 @@ class CandidatesGateway {
             $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);  
+    }
+    
+    public function successEmailToCandidate($param) {
+        
+        $resultArr   = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
+        
+        if($resultArr){
+            #form cndidate details here
+            $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
+            $relation       = isset($resultArr[1]) ? $resultArr[1] : '';
+            $candidateEmail = $candidate->emailid; 
+            $candidateId    = $candidate->getID();
+            $referredBy     = !empty($relation->referred_by) ? $relation->referred_by : '';
+            $candidateName  = $this->postGateway->getCandidateFullNameByEmail($candidateEmail, $referredBy, $companyId);    
+            #email input form here
+            $dataSet = $userArr = array();
+            $dataSet['name']          = $candidateName;
+            $dataSet['email']         = $candidateEmail;
+            $dataSet['email_subject'] = $emailSubject;
+            $dataSet['subject_id']    = $subjectId;
+            $dataSet['email_body']    = $emailBody;
+            $dataSet['company_logo']  = $companyLogo;
+            #send email here
+            $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.candidate_invitation');
+            $this->userEmailManager->emailId = $candidateEmail;
+            $this->userEmailManager->dataSet = $dataSet;
+            $this->userEmailManager->subject = $emailSubject;
+            $this->userEmailManager->name    = $candidateName;
+            $email_sent = $this->userEmailManager->sendMail();
+            #logged in user here
+            $userArr['user_id']      =  $userId;
+            $userArr['user_name']    =  $userName;
+            $userArr['user_emailid'] =  $userEmailId;
+            //log email status
+            $emailStatus = self::EMAIL_FAILURE_STATUS;
+            if (!empty($email_sent)) {
+                $emailStatus = self::EMAIL_SUCCESS_STATUS;
+                $returnArr   = $this->candidatesRepository->addCandidateEmail($dataSet, $userArr, $companyId, $referenceId, $candidateId);
+                $arrayNewEmail = $this->getLastInsertEmail($returnArr);
+                $data = $arrayNewEmail;
+            }
+            $emailLog = array(
+                'emails_types_id'   => 9,
+                'from_user'         => $userId,
+                'from_email'        => $userEmailId,
+                'to_email'          => $this->appEncodeDecode->filterString(strtolower($candidateEmail)),
+                'related_code'      => $companyCode,
+                'sent'              => $emailStatus,
+                'ip_address'        => $_SERVER['REMOTE_ADDR']
+            );
+            $this->userRepository->logEmail($emailLog);
+        }    
+        
     }
     
 }

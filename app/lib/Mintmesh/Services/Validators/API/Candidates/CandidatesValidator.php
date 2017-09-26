@@ -132,11 +132,11 @@ class CandidatesValidator extends Validator {
             'company_code'  => 'required',
             'exam_name'     => 'required',
             'exam_type'     => 'required',
-            'work_experience' => 'required',
-            'max_duration'    => 'required'
+            'work_experience' => 'required'
         ),
         'edit_exam_settings' => array(
-            'company_code'  => 'required'
+            'company_code'  => 'required',
+            'max_duration'  => 'required'
         ),
         'only_company_code' => array(
             'company_code'  => 'required'
