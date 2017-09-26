@@ -173,7 +173,8 @@ class CandidatesValidator extends Validator {
             'assessment_id' => 'required'
         ),     
         'get_screened_candidates' => array(
-            'company_code'  => 'required'
+            'company_code'  => 'required',
+            'campaign_id'  => 'required'
         )     
     );
 

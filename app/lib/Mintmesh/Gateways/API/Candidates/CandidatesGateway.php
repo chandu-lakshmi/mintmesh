@@ -2578,7 +2578,7 @@ class CandidatesGateway {
        $returnArr    = $data = $resultArr = array();
        $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
        $campaignId   = !empty($input['campaign_id']) ? $input['campaign_id'] : 0;
-       $screenedCand = !empty($input['screened_candidates']) ? 1 : 0;
+       $screenedCand = !empty($input['screened_candidates']) ? 0 : 1;
        $timeZone     = !empty($input['time_zone']) ? $input['time_zone'] : 0;
        $candidateId  = 0;
        #get company details here
@@ -2590,62 +2590,53 @@ class CandidatesGateway {
        
        if(!empty($assessmentId)){
        
-            if($screenedCand){
-                $getExamAllCandidates = $this->candidatesRepository->getExamScreenedCandidates($assessmentId);
-            } else {   
-                $getExamAllCandidates = $this->candidatesRepository->getExamAllCandidates($assessmentId);
-            }
-           // print_r($getExamAllCandidates).exit;
-            
+            $count = 0;
+            $getExamAllCandidates = $this->candidatesRepository->getExamAllCandidates($assessmentId);
             foreach ($getExamAllCandidates as $value) {
                 
-               // print_r($value->relationshipid).exit;
-                
-                $referenceId = $value->relationshipid;//995453;        
-                #get candidate details
-                $resultArr  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
-                
-                if(!empty($resultArr)){
-            
-                    $qualification  = $candidateName = $referredByName = $skills = $createdAt = '';
-                    $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
-                    $relation       = isset($resultArr[1]) ? $resultArr[1] : '';
-                    $postDetails    = isset($resultArr[2]) ? $resultArr[2] : '';
-                    $candidateEmail = $candidate->emailid;
-                    $candidateId    = $candidate->getID();
-                    $serviceName    = !empty($postDetails->service_name) ? $postDetails->service_name : '';
-                    
-                    
-                    #get referred by name here
-                    $referredBy     = !empty($relation->referred_by) ? $relation->referred_by : '';
-                    $referredByName = $this->postGateway->getReferredbyUserFullName($referredBy, $companyId);
-                    $candidateName  = $this->postGateway->getCandidateFullNameByEmail($candidateEmail, $referredBy, $companyId); 
-                    
-                    if(!empty($relation->created_at)){
-                        $createdAt = date("M d,Y", strtotime($this->appEncodeDecode->UserTimezone($relation->created_at, $timeZone)));
-                    }
-                
-                    //print_r($resultArr).exit;
+                $referenceId = $value->relationshipid;
+                $minMarks    = $value->min_marks;
+                $maxMarks    = $value->max_marks;
+                $candScore   = $value->result;
+                if(($screenedCand) || ($minMarks <= $candScore)) {         
+                    #get candidate details
+                    $resultArr  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
 
-                    $recorders = array();
-                    //$recorders['candidate_id']  = $candidateId;
-                    $recorders['reference_id']  = $referenceId;
-                    $recorders['name']          = $candidateName;
-                    $recorders['emailid']       = $candidateEmail;
-                    $recorders['score']         = $value->result;//56;
-                    $recorders['outof_score']   = 100;
-                    //$recorders['referred_by']   = $referredByName;
-                    $recorders['referred_at']   = $createdAt;
-                    $recorders['referred_job']  = $serviceName;
-                    
-                    $returnArr[] = $recorders;
+                    if(!empty($resultArr)){
+
+                        $recorders      = array();
+                        $qualification  = $candidateName = $referredByName = $skills = $createdAt = '';
+                        $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
+                        $relation       = isset($resultArr[1]) ? $resultArr[1] : '';
+                        $postDetails    = isset($resultArr[2]) ? $resultArr[2] : '';
+                        $candidateEmail = $candidate->emailid;
+                        $candidateId    = $candidate->getID();
+                        $serviceName    = !empty($postDetails->service_name) ? $postDetails->service_name : '';
+                        #get referred by name here
+                        $referredBy     = !empty($relation->referred_by) ? $relation->referred_by : '';
+                        $candidateName  = $this->postGateway->getCandidateFullNameByEmail($candidateEmail, $referredBy, $companyId); 
+
+                        if(!empty($relation->created_at)){
+                            $createdAt = date("M d,Y", strtotime($this->appEncodeDecode->UserTimezone($relation->created_at, $timeZone)));
+                        }
+                        #form return candidate details here
+                        $recorders['reference_id']  = $referenceId;
+                        $recorders['name']          = $candidateName;
+                        $recorders['emailid']       = $candidateEmail;
+                        $recorders['score']         = $candScore;
+                        $recorders['outof_score']   = $maxMarks;
+                        $recorders['referred_at']   = $createdAt;
+                        $recorders['referred_job']  = $serviceName;
+                        $returnArr[] = $recorders;
+                        $count++;
+                    }
                 }    
             }
             #check if Question result
             if(!empty($returnArr)){
                 
                 $data['candidates'] = $returnArr;
-                $data['total_recorders'] = 1;
+                $data['total_recorders'] = $count;
                 $responseCode    = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
