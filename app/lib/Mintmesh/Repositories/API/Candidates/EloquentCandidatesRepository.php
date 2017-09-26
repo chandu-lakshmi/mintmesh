@@ -576,6 +576,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                                     ->join('question_type as t', 'q.question_type', '=', 't.idquestion_type')
                                     ->where('q.company_id', $companyId)
                                     ->where('q.status', self::STATUS_ACTIVE)
+                                    ->orderBy('q.created_at', 'DESC')
                                     ->limit(10)->skip($start)
                                     ->get();
         $result['total_records'] = DB::select("select FOUND_ROWS() as total_count");
@@ -639,10 +640,12 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
     public function getCompanyAssessmentsAll($companyId = 0, $page = 0){
         $result = '';
         if(!empty($companyId)){
-          $sql = "SELECT SQL_CALC_FOUND_ROWS e.idexam,`e`.`max_duration`, `r`.name as exp_name, `e`.`name`, `e`.`idexam_type`, `e`.`is_active`, `u`.`firstname`, `e`.`created_at`,(select count(*) from exam_question as eq where eq.idexam = e.idexam and eq.`status`=1)  as qcount FROM `exam` AS `e` 
+          $sql = "SELECT SQL_CALC_FOUND_ROWS e.idexam,`e`.`max_duration`, `r`.name as exp_name, `e`.`name`, `e`.`idexam_type`, `e`.`is_active`, `u`.`firstname`, `e`.`created_at`,
+                 (select count(*) from exam_question as eq where eq.idexam = e.idexam and eq.`status`=1)  as qcount 
+                  FROM `exam` AS `e` 
                   INNER JOIN `experience_ranges` AS `r` ON `e`.`work_experience` = `r`.`id` 
                   INNER JOIN `users` AS `u` ON `e`.`created_by` = `u`.`id` 
-                  WHERE `e`.`company_id` = '".$companyId."'";
+                  WHERE `e`.`company_id` = '".$companyId."' order by e.created_at desc ";
             # based on page no
             if (!empty($page)){
                 $page   = $page-1 ;
