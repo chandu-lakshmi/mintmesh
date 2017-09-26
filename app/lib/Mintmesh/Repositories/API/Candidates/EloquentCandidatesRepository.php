@@ -749,5 +749,50 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                     //->toSql();
        return $result;
     }
+    
+    public function createCandidateExamResult($examInstanceId = 0, $totalScore = 0)
+    {   
+        $createdAt   = gmdate('Y-m-d H:i:s');
+        $candidateExamArr  = array(
+                        "idexam_instance"   => $examInstanceId,
+                        "result"            => $totalScore,
+                        "created_at"        => $createdAt
+                    );
+        return $this->candidateExamResult->create($candidateExamArr);
+    }
+    
+    public function getScoreInstanceId($examInstanceId = 0){
+        
+        $result =  DB::table('candidate_exam_answer')
+                    ->selectRaw('sum(score) as total_score')
+                    ->where('idexam_instance', $examInstanceId)
+                    ->get();
+        $return = !empty($result[0]) ? $result[0] : 0;
+       return $return;
+    }
+    
+    public function getExamAllCandidates($examId = 0){
+        
+        $result =  DB::table('candidate_exam_result as r')
+                    ->select('i.candidateid', 'r.result')
+                    ->join('candidate_exam_instance as i', 'r.idexam_instance', '=', 'i.idexam_instance')
+                    ->where('i.idexam', $examId)
+                    ->get();
+                    //->toSql();
+       return $result;
+    }
+    
+    public function getExamScreenedCandidates($examId = 0){
+        
+        $result =  DB::table('candidate_exam_result as r')
+                    ->select('i.candidateid', 'r.result')
+                    ->join('candidate_exam_instance as i', 'r.idexam_instance', '=', 'i.idexam_instance')
+                    ->join('exam as e', 'e.idexam', '=', 'i.idexam')
+                    ->where('e.min_marks','<=', 'r.result')
+                    ->where('i.idexam', $examId)
+                    //->get();
+                    ->toSql();
+       return $result;
+    }
         
 }
