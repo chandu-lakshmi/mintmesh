@@ -2255,7 +2255,7 @@ class CandidatesGateway {
                     $record['question_id']      = !empty($value->question_id) ? $value->question_id : 0;
                     $record['question']         = !empty($value->question) ? $value->question : '';
                     $record['question_value']   = !empty($value->question_value) ? $value->question_value : 0;
-                    $record['question_type']  = !empty($value->question_type) ? $value->question_type : '';
+                    $record['question_type']  = !empty($value->question_type_name) ? $value->question_type_name : '';
                     $examQstArr[]  = $record;
                 }
             }
@@ -2344,20 +2344,22 @@ class CandidatesGateway {
     }
     
     public function deleteQuestion($input) {
-        $returnArr      = $resultArr = $data = $qstInput = array();
-        $companyCode    = !empty($input['company_code']) ? $input['company_code'] : '';
-        $questionId     = !empty($input['question_id']) ? $input['question_id'] : 0;
-        if(!empty($questionId)){
-            $resultArr  = $this->candidatesRepository->deleteQuestion($questionId);
+        
+        $returnArr      = $resultArr = $data = array();
+        $questionIds    = !empty($input['question_id']) ? $input['question_id'] : array();
+        if(!empty($questionIds)){
+            foreach ($questionIds as $questionId) {
+                $resultArr[]  = $this->candidatesRepository->deleteQuestion($questionId);
+            }
         }  
         if(!empty($resultArr)){
             $responseCode    = self::SUCCESS_RESPONSE_CODE;
             $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.edit_configuration.success')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.assessments.delete')));
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_edit_question.failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.assessments.not_delete')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     } 
@@ -2568,7 +2570,7 @@ class CandidatesGateway {
 
                 $responseCode    = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
-                $responseMessage = array('msg' => array(Lang::get('MINTMESH.submit_assessment.success')));
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.assessment.success')));
             } else {
                 $responseCode    = self::ERROR_RESPONSE_CODE;
                 $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
@@ -2703,7 +2705,7 @@ class CandidatesGateway {
                 $data = $arrayNewEmail;
             }
             $emailLog = array(
-                'emails_types_id'   => 9,
+                'emails_types_id'   => 11,
                 'from_user'         => $userId,
                 'from_email'        => $userEmailId,
                 'to_email'          => $this->appEncodeDecode->filterString(strtolower($candidateEmail)),

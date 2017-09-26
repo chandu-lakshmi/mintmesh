@@ -566,7 +566,13 @@ return array(
     "add_edit_question" => array(
         "failure" => "Failed to update question details"
     ),
-    "submit_assessment" => array(
-        "success" => "Successfully Done.",
+    "assessments" => array(
+        "success" => "Successfully Done",
+        "delete"  => "Successfully Deleted",
+        "not_delete"  => "Failed to Delete",
+        "created"  => "Successfully Created",
+        "updated"  => "Successfully Updated",
+        "not_created"  => "Failed to Create",
+        "not_updated"  => "Failed to Update",
     )
 );
