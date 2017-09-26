@@ -774,7 +774,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
     public function getExamAllCandidates($examId = 0){
         
         $result =  DB::table('candidate_exam_result as r')
-                    ->select('i.candidateid', 'r.result')
+                    ->select('r.idcandidate_exam_result','i.candidateid','i.relationshipid', 'r.result')
                     ->join('candidate_exam_instance as i', 'r.idexam_instance', '=', 'i.idexam_instance')
                     ->where('i.idexam', $examId)
                     ->get();
@@ -785,13 +785,13 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
     public function getExamScreenedCandidates($examId = 0){
         
         $result =  DB::table('candidate_exam_result as r')
-                    ->select('i.candidateid', 'r.result')
+                    ->select('i.candidateid','i.relationshipid', 'r.result')
                     ->join('candidate_exam_instance as i', 'r.idexam_instance', '=', 'i.idexam_instance')
                     ->join('exam as e', 'e.idexam', '=', 'i.idexam')
                     ->where('e.min_marks','<=', 'r.result')
                     ->where('i.idexam', $examId)
-                    //->get();
-                    ->toSql();
+                    ->get();
+                    //->toSql();
        return $result;
     }
         

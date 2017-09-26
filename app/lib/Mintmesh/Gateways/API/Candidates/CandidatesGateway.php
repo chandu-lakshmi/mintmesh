@@ -2595,10 +2595,13 @@ class CandidatesGateway {
             } else {   
                 $getExamAllCandidates = $this->candidatesRepository->getExamAllCandidates($assessmentId);
             }
-
-            //foreach ($getExamAllCandidates as $value) {
+           // print_r($getExamAllCandidates).exit;
+            
+            foreach ($getExamAllCandidates as $value) {
                 
-                $referenceId = 995453;        
+               // print_r($value->relationshipid).exit;
+                
+                $referenceId = $value->relationshipid;//995453;        
                 #get candidate details
                 $resultArr  = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
                 
@@ -2625,10 +2628,11 @@ class CandidatesGateway {
                     //print_r($resultArr).exit;
 
                     $recorders = array();
-                    $recorders['candidate_id']  = $candidateId;
+                    //$recorders['candidate_id']  = $candidateId;
+                    $recorders['reference_id']  = $referenceId;
                     $recorders['name']          = $candidateName;
                     $recorders['emailid']       = $candidateEmail;
-                    $recorders['score']         = 56;
+                    $recorders['score']         = $value->result;//56;
                     $recorders['outof_score']   = 100;
                     //$recorders['referred_by']   = $referredByName;
                     $recorders['referred_at']   = $createdAt;
@@ -2636,7 +2640,7 @@ class CandidatesGateway {
                     
                     $returnArr[] = $recorders;
                 }    
-            //}
+            }
             #check if Question result
             if(!empty($returnArr)){
                 
