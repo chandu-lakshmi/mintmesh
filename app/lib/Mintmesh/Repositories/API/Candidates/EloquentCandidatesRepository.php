@@ -789,16 +789,20 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
        return $result;
     }
     
-    public function getExamScreenedCandidates($examId = 0){
+    public function getExamCandidates($examId = 0, $isScreenedCandidate = 0){
         
-        $result =  DB::table('candidate_exam_result as r')
-                    ->select('i.candidateid','i.relationshipid', 'r.result')
-                    ->join('candidate_exam_instance as i', 'r.idexam_instance', '=', 'i.idexam_instance')
-                    ->join('exam as e', 'e.idexam', '=', 'i.idexam')
-                    ->where('e.min_marks','<=', 'r.result')
-                    ->where('i.idexam', $examId)
-                    ->get();
-                    //->toSql();
+        $result = '';
+        if(!empty($examId)){
+            $sql = "select i.candidateid, i.relationshipid, r.result, e.min_marks, e.max_marks 
+                    from candidate_exam_result as r 
+                    inner join candidate_exam_instance as i on r.idexam_instance = i.idexam_instance 
+                    inner join exam as e on e.idexam = i.idexam 
+                    where i.idexam = '".$examId."' ";
+            if($isScreenedCandidate){
+                $sql .= " and e.min_marks <= r.result ";
+            }
+            $result = DB::Select($sql);
+        }
        return $result;
     }
         

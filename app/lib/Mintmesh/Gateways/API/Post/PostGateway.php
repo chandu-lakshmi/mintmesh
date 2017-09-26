@@ -1972,7 +1972,13 @@ class PostGateway {
                 $assessmentName = !empty($examNameArr[0]->name) ? $examNameArr[0]->name : '';
                 $assessmentArr  = array(array("assessment_id" => $assessmentId, "assessment_name" => $assessmentName));
             }
-            $returnData['assessment']   = $assessmentArr;        
+            $returnData['assessment']   = $assessmentArr; 
+            $isScreenedCandidate = 1;
+            $allCandidatesCount  = $this->candidatesRepository->getExamCandidates($assessmentId);
+            $allCandidatesCount  = !empty($allCandidatesCount) ? count($allCandidatesCount) : 0;
+            $screenedCandidatesCount  = $this->candidatesRepository->getExamCandidates($assessmentId, $isScreenedCandidate);
+            $screenedCandidatesCount  = !empty($screenedCandidatesCount) ? count($screenedCandidatesCount) : 0;
+            
             $returnData['camp_ref']     = $refCode;
             if($campRes->location_type == 'ACTIVE'){
                $returnData['status'] = 'OPEN'; 
@@ -2052,7 +2058,10 @@ class PostGateway {
             $url        = $enterpriseUrl . "/email/all-campaigns/share?ref=" . $refCode.""; 
             $biltyUrl   = $this->urlShortner($url);
             $returnData['bittly_url'] = $biltyUrl;
-            $data       = $returnData;
+            $returnData['all_candidates_count']      = $allCandidatesCount;
+            $returnData['screened_candidates_count'] = $screenedCandidatesCount;
+            
+            $data = $returnData;
             
             $responseCode   = self::SUCCESS_RESPONSE_CODE;
             $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
