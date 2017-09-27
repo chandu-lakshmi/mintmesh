@@ -635,6 +635,7 @@ class CandidatesGateway {
         #get company Details by company code
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyLogo    = !empty($companyDetails[0]->logo) ? $companyDetails[0]->logo : ''; 
+        $companyName    = !empty($companyDetails[0]->name) ? $companyDetails[0]->name : ''; 
         $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
         #get the logged in user details
         $this->loggedinUser = $this->referralsGateway->getLoggedInUser(); 
@@ -660,6 +661,7 @@ class CandidatesGateway {
             $dataSet['subject_id']    = $subjectId;
             $dataSet['email_body']    = $emailBody;
             $dataSet['company_logo']  = $companyLogo;
+            $dataSet['company_name']  = $companyName;
             #send email here
             $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.candidate_invitation');
             $this->userEmailManager->emailId = $candidateEmail;
@@ -2371,7 +2373,7 @@ class CandidatesGateway {
         $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
         $pageNo       = !empty($input['page_no']) ? $input['page_no'] : 0;
         if(!empty($input['reference_id'])){
-            $this->successEmailToCandidate($companyCode, $input['reference_id']);
+            $this->successEmailToCandidate($companyCode, $input['reference_id'], 57);
         }
         #get company details here
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
@@ -2695,10 +2697,10 @@ class CandidatesGateway {
             $questionResArr   = $this->candidatesRepository->getExamDetails($assessmentId);
             if(!empty($questionResArr[0])){
                 $qstObj   = $questionResArr[0];
-                $examName = ($qstObj->exam_name) ? $qstObj->exam_name : '';
+                $examName = ($qstObj->exam_name) ? trim($qstObj->exam_name) : '';
             }
-            
-            $emailBody   = "Hello ".$candidateName.",
+            $emailSubject = "Thanks for taking the ".$examName;
+            $emailBody    = "Hello ".$candidateName.",<br>
                             Thank you for completing ".$examName.".
                             We have sent your submission to ".$companyName.". 
                             Please contact ".$companyName." if you have any questions about your ".$serviceName." application.";
@@ -2706,9 +2708,10 @@ class CandidatesGateway {
             $dataSet = $userArr = array();
             $dataSet['name']          = $candidateName;
             $dataSet['email']         = $candidateEmail;
-            $dataSet['email_subject'] = $emailSubject = $examName;
+            $dataSet['email_subject'] = $emailSubject;
             $dataSet['email_body']    = $emailBody;
             $dataSet['company_logo']  = $companyLogo;
+            $dataSet['company_name']  = $companyName;
             
             $userObj    = $this->userRepository->getUserByEmail($referredBy);
             $userId     = !empty($userObj->id) ? $userObj->id : 0;
