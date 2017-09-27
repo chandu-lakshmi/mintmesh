@@ -809,5 +809,15 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         }
        return $result;
     }
+    
+    public function getExamMaxMrks($assessmentId = 0){
+        
+        $result =  DB::table('exam_question')
+                    ->selectRaw('sum(question_value) as total_score')
+                    ->where('idexam', $assessmentId)
+                    ->get();
+        $return = !empty($result[0]) ? $result[0] : 0;
+       return $return;
+    }
         
 }

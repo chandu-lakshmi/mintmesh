@@ -2372,9 +2372,6 @@ class CandidatesGateway {
         $totalRecords = 0;
         $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
         $pageNo       = !empty($input['page_no']) ? $input['page_no'] : 0;
-        if(!empty($input['reference_id'])){
-            $this->successEmailToCandidate($companyCode, $input['reference_id'], 57);
-        }
         #get company details here
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
@@ -2611,11 +2608,12 @@ class CandidatesGateway {
        
             $count = 0;
             $getExamAllCandidates = $this->candidatesRepository->getExamAllCandidates($assessmentId);
+            $getExamMaxMrks = $this->candidatesRepository->getExamMaxMrks($assessmentId);
+            $maxMarks = !empty($getExamMaxMrks->total_score) ? (int) $getExamMaxMrks->total_score : 100;
             foreach ($getExamAllCandidates as $value) {
                 
                 $referenceId = $value->relationshipid;
                 $minMarks    = $value->min_marks;
-                $maxMarks    = $value->max_marks;
                 $candScore   = $value->result;
                 if(($screenedCand) || ($minMarks <= $candScore)) {         
                     #get candidate details
@@ -2636,7 +2634,7 @@ class CandidatesGateway {
                         $candidateName  = $this->postGateway->getCandidateFullNameByEmail($candidateEmail, $referredBy, $companyId); 
 
                         if(!empty($relation->created_at)){
-                            $createdAt = date("M d,Y", strtotime($this->appEncodeDecode->UserTimezone($relation->created_at, $timeZone)));
+                            $createdAt = date("M d, Y", strtotime($this->appEncodeDecode->UserTimezone($relation->created_at, $timeZone)));
                         }
                         #form return candidate details here
                         $recorders['reference_id']  = $referenceId;
@@ -2739,7 +2737,7 @@ class CandidatesGateway {
                 'sent'              => $emailStatus,
                 'ip_address'        => $_SERVER['REMOTE_ADDR']
             );
-            //$this->userRepository->logEmail($emailLog);
+            $this->userRepository->logEmail($emailLog);
         }    
         
     }
