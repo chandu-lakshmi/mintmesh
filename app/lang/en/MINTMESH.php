@@ -118,7 +118,9 @@ return array(
         "contacts_job_invitation" => "emails.Api.User.job_invitation",
         "contacts_job_active_invitation" => "emails.Api.User.job_Active",
         "contacts_campaign_invitation" => "emails.Api.User.campaign_invitation",
-        "user_activation" => "emails.Api.User.user_activation"
+        "user_activation" => "emails.Api.User.user_activation",
+        "candidate_invitation" => "emails.Api.User.candidate_invitation",
+        "candidate_interview_schedule" => "emails.Api.User.candidate_interview_schedule"
     ),
     "activate_user" => array(
         "success" => "Successfully activated",
@@ -548,5 +550,29 @@ return array(
         "success" => "Successfully listed",
         "failure" => "No records found",
         "auth_key_failure" => "Invalid authentication key"
+    ),
+    "add_candidate_tag_jobs" => array(
+        "success" => "Successfully Assigned",
+        "failure" => "No records found",
+    ),
+    "add_candidate_email" => array(
+        "success" => "Successfully Sent",
+        "failure" => "No records found",
+    ),
+    "add_candidate_comment" => array(
+        "success" => "Successfully Added",
+        "failure" => "No records found"
+    ),
+    "add_edit_question" => array(
+        "failure" => "Failed to update question details"
+    ),
+    "assessments" => array(
+        "success" => "Successfully Done",
+        "delete"  => "Successfully Deleted",
+        "not_delete"  => "Failed to Delete",
+        "created"  => "Successfully Created",
+        "updated"  => "Successfully Updated",
+        "not_created"  => "Failed to Create",
+        "not_updated"  => "Failed to Update",
     )
 );

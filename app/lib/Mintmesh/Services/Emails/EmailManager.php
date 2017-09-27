@@ -42,6 +42,10 @@ abstract class EmailManager {
                     if (!empty($emailInput['attachment_path'])){
                          $message->attach($emailInput['attachment_path']);
                     }
+                    //send attachment if attached
+                    if (!empty($emailInput['calendar_event'])){
+                         $message->setBody($emailInput['calendar_event'], 'text/calendar; charset="utf-8"; method=REQUEST');
+                    }
                     });
                    
                     if( count(Mail::failures()) > 0 ) {

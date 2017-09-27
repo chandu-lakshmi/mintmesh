@@ -155,6 +155,8 @@ Route::group(array('prefix' => 'v1'), function() {
       Route::post("enterprise/get_talentcommunity_buckets", "API\Enterprise\EnterpriseController@getTalentCommunityBuckets");
       Route::post("enterprise/add_to_talentcommunity", "API\Enterprise\EnterpriseController@addToTalentCommunity");
       
+      Route::post("enterprise/get_assessment", "API\Candidates\CandidatesController@getAssessment");
+      Route::post("enterprise/submit_assessment", "API\Candidates\CandidatesController@submitAssessment");
       
       Route::post("enterprise/test_lic", "API\Enterprise\EnterpriseController@testLic");
       //unsolicited node for old companies
@@ -408,7 +410,47 @@ Route::group(array('prefix' => 'v1', 'before' => 'oauth'), function() {
       //career settings
       Route::post("enterprise/edit_career_settings", "API\Post\PostController@editCareerSettings");
       Route::post("enterprise/get_career_settings", "API\Post\PostController@getCareerSettings");
+      //candidate management
+      Route::post("enterprise/get_candidate_email_templates", "API\Candidates\CandidatesController@getCandidateEmailTemplates");
+      Route::post("enterprise/get_candidate_details", "API\Candidates\CandidatesController@getCandidateDetails");
+      Route::post("enterprise/add_candidate_schedule", "API\Candidates\CandidatesController@addCandidateSchedule");
+      Route::post("enterprise/add_candidate_email", "API\Candidates\CandidatesController@addCandidateEmail");
+      Route::post("enterprise/add_candidate_comment", "API\Candidates\CandidatesController@addCandidateComment");
+      Route::post("enterprise/get_candidate_activities", "API\Candidates\CandidatesController@getCandidateActivities");
+      Route::post("enterprise/get_candidate_tag_jobs_list", "API\Candidates\CandidatesController@getCandidateTagJobsList");
+      Route::post("enterprise/add_candidate_tag_jobs", "API\Candidates\CandidatesController@addCandidateTagJobs");
+      Route::post("enterprise/get_candidate_comments", "API\Candidates\CandidatesController@getCandidateComments");
+      Route::post("enterprise/get_candidate_sent_emails", "API\Candidates\CandidatesController@getCandidateSentEmails");
+      Route::post("enterprise/get_candidate_referral_list", "API\Candidates\CandidatesController@getCandidateReferralList");
+      Route::post("enterprise/get_candidate_schedules", "API\Candidates\CandidatesController@getCandidateSchedules");
+      Route::post("enterprise/edit_candidate_referral_status", "API\Candidates\CandidatesController@editCandidateReferralStatus");
+      Route::post("enterprise/get_candidates_tags", "API\Candidates\CandidatesController@getCandidatesTags");
+      Route::post("enterprise/add_candidate_tags", "API\Candidates\CandidatesController@addCandidateTags");
+      Route::post("enterprise/get_candidate_tags", "API\Candidates\CandidatesController@getCandidateTags");
+      Route::post("enterprise/test_email", "API\Candidates\CandidatesController@testEmail");
+      Route::post("enterprise/delete_candidate_tag", "API\Candidates\CandidatesController@deleteCandidateTag");
+      Route::post("enterprise/add_candidate_personal_status", "API\Candidates\CandidatesController@addCandidatePersonalStatus");
+      Route::post("enterprise/get_candidate_personal_status", "API\Candidates\CandidatesController@getCandidatePersonalStatus");
+      //questionnaire API's here
+      Route::post("enterprise/get_question_types", "API\Candidates\CandidatesController@getQuestionTypes");
+      Route::post("enterprise/get_question_libraries", "API\Candidates\CandidatesController@getQuestionLibraries");
+      Route::post("enterprise/add_question", "API\Candidates\CandidatesController@addQuestion");
+      Route::post("enterprise/edit_question", "API\Candidates\CandidatesController@editQuestion");
+      Route::post("enterprise/view_question", "API\Candidates\CandidatesController@viewQuestion");
+      Route::post("enterprise/delete_question", "API\Candidates\CandidatesController@deleteQuestion");
+      Route::post("enterprise/get_questions_list", "API\Candidates\CandidatesController@getQuestionsList");
       
+      Route::post("enterprise/add_edit_exam", "API\Candidates\CandidatesController@addEditExam");
+      Route::post("enterprise/view_exam", "API\Candidates\CandidatesController@viewExam");
+      Route::post("enterprise/edit_exam_settings", "API\Candidates\CandidatesController@editExamSettings");
+      Route::post("enterprise/add_edit_exam_question", "API\Candidates\CandidatesController@addEditExamQuestion");
+      Route::post("enterprise/view_exam_question", "API\Candidates\CandidatesController@viewExamQuestion");
+      
+      Route::post("enterprise/get_company_assessments_list", "API\Candidates\CandidatesController@getCompanyAssessmentsList");
+      Route::post("enterprise/get_exam_details", "API\Candidates\CandidatesController@getExamDetails");
+      Route::post("enterprise/get_company_assessments_all", "API\Candidates\CandidatesController@getCompanyAssessmentsAll");
+      Route::post("enterprise/get_screened_candidates", "API\Candidates\CandidatesController@getScreenedCandidates");
+
 });
 
 

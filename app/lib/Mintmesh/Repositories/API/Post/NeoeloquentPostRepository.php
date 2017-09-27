@@ -650,28 +650,20 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         }
     }
     
-    public function getUserNodeIdByEmailId($emailId ='') {
-            $nodeId = 0;
-            $emailId = $this->appEncodeDecode->filterString($emailId);
+    public function getUserNodeIdByEmailId($emailId = '') {
+        
+        $nodeId = 0;
+        if($emailId) {
+            $emailId     = $this->appEncodeDecode->filterString($emailId);
             $queryString = "MATCH (u:User) where u.emailid='".$emailId."'  return ID(u)";
             $query  = new CypherQuery($this->client, $queryString);
             $result = $query->getResultSet();   
             if (isset($result[0]) && isset($result[0][0])) {
-                    $nodeId = $result[0][0];
-                }
-        return  $nodeId;   
-       }
-       
-    public function ptest() {
-            $return = array();
-            $queryString = "MATCH (u)-[r:GOT_REFERRED]->(p:Post) where  r.resume_parsed=0 return r,u,p limit 1";
-            $query  = new CypherQuery($this->client, $queryString);
-            $result = $query->getResultSet();
-            if($result->count()){
-                $return = $result;
+                $nodeId = $result[0][0];
             }
-        return  $return;   
-       }
+        }
+        return  $nodeId;   
+    }
        
     public function checkCandidateReferred($postId=0, $emailid='') {
         $queryString = "MATCH (u:User)-[r:GOT_REFERRED]->(p:Post) where u.emailid='".$emailid."' and ID(p)=".$postId." and r.status<>'DECLINED' return r";
@@ -744,74 +736,6 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
         return $result = $query->getResultSet();
     }
     
-    public function getCompanyAllReferrals_old($emailId='', $companyCode='', $search='', $page=0,$filters = '')
-    {
-       $return = FALSE;
-       if (!empty($emailId) && !empty($companyCode))
-       {
-           $userEmail = $this->appEncodeDecode->filterString(strtolower($emailId));
-           $skip = $limit = 0;
-           if (!empty($page)){
-               $limit = $page*self::LIMIT ;
-               $skip = $limit - self::LIMIT ;
-           }
-
-           $queryString = "MATCH (c:Company)<-[:POSTED_FOR]-(p:Post)<-[r:GOT_REFERRED]-(u) where c.companyCode='".$companyCode."' ";
-           if (!empty($search)){
-              $queryString.=" and (p.service_name =~ '(?i).*". $search .".*' ";
-
-              if($search[0] == 'd' || $search[0] == 'u'){
-                  $queryString .= "or r.one_way_status =~ '(?i).*". $search .".*'";    
-              }else{
-                  $queryString .= "or r.awaiting_action_status =~ '(?i).*". $search .".*'";
-              }
-              $queryString .= ") ";
-           }
-           if(!empty($filters)){
-               $queryString .= "and (";
-           if(in_array("Accepted",$filters)){
-               $queryString .= "r.awaiting_action_status='ACCEPTED' "; 
-           }
-           if(in_array("Declined",$filters)){
-               if(in_array("Accepted",$filters)){
-               $queryString .= "or ";}
-               $queryString .= "r.one_way_status='DECLINED' "; 
-           }
-           if(in_array("Unsolicited",$filters)){
-               if(in_array("Accepted",$filters) || in_array("Declined",$filters)){
-               $queryString .= "or ";}
-               $queryString .= "r.one_way_status='UNSOLICITED' "; 
-           }
-           if(in_array("Interviewed",$filters)){
-               if(in_array("Accepted",$filters) || in_array("Declined",$filters) || in_array("Unsolicited",$filters)){
-               $queryString .= "or ";}
-               $queryString .= "r.awaiting_action_status='INTERVIEWED' "; 
-           }
-           if(in_array("Offered",$filters)){
-               if(in_array("Accepted",$filters) || in_array("Declined",$filters) || in_array("Unsolicited",$filters) || in_array("Interviewed",$filters)){
-               $queryString .= "or ";}
-               $queryString .= "(r.awaiting_action_status='OFFERMADE' or r.awaiting_action_status='OFFERED') "; 
-           }
-           if(in_array("Hired",$filters)){
-               if(in_array("Accepted",$filters) || in_array("Declined",$filters) || in_array("Unsolicited",$filters) || in_array("Interviewed",$filters) || in_array("Offered",$filters)){
-               $queryString .= "or ";}
-               $queryString .= "r.awaiting_action_status='HIRED' "; 
-           }
-           $queryString .= ")";
-           }
-           $queryString.=" return p,u,r order by r.created_at desc";
-           if (!empty($limit) && !($limit < 0))
-           {
-               $queryString.=" skip ".$skip." limit ".self::LIMIT ;
-           }
-           $query = new CypherQuery($this->client, $queryString);
-           $result = $query->getResultSet(); 
-            if($result->count())
-               $return = $result;  
-        } 
-       return $return; 
-    }
-    
     public function getCompanyAllReferrals($emailId='', $companyCode='', $search='', $page=0, $filters = '')
     {
        $return = FALSE;
@@ -876,30 +800,31 @@ class NeoeloquentPostRepository extends BaseRepository implements NeoPostReposit
        return $return; 
     }
     
-    public function referCandidate($neoInput='',$input='') {
+    public function referCandidate($neoInput = array(), $input = array()) {
+        
         $queryString = "Match (p:Post),(u:User)
-                                    where ID(p)=". $input['post_id'] ." and u.emailid='" . $neoInput['referral'] . "'
-                                    create unique (u)-[r:" . Config::get('constants.REFERRALS.GOT_REFERRED');
+                            where ID(p)=". $input['post_id'] ." and u.emailid='" . $neoInput['referral'] . "'
+                create unique (u)-[r:" . Config::get('constants.REFERRALS.GOT_REFERRED');
          if (!empty($neoInput)) {
-                    $queryString.="{";
+             
+                $queryString.="{";
                     foreach ($neoInput as $k => $v) {
                         $queryString.=$k.":'".$this->appEncodeDecode->filterString($v)."'," ;
                     }
                     $queryString = rtrim($queryString, ",");
-                    $queryString.="}";
-                    }
-                    $queryString .= "]->(p) set ";
-                    if($neoInput['one_way_status'] != 'UNSOLICITED'){
-                    $queryString.="p.total_referral_count = p.total_referral_count + 1,";
-                    }
-                    $queryString .= "r.resume_parsed=0";
-                    if($neoInput['one_way_status'] == 'UNSOLICITED'){
-                        $queryString .= ",p.unsolicited_count = p.unsolicited_count + 1";
-                    }
-                    $queryString .=  " return count(p),u,ID(r)";
-                    $query = new CypherQuery($this->client, $queryString);
-                    $result = $query->getResultSet();
-                    return $result;
+                $queryString.="}";
+            }
+            $queryString .= "]->(p) set r.resume_parsed = 0";
+            #update count here
+            if($neoInput['one_way_status'] == 'UNSOLICITED'){
+                $queryString .= ",p.unsolicited_count = p.unsolicited_count + 1 ";
+            } else {
+                $queryString.=",p.total_referral_count = p.total_referral_count + 1 ";
+            }
+            $queryString .=  " return count(p),u,ID(r)";
+            $query   = new CypherQuery($this->client, $queryString);
+            $result  = $query->getResultSet();
+        return $result;
         
     }
     

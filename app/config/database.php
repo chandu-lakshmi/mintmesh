@@ -48,7 +48,7 @@ return array(
 
 		'neo4j' => array (
             'driver' => 'neo4j',
-            'host'   => '127.0.0.1',
+            'host'   => '192.168.1.103',
             'port'   => '7474',
             'username' => 'neo4j',
             /* 
@@ -60,8 +60,8 @@ return array(
 
 		'mysql' => array(
 			'driver'    => 'mysql',
-			'host'      => 'localhost',
-			'database'  => 'mintmesh',
+			'host'      => '192.168.1.103',
+			'database'  => 'mintmesh2',
 			'username'  => 'mintmesh',
 			'password'  => 'm!ntm35h',
 			'charset'   => 'utf8',
