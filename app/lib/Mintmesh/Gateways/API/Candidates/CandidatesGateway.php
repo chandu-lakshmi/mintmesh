@@ -2302,11 +2302,13 @@ class CandidatesGateway {
         
         if(!empty($questionResArr[0])){
             
+            $entUrl  = Config::get('constants.MM_ENTERPRISE_URL');
+            $examUrl =  $entUrl ."/candidate-assessment/".$examId;
             $qstObj  = $questionResArr[0];
             $resultArr['exam_id']        = !empty($qstObj->idexam) ? $qstObj->idexam : '';
             $resultArr['exam_name']      = !empty($qstObj->exam_name) ? $qstObj->exam_name : '';
             $resultArr['exam_type']      = !empty($qstObj->idexam_type) ? $qstObj->idexam_type : '';
-            $resultArr['exam_url']       = !empty($qstObj->exam_url) ? $qstObj->exam_url : '';
+            $resultArr['exam_url']       = !empty($qstObj->exam_url) ? $qstObj->exam_url : $examUrl;
             $resultArr['description_url']      = !empty($qstObj->description_url) ? $qstObj->description_url : '';
             $resultArr['work_experience']      = !empty($qstObj->work_experience) ? $qstObj->work_experience : '';
             $resultArr['max_duration']         = !empty($qstObj->max_duration) ? $qstObj->max_duration : 0;
