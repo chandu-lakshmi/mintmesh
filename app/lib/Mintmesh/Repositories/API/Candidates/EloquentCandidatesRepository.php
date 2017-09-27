@@ -790,7 +790,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                     ->join('candidate_exam_instance as i', 'r.idexam_instance', '=', 'i.idexam_instance')
                     ->join('exam as e', 'e.idexam', '=', 'i.idexam')
                     ->where('i.idexam', $examId)
-                    ->where('i.campaign_id', $examId)
+                    ->where('i.campaign_id', $campaignId)
                     ->get();
        return $result;
     }
