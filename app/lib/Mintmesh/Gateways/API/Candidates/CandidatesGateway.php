@@ -901,7 +901,7 @@ class CandidatesGateway {
                 $returnArr['link_job']  = array(
                             'reference_id'  => $referenceId,
                             'post_name'     => $serviceName,
-                            'referred_by'   => 'by '.$userFirstname,
+                            'referred_by'   => $userFirstname,
                             'referred_on'   => $timelineDate
                 );
                 $returnArr['timeline']  = array(
@@ -1353,7 +1353,7 @@ class CandidatesGateway {
                         'interview_time_zone'   => $returnArr[0]->interview_time_zone,
                         'interview_location'    => $returnArr[0]->interview_location,
                         'notes'                 => $returnArr[0]->notes,
-                        'created_by'            => 'by '.$returnArr[0]->created_by,
+                        'created_by'            => $returnArr[0]->created_by,
                         'created_at'            => $timelinedate
                 );
                 $message =  "Scheduled ".$returnArr[0]->schedule_for." Interview";
@@ -2311,7 +2311,7 @@ class CandidatesGateway {
             $resultArr['exam_url']       = !empty($qstObj->exam_url) ? $qstObj->exam_url : $examUrl;
             $resultArr['description_url']      = !empty($qstObj->description_url) ? $qstObj->description_url : '';
             $resultArr['work_experience']      = !empty($qstObj->work_experience) ? $qstObj->work_experience : '';
-            $resultArr['max_duration']         = !empty($qstObj->max_duration) ? $qstObj->max_duration : 0;
+            $resultArr['max_duration']         = !empty($qstObj->max_duration) ? $qstObj->max_duration : '';
             $resultArr['is_active']            = !empty($qstObj->is_active) ? (int) $qstObj->is_active : 0;
             $resultArr['is_auto_screening']    = !empty($qstObj->is_auto_screening) ? (int) $qstObj->is_auto_screening : 0;
             $resultArr['password_protected']   = !empty($qstObj->password_protected) ? $qstObj->password_protected : '';
