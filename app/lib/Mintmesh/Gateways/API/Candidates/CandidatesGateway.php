@@ -1973,7 +1973,11 @@ class CandidatesGateway {
             #get Question Options here
             $optionsResArr   = $this->candidatesRepository->getQuestionOptions($questionId);
             foreach ($optionsResArr as $value) {
-                $optionsArr[] = (array) $value;
+                $record = array();
+                $record['option_id']    = $value->option_id;
+                $record['option']       = $value->option;
+                $record['is_correct_answer'] = (int) $value->is_correct_answer;
+                $optionsArr[] =  $record;
             }
             #get Question Libraries here
             $librariesResArr = $this->candidatesRepository->getQuestionLibraries($questionId);
