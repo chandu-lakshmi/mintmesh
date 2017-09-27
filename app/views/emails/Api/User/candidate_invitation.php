@@ -34,7 +34,7 @@
   </tr>
   <tr>
     <td valign="top" class="textContent" style="padding:30px 20px 10px;font-size:18px; font-weight:normal; color:#777777;  line-height:135%;"><p style="color:#333333; font-family: 'arial', sans-serif;font-size:18px;font-weight:normal;margin-top:0;margin-bottom:0px;text-align:left;">Sincerely, </p>
-      <p style="color:#777777;font-size:18px; margin:5px 0px 0px; "><?php echo $company_name; ?>HR Team</p></td>
+      <p style="color:#777777;font-size:18px; margin:5px 0px 0px; "><?php echo $company_name; ?> HR Team</p></td>
   </tr>
   <tr>
     <td valign="top" class="textContent" style="padding:10px 20px 20px;font-size:18px; font-weight:normal; color:#999999; text-align:center;line-height:135%;"><hr style="border-top:1px solid #c8c8c8;margin-top:5px;margin-bottom:20px;">

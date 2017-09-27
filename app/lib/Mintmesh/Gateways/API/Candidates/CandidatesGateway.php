@@ -2700,10 +2700,10 @@ class CandidatesGateway {
                 $examName = ($qstObj->exam_name) ? trim($qstObj->exam_name) : '';
             }
             $emailSubject = "Thanks for taking the ".$examName;
-            $emailBody    = "Hello ".$candidateName.",<br>
-                            Thank you for completing ".$examName.".
+            $emailBody    = "Hello <b>".trim($candidateName)."</b>,<br>
+                            Thank you for completing <b>".$examName."</b>.
                             We have sent your submission to ".$companyName.". 
-                            Please contact ".$companyName." if you have any questions about your ".$serviceName." application.";
+                            Please contact <b>".$companyName."</b> if you have any questions about your <b>".$serviceName."</b> application.";
             #email input form here
             $dataSet = $userArr = array();
             $dataSet['name']          = $candidateName;
