@@ -2309,15 +2309,16 @@ class CandidatesGateway {
             $resultArr['exam_url']       = !empty($qstObj->exam_url) ? $qstObj->exam_url : '';
             $resultArr['description_url']      = !empty($qstObj->description_url) ? $qstObj->description_url : '';
             $resultArr['work_experience']      = !empty($qstObj->work_experience) ? $qstObj->work_experience : '';
-            $resultArr['max_duration']         = !empty($qstObj->max_duration) ? $qstObj->max_duration : '';
-            $resultArr['is_active']            = !empty($qstObj->is_active) ? $qstObj->is_active : 0;
-            $resultArr['is_auto_screening']    = !empty($qstObj->is_auto_screening) ? $qstObj->is_auto_screening : '';
+            $resultArr['max_duration']         = !empty($qstObj->max_duration) ? $qstObj->max_duration : 0;
+            $resultArr['is_active']            = !empty($qstObj->is_active) ? (int) $qstObj->is_active : 0;
+            $resultArr['is_auto_screening']    = !empty($qstObj->is_auto_screening) ? (int) $qstObj->is_auto_screening : 0;
             $resultArr['password_protected']   = !empty($qstObj->password_protected) ? $qstObj->password_protected : '';
             $resultArr['password']             = !empty($qstObj->password) ? $qstObj->password : '';
-            $resultArr['min_marks']            = !empty($qstObj->min_marks) ? $qstObj->min_marks : '';
-            $resultArr['enable_full_screen']   = !empty($qstObj->enable_full_screen) ? $qstObj->enable_full_screen : '';
-            $resultArr['shuffle_questions']    = !empty($qstObj->shuffle_questions) ? $qstObj->shuffle_questions : '';
-            $resultArr['reminder_emails']      = !empty($qstObj->reminder_emails) ? $qstObj->reminder_emails : '';
+            $resultArr['min_marks']            = !empty($qstObj->min_marks) ? $qstObj->min_marks : 0;
+            $resultArr['enable_full_screen']   = !empty($qstObj->enable_full_screen) ? (int) $qstObj->enable_full_screen : 0;
+            $resultArr['shuffle_questions']    = !empty($qstObj->shuffle_questions) ? (int) $qstObj->shuffle_questions : 0;
+            $resultArr['reminder_emails']      = !empty($qstObj->reminder_emails) ? (int) $qstObj->reminder_emails : 0;
+            $resultArr['confirmation_email']   = !empty($qstObj->confirmation_email) ? (int) $qstObj->confirmation_email : 0;
             $resultArr['experience_name']      = !empty($qstObj->experience_name) ? $qstObj->experience_name : '';
             $resultArr['disclaimer_text']      = !empty($qstObj->disclaimer_text) ? $qstObj->disclaimer_text : '';
             
