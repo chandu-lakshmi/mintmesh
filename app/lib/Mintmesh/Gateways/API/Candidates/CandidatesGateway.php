@@ -2706,7 +2706,7 @@ class CandidatesGateway {
             $dataSet = $userArr = array();
             $dataSet['name']          = $candidateName;
             $dataSet['email']         = $candidateEmail;
-            $dataSet['email_subject'] = $examName;
+            $dataSet['email_subject'] = $emailSubject = $examName;
             $dataSet['email_body']    = $emailBody;
             $dataSet['company_logo']  = $companyLogo;
             
