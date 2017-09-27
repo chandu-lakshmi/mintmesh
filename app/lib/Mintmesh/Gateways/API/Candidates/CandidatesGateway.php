@@ -2303,7 +2303,7 @@ class CandidatesGateway {
         if(!empty($questionResArr[0])){
             
             $entUrl  = Config::get('constants.MM_ENTERPRISE_URL');
-            $examUrl =  $entUrl ."/candidate-assessment/".$examId;
+            $examUrl =  $entUrl ."/email/candidate-assessment/".$examId;
             $qstObj  = $questionResArr[0];
             $resultArr['exam_id']        = !empty($qstObj->idexam) ? $qstObj->idexam : '';
             $resultArr['exam_name']      = !empty($qstObj->exam_name) ? $qstObj->exam_name : '';

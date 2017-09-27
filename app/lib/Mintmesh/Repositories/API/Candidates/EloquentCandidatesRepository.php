@@ -817,6 +817,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         $result =  DB::table('exam_question')
                     ->selectRaw('sum(question_value) as total_score')
                     ->where('idexam', $assessmentId)
+                    ->where('status', self::STATUS_ACTIVE)
                     ->get();
         $return = !empty($result[0]) ? $result[0] : 0;
        return $return;
