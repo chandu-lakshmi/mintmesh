@@ -2314,7 +2314,7 @@ class CandidatesGateway {
             $resultArr['is_auto_screening']    = !empty($qstObj->is_auto_screening) ? (int) $qstObj->is_auto_screening : 0;
             $resultArr['password_protected']   = !empty($qstObj->password_protected) ? $qstObj->password_protected : '';
             $resultArr['password']             = !empty($qstObj->password) ? $qstObj->password : '';
-            $resultArr['min_marks']            = !empty($qstObj->min_marks) ? $qstObj->min_marks : 0;
+            $resultArr['min_marks']            = !empty($qstObj->min_marks) ? $qstObj->min_marks : '';
             $resultArr['enable_full_screen']   = !empty($qstObj->enable_full_screen) ? (int) $qstObj->enable_full_screen : 0;
             $resultArr['shuffle_questions']    = !empty($qstObj->shuffle_questions) ? (int) $qstObj->shuffle_questions : 0;
             $resultArr['reminder_emails']      = !empty($qstObj->reminder_emails) ? (int) $qstObj->reminder_emails : 0;
