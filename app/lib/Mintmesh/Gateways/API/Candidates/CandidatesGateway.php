@@ -2615,10 +2615,10 @@ class CandidatesGateway {
        $campaignRes    = $this->neoPostRepository->getCampaignById($campaignId);
        $assessmentId   = !empty($campaignRes->assessment_id) ? $campaignRes->assessment_id : 0;
        
-       if(!empty($assessmentId)){
+       if(!empty($assessmentId) && !empty($campaignId)){
        
             $count = 0;
-            $getExamAllCandidates = $this->candidatesRepository->getExamAllCandidates($assessmentId);
+            $getExamAllCandidates = $this->candidatesRepository->getExamAllCandidates($assessmentId, $campaignId);
             $getExamMaxMrks = $this->candidatesRepository->getExamMaxMrks($assessmentId);
             $maxMarks = !empty($getExamMaxMrks->total_score) ? (int) $getExamMaxMrks->total_score : 100;
             foreach ($getExamAllCandidates as $value) {

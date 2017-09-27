@@ -1974,9 +1974,9 @@ class PostGateway {
             }
             $returnData['assessment']   = $assessmentArr; 
             $isScreenedCandidate = 1;
-            $allCandidatesCount  = $this->candidatesRepository->getExamCandidates($assessmentId);
+            $allCandidatesCount  = $this->candidatesRepository->getExamCandidates($assessmentId, $campaignId);
             $allCandidatesCount  = !empty($allCandidatesCount) ? count($allCandidatesCount) : 0;
-            $screenedCandidatesCount  = $this->candidatesRepository->getExamCandidates($assessmentId, $isScreenedCandidate);
+            $screenedCandidatesCount  = $this->candidatesRepository->getExamCandidates($assessmentId, $campaignId, $isScreenedCandidate);
             $screenedCandidatesCount  = !empty($screenedCandidatesCount) ? count($screenedCandidatesCount) : 0;
             
             $returnData['camp_ref']     = $refCode;

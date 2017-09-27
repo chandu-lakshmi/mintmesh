@@ -759,7 +759,6 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                     ->where('e.min_marks','>=', 'cer.result')
                     ->where('e.is_auto_screening',1)
                     ->get();
-                    //->toSql();
        return $result;
     }
     
@@ -784,19 +783,19 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
        return $return;
     }
     
-    public function getExamAllCandidates($examId = 0){
+    public function getExamAllCandidates($examId = 0, $campaignId = 0){
         
         $result =  DB::table('candidate_exam_result as r')
                     ->select('r.idcandidate_exam_result','i.candidateid','i.relationshipid', 'r.result', 'e.min_marks', 'e.max_marks')
                     ->join('candidate_exam_instance as i', 'r.idexam_instance', '=', 'i.idexam_instance')
                     ->join('exam as e', 'e.idexam', '=', 'i.idexam')
                     ->where('i.idexam', $examId)
+                    ->where('i.campaign_id', $examId)
                     ->get();
-                    //->toSql();
        return $result;
     }
     
-    public function getExamCandidates($examId = 0, $isScreenedCandidate = 0){
+    public function getExamCandidates($examId = 0, $campaignId = 0, $isScreenedCandidate = 0){
         
         $result = '';
         if(!empty($examId)){
@@ -804,7 +803,7 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                     from candidate_exam_result as r 
                     inner join candidate_exam_instance as i on r.idexam_instance = i.idexam_instance 
                     inner join exam as e on e.idexam = i.idexam 
-                    where i.idexam = '".$examId."' ";
+                    where i.idexam = '".$examId."' and i.campaign_id = '".$campaignId."' ";
             if($isScreenedCandidate){
                 $sql .= " and e.min_marks <= r.result ";
             }
