@@ -2370,6 +2370,9 @@ class CandidatesGateway {
         $totalRecords = 0;
         $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
         $pageNo       = !empty($input['page_no']) ? $input['page_no'] : 0;
+        if(!empty($input['reference_id'])){
+            $this->successEmailToCandidate($companyCode, $input['reference_id']);
+        }
         #get company details here
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
@@ -2564,6 +2567,8 @@ class CandidatesGateway {
             }
 
             if(!empty($examAnsArr)){
+                #send email to candidate
+                $emailToCandidate = $this->successEmailToCandidate($companyCode, $gotReferredId, $assessmentId);
                 #create Candidate Exam Result
                 $getScoreArr   = $this->candidatesRepository->getScoreInstanceId($examInstanceId);
                 $examResultArr = $this->candidatesRepository->createCandidateExamResult($examInstanceId, $getScoreArr->total_score);
@@ -2665,26 +2670,51 @@ class CandidatesGateway {
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);  
     }
     
-    public function successEmailToCandidate($param) {
+    public function successEmailToCandidate($companyCode = 0, $referenceId = 0, $assessmentId = 0) {
         
+        $candidateId = 0;
         $resultArr   = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
         
         if($resultArr){
-            #form cndidate details here
+            $examName = '';
+            #form candidate details here
             $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
             $relation       = isset($resultArr[1]) ? $resultArr[1] : '';
+            $postDetails    = isset($resultArr[2]) ? $resultArr[2] : '';
+            $serviceName    = $postDetails->service_name;
             $candidateEmail = $candidate->emailid; 
             $candidateId    = $candidate->getID();
+            #get company details here
+            $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
+            $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
+            $companyName    = isset($companyDetails[0]) ? $companyDetails[0]->name : 0;
+            $companyLogo    = !empty($companyDetails[0]->logo)?$companyDetails[0]->logo:''; 
             $referredBy     = !empty($relation->referred_by) ? $relation->referred_by : '';
-            $candidateName  = $this->postGateway->getCandidateFullNameByEmail($candidateEmail, $referredBy, $companyId);    
+            $candidateName  = $this->postGateway->getCandidateFullNameByEmail($candidateEmail, $referredBy, $companyId); 
+            #get Exam Details here                
+            $questionResArr   = $this->candidatesRepository->getExamDetails($assessmentId);
+            if(!empty($questionResArr[0])){
+                $qstObj   = $questionResArr[0];
+                $examName = ($qstObj->exam_name) ? $qstObj->exam_name : '';
+            }
+            
+            $emailBody   = "Hello ".$candidateName.",
+                            Thank you for completing ".$examName.".
+                            We have sent your submission to ".$companyName.". 
+                            Please contact ".$companyName." if you have any questions about your ".$serviceName." application.";
             #email input form here
             $dataSet = $userArr = array();
             $dataSet['name']          = $candidateName;
             $dataSet['email']         = $candidateEmail;
-            $dataSet['email_subject'] = $emailSubject;
-            $dataSet['subject_id']    = $subjectId;
+            $dataSet['email_subject'] = $examName;
             $dataSet['email_body']    = $emailBody;
             $dataSet['company_logo']  = $companyLogo;
+            
+            $userObj    = $this->userRepository->getUserByEmail($referredBy);
+            $userId     = !empty($userObj->id) ? $userObj->id : 0;
+            $userName       = !empty($userObj->firstname) ? $userObj->firstname : '';
+            $userEmailId    = !empty($userObj->emailid) ? $userObj->emailid : '';
+            
             #send email here
             $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.candidate_invitation');
             $this->userEmailManager->emailId = $candidateEmail;
@@ -2692,17 +2722,10 @@ class CandidatesGateway {
             $this->userEmailManager->subject = $emailSubject;
             $this->userEmailManager->name    = $candidateName;
             $email_sent = $this->userEmailManager->sendMail();
-            #logged in user here
-            $userArr['user_id']      =  $userId;
-            $userArr['user_name']    =  $userName;
-            $userArr['user_emailid'] =  $userEmailId;
             //log email status
             $emailStatus = self::EMAIL_FAILURE_STATUS;
             if (!empty($email_sent)) {
                 $emailStatus = self::EMAIL_SUCCESS_STATUS;
-                $returnArr   = $this->candidatesRepository->addCandidateEmail($dataSet, $userArr, $companyId, $referenceId, $candidateId);
-                $arrayNewEmail = $this->getLastInsertEmail($returnArr);
-                $data = $arrayNewEmail;
             }
             $emailLog = array(
                 'emails_types_id'   => 11,
@@ -2713,7 +2736,7 @@ class CandidatesGateway {
                 'sent'              => $emailStatus,
                 'ip_address'        => $_SERVER['REMOTE_ADDR']
             );
-            $this->userRepository->logEmail($emailLog);
+            //$this->userRepository->logEmail($emailLog);
         }    
         
     }
