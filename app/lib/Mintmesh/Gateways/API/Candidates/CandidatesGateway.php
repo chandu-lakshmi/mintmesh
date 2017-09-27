@@ -1872,11 +1872,11 @@ class CandidatesGateway {
             $data = $resultArr;
             $responseCode    = self::SUCCESS_RESPONSE_CODE;
             $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_comment.success')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.assessments.created')));
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_edit_question.failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.assessments.not_created')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -1945,11 +1945,11 @@ class CandidatesGateway {
         if(!empty($resultArr)){
             $responseCode    = self::SUCCESS_RESPONSE_CODE;
             $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.edit_configuration.success')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.assessments.updated')));
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_edit_question.failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.assessments.not_updated')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -2027,21 +2027,22 @@ class CandidatesGateway {
             #edit Exam here
             $resultArr  = $this->candidatesRepository->editExam($examInput, $examId, $userId);
             $data['id'] = $examId;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.assessments.updated')));
         } else {
             #add Exam here
             $resultArr = $this->candidatesRepository->addExam($examInput, $companyId, $userId);
             $examId    = !empty($resultArr['id']) ? $resultArr['id'] : 0;
             $data      = $resultArr;
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.assessments.created')));
         }
         #check result success status   
         if(!empty($resultArr)){
             $responseCode    = self::SUCCESS_RESPONSE_CODE;
             $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_comment.success')));
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_edit_question.failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.assessments.not_updated')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -2087,16 +2088,16 @@ class CandidatesGateway {
             if(!empty($resultArr)){
                 $responseCode    = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
-                $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_comment.success')));
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.assessments.updated')));
             } else {
                 $responseCode    = self::ERROR_RESPONSE_CODE;
                 $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-                $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_edit_question.failure')));
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.assessments.not_updated')));
             }
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_edit_question.failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.assessments.not_updated')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -2197,7 +2198,7 @@ class CandidatesGateway {
             if($examQuestionId){
                 #remove Exam Question here
                 $questionResArr   = $this->candidatesRepository->removeExamQuestion($examQuestionId, $userId);
-                $responseMessage  = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+                $responseMessage  = array('msg' => array(Lang::get('MINTMESH.assessments.delete')));
                 $data['id'] = $examQuestionId;
             } else {
                 #check Exam Question Exist
@@ -2213,7 +2214,7 @@ class CandidatesGateway {
                     $questionResArr  = $this->candidatesRepository->addExamQuestion($examId, $questionId, $userId, $questionValue);
                     $data = $questionResArr;
                 }
-                $responseMessage   = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+                $responseMessage   = array('msg' => array(Lang::get('MINTMESH.assessments.created')));
             }
 
             if($questionResArr){
@@ -2222,12 +2223,12 @@ class CandidatesGateway {
             } else {
                 $responseCode    = self::ERROR_RESPONSE_CODE;
                 $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.assessments.not_updated')));
             }
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.assessments.not_updated')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }

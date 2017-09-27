@@ -642,7 +642,8 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         $result = '';
         if(!empty($companyId)){
           $sql = "SELECT SQL_CALC_FOUND_ROWS e.idexam,`e`.`max_duration`, `r`.name as exp_name, `e`.`name`, `e`.`idexam_type`, `e`.`is_active`, `u`.`firstname`, `e`.`created_at`,
-                 (select count(*) from exam_question as eq where eq.idexam = e.idexam and eq.`status`=1)  as qcount 
+                 (select count(*) from exam_question as eq inner join question as q on q.idquestion = eq.idquestion
+			where eq.idexam = e.idexam and eq.`status`=1 and q.`status` =1)  as qcount 
                   FROM `exam` AS `e` 
                   INNER JOIN `experience_ranges` AS `r` ON `e`.`work_experience` = `r`.`id` 
                   INNER JOIN `users` AS `u` ON `e`.`created_by` = `u`.`id` 
