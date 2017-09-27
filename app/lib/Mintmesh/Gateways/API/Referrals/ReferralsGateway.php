@@ -2564,9 +2564,9 @@ class ReferralsGateway {
                 $refCmpCode = MyEncrypt::encrypt_blowfish($campaignId.'_'.$refId,Config::get('constants.MINTMESH_ENCCODE'));
                 #check resume attachment status
                 if(!empty($emailData['attachment_status'])) {
-                    $dataSet['apply_link']  = $entUrl . "/email/campaign/candidate-assessment/share?ref=" . $refCode."&refrel=" . $refRelCode."&flag=0&jc=1";
+                    $dataSet['apply_link']  = $entUrl . "/email/campaign/candidate-assessment/share?ref=" . $refCode."&refrel=" . $refRelCode."&camp_ref=".$refCmpCode."&flag=0&jc=1";
                 } else{
-                    $dataSet['apply_link']  = $entUrl . "/email/campaign/candidate-details/share?ref=" . $refCode."&refrel=" . $refRelCode."&flag=0&jc=1";
+                    $dataSet['apply_link']  = $entUrl . "/email/campaign/candidate-details/share?ref=" . $refCode."&refrel=" . $refRelCode."&camp_ref=".$refCmpCode."&flag=0&jc=1";
                 }
                 $dataSet['view_jobs_link']      = $entUrl . "/email/all-campaigns/share?ref=" . $refCmpCode;
             } else {

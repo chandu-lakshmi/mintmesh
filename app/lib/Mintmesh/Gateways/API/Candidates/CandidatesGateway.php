@@ -2066,7 +2066,8 @@ class CandidatesGateway {
             $examInput['shuffle']    = !empty($input['shuffle_questions']) ? $input['shuffle_questions'] : 0;
             $examInput['reminder']   = !empty($input['reminder_emails']) ? $input['reminder_emails'] : 0;
             $examInput['confirm']    = !empty($input['confirmation_email']) ? $input['confirmation_email'] : 0;
-            $examInput['pass_protect']   = !empty($input['password_protected']) ? $input['password_protected'] : 0;
+            $examInput['pass_protect']      = !empty($input['password_protected']) ? $input['password_protected'] : 0;
+            $examInput['disclaimer_text']   = !empty($input['disclaimer_text']) ? $input['disclaimer_text'] : '';
             #date format
             $startDate = !empty($input['start_date']) ? $input['start_date'] : '';
             $startTime = !empty($input['start_time']) ? $input['start_time'] : '';
@@ -2304,7 +2305,7 @@ class CandidatesGateway {
             $resultArr['description_url']      = !empty($qstObj->description_url) ? $qstObj->description_url : '';
             $resultArr['work_experience']      = !empty($qstObj->work_experience) ? $qstObj->work_experience : '';
             $resultArr['max_duration']         = !empty($qstObj->max_duration) ? $qstObj->max_duration : '';
-            $resultArr['is_active']            = !empty($qstObj->is_active) ? $qstObj->is_active : '';
+            $resultArr['is_active']            = !empty($qstObj->is_active) ? $qstObj->is_active : 0;
             $resultArr['is_auto_screening']    = !empty($qstObj->is_auto_screening) ? $qstObj->is_auto_screening : '';
             $resultArr['password_protected']   = !empty($qstObj->password_protected) ? $qstObj->password_protected : '';
             $resultArr['password']             = !empty($qstObj->password) ? $qstObj->password : '';
@@ -2313,6 +2314,7 @@ class CandidatesGateway {
             $resultArr['shuffle_questions']    = !empty($qstObj->shuffle_questions) ? $qstObj->shuffle_questions : '';
             $resultArr['reminder_emails']      = !empty($qstObj->reminder_emails) ? $qstObj->reminder_emails : '';
             $resultArr['experience_name']      = !empty($qstObj->experience_name) ? $qstObj->experience_name : '';
+            $resultArr['disclaimer_text']      = !empty($qstObj->disclaimer_text) ? $qstObj->disclaimer_text : '';
             
             $startDateTime = !empty($qstObj->start_date_time) ? $qstObj->start_date_time : '';
             $endDateTime   = !empty($qstObj->end_date_time) ? $qstObj->end_date_time : '';
@@ -2392,7 +2394,7 @@ class CandidatesGateway {
                             'is_active'      => $status,
                             'qcount'         => $res->qcount,
                             'created_by'     => $res->firstname,
-                            'created_at'     => date('M j Y', strtotime($res->created_at))
+                            'created_at'     => date('M j, Y', strtotime($res->created_at))
                     );
                 }
                 
@@ -2437,6 +2439,8 @@ class CandidatesGateway {
             $resultArr['experience_name'] = !empty($qstObj->experience_name) ? $qstObj->experience_name : '';
             $resultArr['max_duration']    = !empty($qstObj->max_duration) ? $qstObj->max_duration : '';
             $resultArr['description']     = !empty($qstObj->description) ? $qstObj->description : '';
+            $resultArr['enable_full_screen']  = !empty($qstObj->enable_full_screen) ? $qstObj->enable_full_screen : '';
+            $resultArr['disclaimer_text']     = !empty($qstObj->disclaimer_text) ? $qstObj->disclaimer_text : '';
             #get Exam Question List here
             $examQstResArr   = $this->candidatesRepository->getExamQuestionList($examId);
         
@@ -2528,6 +2532,7 @@ class CandidatesGateway {
         $companyCode    = !empty($input['company_code']) ? $input['company_code'] : '';
         $candidateEmail = !empty($input['emailid']) ? $input['emailid'] : 0;
         $assessmentId   = !empty($input['assessment_id']) ? $input['assessment_id'] : 0;
+        $campaignId     = !empty($input['campaign_id']) ? $input['campaign_id'] : 0;
         $gotReferredId  = !empty($input['got_referred_id']) ? $input['got_referred_id'] : 0;
         $examQstList    = !empty($input['exam_question_list']) ? array_values($input['exam_question_list']) : array();
         #get candidate details here
@@ -2536,6 +2541,7 @@ class CandidatesGateway {
         if(!empty($examQstList)){
         
             $instanceArr['exam_id']           = $assessmentId;
+            $instanceArr['campaign_id']       = $campaignId;
             $instanceArr['candidate_id']      = $candidateId;
             $instanceArr['relationship_id']   = $gotReferredId;
 
@@ -2672,7 +2678,7 @@ class CandidatesGateway {
     
     public function successEmailToCandidate($companyCode = 0, $referenceId = 0, $assessmentId = 0) {
         
-        $candidateId = 0;
+        $candidateId = $confEmail = 0;
         $resultArr   = $this->neoCandidatesRepository->getCandidateDetails($companyCode, $candidateId, $referenceId);
         
         if($resultArr){
@@ -2696,48 +2702,51 @@ class CandidatesGateway {
             if(!empty($questionResArr[0])){
                 $qstObj   = $questionResArr[0];
                 $examName = ($qstObj->exam_name) ? trim($qstObj->exam_name) : '';
+                $confEmail = ($qstObj->confirmation_email) ? $qstObj->confirmation_email : 0;
             }
-            $emailSubject = "Thanks for taking the ".$examName;
-            $emailBody    = "Hello <b>".trim($candidateName)."</b>,<br>
-                            Thank you for completing <b>".$examName."</b>.
-                            We have sent your submission to ".$companyName.". 
-                            Please contact <b>".$companyName."</b> if you have any questions about your <b>".$serviceName."</b> application.";
-            #email input form here
-            $dataSet = $userArr = array();
-            $dataSet['name']          = $candidateName;
-            $dataSet['email']         = $candidateEmail;
-            $dataSet['email_subject'] = $emailSubject;
-            $dataSet['email_body']    = $emailBody;
-            $dataSet['company_logo']  = $companyLogo;
-            $dataSet['company_name']  = $companyName;
-            
-            $userObj    = $this->userRepository->getUserByEmail($referredBy);
-            $userId     = !empty($userObj->id) ? $userObj->id : 0;
-            $userName       = !empty($userObj->firstname) ? $userObj->firstname : '';
-            $userEmailId    = !empty($userObj->emailid) ? $userObj->emailid : '';
-            
-            #send email here
-            $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.candidate_invitation');
-            $this->userEmailManager->emailId = $candidateEmail;
-            $this->userEmailManager->dataSet = $dataSet;
-            $this->userEmailManager->subject = $emailSubject;
-            $this->userEmailManager->name    = $candidateName;
-            $email_sent = $this->userEmailManager->sendMail();
-            //log email status
-            $emailStatus = self::EMAIL_FAILURE_STATUS;
-            if (!empty($email_sent)) {
-                $emailStatus = self::EMAIL_SUCCESS_STATUS;
+            if(!empty($confEmail)){
+                $emailSubject = "Thanks for taking the ".$examName;
+                $emailBody    = "Hello <b>".trim($candidateName)."</b>,<br>
+                                Thank you for completing <b>".$examName."</b>.
+                                We have sent your submission to ".$companyName.". 
+                                Please contact <b>".$companyName."</b> if you have any questions about your <b>".$serviceName."</b> application.";
+                #email input form here
+                $dataSet = $userArr = array();
+                $dataSet['name']          = $candidateName;
+                $dataSet['email']         = $candidateEmail;
+                $dataSet['email_subject'] = $emailSubject;
+                $dataSet['email_body']    = $emailBody;
+                $dataSet['company_logo']  = $companyLogo;
+                $dataSet['company_name']  = $companyName;
+
+                $userObj    = $this->userRepository->getUserByEmail($referredBy);
+                $userId     = !empty($userObj->id) ? $userObj->id : 0;
+                $userName       = !empty($userObj->firstname) ? $userObj->firstname : '';
+                $userEmailId    = !empty($userObj->emailid) ? $userObj->emailid : '';
+
+                #send email here
+                $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.candidate_invitation');
+                $this->userEmailManager->emailId = $candidateEmail;
+                $this->userEmailManager->dataSet = $dataSet;
+                $this->userEmailManager->subject = $emailSubject;
+                $this->userEmailManager->name    = $candidateName;
+                $email_sent = $this->userEmailManager->sendMail();
+                //log email status
+                $emailStatus = self::EMAIL_FAILURE_STATUS;
+                if (!empty($email_sent)) {
+                    $emailStatus = self::EMAIL_SUCCESS_STATUS;
+                }
+                $emailLog = array(
+                    'emails_types_id'   => 11,
+                    'from_user'         => $userId,
+                    'from_email'        => $userEmailId,
+                    'to_email'          => $this->appEncodeDecode->filterString(strtolower($candidateEmail)),
+                    'related_code'      => $companyCode,
+                    'sent'              => $emailStatus,
+                    'ip_address'        => $_SERVER['REMOTE_ADDR']
+                );
+                $this->userRepository->logEmail($emailLog);
             }
-            $emailLog = array(
-                'emails_types_id'   => 11,
-                'from_user'         => $userId,
-                'from_email'        => $userEmailId,
-                'to_email'          => $this->appEncodeDecode->filterString(strtolower($candidateEmail)),
-                'related_code'      => $companyCode,
-                'sent'              => $emailStatus,
-                'ip_address'        => $_SERVER['REMOTE_ADDR']
-            );
-            $this->userRepository->logEmail($emailLog);
         }    
         
     }

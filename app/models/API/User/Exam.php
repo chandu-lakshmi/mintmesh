@@ -33,6 +33,7 @@ class Exam extends Eloquent {
                                 'shuffle_questions', 
                                 'reminder_emails', 
                                 'confirmation_email', 
+                                'disclaimer_text', 
                                 'min_marks', 
                                 'created_at',  
                                 'created_by',
