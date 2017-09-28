@@ -565,22 +565,31 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         return $return;
     }
     
-    public function getQuestionsList($companyId = 0, $page = 0, $examId = 0){
+    public function getQuestionsList($companyId = 0, $page = 0, $examId = 0, $search = '', $filters = ''){
+                
+        $sql = "SELECT SQL_CALC_FOUND_ROWS q.idquestion, q.idquestion, q.question, q.question_value, t.name AS question_type
+                FROM question AS q
+                INNER JOIN question_type AS t ON q.question_type = t.idquestion_type
+                WHERE q.company_id = ".$companyId." AND q.status = ".self::STATUS_ACTIVE;
+            
+            if($filters){
+                $sql .= " and q.question_type =".$filters;
+            }
+            #search by Assessment name here
+            if($search){
+                $search   = $this->appEncodeDecode->filterString($search);
+                $sql .= " AND q.question LIKE '%".$search."%'";
+            }
+            $sql .= " ORDER BY q.created_at DESC ";
+            # based on page no
+            if (!empty($page)){
+                $page   = $page-1 ;
+                $offset = $page*10 ;
+                $sql.=  " limit ".$offset.",10 ";
+            }
         
-        $start = $end = 0;
-        if (!empty($page)){
-            $end = $page-1 ;
-            $start = $end*10 ;
-        }
-        $result['questions_list'] =  DB::table('question as q')
-                                    ->select(DB::raw('SQL_CALC_FOUND_ROWS q.idquestion'),'q.idquestion','q.question', 'q.question_value', 't.name as question_type')
-                                    ->join('question_type as t', 'q.question_type', '=', 't.idquestion_type')
-                                    ->where('q.company_id', $companyId)
-                                    ->where('q.status', self::STATUS_ACTIVE)
-                                    ->orderBy('q.created_at', 'DESC')
-                                    ->limit(10)->skip($start)
-                                    ->get();
-        $result['total_records'] = DB::select("select FOUND_ROWS() as total_count");
+        $result['questions_list'] = DB::Select($sql);
+        $result['total_records']  = DB::select("select FOUND_ROWS() as total_count");
         return $result; 
     }
     
