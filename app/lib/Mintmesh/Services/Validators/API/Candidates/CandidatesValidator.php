@@ -131,7 +131,6 @@ class CandidatesValidator extends Validator {
         'add_edit_exam' => array(
             'company_code'  => 'required',
             'exam_name'     => 'required',
-            'exam_type'     => 'required',
             'work_experience' => 'required'
         ),
         'edit_exam_settings' => array(

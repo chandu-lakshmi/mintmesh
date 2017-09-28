@@ -1239,6 +1239,8 @@ class CandidatesGateway {
             
             $neoInput       = $refInput = array();
             $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
+            $postDetails    = isset($resultArr[2]) ? $resultArr[2] : '';
+            $postId         = $postDetails->getID();
             $candidateEmail = $candidate->emailid;
             $candidateId    = $candidate->getID();
             $moduleType     = 4;
@@ -1246,7 +1248,7 @@ class CandidatesGateway {
             $activityMsg    = $this->getCandidateStatusMessage($refStatus);
              
             if($referenceId){
-                $refStatus    = $this->neoCandidatesRepository->editCandidateReferralStatus($referenceId, $refStatus, $userEmailId);
+                $refStatus    = $this->neoCandidatesRepository->editCandidateReferralStatus($postId, $referenceId, $refStatus, $userEmailId);
                 $activityId   = $this->candidatesRepository->addCandidateActivityLogs($companyId, $referenceId, $candidateId, $userId, $moduleType, $activityText, $refComment) ;
                 #return response form here
                 if($refComment){
@@ -2382,11 +2384,13 @@ class CandidatesGateway {
         $totalRecords = 0;
         $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
         $pageNo       = !empty($input['page_no']) ? $input['page_no'] : 0;
+        $search       = !empty($input['search']) ? $input['search'] : '';
+        $filter       = isset($input['filter']) ? $input['filter'] : '';
         #get company details here
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
         #get Question Types List here
-        $resultArr    = $this->candidatesRepository->getCompanyAssessmentsAll($companyId, $pageNo);
+        $resultArr    = $this->candidatesRepository->getCompanyAssessmentsAll($companyId, $pageNo, $search, $filter);
         #check if Question result
         if(!empty($resultArr['assessments_list'])){
             
@@ -2427,6 +2431,18 @@ class CandidatesGateway {
             }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data); 
     }
+    
+    public function shuffleAssociativeArray($list) { 
+        
+        if (!is_array($list)) return $list; 
+        $keys = array_keys($list); 
+        shuffle($keys); 
+        $random = array(); 
+        foreach ($keys as $key) { 
+          $random[] = $list[$key]; 
+        }
+        return $random; 
+      }
        
     public function getAssessment($input) {
         
@@ -2447,17 +2463,19 @@ class CandidatesGateway {
             $resultArr['experience_name'] = !empty($qstObj->experience_name) ? $qstObj->experience_name : '';
             $resultArr['max_duration']    = !empty($qstObj->max_duration) ? $qstObj->max_duration : '';
             $resultArr['description']     = !empty($qstObj->description) ? $qstObj->description : '';
-            $resultArr['enable_full_screen']  = !empty($qstObj->enable_full_screen) ? $qstObj->enable_full_screen : '';
+            $resultArr['enable_full_screen']  = !empty($qstObj->enable_full_screen) ? $qstObj->enable_full_screen : 0;
             $resultArr['disclaimer_text']     = !empty($qstObj->disclaimer_text) ? $qstObj->disclaimer_text : '';
+            $shuffleQuestions             = !empty($qstObj->shuffle_questions) ? $qstObj->shuffle_questions : 0;
             #get Exam Question List here
             $examQstResArr   = $this->candidatesRepository->getExamQuestionList($examId);
         
             if(!empty($examQstResArr)){
-                
+                $number = 1;
                 foreach ($examQstResArr as $value) {
+                    
                     $record = $qstOptArray = array();
                     $record['id']               = $questionId = !empty($value->question_id) ? $value->question_id : 0;
-                    $record['number']           = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
+                    $record['number']           = $number;//!empty($value->exam_question_id) ? $value->exam_question_id : 0;
                     $record['exam_question_id'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
                     $record['question_id']      = $questionId;
                     $record['question']         = !empty($value->question) ? $value->question : '';
@@ -2511,11 +2529,15 @@ class CandidatesGateway {
                         $record['elements']     = array($elements);
                         $examQstArr[]  = $record;
                     }
+                    $number++;
                 }
             }
         
             if($resultArr){
                 
+                if($shuffleQuestions){
+                    $examQstArr =  $this->shuffleAssociativeArray($examQstArr);
+                }
                 $resultArr['pages'] = $examQstArr;
                 $data = $resultArr;
                 $responseCode    = self::SUCCESS_RESPONSE_CODE;
@@ -2533,6 +2555,8 @@ class CandidatesGateway {
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
+    
+    
     
     public function submitAssessment($input) {
        

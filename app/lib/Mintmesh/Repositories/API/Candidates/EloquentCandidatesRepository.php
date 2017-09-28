@@ -638,24 +638,35 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         return $return;
     }
     
-    public function getCompanyAssessmentsAll($companyId = 0, $page = 0){
+    public function getCompanyAssessmentsAll($companyId = 0, $page = 0, $search = '', $filters = ''){
         $result = '';
         if(!empty($companyId)){
-          $sql = "SELECT SQL_CALC_FOUND_ROWS e.idexam,`e`.`max_duration`, `r`.name as exp_name, `e`.`name`, `e`.`idexam_type`, `e`.`is_active`, `u`.`firstname`, `e`.`created_at`,
-                 (select count(*) from exam_question as eq inner join question as q on q.idquestion = eq.idquestion
+            
+            $sql = "SELECT SQL_CALC_FOUND_ROWS e.idexam,`e`.`max_duration`, `r`.name as exp_name, `e`.`name`, `e`.`idexam_type`, `e`.`is_active`, `u`.`firstname`, `e`.`created_at`,
+                    (select count(*) from exam_question as eq inner join question as q on q.idquestion = eq.idquestion
 			where eq.idexam = e.idexam and eq.`status`=1 and q.`status` =1)  as qcount 
-                  FROM `exam` AS `e` 
-                  INNER JOIN `experience_ranges` AS `r` ON `e`.`work_experience` = `r`.`id` 
-                  INNER JOIN `users` AS `u` ON `e`.`created_by` = `u`.`id` 
-                  WHERE `e`.`company_id` = '".$companyId."' order by e.created_at desc ";
+                    FROM `exam` AS `e` 
+                    INNER JOIN `experience_ranges` AS `r` ON `e`.`work_experience` = `r`.`id` 
+                    INNER JOIN `users` AS `u` ON `e`.`created_by` = `u`.`id` 
+                    WHERE `e`.`company_id` = '".$companyId."' ";
+            #Active | Inactive filters here
+            if(($filters == '0') || ($filters == '1')){
+                $sql .= " and e.is_active =".$filters;
+            }
+            #search by Assessment name here
+            if($search){
+                $search   = $this->appEncodeDecode->filterString($search);
+                $sql .= " and e.name LIKE '%".$search."%'";
+            }
+            $sql .= " order by e.created_at desc";
             # based on page no
             if (!empty($page)){
                 $page   = $page-1 ;
                 $offset = $page*10 ;
                 $sql.=  " limit ".$offset.",10 ";
             }
-           $result['assessments_list']  = DB::Select($sql);
-           $result['total_records']     = DB::select("select FOUND_ROWS() as total_count");
+            $result['assessments_list']  = DB::Select($sql);
+            $result['total_records']     = DB::select("select FOUND_ROWS() as total_count");
         }
        return $result; 
     }
