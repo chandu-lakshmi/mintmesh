@@ -70,11 +70,11 @@ class parserJob extends Command {
                #download the file from s3 bucket
                $filepath         =  !empty($relation->resume_path)?$relation->resume_path:'';
                $this->Parser     =  new ParserManager;
-               $parsedRes        =  $this->Parser->processParsing($filepath);
+               //$parsedRes        =  $this->Parser->processParsing($filepath);
                #save the parsed json file path here
-               $updateParsedJson =  $this->updateResumeParsedJsonPath($relationId, $parsedRes);
+               //$updateParsedJson =  $this->updateResumeParsedJsonPath($relationId, $parsedRes);
                // adding confident score calcuation job to queue
-               $this->addSolicitedConfidentScoreJobtoQueue($relationId);
+               //$this->addSolicitedConfidentScoreJobtoQueue($relationId);
                #check if referral job is hcm job or not
                if($jobDetails->hcm_type == 'success factors'){
                 //echo 'success factors';
