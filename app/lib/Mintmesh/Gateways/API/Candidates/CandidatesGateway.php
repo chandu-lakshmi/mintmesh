@@ -2227,7 +2227,7 @@ class CandidatesGateway {
                     }
                 }    
             }
-            $responseMessage   = array('msg' => array(Lang::get('MINTMESH.assessments.created')));
+            $responseMessage   = array('msg' => array(Lang::get('MINTMESH.add_edit_question.success')));
         } 
 
         if($questionResArr){

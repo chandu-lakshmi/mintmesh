@@ -564,7 +564,8 @@ return array(
         "failure" => "No records found"
     ),
     "add_edit_question" => array(
-        "failure" => "Failed to update question details"
+        "failure" => "Failed to update question details",
+        "success" => "Successfully Added",
     ),
     "assessments" => array(
         "success" => "Successfully Done",
