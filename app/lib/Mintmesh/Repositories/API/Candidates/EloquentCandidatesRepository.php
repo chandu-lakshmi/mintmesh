@@ -573,7 +573,12 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                 WHERE q.company_id = ".$companyId." AND q.status = ".self::STATUS_ACTIVE;
             
             if($filters){
-                $sql .= " and q.question_type =".$filters;
+                $filterSql = '';
+                foreach ($filters as $value) {
+                   $filterSql .= " q.question_type =".$value." OR";
+                }
+                $filterSql = rtrim($filterSql,'OR');
+                $sql .= " AND (".$filterSql.")";
             }
             #search by Assessment name here
             if($search){
@@ -587,7 +592,6 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                 $offset = $page*10 ;
                 $sql.=  " limit ".$offset.",10 ";
             }
-        
         $result['questions_list'] = DB::Select($sql);
         $result['total_records']  = DB::select("select FOUND_ROWS() as total_count");
         return $result; 
