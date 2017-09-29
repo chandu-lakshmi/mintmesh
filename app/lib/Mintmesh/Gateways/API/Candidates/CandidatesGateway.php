@@ -822,7 +822,7 @@ class CandidatesGateway {
                 $data = $returnArr;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
             } else {
-                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.get_candidate_activities.failure')));
             }
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
@@ -867,7 +867,7 @@ class CandidatesGateway {
             $candidateEmail = $candidate->emailid;
             $candidateId    = $candidate->getID();
             $moduleType     = 5;
-            $activityText   = 'Link Job';
+            $activityText   = 'Assigned to';
             
             $neoInput['referral']               = $candidateEmail;
             $neoInput['referred_by']            = $userEmailId;
@@ -892,7 +892,7 @@ class CandidatesGateway {
                 $referCandidateArr = $this->neoPostRepository->referCandidate($neoInput, $refInput);
                 #add Candidate Activity Logs here
                 $serviceName  = !empty($postDetails->service_name) ? $postDetails->service_name : '';
-                $comment      = "Linked to ".$serviceName;
+                $comment      = "Assigned to ".$serviceName;
                 $activityId   = $this->candidatesRepository->addCandidateActivityLogs($companyId, $referenceId, $candidateId, $userId, $moduleType, $activityText, $comment) ;
                 #return response form here
                 $createdAt    = gmdate('Y-m-d H:i:s');;

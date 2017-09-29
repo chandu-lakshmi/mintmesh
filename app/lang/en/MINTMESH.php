@@ -575,5 +575,7 @@ return array(
         "updated"  => "Successfully Updated",
         "not_created"  => "Failed to Create",
         "not_updated"  => "Failed to Update",
-    )
+    ),"get_candidate_activities" => array(
+        "failure" => "No Events Recorded"
+    ),
 );
