@@ -2187,53 +2187,58 @@ class CandidatesGateway {
     
     public function addEditExamQuestion($input) {
         
-        $returnArr      = $data = array();
+        $questionResArr = $data = array();
         $companyCode    = !empty($input['company_code']) ? $input['company_code'] : '';
-        $examId         = !empty($input['exam_id']) ? $input['exam_id'] : 0;
-        $questionId     = !empty($input['question_id']) ? $input['question_id'] : 0;
-        $questionValue  = !empty($input['question_value']) ? $input['question_value'] : 0;
+        $examQstArr     = !empty($input['exam_question_arr']) ? $input['exam_question_arr'] : '';
         $examQuestionId = !empty($input['exam_question_id']) ? $input['exam_question_id'] : 0;
+        $examId         = !empty($input['exam_id']) ? $input['exam_id'] : 0;
         #get Logged In User details here
         $this->loggedinUser = $this->referralsGateway->getLoggedInUser(); 
         $userId   = $this->loggedinUser->id;
-       
-        if((!empty($examId) && !empty($questionId)) || !empty($examQuestionId)){
-  
-            if($examQuestionId){
-                #remove Exam Question here
-                $questionResArr   = $this->candidatesRepository->removeExamQuestion($examQuestionId, $userId);
-                $responseMessage  = array('msg' => array(Lang::get('MINTMESH.assessments.delete')));
-                $data['id'] = $examQuestionId;
-            } else {
-                #check Exam Question Exist
-                $checkExmQstResArr    = $this->candidatesRepository->checkExamQuestionExist($examId, $questionId);
-                if(!empty($checkExmQstResArr[0])){
-                    $exmQst = $checkExmQstResArr[0];
-                    $examQuestionId = !empty($exmQst->exam_question_id) ? $exmQst->exam_question_id : 0;
-                    #update Exam Question status here
-                    $questionResArr  = $this->candidatesRepository->updateExamQuestionStatus($examQuestionId);
-                    $data['id'] = $examQuestionId;
-                } else {
-                    #add Exam Question here
-                    $questionResArr  = $this->candidatesRepository->addExamQuestion($examId, $questionId, $userId, $questionValue);
-                    $data = $questionResArr;
-                }
-                $responseMessage   = array('msg' => array(Lang::get('MINTMESH.assessments.created')));
-            }
+        #check if remove the question or not                
+        if($examQuestionId){
+            #remove Exam Question here
+            $questionResArr   = $this->candidatesRepository->removeExamQuestion($examQuestionId, $userId);
+            $responseMessage  = array('msg' => array(Lang::get('MINTMESH.assessments.delete')));
+            $data['id'] = $examQuestionId;
 
-            if($questionResArr){
-                $responseCode    = self::SUCCESS_RESPONSE_CODE;
-                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
-            } else {
-                $responseCode    = self::ERROR_RESPONSE_CODE;
-                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-                $responseMessage = array('msg' => array(Lang::get('MINTMESH.assessments.not_updated')));
+        } else if(!empty ($examId) || !empty ($examQstArr)) {
+            #check add the question to exam here
+            foreach ($examQstArr as $value) {
+
+                $questionId    = !empty($value['question_id']) ? $value['question_id'] : 0;
+                $questionValue = !empty($value['question_value']) ? $value['question_value'] : 0;
+                
+                if(!empty($questionId)){
+                    #check Exam Question Exist
+                    $checkExmQstResArr  = $this->candidatesRepository->checkExamQuestionExist($examId, $questionId);
+                    
+                    if(!empty($checkExmQstResArr[0])){
+                        
+                        $exmQstObj      = $checkExmQstResArr[0];
+                        $examQuestionId = !empty($exmQstObj->exam_question_id) ? $exmQstObj->exam_question_id : 0;
+                        #update Exam Question status here
+                        $questionResArr = $this->candidatesRepository->updateExamQuestionStatus($examQuestionId);
+                        $data[]['id']   = $examQuestionId;
+                    } else {
+                        #add Exam Question here
+                        $questionResArr[]  = $this->candidatesRepository->addExamQuestion($examId, $questionId, $userId, $questionValue);
+                        $data = $questionResArr;
+                    }
+                }    
             }
+            $responseMessage   = array('msg' => array(Lang::get('MINTMESH.assessments.created')));
+        } 
+
+        if($questionResArr){
+            $responseCode    = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
             $responseMessage = array('msg' => array(Lang::get('MINTMESH.assessments.not_updated')));
         }
+        
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
     
