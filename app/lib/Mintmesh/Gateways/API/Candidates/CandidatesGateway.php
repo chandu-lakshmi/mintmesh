@@ -257,13 +257,13 @@ class CandidatesGateway {
             $postDetails    = isset($resultArr[2]) ? $resultArr[2] : '';
             $serviceName    = $postDetails->service_name;
             $candidateEmail = $candidate->emailid; 
-            
+            $createdAt      = date('M d, Y g:i A');
             $referredBy         = !empty($relation->referred_by) ? $relation->referred_by : '';
             $candidateName      = $this->postGateway->getCandidateFullNameByEmail($candidateEmail, $referredBy, $companyId);    
             $returnArr          = $this->candidatesRepository->getCandidateEmailTemplates();
 
             foreach($returnArr as  &$resVal){
-                $arrayReplace    = array( "%fname%" => $candidateName, "%company%" => $companyName, "%jobtitle%" => $serviceName);
+                $arrayReplace    = array( "%fname%" => $candidateName, "%company%" => $companyName, "%jobtitle%" => $serviceName, "%longtime%" => $createdAt);
                 $body_text       = strtr($resVal->body, $arrayReplace);
                 $subject         = strtr($resVal->subject, $arrayReplace);
                 $resVal->subject = $subject;
@@ -895,7 +895,7 @@ class CandidatesGateway {
                 $comment      = "Assigned to ".$serviceName;
                 $activityId   = $this->candidatesRepository->addCandidateActivityLogs($companyId, $referenceId, $candidateId, $userId, $moduleType, $activityText, $comment) ;
                 #return response form here
-                $createdAt    = gmdate('Y-m-d H:i:s');;
+                $createdAt    = gmdate('Y-m-d H:i:s');
                 $timelineDate = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
                 
                 $returnArr['link_job']  = array(
