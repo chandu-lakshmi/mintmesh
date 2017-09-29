@@ -552,12 +552,12 @@ return array(
         "auth_key_failure" => "Invalid authentication key"
     ),
     "add_candidate_tag_jobs" => array(
-        "success" => "Successfully Assigned",
-        "failure" => "No records found",
+        "success" => "Job Assigned Successfully",
+        "failure" => "Failed to Assign Job",
     ),
     "add_candidate_email" => array(
-        "success" => "Successfully Sent",
-        "failure" => "No records found",
+        "success" => "Email Sent Successfully",
+        "failure" => "Failed to Send Email",
     ),
     "add_candidate_comment" => array(
         "success" => "Successfully Added",
@@ -575,7 +575,16 @@ return array(
         "updated"  => "Successfully Updated",
         "not_created"  => "Failed to Create",
         "not_updated"  => "Failed to Update",
-    ),"get_candidate_activities" => array(
+    ),
+    "get_candidate_activities" => array(
         "activities_failure" => "No Events Recorded"
+    ),
+    "get_candidate_comments" => array(
+        "success" => "Comment Added",
+        "failure" => "Failed to Add Comment"
+    ),
+    "add_candidate_schedule" => array(
+        "success" => "Shedule Created",
+        "failure" => "Failed to create Shedule"
     ),
 );

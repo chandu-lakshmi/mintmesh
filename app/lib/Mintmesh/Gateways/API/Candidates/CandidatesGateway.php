@@ -605,16 +605,16 @@ class CandidatesGateway {
                 
                 $responseCode    = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
-                $responseMessage = array('msg' => array(Lang::get('MINTMESH.user.create_success')));
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_schedule.success')));
             } else {
                 $responseCode    = self::ERROR_RESPONSE_CODE;
                 $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-                $responseMessage = array('msg' => array(Lang::get('MINTMESH.user.create_failure')));
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_schedule.failure')));
             }
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.get_candidate_activities.activities_failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_schedule.failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -705,7 +705,7 @@ class CandidatesGateway {
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.get_candidate_activities.activities_failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_email.failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -928,7 +928,7 @@ class CandidatesGateway {
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.get_candidate_activities.activities_failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -1026,14 +1026,14 @@ class CandidatesGateway {
             $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
             if($returnArr){
                 $data = $returnArr;
-                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.get_candidate_comments.success')));
             } else {
-                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.get_candidate_comments.failure')));
             }
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.get_candidate_activities.activities_failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.get_candidate_comments.failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }

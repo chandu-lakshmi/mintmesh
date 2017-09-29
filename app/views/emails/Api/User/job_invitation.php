@@ -146,7 +146,7 @@
                                             <td align="left" style="padding:20px 0;">
                                                 <table cellpadding="0" cellpadding="0" border="0" style="width:100px;text-align:center;display:inline-block;font-family:Arial, Helvetica, sans-serif;font-size:14px;">
                                                     <tr>
-                                                        <td style="background:#238260;border:1px solid #238260;padding: 6px 10px;"><a href="<?php echo $drop_cv_link ; ?>" style="display:inline-block;border-radius: 2px;background:#238260;color:#fff;text-decoration: none;outline:none;width:100%;">Upload CV</a>
+                                                        <td style="background:#238260;border:1px solid #238260;padding: 6px 10px;"><a href="<?php echo $drop_cv_link ; ?>" style="display:inline-block;border-radius: 2px;background:#238260;color:#fff;text-decoration: none;outline:none;width:100%;">REFER</a>
                                                         </td>
                                                     </tr><?php } ?>
                                                 </table>
