@@ -408,8 +408,9 @@ return array(
     'addContact' => array(
         "success" => "Contact added successfully",
         "failure" => "Failed to add contact",
-        "contactExists" => "Contact already exists",
-        "contactUpdated" => "Contact updated successfully"
+        "contactExists"  => "Contact already exists",
+        "contactUpdated" => "Contact updated successfully",
+        "message" => "We are delighted to have you as part of our Talent Community. Please log in to your personalized talent relationship page for our updates"
     ),
     'getPermissions' => array(
         "success" => "Permissions successfully retrieved",

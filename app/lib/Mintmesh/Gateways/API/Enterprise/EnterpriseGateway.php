@@ -3730,7 +3730,7 @@ class EnterpriseGateway {
                     $neoResult      = $this->neoEnterpriseRepository->companyAutoConnect($neoInput['emailid'], $relationAttrs);
                     $responseCode   = self::SUCCESS_RESPONSE_CODE;
                     $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
-                    $message        = array('msg' => array(Lang::get('MINTMESH.addContact.success')));
+                    $message        = array('msg' => array(Lang::get('MINTMESH.addContact.message')));
                 } else {
                     $message = array('msg' => array(Lang::get('MINTMESH.addContact.failure')));
                 }     
@@ -3746,7 +3746,7 @@ class EnterpriseGateway {
                     }
                     $responseCode   = self::SUCCESS_RESPONSE_CODE;
                     $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
-                    $message        = array('msg' => array(Lang::get('MINTMESH.addContact.contactUpdated')));
+                    $message        = array('msg' => array(Lang::get('MINTMESH.addContact.message')));
                 } else {
                     $message = array('msg' => array(Lang::get('MINTMESH.addContact.contactExists')));
                 }
