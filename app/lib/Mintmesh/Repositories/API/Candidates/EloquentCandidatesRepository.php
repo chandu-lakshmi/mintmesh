@@ -884,4 +884,38 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         }    
         return $return;
     }
+    
+    public function checkAndCreateCandidatesTags($tagName = '', $companyId = 0, $userId = 0) {
+        
+        $return = 0;
+        if(!empty($tagName)){
+            $createdAt   = gmdate('Y-m-d H:i:s');
+            $tagName     = $this->appEncodeDecode->filterString($tagName);
+            #get library with library name
+            $result =  DB::table('candidates_tags_list')
+                        ->select('id', 'tag_name')
+                        ->where('tag_name', 'LIKE', '' . $tagName . '')
+                        ->limit(1)
+                        ->get();
+
+            if(isset($result[0]) && !empty($result[0]->id)){
+                #return library id here
+                $return = $result[0]->id;
+            } else {
+                #check Bad Words here
+                $tagName = $this->appEncodeDecode->cleanBadWords($tagName);
+                if(!empty($tagName)){
+                    #create new library here
+                    $return = DB::table('candidates_tags_list')
+                                ->insertGetId( array(
+                                            'company_id' => $companyId,
+                                            'tag_name'   => $tagName,
+                                            'created_by' => $userId,
+                                            'created_at' => $createdAt
+                                            ));
+                }
+            }
+        }    
+        return $return;
+    }
 }

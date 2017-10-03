@@ -1398,8 +1398,8 @@ class CandidatesGateway {
         $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
-        $tag_id     = !empty($input['tag_id']) ? $input['tag_id'] : '';
-        $tag_name     = !empty($input['tag_name']) ? $input['tag_name'] : '';
+        $tag_id      = !empty($input['tag_id']) ? $input['tag_id'] : '';
+        $tag_name    = !empty($input['tag_name']) ? $input['tag_name'] : '';
         #get company details here
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
@@ -1413,7 +1413,9 @@ class CandidatesGateway {
             $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
             $candidateEmail = $candidate->emailid;
             $candidateId    = $candidate->getID();
-        
+            if(empty($tag_id)){
+               $tag_id  =  $this->candidatesRepository->checkAndCreateCandidatesTags($tag_name, $companyId, $userId);
+            }
             $lastInsert = $this->candidatesRepository->addCandidateTags($companyId, $tag_id, $referenceId, $candidateId, $userId);
           
             #check get career settings details not empty
