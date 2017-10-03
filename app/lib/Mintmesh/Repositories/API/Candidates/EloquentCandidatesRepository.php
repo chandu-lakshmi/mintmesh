@@ -662,9 +662,14 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
                     INNER JOIN `experience_ranges` AS `r` ON `e`.`work_experience` = `r`.`id` 
                     INNER JOIN `users` AS `u` ON `e`.`created_by` = `u`.`id` 
                     WHERE `e`.`company_id` = '".$companyId."' ";
-            #Active | Inactive filters here
-            if(($filters == '0') || ($filters == '1')){
-                $sql .= " and e.is_active =".$filters;
+            #
+            if($filters){
+                $filterSql = '';
+                foreach ($filters as $value) {
+                   $filterSql .= " e.is_active =".$value." OR";
+                }
+                $filterSql = rtrim($filterSql,'OR');
+                $sql .= " AND (".$filterSql.")";
             }
             #search by Assessment name here
             if($search){
