@@ -1859,9 +1859,16 @@ class CandidatesGateway {
             #add to Question Bank 
             if(!empty($librariesArr)) {
                 foreach ($librariesArr as $library) {
+                    
+                    $libraryId    = isset($library['library_id']) ? $library['library_id'] : 0;  
+                    $libraryName  = isset($library['library_name']) ? $library['library_name'] : '';
+                    if(empty($libraryId)){
+                        #check and get Library id by Library name
+                        $libraryId = $this->candidatesRepository->checkAndCreateLibrary($libraryName);
+                    }
                     #form Question Bank input
                     $libraryInput = array();
-                    $libraryInput['library_id']  = isset($library['library_id']) ? $library['library_id'] : 0;
+                    $libraryInput['library_id']  = $libraryId;
                     $libraryInput['question_id'] = $questionId;
                     #add to Question Bank here
                     $librariesResArr[] = $this->candidatesRepository->addQuestionBank($libraryInput, $companyId);
@@ -1928,9 +1935,16 @@ class CandidatesGateway {
                 $this->candidatesRepository->editQuestionBankInactiveAll($questionId);
                 foreach ($librariesArr as $value) {
                     #form Question Bank input
-                    $libraryInput = array();
                     $qstBankId    = !empty($value['qst_bank_id']) ? $value['qst_bank_id'] : 0;
-                    $libraryInput['library_id']   = isset($value['library_id']) ? $value['library_id'] : 0;
+                    $libraryId    = isset($value['library_id']) ? $value['library_id'] : 0;
+                    $libraryName  = isset($value['library_name']) ? $value['library_name'] : '';
+                    
+                    if(empty($libraryId)){
+                        #check and get Library id by Library name
+                        $libraryId = $this->candidatesRepository->checkAndCreateLibrary($libraryName);
+                    }
+                    $libraryInput = array();
+                    $libraryInput['library_id']   = $libraryId;
                     $libraryInput['question_id']  = $questionId;
                     #check option id
                     if($qstBankId){

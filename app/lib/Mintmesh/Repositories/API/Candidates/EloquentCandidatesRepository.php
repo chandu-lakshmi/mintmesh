@@ -851,5 +851,37 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         $return = !empty($result[0]) ? $result[0] : 0;
        return $return;
     }
+    
+    public function checkAndCreateLibrary($libraryName = '') {
         
+        $return = 0;
+        if(!empty($libraryName)){
+            $createdAt   = gmdate('Y-m-d H:i:s');
+            $libraryName = $this->appEncodeDecode->filterString($libraryName);
+            #get library with library name
+            $result =  DB::table('question_library')
+                        ->select('idquestion_library', 'name')
+                        ->where('status', self::STATUS_ACTIVE)
+                        ->where('name', 'LIKE', '' . $libraryName . '')
+                        ->limit(1)
+                        ->get();
+
+            if(isset($result[0]) && !empty($result[0]->idquestion_library)){
+                #return library id here
+                $return = $result[0]->idquestion_library;
+            } else {
+                #check Bad Words here
+                $libraryName = $this->appEncodeDecode->cleanBadWords($libraryName);
+                if(!empty($libraryName)){
+                    #create new library here
+                    $return = DB::table('question_library')
+                                ->insertGetId( array(
+                                            'name' => $libraryName,
+                                            'created_at' => $createdAt
+                                            ));
+                }
+            }
+        }    
+        return $return;
+    }
 }
