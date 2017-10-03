@@ -513,7 +513,6 @@ class CandidatesGateway {
             $scheduleFor = !empty($input['schedule_for']) ? $input['schedule_for'] : $subject;
             
             $emailData = array();
-            $emailData = array();
             $emailData['from_name']     = $userName;//"Company Epi 1";        
             $emailData['from_address']  = "'support@mintmesh.com";        
             $emailData['to_name']       = $candidateName;//"karthik enterpi";        

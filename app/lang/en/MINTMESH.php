@@ -584,7 +584,7 @@ return array(
         "failure" => "Failed to Add Comment"
     ),
     "add_candidate_schedule" => array(
-        "success" => "Shedule Created",
+        "success" => "Schedule Created",
         "failure" => "Failed to create Shedule"
     ),
 );
