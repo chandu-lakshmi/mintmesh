@@ -565,22 +565,35 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         return $return;
     }
     
-    public function getQuestionsList($companyId = 0, $page = 0, $examId = 0){
-        
-        $start = $end = 0;
-        if (!empty($page)){
-            $end = $page-1 ;
-            $start = $end*10 ;
-        }
-        $result['questions_list'] =  DB::table('question as q')
-                                    ->select(DB::raw('SQL_CALC_FOUND_ROWS q.idquestion'),'q.idquestion','q.question', 'q.question_value', 't.name as question_type')
-                                    ->join('question_type as t', 'q.question_type', '=', 't.idquestion_type')
-                                    ->where('q.company_id', $companyId)
-                                    ->where('q.status', self::STATUS_ACTIVE)
-                                    ->orderBy('q.created_at', 'DESC')
-                                    ->limit(10)->skip($start)
-                                    ->get();
-        $result['total_records'] = DB::select("select FOUND_ROWS() as total_count");
+    public function getQuestionsList($companyId = 0, $page = 0, $examId = 0, $search = '', $filters = ''){
+                
+        $sql = "SELECT SQL_CALC_FOUND_ROWS q.idquestion, q.idquestion, q.question, q.question_value, t.name AS question_type
+                FROM question AS q
+                INNER JOIN question_type AS t ON q.question_type = t.idquestion_type
+                WHERE q.company_id = ".$companyId." AND q.status = ".self::STATUS_ACTIVE;
+            
+            if($filters){
+                $filterSql = '';
+                foreach ($filters as $value) {
+                   $filterSql .= " q.question_type =".$value." OR";
+                }
+                $filterSql = rtrim($filterSql,'OR');
+                $sql .= " AND (".$filterSql.")";
+            }
+            #search by Assessment name here
+            if($search){
+                $search   = $this->appEncodeDecode->filterString($search);
+                $sql .= " AND q.question LIKE '%".$search."%'";
+            }
+            $sql .= " ORDER BY q.created_at DESC ";
+            # based on page no
+            if (!empty($page)){
+                $page   = $page-1 ;
+                $offset = $page*10 ;
+                $sql.=  " limit ".$offset.",10 ";
+            }
+        $result['questions_list'] = DB::Select($sql);
+        $result['total_records']  = DB::select("select FOUND_ROWS() as total_count");
         return $result; 
     }
     
@@ -638,24 +651,40 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         return $return;
     }
     
-    public function getCompanyAssessmentsAll($companyId = 0, $page = 0){
+    public function getCompanyAssessmentsAll($companyId = 0, $page = 0, $search = '', $filters = ''){
         $result = '';
         if(!empty($companyId)){
-          $sql = "SELECT SQL_CALC_FOUND_ROWS e.idexam,`e`.`max_duration`, `r`.name as exp_name, `e`.`name`, `e`.`idexam_type`, `e`.`is_active`, `u`.`firstname`, `e`.`created_at`,
-                 (select count(*) from exam_question as eq inner join question as q on q.idquestion = eq.idquestion
+            
+            $sql = "SELECT SQL_CALC_FOUND_ROWS e.idexam,`e`.`max_duration`, `r`.name as exp_name, `e`.`name`, `e`.`idexam_type`, `e`.`is_active`, `u`.`firstname`, `e`.`created_at`,
+                    (select count(*) from exam_question as eq inner join question as q on q.idquestion = eq.idquestion
 			where eq.idexam = e.idexam and eq.`status`=1 and q.`status` =1)  as qcount 
-                  FROM `exam` AS `e` 
-                  INNER JOIN `experience_ranges` AS `r` ON `e`.`work_experience` = `r`.`id` 
-                  INNER JOIN `users` AS `u` ON `e`.`created_by` = `u`.`id` 
-                  WHERE `e`.`company_id` = '".$companyId."' order by e.created_at desc ";
+                    FROM `exam` AS `e` 
+                    INNER JOIN `experience_ranges` AS `r` ON `e`.`work_experience` = `r`.`id` 
+                    INNER JOIN `users` AS `u` ON `e`.`created_by` = `u`.`id` 
+                    WHERE `e`.`company_id` = '".$companyId."' ";
+            #
+            if($filters){
+                $filterSql = '';
+                foreach ($filters as $value) {
+                   $filterSql .= " e.is_active =".$value." OR";
+                }
+                $filterSql = rtrim($filterSql,'OR');
+                $sql .= " AND (".$filterSql.")";
+            }
+            #search by Assessment name here
+            if($search){
+                $search   = $this->appEncodeDecode->filterString($search);
+                $sql .= " and e.name LIKE '%".$search."%'";
+            }
+            $sql .= " order by e.created_at desc";
             # based on page no
             if (!empty($page)){
                 $page   = $page-1 ;
                 $offset = $page*10 ;
                 $sql.=  " limit ".$offset.",10 ";
             }
-           $result['assessments_list']  = DB::Select($sql);
-           $result['total_records']     = DB::select("select FOUND_ROWS() as total_count");
+            $result['assessments_list']  = DB::Select($sql);
+            $result['total_records']     = DB::select("select FOUND_ROWS() as total_count");
         }
        return $result; 
     }
@@ -822,5 +851,71 @@ class EloquentCandidatesRepository extends BaseRepository implements CandidatesR
         $return = !empty($result[0]) ? $result[0] : 0;
        return $return;
     }
+    
+    public function checkAndCreateLibrary($libraryName = '') {
         
+        $return = 0;
+        if(!empty($libraryName)){
+            $createdAt   = gmdate('Y-m-d H:i:s');
+            $libraryName = $this->appEncodeDecode->filterString($libraryName);
+            #get library with library name
+            $result =  DB::table('question_library')
+                        ->select('idquestion_library', 'name')
+                        ->where('status', self::STATUS_ACTIVE)
+                        ->where('name', 'LIKE', '' . $libraryName . '')
+                        ->limit(1)
+                        ->get();
+
+            if(isset($result[0]) && !empty($result[0]->idquestion_library)){
+                #return library id here
+                $return = $result[0]->idquestion_library;
+            } else {
+                #check Bad Words here
+                $libraryName = $this->appEncodeDecode->cleanBadWords($libraryName);
+                if(!empty($libraryName)){
+                    #create new library here
+                    $return = DB::table('question_library')
+                                ->insertGetId( array(
+                                            'name' => $libraryName,
+                                            'created_at' => $createdAt
+                                            ));
+                }
+            }
+        }    
+        return $return;
+    }
+    
+    public function checkAndCreateCandidatesTags($tagName = '', $companyId = 0, $userId = 0) {
+        
+        $return = 0;
+        if(!empty($tagName)){
+            $createdAt   = gmdate('Y-m-d H:i:s');
+            $tagName     = $this->appEncodeDecode->filterString($tagName);
+            #get library with library name
+            $result =  DB::table('candidates_tags_list')
+                        ->select('id', 'tag_name')
+                        ->where('tag_name', 'LIKE', '' . $tagName . '')
+                        ->limit(1)
+                        ->get();
+
+            if(isset($result[0]) && !empty($result[0]->id)){
+                #return library id here
+                $return = $result[0]->id;
+            } else {
+                #check Bad Words here
+                $tagName = $this->appEncodeDecode->cleanBadWords($tagName);
+                if(!empty($tagName)){
+                    #create new library here
+                    $return = DB::table('candidates_tags_list')
+                                ->insertGetId( array(
+                                            'company_id' => $companyId,
+                                            'tag_name'   => $tagName,
+                                            'created_by' => $userId,
+                                            'created_at' => $createdAt
+                                            ));
+                }
+            }
+        }    
+        return $return;
+    }
 }

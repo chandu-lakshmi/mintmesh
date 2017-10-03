@@ -257,13 +257,13 @@ class CandidatesGateway {
             $postDetails    = isset($resultArr[2]) ? $resultArr[2] : '';
             $serviceName    = $postDetails->service_name;
             $candidateEmail = $candidate->emailid; 
-            
+            $createdAt      = date('M d, Y g:i A');
             $referredBy         = !empty($relation->referred_by) ? $relation->referred_by : '';
             $candidateName      = $this->postGateway->getCandidateFullNameByEmail($candidateEmail, $referredBy, $companyId);    
             $returnArr          = $this->candidatesRepository->getCandidateEmailTemplates();
 
             foreach($returnArr as  &$resVal){
-                $arrayReplace    = array( "%fname%" => $candidateName, "%company%" => $companyName, "%jobtitle%" => $serviceName);
+                $arrayReplace    = array( "%fname%" => $candidateName, "%company%" => $companyName, "%jobtitle%" => $serviceName, "%longtime%" => $createdAt);
                 $body_text       = strtr($resVal->body, $arrayReplace);
                 $subject         = strtr($resVal->subject, $arrayReplace);
                 $resVal->subject = $subject;
@@ -281,7 +281,7 @@ class CandidatesGateway {
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.get_candidate_activities.activities_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -397,7 +397,7 @@ class CandidatesGateway {
             $candidateName  = $this->postGateway->getCandidateFullNameByEmail($candidateEmail, $referredBy, $companyId);    
             
             if(!empty($relation->created_at)){
-                $createdAt = date("M d,Y", strtotime($this->appEncodeDecode->UserTimezone($relation->created_at, $timeZone)));
+                $createdAt = date("M d, Y", strtotime($this->appEncodeDecode->UserTimezone($relation->created_at, $timeZone)));
             }
             $cvName = !empty($candidateArr['cv_original_name']) ? $candidateArr['cv_original_name'] : Lang::get('MINTMESH.candidates.awaiting_resume');
             $cvPath = !empty($candidateArr['cv_path']) ? $candidateArr['cv_path'] : '';
@@ -461,7 +461,7 @@ class CandidatesGateway {
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.get_candidate_activities.activities_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -512,7 +512,6 @@ class CandidatesGateway {
             $location    = !empty($input['interview_location']) ? $input['interview_location'] : '';
             $scheduleFor = !empty($input['schedule_for']) ? $input['schedule_for'] : $subject;
             
-            $emailData = array();
             $emailData = array();
             $emailData['from_name']     = $userName;//"Company Epi 1";        
             $emailData['from_address']  = "'support@mintmesh.com";        
@@ -605,16 +604,16 @@ class CandidatesGateway {
                 
                 $responseCode    = self::SUCCESS_RESPONSE_CODE;
                 $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
-                $responseMessage = array('msg' => array(Lang::get('MINTMESH.user.create_success')));
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_schedule.success')));
             } else {
                 $responseCode    = self::ERROR_RESPONSE_CODE;
                 $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-                $responseMessage = array('msg' => array(Lang::get('MINTMESH.user.create_failure')));
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_schedule.failure')));
             }
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_schedule.failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -705,7 +704,7 @@ class CandidatesGateway {
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_email.failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -747,7 +746,7 @@ class CandidatesGateway {
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.get_candidate_activities.activities_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -822,12 +821,12 @@ class CandidatesGateway {
                 $data = $returnArr;
                 $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
             } else {
-                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.get_candidate_activities.activities_failure')));
             }
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.get_candidate_activities.activities_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
         
@@ -867,7 +866,7 @@ class CandidatesGateway {
             $candidateEmail = $candidate->emailid;
             $candidateId    = $candidate->getID();
             $moduleType     = 5;
-            $activityText   = 'Link Job';
+            $activityText   = 'Assigned to';
             
             $neoInput['referral']               = $candidateEmail;
             $neoInput['referred_by']            = $userEmailId;
@@ -892,10 +891,10 @@ class CandidatesGateway {
                 $referCandidateArr = $this->neoPostRepository->referCandidate($neoInput, $refInput);
                 #add Candidate Activity Logs here
                 $serviceName  = !empty($postDetails->service_name) ? $postDetails->service_name : '';
-                $comment      = "Linked to ".$serviceName;
+                $comment      = "Assigned to ".$serviceName;
                 $activityId   = $this->candidatesRepository->addCandidateActivityLogs($companyId, $referenceId, $candidateId, $userId, $moduleType, $activityText, $comment) ;
                 #return response form here
-                $createdAt    = gmdate('Y-m-d H:i:s');;
+                $createdAt    = gmdate('Y-m-d H:i:s');
                 $timelineDate = \Carbon\Carbon::createFromTimeStamp(strtotime($createdAt))->diffForHumans();
                 
                 $returnArr['link_job']  = array(
@@ -928,7 +927,7 @@ class CandidatesGateway {
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -981,7 +980,7 @@ class CandidatesGateway {
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.get_candidate_activities.activities_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -1026,14 +1025,14 @@ class CandidatesGateway {
             $responseMsg    = self::SUCCESS_RESPONSE_MESSAGE;
             if($returnArr){
                 $data = $returnArr;
-                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.success')));
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.get_candidate_comments.success')));
             } else {
-                $responseMessage = array('msg' => array(Lang::get('MINTMESH.not_parsed_resumes.failure')));
+                $responseMessage = array('msg' => array(Lang::get('MINTMESH.get_candidate_comments.failure')));
             }
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.get_candidate_comments.failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -1093,7 +1092,7 @@ class CandidatesGateway {
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.get_candidate_activities.activities_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -1150,7 +1149,7 @@ class CandidatesGateway {
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.get_candidate_activities.activities_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -1210,7 +1209,7 @@ class CandidatesGateway {
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.get_candidate_activities.activities_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -1239,6 +1238,8 @@ class CandidatesGateway {
             
             $neoInput       = $refInput = array();
             $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
+            $postDetails    = isset($resultArr[2]) ? $resultArr[2] : '';
+            $postId         = $postDetails->getID();
             $candidateEmail = $candidate->emailid;
             $candidateId    = $candidate->getID();
             $moduleType     = 4;
@@ -1246,7 +1247,7 @@ class CandidatesGateway {
             $activityMsg    = $this->getCandidateStatusMessage($refStatus);
              
             if($referenceId){
-                $refStatus    = $this->neoCandidatesRepository->editCandidateReferralStatus($referenceId, $refStatus, $userEmailId);
+                $refStatus    = $this->neoCandidatesRepository->editCandidateReferralStatus($postId, $referenceId, $refStatus, $userEmailId);
                 $activityId   = $this->candidatesRepository->addCandidateActivityLogs($companyId, $referenceId, $candidateId, $userId, $moduleType, $activityText, $refComment) ;
                 #return response form here
                 if($refComment){
@@ -1278,7 +1279,7 @@ class CandidatesGateway {
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.get_candidate_activities.activities_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -1397,8 +1398,8 @@ class CandidatesGateway {
         $companyCode = !empty($input['company_code']) ? $input['company_code'] : '';
         $referenceId = !empty($input['reference_id']) ? $input['reference_id'] : '';
         $candidateId = !empty($input['candidate_id']) ? $input['candidate_id'] : '';
-        $tag_id     = !empty($input['tag_id']) ? $input['tag_id'] : '';
-        $tag_name     = !empty($input['tag_name']) ? $input['tag_name'] : '';
+        $tag_id      = !empty($input['tag_id']) ? $input['tag_id'] : '';
+        $tag_name    = !empty($input['tag_name']) ? $input['tag_name'] : '';
         #get company details here
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
@@ -1412,7 +1413,9 @@ class CandidatesGateway {
             $candidate      = isset($resultArr[0]) ? $resultArr[0] : '';
             $candidateEmail = $candidate->emailid;
             $candidateId    = $candidate->getID();
-        
+            if(empty($tag_id)){
+               $tag_id  =  $this->candidatesRepository->checkAndCreateCandidatesTags($tag_name, $companyId, $userId);
+            }
             $lastInsert = $this->candidatesRepository->addCandidateTags($companyId, $tag_id, $referenceId, $candidateId, $userId);
           
             #check get career settings details not empty
@@ -1433,7 +1436,7 @@ class CandidatesGateway {
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.get_candidate_activities.activities_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
@@ -1471,7 +1474,7 @@ class CandidatesGateway {
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-            $responseMessage = array('msg' => array(Lang::get('MINTMESH.add_candidate_tag_jobs.candidate_failure')));
+            $responseMessage = array('msg' => array(Lang::get('MINTMESH.get_candidate_activities.activities_failure')));
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
        
@@ -1496,11 +1499,11 @@ class CandidatesGateway {
                try{
                     //Create Email Headers
                      $mime_boundary = "----Meeting Booking----".MD5(TIME());
-                     $headers = "From: ".$from_name." <".$from_address.">\n";
-                     $headers .= "Reply-To: ".$from_name." <".$from_address.">\n";
-                     $headers .= "MIME-Version: 1.0\n";
-                     $headers .= "Content-Type: multipart/alternative; boundary=\"$mime_boundary\"\n";
-                     $headers .= "Content-class: urn:content-classes:calendarmessage\n";
+                     //$headers = "From: ".$from_name." <".$from_address.">\n";
+                     //$headers .= "Reply-To: ".$from_name." <".$from_address.">\n";
+                     //$headers .= "MIME-Version: 1.0\n";
+                     //$headers .= "Content-Type: multipart/alternative; boundary=\"$mime_boundary\"\n";
+                     //$headers .= "Content-class: urn:content-classes:calendarmessage\n";
 
                     //Create Email Body (HTML)
                      $message = "--$mime_boundary\r\n";
@@ -1559,21 +1562,33 @@ class CandidatesGateway {
                     $message .= 'Content-Type: text/calendar;name="meeting.ics";method=REQUEST'."\n";
                     $message .= "Content-Transfer-Encoding: 8bit\n\n";
                     $message .= $ical;
+                    
+                    $dataSet = array();
+                    $dataSet['email'] = $to_address;
+                    $dataSet['send_company_name'] = $from_name;
+                    $dataSet['calendar_event']    = TRUE;
+                    $dataSet['email_body']        = $message;
+                    
+                    $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.blank');
+                    $this->userEmailManager->emailId = $to_address;
+                    $this->userEmailManager->dataSet = $dataSet;
+                    $this->userEmailManager->subject = $subject;
+                    $this->userEmailManager->name    = $from_name;
+                    $return = $this->userEmailManager->sendMail();
+                    //$mailsent = mail($to_address, $subject, $message, $headers);
 
-                    $mailsent = mail($to_address, $subject, $message, $headers);
-
-                       if( count(Mail::failures()) > 0 ) {
-                          $return = false ;
-                       } else {
-                           $return = true ;
-                       }
+//                       if( count(Mail::failures()) > 0 ) {
+//                          $return = false ;
+//                       } else {
+//                           $return = true ;
+//                       }
                 }
                  catch(\RuntimeException $e)
                 {
                     $return = false ;
                 }
                 
-            return true;    
+            return $return;    
        }
        
        public function getCandidateStatusMessage($status = '') {
@@ -1858,9 +1873,16 @@ class CandidatesGateway {
             #add to Question Bank 
             if(!empty($librariesArr)) {
                 foreach ($librariesArr as $library) {
+                    
+                    $libraryId    = isset($library['library_id']) ? $library['library_id'] : 0;  
+                    $libraryName  = isset($library['library_name']) ? $library['library_name'] : '';
+                    if(empty($libraryId)){
+                        #check and get Library id by Library name
+                        $libraryId = $this->candidatesRepository->checkAndCreateLibrary($libraryName);
+                    }
                     #form Question Bank input
                     $libraryInput = array();
-                    $libraryInput['library_id']  = isset($library['library_id']) ? $library['library_id'] : 0;
+                    $libraryInput['library_id']  = $libraryId;
                     $libraryInput['question_id'] = $questionId;
                     #add to Question Bank here
                     $librariesResArr[] = $this->candidatesRepository->addQuestionBank($libraryInput, $companyId);
@@ -1927,9 +1949,16 @@ class CandidatesGateway {
                 $this->candidatesRepository->editQuestionBankInactiveAll($questionId);
                 foreach ($librariesArr as $value) {
                     #form Question Bank input
-                    $libraryInput = array();
                     $qstBankId    = !empty($value['qst_bank_id']) ? $value['qst_bank_id'] : 0;
-                    $libraryInput['library_id']   = isset($value['library_id']) ? $value['library_id'] : 0;
+                    $libraryId    = isset($value['library_id']) ? $value['library_id'] : 0;
+                    $libraryName  = isset($value['library_name']) ? $value['library_name'] : '';
+                    
+                    if(empty($libraryId)){
+                        #check and get Library id by Library name
+                        $libraryId = $this->candidatesRepository->checkAndCreateLibrary($libraryName);
+                    }
+                    $libraryInput = array();
+                    $libraryInput['library_id']   = $libraryId;
                     $libraryInput['question_id']  = $questionId;
                     #check option id
                     if($qstBankId){
@@ -2109,11 +2138,13 @@ class CandidatesGateway {
        $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
        $examId       = !empty($input['exam_id']) ? $input['exam_id'] : '';
        $pageNo       = !empty($input['page_no']) ? $input['page_no'] : 0;
+       $search       = !empty($input['search']) ? $input['search'] : '';
+       $filter       = isset($input['filter']) ? $input['filter'] : '';
        #get company details here
        $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
        $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
        #get Question Types List here
-       $questionResArr    = $this->candidatesRepository->getQuestionsList($companyId, $pageNo, $examId);
+       $questionResArr    = $this->candidatesRepository->getQuestionsList($companyId, $pageNo, $examId, $search, $filter);
         #check if Question result
         if(!empty($questionResArr['questions_list'])){
             
@@ -2183,53 +2214,58 @@ class CandidatesGateway {
     
     public function addEditExamQuestion($input) {
         
-        $returnArr      = $data = array();
+        $questionResArr = $data = array();
         $companyCode    = !empty($input['company_code']) ? $input['company_code'] : '';
-        $examId         = !empty($input['exam_id']) ? $input['exam_id'] : 0;
-        $questionId     = !empty($input['question_id']) ? $input['question_id'] : 0;
-        $questionValue  = !empty($input['question_value']) ? $input['question_value'] : 0;
+        $examQstArr     = !empty($input['exam_question_arr']) ? $input['exam_question_arr'] : '';
         $examQuestionId = !empty($input['exam_question_id']) ? $input['exam_question_id'] : 0;
+        $examId         = !empty($input['exam_id']) ? $input['exam_id'] : 0;
         #get Logged In User details here
         $this->loggedinUser = $this->referralsGateway->getLoggedInUser(); 
         $userId   = $this->loggedinUser->id;
-       
-        if((!empty($examId) && !empty($questionId)) || !empty($examQuestionId)){
-  
-            if($examQuestionId){
-                #remove Exam Question here
-                $questionResArr   = $this->candidatesRepository->removeExamQuestion($examQuestionId, $userId);
-                $responseMessage  = array('msg' => array(Lang::get('MINTMESH.assessments.delete')));
-                $data['id'] = $examQuestionId;
-            } else {
-                #check Exam Question Exist
-                $checkExmQstResArr    = $this->candidatesRepository->checkExamQuestionExist($examId, $questionId);
-                if(!empty($checkExmQstResArr[0])){
-                    $exmQst = $checkExmQstResArr[0];
-                    $examQuestionId = !empty($exmQst->exam_question_id) ? $exmQst->exam_question_id : 0;
-                    #update Exam Question status here
-                    $questionResArr  = $this->candidatesRepository->updateExamQuestionStatus($examQuestionId);
-                    $data['id'] = $examQuestionId;
-                } else {
-                    #add Exam Question here
-                    $questionResArr  = $this->candidatesRepository->addExamQuestion($examId, $questionId, $userId, $questionValue);
-                    $data = $questionResArr;
-                }
-                $responseMessage   = array('msg' => array(Lang::get('MINTMESH.assessments.created')));
-            }
+        #check if remove the question or not                
+        if($examQuestionId){
+            #remove Exam Question here
+            $questionResArr   = $this->candidatesRepository->removeExamQuestion($examQuestionId, $userId);
+            $responseMessage  = array('msg' => array(Lang::get('MINTMESH.assessments.delete')));
+            $data['id'] = $examQuestionId;
 
-            if($questionResArr){
-                $responseCode    = self::SUCCESS_RESPONSE_CODE;
-                $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
-            } else {
-                $responseCode    = self::ERROR_RESPONSE_CODE;
-                $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
-                $responseMessage = array('msg' => array(Lang::get('MINTMESH.assessments.not_updated')));
+        } else if(!empty ($examId) || !empty ($examQstArr)) {
+            #check add the question to exam here
+            foreach ($examQstArr as $value) {
+
+                $questionId    = !empty($value['question_id']) ? $value['question_id'] : 0;
+                $questionValue = !empty($value['question_value']) ? $value['question_value'] : 0;
+                
+                if(!empty($questionId)){
+                    #check Exam Question Exist
+                    $checkExmQstResArr  = $this->candidatesRepository->checkExamQuestionExist($examId, $questionId);
+                    
+                    if(!empty($checkExmQstResArr[0])){
+                        
+                        $exmQstObj      = $checkExmQstResArr[0];
+                        $examQuestionId = !empty($exmQstObj->exam_question_id) ? $exmQstObj->exam_question_id : 0;
+                        #update Exam Question status here
+                        $questionResArr = $this->candidatesRepository->updateExamQuestionStatus($examQuestionId);
+                        $data[]['id']   = $examQuestionId;
+                    } else {
+                        #add Exam Question here
+                        $questionResArr[]  = $this->candidatesRepository->addExamQuestion($examId, $questionId, $userId, $questionValue);
+                        $data = $questionResArr;
+                    }
+                }    
             }
+            $responseMessage   = array('msg' => array(Lang::get('MINTMESH.add_edit_question.success')));
+        } 
+
+        if($questionResArr){
+            $responseCode    = self::SUCCESS_RESPONSE_CODE;
+            $responseMsg     = self::SUCCESS_RESPONSE_MESSAGE;
         } else {
             $responseCode    = self::ERROR_RESPONSE_CODE;
             $responseMsg     = self::ERROR_RESPONSE_MESSAGE;
             $responseMessage = array('msg' => array(Lang::get('MINTMESH.assessments.not_updated')));
         }
+        
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
     
@@ -2382,11 +2418,13 @@ class CandidatesGateway {
         $totalRecords = 0;
         $companyCode  = !empty($input['company_code']) ? $input['company_code'] : '';
         $pageNo       = !empty($input['page_no']) ? $input['page_no'] : 0;
+        $search       = !empty($input['search']) ? $input['search'] : '';
+        $filter       = isset($input['filter']) ? $input['filter'] : '';
         #get company details here
         $companyDetails = $this->enterpriseRepository->getCompanyDetailsByCode($companyCode);
         $companyId      = isset($companyDetails[0]) ? $companyDetails[0]->id : 0;
         #get Question Types List here
-        $resultArr    = $this->candidatesRepository->getCompanyAssessmentsAll($companyId, $pageNo);
+        $resultArr    = $this->candidatesRepository->getCompanyAssessmentsAll($companyId, $pageNo, $search, $filter);
         #check if Question result
         if(!empty($resultArr['assessments_list'])){
             
@@ -2427,6 +2465,18 @@ class CandidatesGateway {
             }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data); 
     }
+    
+    public function shuffleAssociativeArray($list) { 
+        
+        if (!is_array($list)) return $list; 
+        $keys = array_keys($list); 
+        shuffle($keys); 
+        $random = array(); 
+        foreach ($keys as $key) { 
+          $random[] = $list[$key]; 
+        }
+        return $random; 
+      }
        
     public function getAssessment($input) {
         
@@ -2447,17 +2497,19 @@ class CandidatesGateway {
             $resultArr['experience_name'] = !empty($qstObj->experience_name) ? $qstObj->experience_name : '';
             $resultArr['max_duration']    = !empty($qstObj->max_duration) ? $qstObj->max_duration : '';
             $resultArr['description']     = !empty($qstObj->description) ? $qstObj->description : '';
-            $resultArr['enable_full_screen']  = !empty($qstObj->enable_full_screen) ? $qstObj->enable_full_screen : '';
+            $resultArr['enable_full_screen']  = !empty($qstObj->enable_full_screen) ? $qstObj->enable_full_screen : 0;
             $resultArr['disclaimer_text']     = !empty($qstObj->disclaimer_text) ? $qstObj->disclaimer_text : '';
+            $shuffleQuestions             = !empty($qstObj->shuffle_questions) ? $qstObj->shuffle_questions : 0;
             #get Exam Question List here
             $examQstResArr   = $this->candidatesRepository->getExamQuestionList($examId);
         
             if(!empty($examQstResArr)){
-                
+                $number = 1;
                 foreach ($examQstResArr as $value) {
+                    
                     $record = $qstOptArray = array();
                     $record['id']               = $questionId = !empty($value->question_id) ? $value->question_id : 0;
-                    $record['number']           = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
+                    $record['number']           = $number;//!empty($value->exam_question_id) ? $value->exam_question_id : 0;
                     $record['exam_question_id'] = !empty($value->exam_question_id) ? $value->exam_question_id : 0;
                     $record['question_id']      = $questionId;
                     $record['question']         = !empty($value->question) ? $value->question : '';
@@ -2511,11 +2563,15 @@ class CandidatesGateway {
                         $record['elements']     = array($elements);
                         $examQstArr[]  = $record;
                     }
+                    $number++;
                 }
             }
         
             if($resultArr){
                 
+                if($shuffleQuestions){
+                    $examQstArr =  $this->shuffleAssociativeArray($examQstArr);
+                }
                 $resultArr['pages'] = $examQstArr;
                 $data = $resultArr;
                 $responseCode    = self::SUCCESS_RESPONSE_CODE;
@@ -2533,6 +2589,8 @@ class CandidatesGateway {
         }
         return $this->commonFormatter->formatResponse($responseCode, $responseMsg, $responseMessage, $data);
     }
+    
+    
     
     public function submitAssessment($input) {
        

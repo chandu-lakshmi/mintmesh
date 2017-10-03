@@ -93,6 +93,7 @@ return array(
         "set_password" => "MintMesh enterprise-User Account Activation"
     ),
     "email_template_paths" => array(
+        "blank" => "emails.Api.User.blank",
         "user_welcome" => "emails.Api.User.welcome",
         "enterprise_welcome" => "emails.Api.User.enterprise_welcome",
         "user_introduction" => "emails.Api.User.introduction",
@@ -408,8 +409,9 @@ return array(
     'addContact' => array(
         "success" => "Contact added successfully",
         "failure" => "Failed to add contact",
-        "contactExists" => "Contact already exists",
-        "contactUpdated" => "Contact updated successfully"
+        "contactExists"  => "Contact already exists",
+        "contactUpdated" => "Contact updated successfully",
+        "message" => "We are delighted to have you as part of our Talent Community. Please log in to your personalized talent relationship page for our updates"
     ),
     'getPermissions' => array(
         "success" => "Permissions successfully retrieved",
@@ -552,19 +554,20 @@ return array(
         "auth_key_failure" => "Invalid authentication key"
     ),
     "add_candidate_tag_jobs" => array(
-        "success" => "Successfully Assigned",
-        "failure" => "No records found",
+        "success" => "Job Assigned Successfully",
+        "failure" => "Failed to Assign Job",
     ),
     "add_candidate_email" => array(
-        "success" => "Successfully Sent",
-        "failure" => "No records found",
+        "success" => "Email Sent Successfully",
+        "failure" => "Failed to Send Email",
     ),
     "add_candidate_comment" => array(
         "success" => "Successfully Added",
         "failure" => "No records found"
     ),
     "add_edit_question" => array(
-        "failure" => "Failed to update question details"
+        "failure" => "Failed to update question details",
+        "success" => "Successfully Added",
     ),
     "assessments" => array(
         "success" => "Successfully Done",
@@ -574,5 +577,16 @@ return array(
         "updated"  => "Successfully Updated",
         "not_created"  => "Failed to Create",
         "not_updated"  => "Failed to Update",
-    )
+    ),
+    "get_candidate_activities" => array(
+        "activities_failure" => "No Events Recorded"
+    ),
+    "get_candidate_comments" => array(
+        "success" => "Comment Added",
+        "failure" => "Failed to Add Comment"
+    ),
+    "add_candidate_schedule" => array(
+        "success" => "Schedule Created",
+        "failure" => "Failed to create Shedule"
+    ),
 );

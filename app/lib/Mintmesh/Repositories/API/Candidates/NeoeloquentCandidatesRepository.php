@@ -86,17 +86,17 @@ class NeoeloquentCandidatesRepository extends BaseRepository implements NeoCandi
         return $return;
     }
     
-    public function editCandidateReferralStatus($referenceId = "", $status = "", $updatedBy = "") {
+    public function editCandidateReferralStatus($postId = "", $referenceId = "", $status = "", $updatedBy = "") {
         
         $return = FALSE;  
-        if ($referenceId) {
-            
+        if (!empty($postId) && !empty($referenceId)) {
+            $setQuery = '';
             if(!empty($status) && !empty($updatedBy)){
                 $status   = $this->appEncodeDecode->filterString(strtoupper($status));
                 $setQuery = " set  r.referral_status ='".$status."', r.referral_status_by ='".$updatedBy."' ";
             }
             #required query string parameters form here    
-            $baseQuery = "MATCH (u:User)-[r:GOT_REFERRED]-(p:Post) where ID(r)=".$referenceId;        
+            $baseQuery = "MATCH (u:User)-[r:GOT_REFERRED]->(p:Post) where ID(p) =".$postId." and ID(r)=".$referenceId;        
             #query string formation here
             $queryString  = $baseQuery.$setQuery;
             $queryString .= " return r";
