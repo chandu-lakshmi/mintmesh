@@ -142,7 +142,7 @@
                                 <td>
                                     <table cellspacing="0" cellpadding="0" width="90%" style="font-family:Arial, Helvetica, sans-serif;font-size:14px;">
                                         <tr>
-                                            <td align="right" style="padding:20px 0;">Upload a friend’s resume for future openings  &nbsp;</td>
+                                            <td align="right" style="padding:20px 0;">Refer a friend for future openings here  &nbsp;</td>
                                             <td align="left" style="padding:20px 0;">
                                                 <table cellpadding="0" cellpadding="0" border="0" style="width:100px;text-align:center;display:inline-block;font-family:Arial, Helvetica, sans-serif;font-size:14px;">
                                                     <tr>

@@ -397,7 +397,7 @@ class CandidatesGateway {
             $candidateName  = $this->postGateway->getCandidateFullNameByEmail($candidateEmail, $referredBy, $companyId);    
             
             if(!empty($relation->created_at)){
-                $createdAt = date("M d,Y", strtotime($this->appEncodeDecode->UserTimezone($relation->created_at, $timeZone)));
+                $createdAt = date("M d, Y", strtotime($this->appEncodeDecode->UserTimezone($relation->created_at, $timeZone)));
             }
             $cvName = !empty($candidateArr['cv_original_name']) ? $candidateArr['cv_original_name'] : Lang::get('MINTMESH.candidates.awaiting_resume');
             $cvPath = !empty($candidateArr['cv_path']) ? $candidateArr['cv_path'] : '';
