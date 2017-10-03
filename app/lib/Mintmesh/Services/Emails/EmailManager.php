@@ -42,10 +42,14 @@ abstract class EmailManager {
                     if (!empty($emailInput['attachment_path'])){
                          $message->attach($emailInput['attachment_path']);
                     }
-                    //send attachment if attached
-                    if (!empty($emailInput['calendar_event'])){
-                         $message->setBody($emailInput['calendar_event'], 'text/calendar; charset="utf-8"; method=REQUEST');
-                    }
+                        //send attachment if attached
+                        if (!empty($emailInput['calendar_event'])){
+
+                            $mime_boundary = "----Meeting Booking----".MD5(TIME());
+                            $message->getHeaders()->addTextHeader('MIME-Version', '1.0\n');
+                            $message->getHeaders()->addTextHeader('Content-Type', 'multipart/alternative; boundary=\"'.$mime_boundary.'\"\n');
+                            $message->getHeaders()->addTextHeader('Content-class', 'urn:content-classes:calendarmessage\n');
+                        }
                     });
                    
                     if( count(Mail::failures()) > 0 ) {

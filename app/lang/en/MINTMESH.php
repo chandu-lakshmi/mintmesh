@@ -93,6 +93,7 @@ return array(
         "set_password" => "MintMesh enterprise-User Account Activation"
     ),
     "email_template_paths" => array(
+        "blank" => "emails.Api.User.blank",
         "user_welcome" => "emails.Api.User.welcome",
         "enterprise_welcome" => "emails.Api.User.enterprise_welcome",
         "user_introduction" => "emails.Api.User.introduction",

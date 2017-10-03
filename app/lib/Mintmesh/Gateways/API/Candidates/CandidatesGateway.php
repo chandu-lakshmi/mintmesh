@@ -1499,11 +1499,11 @@ class CandidatesGateway {
                try{
                     //Create Email Headers
                      $mime_boundary = "----Meeting Booking----".MD5(TIME());
-                     $headers = "From: ".$from_name." <".$from_address.">\n";
-                     $headers .= "Reply-To: ".$from_name." <".$from_address.">\n";
-                     $headers .= "MIME-Version: 1.0\n";
-                     $headers .= "Content-Type: multipart/alternative; boundary=\"$mime_boundary\"\n";
-                     $headers .= "Content-class: urn:content-classes:calendarmessage\n";
+                     //$headers = "From: ".$from_name." <".$from_address.">\n";
+                     //$headers .= "Reply-To: ".$from_name." <".$from_address.">\n";
+                     //$headers .= "MIME-Version: 1.0\n";
+                     //$headers .= "Content-Type: multipart/alternative; boundary=\"$mime_boundary\"\n";
+                     //$headers .= "Content-class: urn:content-classes:calendarmessage\n";
 
                     //Create Email Body (HTML)
                      $message = "--$mime_boundary\r\n";
@@ -1562,21 +1562,33 @@ class CandidatesGateway {
                     $message .= 'Content-Type: text/calendar;name="meeting.ics";method=REQUEST'."\n";
                     $message .= "Content-Transfer-Encoding: 8bit\n\n";
                     $message .= $ical;
+                    
+                    $dataSet = array();
+                    $dataSet['email'] = $to_address;
+                    $dataSet['send_company_name'] = $from_name;
+                    $dataSet['calendar_event']    = TRUE;
+                    $dataSet['email_body']        = $message;
+                    
+                    $this->userEmailManager->templatePath = Lang::get('MINTMESH.email_template_paths.blank');
+                    $this->userEmailManager->emailId = $to_address;
+                    $this->userEmailManager->dataSet = $dataSet;
+                    $this->userEmailManager->subject = $subject;
+                    $this->userEmailManager->name    = $from_name;
+                    $return = $this->userEmailManager->sendMail();
+                    //$mailsent = mail($to_address, $subject, $message, $headers);
 
-                    $mailsent = mail($to_address, $subject, $message, $headers);
-
-                       if( count(Mail::failures()) > 0 ) {
-                          $return = false ;
-                       } else {
-                           $return = true ;
-                       }
+//                       if( count(Mail::failures()) > 0 ) {
+//                          $return = false ;
+//                       } else {
+//                           $return = true ;
+//                       }
                 }
                  catch(\RuntimeException $e)
                 {
                     $return = false ;
                 }
                 
-            return true;    
+            return $return;    
        }
        
        public function getCandidateStatusMessage($status = '') {
